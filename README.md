@@ -47,6 +47,7 @@ is still somewhat in flux and I expect there will continue to be changes. In par
 3. The `SV_Preferences` class was sufficient for storing settings for a Self Balancing Robot, however it's not really adequate for an Aircraft.
   I will need to look at alternative ways of storing settings. This may also involve removing the `SV_Preferences` and associated classes from
   the Stabilized Vehicle library.
+4. The `Backchannel` needs refactoring.
 
 ## ProtoFlight Project
 
@@ -294,8 +295,8 @@ classDiagram
         setFrequency(size_t motorIndex, float frequencyHz)
         filter(xyz_t& input, size_t motorIndex)
     }
-    IMU_FiltersBase <|-- IMU_Filters
 
+    IMU_FiltersBase <|-- IMU_Filters
     IMU_Filters *-- RPM_Filter
 
     MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot
@@ -364,7 +365,6 @@ classDiagram
         updateOutputsUsingPIDs() override
         updateBlackbox() uint32_t override
         updateSetpoints()
-        updateMotorSpeedEstimates()
     }
     FlightController o-- RadioControllerBase : calls getFailsafePhase
     RadioControllerBase o--ReceiverBase
@@ -384,7 +384,6 @@ classDiagram
     ReceiverTask o-- ReceiverBase : calls WAIT_FOR_DATA_RECEIVED update getStickValues
     ReceiverWatcher <|-- ScreenBase
     ReceiverTask o-- RadioControllerBase : calls updateControls checkFailsafe
-
 
     class VehicleControllerBase {
         <<abstract>>
