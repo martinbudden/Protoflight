@@ -5,12 +5,10 @@
 /*!
 Constructor. Sets member data.
 */
-FlightController::FlightController(uint32_t taskIntervalMicroSeconds, MotorMixerBase& motorMixer, const AHRS& ahrs, RadioControllerBase& radioController) :
-    VehicleControllerBase(AIRCRAFT, PID_COUNT),
+FlightController::FlightController(uint32_t taskIntervalMicroSeconds, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController) :
+    VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroSeconds, ahrs),
     _mixer(motorMixer),
-    _ahrs(ahrs),
     _radioController(radioController),
-    _taskIntervalMicroSeconds(taskIntervalMicroSeconds),
     _scaleFactors(gScaleFactors)
 {
     for (size_t ii = 0; ii < PID_COUNT; ++ii) {

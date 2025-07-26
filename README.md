@@ -5,14 +5,14 @@ ProtoFlight is flight control software.
 It has the following design goals (in no particular order)
 
 1. A modular design that is built up from components in separate libraries (see below).
-2. Produce libraries that are usable in their own right
+2. Produce libraries that are usable in their own right.
 3. Be peformant. Support 8kHz Gyro/PID loop time.
 4. Support multi-core processors, in particular allow the Gyro/PID loop to have an entire core to itself.
-5. Run on bare metal or under [FREERTOS](https://www.freertos.org/)
-6. Be (relatively) easy to learn and modify
-7. Give users the ability implement their own code or modifications
-8. Modular architecture to make it easier to identify which bit of code to modify, without impacting other code
-9. Be useful to people who want to experiment with and customize a flight controller
+5. Run on bare metal or under [FREERTOS](https://www.freertos.org/).
+6. Be (relatively) easy to learn and modify.
+7. Give users the ability implement their own code or modifications.
+8. Modular architecture to make it easier to identify which bit of code to modify, without impacting other code.
+9. Be useful to people who want to experiment with and customize a flight controller.
 10. Be useful to someone who wants to understand how flight control software works.
 
 ## Libraries used to build ProtoFlight
@@ -44,6 +44,9 @@ is still somewhat in flux and I expect there will continue to be changes. In par
   I've thought about other names, including "FlightCommander" and "Pilot".
   I've also thought of renaming the current "FlightController" to "FlightStabilizer", and renaming "RadioController" to "FlightController".
   But none of these options seem satisfactory. Currently I'm leaning towards "Helm" or "Cockpit".
+3. The `SV_Preferences` class was sufficient for storing settings for a Self Balancing Robot, however it's not really adequate for an Aircraft.
+  I will need to look at alternative ways of storing settings. This may also involve removing the `SV_Preferences` and associated classes from
+  the Stabilized Vehicle library.
 
 ## ProtoFlight Project
 
@@ -196,3 +199,357 @@ The heart of the loop is the `AHRS::readIMUandUpdateOrientation` function, invoc
 12. If the blackbox is active, data is copied to the blackbox for logging by the Blackbox task.
 
 Note: strictly speaking we don't have the full 125 microseconds - step 3 also eats into this time.
+
+## Class structure
+
+Simplified outline of the main classes.
+
+Classes with *"(eg)"* suffix give examples of specific instances.
+
+All objects are statically allocated in `Main::setup()`.
+
+The `RadioController` class forms the interface between the receiver and the flight controller.
+It handles failsafe.
+It is the place where any intelligence (ie waypointing, return to home, crash detection etc) should be added.
+RadioController is not really a good name and I am trying to think of a better one.
+
+```mermaid
+classDiagram
+    class SensorFusionFilterBase {
+        <<abstract>>
+        update() Quaternion *
+        getOrientation() Quaternion const
+    }
+
+    class IMU_Base {
+        virtual readAccGyroRPS() accGyroRPS_t
+    }
+
+    class IMU_FiltersBase {
+        <<abstract>>
+        setFilters() *
+        filter() *
+    }
+
+    class VehicleControllerBase {
+        <<abstract>>
+        loop() *
+        updateOutputsUsingPIDs() *
+        updateBlackbox() uint32_t  *
+    }
+
+    class MotorMixerBase {
+        <<abstract>>
+        outputToMotors() *
+        getMotorRPM() int32_t *
+    }
+    MotorMixerBase <|-- MotorMixerQuadX_Base
+
+    VehicleControllerBase <|-- FlightController
+    class FlightController {
+        array~PIDF~ _pids
+        updateOutputsUsingPIDs() override
+        updateBlackbox() uint32_t override
+        updateSetpoints()
+        updateMotorSpeedEstimates()
+    }
+    FlightController *-- MotorMixerBase
+    FlightController o-- RadioControllerBase
+    FlightController o-- Blackbox
+
+    class AHRS {
+        bool readIMUandUpdateOrientation()
+    }
+    AHRS *-- IMU_Base
+    AHRS *-- SensorFusionFilterBase
+    AHRS *-- IMU_FiltersBase
+    AHRS o-- VehicleControllerBase
+    VehicleControllerBase o-- AHRS
+
+    class ReceiverBase {
+        <<abstract>>
+        WAIT_FOR_DATA_RECEIVED() int32_t *
+        update() bool *
+        getStickValues() *
+        getAuxiliaryChannel() uint32_t *
+    }
+
+    class RadioControllerBase {
+        <<abstract>>
+        updateControls() *
+        checkFailsafe() *
+        getFailsafePhase() uint32_t const *
+    }
+
+    RadioController o-- FlightController
+    RadioControllerBase o--ReceiverBase
+    RadioControllerBase <|-- RadioController
+    class RadioController {
+        updateControls() override
+        checkFailsafe() override
+        getFailsafePhase() uint32_t const override
+    }
+
+    class RPM_Filter {
+        setFrequency(size_t motorIndex, float frequencyHz)
+        filter(xyz_t& input, size_t motorIndex)
+    }
+    IMU_FiltersBase <|-- IMU_Filters
+
+    IMU_Filters *-- RPM_Filter
+
+    MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot
+    class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
+
+    IMU_Base <|-- IMU_BMI270
+    class IMU_BMI270["IMU_BMI270(eg)"]
+
+    SensorFusionFilterBase  <|-- MadgwickFilter
+    class MadgwickFilter["MadgwickFilter(eg)"] {
+        update() Quaternion override
+    }
+
+    ReceiverBase <|-- ReceiverAtomJoyStick
+    class ReceiverAtomJoyStick["ReceiverAtomJoyStick(eg)"]
+    ReceiverAtomJoyStick *-- ESPNOW_Transceiver
+```
+
+## Task structure
+
+Simplified outline of the tasks.
+
+On a dual-core processor `AHRS_Task` has the second core all to itself.
+
+The `AHRS_Task` and the `ReceiverTask` may be either interrupt driven or timer driven.<br>
+All other tasks are timer driven.
+
+Tasks are statically (build-time) polymorphic, not dynamically (run-time) polymorphic. 
+They all have `task` and `loop` functions, but these functions are not virtual.
+This is deliberate.
+
+Despite its name, `MainTask` is only responsible for checking the buttons and updating the screen.
+It is called such because it implements the Arduino main `loop()` function.
+
+`BackchannelTask`, `BlackboxTask`, and `MSP_Task` are optional tasks and are not required for flight.
+
+```mermaid
+classDiagram
+    class TaskBase {
+        uint32_t _taskIntervalMicroSeconds
+    }
+
+    TaskBase <|-- MainTask
+    class MainTask {
+        +loop()
+        -task() [[noreturn]]
+    }
+    MainTask o-- ButtonsBase : calls update
+    MainTask o-- ScreenBase : calls update
+
+    class RadioControllerBase {
+        <<abstract>>
+        updateControls() *
+        checkFailsafe() *
+        getFailsafePhase() uint32_t const *
+    }
+    class ReceiverBase {
+        <<abstract>>
+        WAIT_FOR_DATA_RECEIVED() int32_t *
+        update() bool *
+        getStickValues() *
+        getAuxiliaryChannel() uint32_t *
+    }
+    class FlightController {
+        array~PIDF~ _pids
+        updateOutputsUsingPIDs() override
+        updateBlackbox() uint32_t override
+        updateSetpoints()
+        updateMotorSpeedEstimates()
+    }
+    FlightController o-- RadioControllerBase : calls getFailsafePhase
+    RadioControllerBase o--ReceiverBase
+    RadioControllerBase <|-- RadioController
+    RadioController o-- FlightController : calls updateSetpoints
+
+    TaskBase <|-- ReceiverTask
+    class ReceiverTask {
+        +loop()
+        -task() [[noreturn]]
+    }
+    class ReceiverWatcher {
+        <<abstract>>
+        newReceiverPacketAvailable() *
+    }
+    ReceiverTask o-- ReceiverWatcher : calls newReceiverPacketAvailable
+    ReceiverTask o-- ReceiverBase : calls WAIT_FOR_DATA_RECEIVED update getStickValues
+    ReceiverWatcher <|-- ScreenBase
+    ReceiverTask o-- RadioControllerBase : calls updateControls checkFailsafe
+
+
+    class VehicleControllerBase {
+        <<abstract>>
+        loop() *
+        updateOutputsUsingPIDs() *
+        updateBlackbox() uint32_t  *
+    }
+    TaskBase <|-- VehicleControllerTask
+    class VehicleControllerTask {
+        +loop()
+        -task() [[noreturn]]
+    }
+    VehicleControllerTask o-- VehicleControllerBase : calls loop
+    VehicleControllerBase <|-- FlightController
+
+    TaskBase <|-- AHRS_Task
+    class AHRS_Task {
+        +loop()
+        -task() [[noreturn]]
+    }
+    AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
+
+    class AHRS {
+        bool readIMUandUpdateOrientation()
+    }
+    AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
+    VehicleControllerBase o-- AHRS
+
+    class Backchannel {
+        processedReceivedPacket() bool
+    }
+    TaskBase <|-- BackchannelTask
+    class BackchannelTask {
+        +loop()
+        -task() [[noreturn]]
+    }
+    BackchannelTask o-- Backchannel : calls processedReceivedPacket
+
+    TaskBase <|-- BlackboxTask
+    class BlackboxTask {
+        +loop()
+        -task() [[noreturn]]
+    }
+    BlackboxTask o-- Blackbox : calls update
+    Blackbox <|-- BlackboxProtoFlight
+    class Blackbox {
+        update() uint32_t
+    }
+
+    TaskBase <|-- MSP_Task
+    class MSP_Task {
+        +loop()
+        -task() [[noreturn]]
+    }
+    MSP_Task o-- MSP_SerialBase : calls processInput
+    MSP_SerialBase <|-- MSP_Serial
+    class MSP_SerialBase {
+        <<abstract>>
+        sendFrame() int *
+        processInput() *
+    }
+```
+
+## Blackbox
+
+`BlackboxProtoFlight` writes system information (ie the header of the blackbox file) when blackbox is started.
+
+`BlackboxCallbacksProtoFlight` writes blackbox data during flight
+
+```mermaid
+classDiagram
+    class Blackbox {
+        virtual writeSystemInformation() write_e *
+        virtual update() uint32_t
+    }
+    Blackbox *-- BlackboxEncoder
+    Blackbox o-- BlackboxSerialDevice
+    Blackbox o-- BlackboxCallbacksBase
+
+    RadioControllerBase <|-- RadioController
+    class RadioController {
+        getRates() rates_t  const
+    }
+
+    Blackbox <|-- BlackboxProtoFlight
+    class BlackboxProtoFlight {
+        write_e writeSystemInformation() override
+    }
+    BlackboxProtoFlight o-- FlightController
+    FlightController o-- BlackboxProtoFlight
+    BlackboxProtoFlight o-- RadioController
+
+    class BlackboxCallbacksBase {
+        virtual void loadSlowStateFromFlightController() *
+        virtual void loadMainStateFromFlightController() *
+    }
+
+    BlackboxCallbacksBase <|-- BlackboxCallbacksProtoFlight
+    class BlackboxCallbacksProtoFlight {
+        void loadSlowStateFromFlightController() override
+        void loadMainStateFromFlightController() override
+    }
+    BlackboxCallbacksProtoFlight o-- AHRS
+    BlackboxCallbacksProtoFlight o-- ReceiverBase
+    BlackboxCallbacksProtoFlight o-- RadioControllerBase
+    BlackboxCallbacksProtoFlight o-- FlightController
+
+    BlackboxSerialDevice <|-- BlackboxSerialDeviceSDCard~eg~
+
+    TaskBase <|-- BlackboxTask
+    class BlackboxTask {
+        +loop()
+        -task() [[noreturn]]
+    }
+    BlackboxTask o-- Blackbox : calls update
+```
+
+## MSP
+
+`MSP_Base` has the virtual functions `processOutCommand` and `processInCommand` which are overridden in `MSP_ProtoFlight`.
+
+`MSP_ProtoFlight` overrides these functions to set and get values in the main flight objects (ie `FlightController`, `AHRS` etc)
+when MSP commands are received.
+
+```mermaid
+classDiagram
+    class MSP_SerialBase {
+        <<abstract>>
+        sendFrame() int *
+        processInput() *
+    }
+    class MSP_Base {
+        virtual processOutCommand() result_e
+        virtual processInCommand() result_e
+    }
+    class MSP_Stream {
+    }
+    MSP_Stream *-- MSP_Base
+    MSP_Stream o-- MSP_SerialBase
+
+    MSP_SerialBase <|-- MSP_Serial
+    class MSP_Serial {
+        sendFrame() int override
+        processInput() override
+    }
+    MSP_Serial o-- MSP_Stream
+
+    MSP_Base <|-- MSP_ProtoFlight
+    class MSP_ProtoFlight {
+        processOutCommand() result_e override
+        processInCommand() result_e override
+    }
+    MSP_ProtoFlight *-- MSP_ProtoBox
+    MSP_ProtoFlight o-- Features
+    MSP_ProtoFlight o-- AHRS
+    MSP_ProtoFlight o-- FlightController
+    MSP_ProtoFlight o-- RadioController
+    MSP_ProtoFlight o-- ReceiverBase
+
+    MSP_Box <|-- MSP_ProtoBox
+
+    TaskBase <|-- MSP_Task
+    class MSP_Task {
+        +loop()
+        -task() [[noreturn]]
+    }
+    MSP_Task o-- MSP_SerialBase : calls processInput
+```

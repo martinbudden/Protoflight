@@ -33,7 +33,7 @@ positive yaw is nose right
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskIntervalMicroSeconds, MotorMixerBase& motorMixer, const AHRS& ahrs, RadioControllerBase& radioController);
+    FlightController(uint32_t taskIntervalMicroSeconds, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController);
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
@@ -197,14 +197,12 @@ private:
 private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
     MotorMixerBase& _mixer;
-    const AHRS& _ahrs; //<! AHRS which uses ENU (East North Up) coordinate convention
     RadioControllerBase& _radioController;
     Blackbox* _blackbox {nullptr};
     control_mode_e _controlMode {CONTROL_MODE_RATE};
     uint32_t _useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
     debug_mode_e _debugMode {DEBUG_MODE_AHRS_TIMINGS}; // default to providing AHRS timings to blackbox
 
-    uint32_t _taskIntervalMicroSeconds;
     float _mixerThrottle {0.0F};
 
     // ground mode handling

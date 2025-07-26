@@ -4,13 +4,13 @@
 
 class AHRS;
 class FlightController;
-class RadioController;
+class RadioControllerBase;
 class ReceiverBase;
 
 
 class BlackboxCallbacksProtoFlight : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacksProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver) :
+    BlackboxCallbacksProtoFlight(AHRS& ahrs, FlightController& flightController, RadioControllerBase& radioController, ReceiverBase& receiver) :
         _ahrs(ahrs),
         _flightController(flightController),
         _radioController(radioController),
@@ -31,6 +31,6 @@ public:
 private:
     AHRS& _ahrs;
     FlightController& _flightController;
-    RadioController& _radioController;
+    RadioControllerBase& _radioController;
     ReceiverBase& _receiver;
 };

@@ -99,7 +99,7 @@ void Main::setup()
     AHRS& ahrs = createAHRS(motorMixer);
 
     // Statically allocate the flightController.
-    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, motorMixer, ahrs, radioController);
+    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
 
@@ -184,7 +184,7 @@ void Main::setup()
     _tasks.mainTask = &mainTask;
     reportMainTask();
     _tasks.ahrsTask = AHRS_Task::createTask(ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_TASK_INTERVAL_MICROSECONDS);
-    _tasks.flightControllerTask = VehicleControllerTask::createTask(flightController, FC_TASK_PRIORITY, FC_TASK_CORE, FC_TASK_INTERVAL_MICROSECONDS);
+    _tasks.flightControllerTask = VehicleControllerTask::createTask(flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
     _tasks.receiverTask = ReceiverTask::createTask(receiver, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
 #if defined(USE_MSP)
     _tasks.mspTask = MSP_Task::createTask(mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);

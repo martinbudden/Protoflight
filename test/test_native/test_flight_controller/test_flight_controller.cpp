@@ -54,7 +54,7 @@ void test_flight_controller()
     static MotorMixerBase motorMixer(MOTOR_COUNT);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, motorMixer, ahrs, radioController);
+    FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     TEST_ASSERT_FALSE(fc.motorsIsOn());
 
     fc.motorsSwitchOn();

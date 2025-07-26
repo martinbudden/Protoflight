@@ -55,7 +55,7 @@ void test_msp_set_failsafe_config()
     static MotorMixerBase motorMixer(MOTOR_COUNT);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, motorMixer, ahrs, radioController);
+    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
 
     static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver);
@@ -124,7 +124,7 @@ void test_msp_pid_in()
     static MotorMixerBase motorMixer(MOTOR_COUNT);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, motorMixer, ahrs, radioController);
+    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
 
     static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver);
@@ -167,7 +167,7 @@ void test_msp_features()
     static MotorMixerBase motorMixer(MOTOR_COUNT);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, motorMixer, ahrs, radioController);
+    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
 
     static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver);
@@ -192,7 +192,7 @@ void test_msp_raw_imu()
     static MotorMixerBase motorMixer(MOTOR_COUNT);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, motorMixer, ahrs, radioController);
+    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
 
     static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver);

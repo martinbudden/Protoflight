@@ -58,7 +58,7 @@ void test_telemetry_msp()
     static MotorMixerBase motorMixer(MOTOR_COUNT);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, motorMixer, ahrs, radioController);
+    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
 
     // statically allocate an MSP object
