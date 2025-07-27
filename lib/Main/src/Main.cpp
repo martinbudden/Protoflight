@@ -7,9 +7,10 @@
 
 #include <AHRS.h>
 #include <AHRS_Task.h>
-#if defined(USE_ESPNOW)
-#include <BackchannelESPNOW.h>
+#include <BackchannelFlightController.h>
 #include <BackchannelTask.h>
+#if defined(USE_ESPNOW)
+#include <BackchannelTransceiverESPNOW.h>
 #endif
 #include <BlackboxCallbacksProtoFlight.h>
 #include <BlackboxProtoFlight.h>
@@ -39,7 +40,6 @@
 #if defined(USE_FREERTOS)
 #include <freertos/FreeRTOS.h>
 #endif
-
 
 
 /*!
@@ -198,15 +198,16 @@ void Main::setup()
     // static MSP_ProtoFlight mspProtoFlightBackchannel(features, ahrs, flightController, radioController, receiver); // NOLINT(misc-const-correctness) false positive
     // Statically allocate the backchannel.
     constexpr uint8_t backchannelMacAddress[ESP_NOW_ETH_ALEN] BACKCHANNEL_MAC_ADDRESS;
-    static BackchannelESPNOW backchannel(
-        receiver.getESPNOW_Transceiver(),
+    static BackchannelTransceiverESPNOW backchannelTransceiverESPNOW(receiver.getESPNOW_Transceiver(), &backchannelMacAddress[0]);
+    static BackchannelFlightController backchannel(
+        backchannelTransceiverESPNOW,
         &backchannelMacAddress[0],
         &myMacAddress[0],
         flightController,
         ahrs,
         receiver,
-        preferences,
-        &mainTask
+        &mainTask,
+        preferences
     );
 
     _tasks.backchannelTask = BackchannelTask::createTask(backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
