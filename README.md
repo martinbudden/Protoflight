@@ -222,7 +222,13 @@ classDiagram
         getOrientation() Quaternion const
     }
 
+    class Blackbox {
+        <<abstract>>
+    }
+    Blackbox <|-- BlackboxProtoFlight
+
     class IMU_Base {
+        <<abstract>>
         virtual readAccGyroRPS() accGyroRPS_t
     }
 
@@ -254,9 +260,9 @@ classDiagram
         updateSetpoints()
         updateMotorSpeedEstimates()
     }
+    FlightController o-- Blackbox
     FlightController *-- MotorMixerBase
     FlightController o-- RadioControllerBase
-    FlightController o-- Blackbox
 
     class AHRS {
         bool readIMUandUpdateOrientation()
@@ -428,10 +434,11 @@ classDiagram
         -task() [[noreturn]]
     }
     BlackboxTask o-- Blackbox : calls update
-    Blackbox <|-- BlackboxProtoFlight
     class Blackbox {
+        <<abstract>>
         update() uint32_t
     }
+    Blackbox <|-- BlackboxProtoFlight
 
     TaskBase <|-- MSP_Task
     class MSP_Task {
