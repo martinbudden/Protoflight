@@ -268,8 +268,8 @@ classDiagram
         bool readIMUandUpdateOrientation()
     }
     AHRS o-- IMU_Base
-    AHRS o-- SensorFusionFilterBase
     AHRS o-- IMU_FiltersBase
+    AHRS o-- SensorFusionFilterBase
     AHRS o-- VehicleControllerBase
     VehicleControllerBase o-- AHRS
 
@@ -463,6 +463,7 @@ classDiagram
 ```mermaid
 classDiagram
     class Blackbox {
+        <<abstract>>
         virtual writeSystemInformation() write_e *
         virtual update() uint32_t
     }
@@ -470,6 +471,9 @@ classDiagram
     Blackbox o-- BlackboxSerialDevice
     Blackbox o-- BlackboxCallbacksBase
 
+    class RadioControllerBase {
+        <<abstract>>
+    }
     RadioControllerBase <|-- RadioController
     class RadioController {
         getRates() rates_t  const
@@ -484,6 +488,7 @@ classDiagram
     BlackboxProtoFlight o-- RadioController
 
     class BlackboxCallbacksBase {
+        <<abstract>>
         virtual void loadSlowStateFromFlightController() *
         virtual void loadMainStateFromFlightController() *
     }
@@ -493,11 +498,17 @@ classDiagram
         void loadSlowStateFromFlightController() override
         void loadMainStateFromFlightController() override
     }
+    class ReceiverBase {
+        <<abstract>>
+    }
     BlackboxCallbacksProtoFlight o-- AHRS
     BlackboxCallbacksProtoFlight o-- ReceiverBase
     BlackboxCallbacksProtoFlight o-- RadioControllerBase
     BlackboxCallbacksProtoFlight o-- FlightController
 
+    class BlackboxSerialDevice {
+        <<abstract>>
+    }
     class BlackboxSerialDeviceSDCard["BlackboxSerialDeviceSDCard(eg)"]
     BlackboxSerialDevice <|-- BlackboxSerialDeviceSDCard
 
@@ -549,6 +560,9 @@ classDiagram
     MSP_ProtoFlight o-- AHRS
     MSP_ProtoFlight o-- FlightController
     MSP_ProtoFlight o-- RadioController
+    class ReceiverBase {
+        <<abstract>>
+    }
     MSP_ProtoFlight o-- ReceiverBase
 
     MSP_Box <|-- MSP_ProtoBox
