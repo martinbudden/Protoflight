@@ -45,9 +45,7 @@ is still somewhat in flux and I expect there will continue to be changes. In par
   I've also thought of renaming the current "FlightController" to "FlightStabilizer", and renaming "RadioController" to "FlightController".
   But none of these options seem satisfactory. Currently I'm leaning towards "Helm" or "Cockpit".
 3. The `SV_Preferences` class was sufficient for storing settings for a Self Balancing Robot, however it's not really adequate for an Aircraft.
-  I will need to look at alternative ways of storing settings. This may also involve removing the `SV_Preferences` and associated classes from
-  the Stabilized Vehicle library.
-4. The `Backchannel` needs refactoring.
+  I will need to look at alternative ways of storing settings.
 
 ## ProtoFlight Project
 
