@@ -219,22 +219,28 @@ classDiagram
         update() Quaternion *
         getOrientation() Quaternion const
     }
+    link SensorFusionFilterBase "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
 
     class Blackbox {
         <<abstract>>
     }
+    link Blackbox "https://github.com/martinbudden/Library-Blackbox/blob/main/src/Blackbox.h"
     Blackbox <|-- BlackboxProtoFlight
+    class BlackboxProtoFlight
+    link BlackboxProtoFlight "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxProtoFlight.h"
 
     class IMU_Base {
         <<abstract>>
         virtual readAccGyroRPS() accGyroRPS_t
     }
+    link IMU_Base "https://github.com/martinbudden/Library-IMU/blob/main/src/IMU_Base.h"
 
     class IMU_FiltersBase {
         <<abstract>>
         setFilters() *
         filter() *
     }
+    link IMU_FiltersBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/IMU_FiltersBase.h"
 
     class VehicleControllerBase {
         <<abstract>>
@@ -242,34 +248,43 @@ classDiagram
         updateOutputsUsingPIDs() *
         updateBlackbox() uint32_t  *
     }
+    link VehicleControllerBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerBase.h"
 
     class MotorMixerBase {
         <<abstract>>
         outputToMotors() *
         getMotorRPM() int32_t *
+        getMotorFrequencyHz() float
     }
+    link MotorMixerBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/MotorMixerBase.h"
     MotorMixerBase <|-- MotorMixerQuadX_Base
 
     VehicleControllerBase <|-- FlightController
     class FlightController {
         array~PIDF~ _pids
+        Filter _rollRateDTermFilter
+        Filter _pitchRateDTermFilter
+        array~Filter~ _stickSetpointFilters
         updateOutputsUsingPIDs() override
         updateBlackbox() uint32_t override
         updateSetpoints()
         updateMotorSpeedEstimates()
     }
-    FlightController o-- Blackbox
-    FlightController *-- MotorMixerBase
-    FlightController o-- RadioControllerBase
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
+    FlightController o-- Blackbox : calls update
+    FlightController --o RadioController : calls updateSetpoints
+    FlightController o-- RadioControllerBase : calls getFailsafePhase
+    FlightController o-- MotorMixerBase : calls outputToMotors
 
     class AHRS {
         bool readIMUandUpdateOrientation()
     }
-    AHRS o-- IMU_Base
-    AHRS o-- IMU_FiltersBase
-    AHRS o-- SensorFusionFilterBase
-    AHRS o-- VehicleControllerBase
-    VehicleControllerBase o-- AHRS
+    link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
+    AHRS o-- IMU_Base : calls readAccGyroRPS
+    AHRS o-- IMU_FiltersBase : calls setFilters filter
+    AHRS o-- SensorFusionFilterBase : calls update
+    AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs updateBlackbox
+    VehicleControllerBase o-- AHRS : historical
 
     class ReceiverBase {
         <<abstract>>
@@ -278,6 +293,7 @@ classDiagram
         getStickValues() *
         getAuxiliaryChannel() uint32_t *
     }
+    link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
 
     class RadioControllerBase {
         <<abstract>>
@@ -285,38 +301,57 @@ classDiagram
         checkFailsafe() *
         getFailsafePhase() uint32_t const *
     }
+    link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
 
-    RadioController o-- FlightController
-    RadioControllerBase o--ReceiverBase
     RadioControllerBase <|-- RadioController
+    RadioControllerBase o--ReceiverBase
     class RadioController {
         updateControls() override
         checkFailsafe() override
         getFailsafePhase() uint32_t const override
     }
+    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
 
     class RPM_Filter {
+        array~NotchFilter~ _filters[MOTOR][HARMONIC][AXIS]
         setFrequency(size_t motorIndex, float frequencyHz)
-        filter(xyz_t& input, size_t motorIndex)
+        filter(xyz_t& axis, size_t motorIndex)
     }
+    link RPM_Filter "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RPM_Filter.h"
 
     IMU_FiltersBase <|-- IMU_Filters
+    class IMU_Filters {
+        array~LowPassFilter~ _gyroLPFs[AXIS]
+        array~NotchFilter~ _gyroNotchFilters[AXIS]
+        setFilters() override
+        filter() override
+    }
+    link IMU_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/IMU_Filters.h"
+    IMU_Filters o-- MotorMixerBase : calls getMotorFrequencyHz
     IMU_Filters *-- RPM_Filter
 
     MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot
+    class MotorMixerQuadX_Base
+    link MotorMixerQuadX_Base "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_Base.h"
     class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
+    link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
 
     IMU_Base <|-- IMU_BMI270
     class IMU_BMI270["IMU_BMI270(eg)"]
+    link IMU_BMI270 "https://github.com/martinbudden/Library-IMU/blob/main/src/IMU_BMI270.h"
 
     SensorFusionFilterBase  <|-- MadgwickFilter
     class MadgwickFilter["MadgwickFilter(eg)"] {
         update() Quaternion override
     }
+    link MadgwickFilter "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
 
     ReceiverBase <|-- ReceiverAtomJoyStick
     class ReceiverAtomJoyStick["ReceiverAtomJoyStick(eg)"]
+    link ReceiverAtomJoyStick "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverAtomJoyStick.h"
     ReceiverAtomJoyStick *-- ESPNOW_Transceiver
+    class ESPNOW_Transceiver
+    link ESPNOW_Transceiver "https://github.com/martinbudden/Library-Receiver/blob/main/src/ESPNOW_Transceiver.h"
 ```
 
 ## Task structure

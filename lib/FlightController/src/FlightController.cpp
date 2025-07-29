@@ -168,9 +168,8 @@ void FlightController::setFilters(const filters_t& filters)
     const float dT = static_cast<float>(_taskIntervalMicroSeconds) / 1000000.0F;
 
     if (filters.dterm_lpf1_hz == 0) {
-        _rollRateDTermPT1_LPF1.setToPassthrough();
-        _pitchRateDTermPT1_LPF1.setToPassthrough();
-        _yawRateDTermPT1_LPF1.setToPassthrough();
+        _rollRateDTermFilter.setToPassthrough();
+        _pitchRateDTermFilter.setToPassthrough();
     } else {
         // if the user has selected a filter, then provide a PowerTransfer1 filter.
         // If no filter selected, then set the filter to passthrough
@@ -182,14 +181,12 @@ void FlightController::setFilters(const filters_t& filters)
         case filters_t::PT3:
             [[fallthrough]];
         case filters_t::BIQUAD:
-            _rollRateDTermPT1_LPF1.setCutoffFrequencyAndReset(filters.dterm_lpf1_hz, dT);
-            _pitchRateDTermPT1_LPF1.setCutoffFrequencyAndReset(filters.dterm_lpf1_hz, dT);
-            _yawRateDTermPT1_LPF1.setCutoffFrequencyAndReset(filters.dterm_lpf1_hz, dT);
+            _rollRateDTermFilter.setCutoffFrequencyAndReset(filters.dterm_lpf1_hz, dT);
+            _pitchRateDTermFilter.setCutoffFrequencyAndReset(filters.dterm_lpf1_hz, dT);
             break;
         default:
-            _rollRateDTermPT1_LPF1.setToPassthrough();
-            _pitchRateDTermPT1_LPF1.setToPassthrough();
-            _yawRateDTermPT1_LPF1.setToPassthrough();
+            _rollRateDTermFilter.setToPassthrough();
+            _pitchRateDTermFilter.setToPassthrough();
             break;
         }
     }
@@ -287,12 +284,14 @@ void FlightController::updateSetpoints(const controls_t& controls) // NOLINT(rea
     _rollStickDPS = controls.rollStickDPS;
     _rollStickDegrees = controls.rollStickDegrees;
     _rollStickSinAngle = sinf(_rollStickDegrees * degreesToRadians);
+
     // Pushing the  PITCH stick forward gives a positive value of _pitchStick and we want this to be nose up.
     // For NED nose up is positive pitch, so sign of setpoint is opposite sign as _pitchStick.
     // So sign of _pitchStick is negated.
     _pitchStickDPS = -controls.pitchStickDPS;
     _pitchStickDegrees = -controls.pitchStickDegrees;
     _pitchStickSinAngle = sinf(_pitchStickDegrees * degreesToRadians);
+
     // Pushing the YAW stick to the right gives a positive value of _yawStick and we want this to be nose right.
     // For NED nose left is positive yaw, so sign of setpoint is same as sign of _yawStick.
     // So sign of _yawStick is left unchanged.
@@ -467,15 +466,14 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     // this is because they are especially noisy, being the derivative of a noisy value.
 
     const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
-    const float rollRateDeltaDPS = _rollRateDTermPT1_LPF1.filter(rollRateDPS - _PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
+    const float rollRateDeltaDPS = _rollRateDTermFilter.filter(rollRateDPS - _PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
     _outputs[ROLL_RATE_DPS] = _PIDS[ROLL_RATE_DPS].updateDelta(rollRateDPS, rollRateDeltaDPS*_TPA, deltaT);
 
     const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
-    const float pitchRateDeltaDPS = _pitchRateDTermPT1_LPF1.filter(pitchRateDPS - _PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
+    const float pitchRateDeltaDPS = _pitchRateDTermFilter.filter(pitchRateDPS - _PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
     _outputs[PITCH_RATE_DPS] = _PIDS[PITCH_RATE_DPS].updateDelta(pitchRateDPS, pitchRateDeltaDPS*_TPA, deltaT);
 
-    //const float yawRateDeltaDPS = _yawRateDTermPT1_LPF1.filter(yawRateDPS - _PIDS[YAW_RATE_DPS].getPreviousMeasurement());
-    // DTerm is zero for yawRate, so no filtering required
+    // DTerm is zero for yawRate, so no DTerm filtering required
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
     _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT);
 }

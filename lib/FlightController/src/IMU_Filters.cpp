@@ -47,7 +47,7 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
 {
     (void)acc;
     (void)deltaT;
-    if (_rpmFilter.getMotorCount() == 4) {
+    if (_motorCount == 4) {
         // unwind loop if there are only 4 motors
         _rpmFilter.filter(gyroRPS, 0);
         _rpmFilter.filter(gyroRPS, 1);

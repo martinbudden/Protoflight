@@ -250,9 +250,8 @@ private:
     uint32_t _crashRecovery { false };
 
     filters_t _filters {};
-    PowerTransferFilter1  _rollRateDTermPT1_LPF1 {};
-    PowerTransferFilter1  _pitchRateDTermPT1_LPF1 {};
-    PowerTransferFilter1 _yawRateDTermPT1_LPF1 {};
+    PowerTransferFilter1  _rollRateDTermFilter {};
+    PowerTransferFilter1  _pitchRateDTermFilter {};
     PowerTransferFilter1  _rollStickFilter {};
     PowerTransferFilter1  _pitchStickFilter {};
 };
