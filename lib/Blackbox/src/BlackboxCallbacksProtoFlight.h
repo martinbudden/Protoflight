@@ -17,10 +17,8 @@ public:
         _receiver(receiver)
         {}
 public:
-    virtual void loadSlowStateFromFlightController(blackboxSlowState_t& blackboxSlowState) override;
-    //! Fill the current state of the blackbox using values read from the flight controller
-    virtual void loadMainStateFromFlightController(blackboxMainState_t& blackboxMainState) override;
-    virtual void loadMainStateFromFlightController(blackboxMainState_t& blackboxMainState, const xyz_t& gyroRPS, const xyz_t& gyroRPS_unfiltered, const xyz_t& acc) override;
+    virtual void loadSlowState(blackboxSlowState_t& blackboxSlowState) override;
+    virtual void loadMainState(blackboxMainState_t& blackboxMainState, uint32_t currentTimeUs) override;
 
     virtual bool isArmed() const override;
     virtual bool isBlackboxRcModeActive() const override;

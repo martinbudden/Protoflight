@@ -13,6 +13,7 @@
 #include <BackchannelTransceiverESPNOW.h>
 #endif
 #include <BlackboxCallbacksProtoFlight.h>
+#include <BlackboxMessageQueueAHRS.h>
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
 #include <BlackboxTask.h>
@@ -118,12 +119,11 @@ void Main::setup()
     testBlackbox(ahrs, flightController, radioController, receiver);
 #endif
 #if defined(USE_BLACKBOX)
-    static BlackboxCallbacksProtoFlight blackboxCallbacks(ahrs, flightController, receiver);
+    static BlackboxCallbacksProtoFlight blackboxCallbacks(ahrs, flightController, radioController, receiver);
     static BlackboxSerialDeviceSDCard blackboxSerialDevice;
     blackboxSerialDevice.init();
-    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxSerialDevice, flightController);
+    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxSerialDevice, flightController, radioController);
     flightController.setBlackbox(blackbox);
-    //ahrs.setUpdateBlackbox(true);
     blackbox.init({
         .sample_rate = Blackbox::RATE_ONE,
         .device = Blackbox::DEVICE_SDCARD,
@@ -190,7 +190,12 @@ void Main::setup()
     _tasks.mspTask = MSP_Task::createTask(mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
 #endif
 #if defined(USE_BLACKBOX)
-    _tasks.blackboxTask = BlackboxTask::createTask(blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
+    TaskBase::task_info_t taskInfo {}; // NOLINT(misc-const-correctness) false positive
+    _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
+    vTaskSuspend(taskInfo.taskHandle);
+    static BlackboxMessageQueueAHRS blackboxMessageQueueAHRS(_tasks.blackboxTask->getMessageQueue());
+    ahrs.setMessageQueue(&blackboxMessageQueueAHRS);
+    vTaskResume(taskInfo.taskHandle);
 #endif
 
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(USE_ESPNOW)

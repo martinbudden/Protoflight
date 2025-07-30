@@ -40,7 +40,7 @@ uint32_t BlackboxCallbacksProtoFlight::rcModeActivationMask() const
     return 0;
 }
 
-void BlackboxCallbacksProtoFlight::loadSlowStateFromFlightController(blackboxSlowState_t& slowState)
+void BlackboxCallbacksProtoFlight::loadSlowState(blackboxSlowState_t& slowState)
 {
     //memcpy(&slowState->flightModeFlags, &_rcModeActivationMask, sizeof(slowState->flightModeFlags)); //was flightModeFlags;
     slowState.flightModeFlags = _flightController.getFlightModeFlags();
@@ -51,15 +51,23 @@ void BlackboxCallbacksProtoFlight::loadSlowStateFromFlightController(blackboxSlo
     slowState.rxFlightChannelsValid = (slowState.failsafePhase == RadioController::FAILSAFE_IDLE);
 }
 
-void BlackboxCallbacksProtoFlight::loadMainStateFromFlightController(blackboxMainState_t& mainState)
+void BlackboxCallbacksProtoFlight::loadMainState(blackboxMainState_t& mainState, uint32_t currentTimeUs)
 {
+
+#if false
+    mainState.time = currentTimeUs;
     const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();
+    const xyz_t gyroRPS = ahrsData.gyroRPS;
+    const xyz_t gyroRPS_unfiltered = ahrsData.gyroRPS_unfiltered;
+    const xyz_t acc = ahrsData.acc;
+#else
+    (void)currentTimeUs;
+    mainState.time = _queueItem.timeMicroSeconds;
+    const xyz_t gyroRPS = _queueItem.gyroRPS;
+    const xyz_t gyroRPS_unfiltered = _queueItem.gyroRPS_unfiltered;
+    const xyz_t acc = _queueItem.acc;
+#endif
 
-    loadMainStateFromFlightController(mainState, ahrsData.gyroRPS, ahrsData.gyroRPS_unfiltered, ahrsData.acc);
-}
-
-void BlackboxCallbacksProtoFlight::loadMainStateFromFlightController(blackboxMainState_t& mainState, const xyz_t& gyroRPS, const xyz_t& gyroRPS_unfiltered, const xyz_t& acc)
-{
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
 
     constexpr float radiansToDegrees {180.0F / static_cast<float>(M_PI)};
@@ -100,7 +108,6 @@ void BlackboxCallbacksProtoFlight::loadMainStateFromFlightController(blackboxMai
 
     // log the final throttle value used in the mixer
     mainState.setpoint[3] = static_cast<int16_t>(std::lroundf(_flightController.getMixerThrottle() * 1000.0F));
-
 
     for (int ii = 0; ii < blackboxMainState_t::DEBUG_VALUE_COUNT; ++ii) {
         mainState.debug[ii] = _flightController.getDebugValue(ii);

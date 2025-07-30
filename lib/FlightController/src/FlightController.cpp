@@ -226,12 +226,6 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
     return telemetry;
 }
 
-uint32_t FlightController::updateBlackbox(uint32_t timeMicroSeconds, const xyz_t& gyroRPS, const xyz_t& gyroRPS_unfiltered, const xyz_t& acc)
-{
-    assert(_blackbox != nullptr && "blackbox not set in FlightController");
-    return _blackbox->update(timeMicroSeconds, &gyroRPS, &gyroRPS_unfiltered, &acc);
-}
-
 void FlightController::outputToMotors(float deltaT, uint32_t tickCount)
 {
     const MotorMixerBase::commands_t commands =

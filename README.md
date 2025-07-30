@@ -220,14 +220,29 @@ classDiagram
         getOrientation() Quaternion const
     }
     link SensorFusionFilterBase "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
+    class AHRS_MessageQueueBase {
+        <<abstract>>
+        append() *
+    }
+    class BlackboxMessageQueueAHRS {
+        append() override
+    }
+    class BlackboxMessageQueue {
+        RECEIVE(queue_item_t& queueItem) int32_t
+        SEND(const queue_item_t& queueItem)
+        SEND_IF_NOT_FULL(const queue_item_t& queueItem)
+    }
+    AHRS_MessageQueueBase <-- BlackboxMessageQueueAHRS
+    BlackboxMessageQueueAHRS o-- BlackboxMessageQueue : calls SEND_IF_NOT_FULL
 
     class Blackbox {
         <<abstract>>
+        writeSystemInformation() *
+        start()
+        finish()
+        update() uint32_t
     }
     link Blackbox "https://github.com/martinbudden/Library-Blackbox/blob/main/src/Blackbox.h"
-    Blackbox <|-- BlackboxProtoFlight
-    class BlackboxProtoFlight
-    link BlackboxProtoFlight "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxProtoFlight.h"
 
     class IMU_Base {
         <<abstract>>
@@ -246,7 +261,6 @@ classDiagram
         <<abstract>>
         loop() *
         updateOutputsUsingPIDs() *
-        updateBlackbox() uint32_t  *
     }
     link VehicleControllerBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerBase.h"
 
@@ -266,12 +280,11 @@ classDiagram
         Filter _pitchRateDTermFilter
         array~Filter~ _stickSetpointFilters
         updateOutputsUsingPIDs() override
-        updateBlackbox() uint32_t override
         updateSetpoints()
         updateMotorSpeedEstimates()
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    FlightController o-- Blackbox : calls update
+    FlightController o-- Blackbox : calls start finish
     FlightController --o RadioController : calls updateSetpoints
     FlightController o-- RadioControllerBase : calls getFailsafePhase
     FlightController o-- MotorMixerBase : calls outputToMotors
@@ -283,7 +296,8 @@ classDiagram
     AHRS o-- IMU_Base : calls readAccGyroRPS
     AHRS o-- IMU_FiltersBase : calls setFilters filter
     AHRS o-- SensorFusionFilterBase : calls update
-    AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs updateBlackbox
+    AHRS o-- AHRS_MessageQueueBase : calls append
+    AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
     VehicleControllerBase o-- AHRS : historical
 
     class ReceiverBase {
@@ -377,6 +391,7 @@ classDiagram
     class TaskBase {
         uint32_t _taskIntervalMicroSeconds
     }
+    link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
 
     TaskBase <|-- MainTask
     class MainTask {
@@ -392,6 +407,11 @@ classDiagram
         checkFailsafe() *
         getFailsafePhase() uint32_t const *
     }
+    class RadioController {
+        updateControls() override
+        checkFailsafe() override
+        getFailsafePhase() uint32_t const override
+    }
     class ReceiverBase {
         <<abstract>>
         WAIT_FOR_DATA_RECEIVED() int32_t *
@@ -402,9 +422,9 @@ classDiagram
     class FlightController {
         array~PIDF~ _pids
         updateOutputsUsingPIDs() override
-        updateBlackbox() uint32_t override
         updateSetpoints()
     }
+    FlightController o-- Blackbox : calls start finish
     FlightController o-- RadioControllerBase : calls getFailsafePhase
     RadioControllerBase o--ReceiverBase
     RadioControllerBase <|-- RadioController
@@ -415,6 +435,7 @@ classDiagram
         +loop()
         -task() [[noreturn]]
     }
+    link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
     class ReceiverWatcher {
         <<abstract>>
         newReceiverPacketAvailable() *
@@ -428,13 +449,13 @@ classDiagram
         <<abstract>>
         loop() *
         updateOutputsUsingPIDs() *
-        updateBlackbox() uint32_t  *
     }
     TaskBase <|-- VehicleControllerTask
     class VehicleControllerTask {
         +loop()
         -task() [[noreturn]]
     }
+    link VehicleControllerTask "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerTask.h"
     VehicleControllerTask o-- VehicleControllerBase : calls loop
     VehicleControllerBase <|-- FlightController
 
@@ -443,14 +464,22 @@ classDiagram
         +loop()
         -task() [[noreturn]]
     }
+    link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
     AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
 
+    class BlackboxMessageQueue {
+        RECEIVE(queue_item_t& queueItem) int32_t
+        SEND(const queue_item_t& queueItem)
+        SEND_IF_NOT_FULL(const queue_item_t& queueItem)
+    }
     class AHRS {
         bool readIMUandUpdateOrientation()
     }
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
+    AHRS o-- BlackboxMessageQueue : (indirectly) calls SEND_IF_NOT_FULL
     VehicleControllerBase o-- AHRS : historical
 
+    TaskBase <|-- BlackboxTask
     class Backchannel {
         processedReceivedPacket() bool
     }
@@ -459,25 +488,34 @@ classDiagram
         +loop()
         -task() [[noreturn]]
     }
+    link BackchannelTask "https://github.com/martinbudden/Library-Backchannel/blob/main/src/BackchannelTask.h"
     BackchannelTask o-- Backchannel : calls processedReceivedPacket
 
-    TaskBase <|-- BlackboxTask
     class BlackboxTask {
         +loop()
         -task() [[noreturn]]
     }
+    link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
+    BlackboxTask o-- BlackboxMessageQueue : calls RECEIVE
     BlackboxTask o-- Blackbox : calls update
     class Blackbox {
         <<abstract>>
+        writeSystemInformation() *
+        start()
+        finish()
         update() uint32_t
     }
+    link Blackbox "https://github.com/martinbudden/Library-Blackbox/blob/main/src/Blackbox.h"
     Blackbox <|-- BlackboxProtoFlight
+    class BlackboxProtoFlight
+    link BlackboxProtoFlight "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxProtoFlight.h"
 
     TaskBase <|-- MSP_Task
     class MSP_Task {
         +loop()
         -task() [[noreturn]]
     }
+    link MSP_Task "https://github.com/martinbudden/Library-MultiWiiSerialProtocol/blob/main/src/MSP_Task.h"
     MSP_Task o-- MSP_SerialBase : calls processInput
     MSP_SerialBase <|-- MSP_Serial
     class MSP_SerialBase {
@@ -489,9 +527,11 @@ classDiagram
 
 ## Blackbox
 
-`BlackboxProtoFlight` writes system information (ie the header of the blackbox file) when blackbox is started.
+`BlackboxProtoFlight` encodes system information (ie the header of the blackbox file) when blackbox is started.
 
-`BlackboxCallbacksProtoFlight` writes blackbox data during flight
+`BlackboxCallbacksProtoFlight` encodes blackbox data during flight
+
+All writing to the serial device is done via the `BlackboxEncoder`
 
 ```mermaid
 classDiagram
@@ -500,10 +540,11 @@ classDiagram
         virtual writeSystemInformation() write_e *
         virtual update() uint32_t
     }
-    Blackbox *-- BlackboxEncoder
-    Blackbox o-- BlackboxSerialDevice
-    Blackbox o-- BlackboxCallbacksBase
 
+    class BlackboxMessageQueue {
+        RECEIVE(queue_item_t& queueItem) int32_t
+        SEND(const queue_item_t& queueItem)
+    }
     class RadioControllerBase {
         <<abstract>>
     }
@@ -512,32 +553,48 @@ classDiagram
         getRates() rates_t  const
     }
 
-    Blackbox <|-- BlackboxProtoFlight
+    %%Blackbox <|-- BlackboxProtoFlight
     class BlackboxProtoFlight {
         write_e writeSystemInformation() override
     }
-    BlackboxProtoFlight o-- FlightController
-    FlightController o-- BlackboxProtoFlight
-    BlackboxProtoFlight o-- RadioController
 
     class BlackboxCallbacksBase {
         <<abstract>>
-        virtual void loadSlowStateFromFlightController() *
-        virtual void loadMainStateFromFlightController() *
+        _queueItem queue_item_t
+        setQueueItem()
+        virtual void loadSlowState() *
+        virtual void loadMainState() *
+    }
+    class BlackboxCallbacksProtoFlight {
+        void loadSlowState() override
+        void loadMainState() override
     }
 
-    BlackboxCallbacksBase <|-- BlackboxCallbacksProtoFlight
-    class BlackboxCallbacksProtoFlight {
-        void loadSlowStateFromFlightController() override
-        void loadMainStateFromFlightController() override
-    }
     class ReceiverBase {
         <<abstract>>
     }
-    BlackboxCallbacksProtoFlight o-- AHRS
-    BlackboxCallbacksProtoFlight o-- ReceiverBase
-    BlackboxCallbacksProtoFlight o-- RadioControllerBase
-    BlackboxCallbacksProtoFlight o-- FlightController
+
+    Blackbox o-- BlackboxCallbacksBase : calls loadState
+    Blackbox <|-- BlackboxProtoFlight
+    BlackboxEncoder --* Blackbox : calls write
+    BlackboxSerialDevice --o Blackbox : calls open close
+    BlackboxEncoder o-- BlackboxSerialDevice : calls write
+
+
+    BlackboxCallbacksBase o-- BlackboxMessageQueue
+    BlackboxCallbacksProtoFlight o-- ReceiverBase : calls getControls
+    BlackboxCallbacksProtoFlight o-- RadioControllerBase : calls getFailSafePhase
+    BlackboxCallbacksProtoFlight o-- FlightController : calls getPID
+    %%FlightController --o BlackboxCallbacksProtoFlight 
+    %%FlightController o-- Blackbox : calls start finish
+    Blackbox --o FlightController : calls start finish
+    BlackboxCallbacksBase <|-- BlackboxCallbacksProtoFlight
+    %%BlackboxCallbacksProtoFlight --|> BlackboxCallbacksBase
+
+    FlightController --o BlackboxProtoFlight
+    %%Blackbox --o FlightController
+    %%BlackboxProtoFlight o-- FlightController
+    RadioController --o BlackboxProtoFlight : calls getRates
 
     class BlackboxSerialDevice {
         <<abstract>>
@@ -550,6 +607,8 @@ classDiagram
         +loop()
         -task() [[noreturn]]
     }
+    BlackboxTask o-- BlackboxMessageQueue : calls RECEIVE
+    BlackboxTask o-- BlackboxCallbacksBase : calls setQueueItem
     BlackboxTask o-- Blackbox : calls update
 ```
 
