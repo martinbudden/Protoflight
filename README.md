@@ -496,7 +496,7 @@ classDiagram
         -task() [[noreturn]]
     }
     link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
-    BlackboxTask o-- BlackboxMessageQueue : calls RECEIVE
+    BlackboxTask o-- BlackboxMessageQueue : calls WAIT_IF_EMPTY
     BlackboxTask o-- Blackbox : calls update
     class Blackbox {
         <<abstract>>
@@ -529,7 +529,7 @@ classDiagram
 
 `BlackboxProtoFlight` encodes system information (ie the header of the blackbox file) when blackbox is started.
 
-`BlackboxCallbacksProtoFlight` encodes blackbox data during flight
+`BlackboxCallbacks` encodes blackbox data during flight
 
 All writing to the serial device is done via the `BlackboxEncoder`
 
@@ -541,74 +541,85 @@ classDiagram
         virtual update() uint32_t
     }
 
-    class BlackboxMessageQueue {
-        RECEIVE(queue_item_t& queueItem) int32_t
-        SEND(const queue_item_t& queueItem)
+    class BlackboxCallbacks {
+        void loadSlowState() override
+        void loadMainState() override
     }
+    class BlackboxMessageQueueBase {
+        <<abstract>>
+        WAIT_IF_EMPTY() *
+    }
+    class BlackboxMessageQueue {
+        WAIT_IF_EMPTY() override
+        RECEIVE(queue_item_t& queueItem) int32_t
+    }
+
     class RadioControllerBase {
         <<abstract>>
     }
-    RadioControllerBase <|-- RadioController
     class RadioController {
         getRates() rates_t  const
     }
+    class ReceiverBase {
+        <<abstract>>
+    }
+    class FlightController {
+    }
 
-    %%Blackbox <|-- BlackboxProtoFlight
     class BlackboxProtoFlight {
         write_e writeSystemInformation() override
     }
 
     class BlackboxCallbacksBase {
         <<abstract>>
-        _queueItem queue_item_t
-        setQueueItem()
         virtual void loadSlowState() *
         virtual void loadMainState() *
     }
-    class BlackboxCallbacksProtoFlight {
-        void loadSlowState() override
-        void loadMainState() override
-    }
 
-    class ReceiverBase {
+
+    class BlackboxSerialDevice {
         <<abstract>>
     }
+    class BlackboxSerialDeviceSDCard["BlackboxSerialDeviceSDCard(eg)"]
 
     Blackbox o-- BlackboxCallbacksBase : calls loadState
-    Blackbox <|-- BlackboxProtoFlight
-    BlackboxEncoder --* Blackbox : calls write
-    BlackboxSerialDevice --o Blackbox : calls open close
-    BlackboxEncoder o-- BlackboxSerialDevice : calls write
 
-
-    BlackboxCallbacksBase o-- BlackboxMessageQueue
-    BlackboxCallbacksProtoFlight o-- ReceiverBase : calls getControls
-    BlackboxCallbacksProtoFlight o-- RadioControllerBase : calls getFailSafePhase
-    BlackboxCallbacksProtoFlight o-- FlightController : calls getPID
-    %%FlightController --o BlackboxCallbacksProtoFlight 
-    %%FlightController o-- Blackbox : calls start finish
+    %%BlackboxEncoder --* Blackbox : calls write
+    %%BlackboxSerialDevice --o Blackbox : calls open close
     Blackbox --o FlightController : calls start finish
-    BlackboxCallbacksBase <|-- BlackboxCallbacksProtoFlight
-    %%BlackboxCallbacksProtoFlight --|> BlackboxCallbacksBase
+    Blackbox <|-- BlackboxProtoFlight
+    Blackbox *-- BlackboxEncoder : calls write
+    Blackbox o-- BlackboxSerialDevice : calls open close
+    BlackboxEncoder o-- BlackboxSerialDevice : calls write
+    BlackboxSerialDevice <|-- BlackboxSerialDeviceSDCard
+
+
+    BlackboxCallbacksBase o-- BlackboxMessageQueueBase
+    BlackboxMessageQueueBase <|-- BlackboxMessageQueue
+    %%BlackboxMessageQueue --|> BlackboxMessageQueueBase
+    %%BlackboxMessageQueue --o BlackboxCallbacks : calls RECEIVE
+    RadioControllerBase <|-- RadioController
+    BlackboxCallbacks o-- BlackboxMessageQueue : calls RECEIVE
+    BlackboxCallbacks o-- ReceiverBase : calls getControls
+    BlackboxCallbacks o-- RadioControllerBase : calls getFailSafePhase
+    BlackboxCallbacks o-- FlightController : calls getPID
+    %%FlightController --o BlackboxCallbacks 
+    %%FlightController o-- Blackbox : calls start finish
+    BlackboxCallbacksBase <|-- BlackboxCallbacks
+    %%BlackboxCallbacks --|> BlackboxCallbacksBase
 
     FlightController --o BlackboxProtoFlight
     %%Blackbox --o FlightController
     %%BlackboxProtoFlight o-- FlightController
     RadioController --o BlackboxProtoFlight : calls getRates
 
-    class BlackboxSerialDevice {
-        <<abstract>>
-    }
-    class BlackboxSerialDeviceSDCard["BlackboxSerialDeviceSDCard(eg)"]
-    BlackboxSerialDevice <|-- BlackboxSerialDeviceSDCard
 
     TaskBase <|-- BlackboxTask
     class BlackboxTask {
         +loop()
         -task() [[noreturn]]
     }
-    BlackboxTask o-- BlackboxMessageQueue : calls RECEIVE
-    BlackboxTask o-- BlackboxCallbacksBase : calls setQueueItem
+    BlackboxTask o-- BlackboxMessageQueueBase : calls WAIT_IF_EMPTY
     BlackboxTask o-- Blackbox : calls update
 ```
 

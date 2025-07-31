@@ -1,4 +1,5 @@
-#include "BlackboxCallbacksProtoFlight.h"
+#include "BlackboxCallbacks.h"
+#include "BlackboxMessageQueue.h"
 #include "RadioController.h"
 
 #include <AHRS.h>
@@ -7,40 +8,40 @@
 #include <cmath>
 
 
-bool BlackboxCallbacksProtoFlight::isArmed() const
+bool BlackboxCallbacks::isArmed() const
 {
     // ARMING_FLAG(ARMED)
     return _flightController.motorsIsOn();
 }
 
-bool BlackboxCallbacksProtoFlight::areMotorsRunning() const
+bool BlackboxCallbacks::areMotorsRunning() const
 {
     return _flightController.motorsIsOn();
 }
 
-bool BlackboxCallbacksProtoFlight::isBlackboxRcModeActive() const
+bool BlackboxCallbacks::isBlackboxRcModeActive() const
 {
     // IS_RC_MODE_ACTIVE(BOX_BLACKBOX)
     return true;
 };
 
-bool BlackboxCallbacksProtoFlight::isBlackboxModeActivationConditionPresent() const
+bool BlackboxCallbacks::isBlackboxModeActivationConditionPresent() const
 {
     //isModeActivationConditionPresent(BOX_BLACKBOX);
     return true;
 }
 
-uint32_t BlackboxCallbacksProtoFlight::getArmingBeepTimeMicroSeconds() const
+uint32_t BlackboxCallbacks::getArmingBeepTimeMicroSeconds() const
 {
     return 0;
 }
 
-uint32_t BlackboxCallbacksProtoFlight::rcModeActivationMask() const
+uint32_t BlackboxCallbacks::rcModeActivationMask() const
 {
     return 0;
 }
 
-void BlackboxCallbacksProtoFlight::loadSlowState(blackboxSlowState_t& slowState)
+void BlackboxCallbacks::loadSlowState(blackboxSlowState_t& slowState)
 {
     //memcpy(&slowState->flightModeFlags, &_rcModeActivationMask, sizeof(slowState->flightModeFlags)); //was flightModeFlags;
     slowState.flightModeFlags = _flightController.getFlightModeFlags();
@@ -51,7 +52,7 @@ void BlackboxCallbacksProtoFlight::loadSlowState(blackboxSlowState_t& slowState)
     slowState.rxFlightChannelsValid = (slowState.failsafePhase == RadioController::FAILSAFE_IDLE);
 }
 
-void BlackboxCallbacksProtoFlight::loadMainState(blackboxMainState_t& mainState, uint32_t currentTimeUs)
+void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t currentTimeUs)
 {
 
 #if false
@@ -62,10 +63,13 @@ void BlackboxCallbacksProtoFlight::loadMainState(blackboxMainState_t& mainState,
     const xyz_t acc = ahrsData.acc;
 #else
     (void)currentTimeUs;
-    mainState.time = _queueItem.timeMicroSeconds;
-    const xyz_t gyroRPS = _queueItem.gyroRPS;
-    const xyz_t gyroRPS_unfiltered = _queueItem.gyroRPS_unfiltered;
-    const xyz_t acc = _queueItem.acc;
+    BlackboxMessageQueue::queue_item_t queueItem;
+    _messageQueue.RECEIVE(queueItem);
+
+    mainState.time = queueItem.timeMicroSeconds;
+    const xyz_t gyroRPS = queueItem.gyroRPS;
+    const xyz_t gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered;
+    const xyz_t acc = queueItem.acc;
 #endif
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)

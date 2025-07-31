@@ -12,7 +12,7 @@
 #if defined(USE_ESPNOW)
 #include <BackchannelTransceiverESPNOW.h>
 #endif
-#include <BlackboxCallbacksProtoFlight.h>
+#include <BlackboxCallbacks.h>
 #include <BlackboxMessageQueueAHRS.h>
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
@@ -119,10 +119,13 @@ void Main::setup()
     testBlackbox(ahrs, flightController, radioController, receiver);
 #endif
 #if defined(USE_BLACKBOX)
-    static BlackboxCallbacksProtoFlight blackboxCallbacks(ahrs, flightController, radioController, receiver);
+    static BlackboxMessageQueue blackboxMessageQueue;
+    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver);
     static BlackboxSerialDeviceSDCard blackboxSerialDevice;
     blackboxSerialDevice.init();
-    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxSerialDevice, flightController, radioController);
+    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController);
+    static BlackboxMessageQueueAHRS blackboxMessageQueueAHRS(blackboxMessageQueue);
+    ahrs.setMessageQueue(&blackboxMessageQueueAHRS);
     flightController.setBlackbox(blackbox);
     blackbox.init({
         .sample_rate = Blackbox::RATE_ONE,
@@ -192,9 +195,6 @@ void Main::setup()
 #if defined(USE_BLACKBOX)
     TaskBase::task_info_t taskInfo {}; // NOLINT(misc-const-correctness) false positive
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
-    vTaskSuspend(taskInfo.taskHandle);
-    static BlackboxMessageQueueAHRS blackboxMessageQueueAHRS(_tasks.blackboxTask->getMessageQueue());
-    ahrs.setMessageQueue(&blackboxMessageQueueAHRS);
     vTaskResume(taskInfo.taskHandle);
 #endif
 
@@ -221,11 +221,12 @@ void Main::setup()
 
 void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver)
 {
-    static BlackboxCallbacksProtoFlight blackboxCallbacks(ahrs, flightController, radioController, receiver); // NOLINT(misc-const-correctness)
+    static BlackboxMessageQueue blackboxMessageQueue;
+    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver); // NOLINT(misc-const-correctness)
     static BlackboxSerialDeviceSDCard blackboxSerialDevice;
     blackboxSerialDevice.init();
 
-    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxSerialDevice, flightController, radioController);
+    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController);
     flightController.setBlackbox(blackbox);
     blackbox.init({
         .sample_rate = Blackbox::RATE_ONE,

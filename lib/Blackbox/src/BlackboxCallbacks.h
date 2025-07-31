@@ -3,14 +3,16 @@
 #include "BlackboxCallbacksBase.h"
 
 class AHRS;
+class BlackboxMessageQueue;
 class FlightController;
 class RadioControllerBase;
 class ReceiverBase;
 
 
-class BlackboxCallbacksProtoFlight : public BlackboxCallbacksBase {
+class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacksProtoFlight(AHRS& ahrs, FlightController& flightController, RadioControllerBase& radioController, ReceiverBase& receiver) :
+    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, AHRS& ahrs, FlightController& flightController, RadioControllerBase& radioController, ReceiverBase& receiver) :
+        _messageQueue(messageQueue),
         _ahrs(ahrs),
         _flightController(flightController),
         _radioController(radioController),
@@ -27,6 +29,7 @@ public:
     virtual bool areMotorsRunning() const override;
     virtual uint32_t rcModeActivationMask() const override;
 private:
+    BlackboxMessageQueue& _messageQueue;
     AHRS& _ahrs;
     FlightController& _flightController;
     RadioControllerBase& _radioController;
