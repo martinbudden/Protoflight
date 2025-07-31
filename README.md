@@ -537,8 +537,8 @@ All writing to the serial device is done via the `BlackboxEncoder`
 classDiagram
     class Blackbox {
         <<abstract>>
-        virtual writeSystemInformation() write_e *
-        virtual update() uint32_t
+        writeSystemInformation() *
+        update() uint32_t
     }
 
     class BlackboxCallbacks {
@@ -567,7 +567,7 @@ classDiagram
     }
 
     class BlackboxProtoFlight {
-        write_e writeSystemInformation() override
+        writeSystemInformation() override
     }
 
     class BlackboxCallbacksBase {
@@ -575,7 +575,6 @@ classDiagram
         virtual void loadSlowState() *
         virtual void loadMainState() *
     }
-
 
     class BlackboxSerialDevice {
         <<abstract>>

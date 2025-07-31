@@ -221,8 +221,8 @@ void Main::setup()
 
 void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver)
 {
-    static BlackboxMessageQueue blackboxMessageQueue;
-    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver); // NOLINT(misc-const-correctness)
+    static BlackboxMessageQueue blackboxMessageQueue; // NOLINT(misc-const-correctness) false positive
+    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver); // NOLINT(misc-const-correctness) false positive
     static BlackboxSerialDeviceSDCard blackboxSerialDevice;
     blackboxSerialDevice.init();
 

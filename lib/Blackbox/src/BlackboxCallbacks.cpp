@@ -97,11 +97,14 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
         mainState.axisPID_I[ii] = std::lroundf(pidError.I);
         mainState.axisPID_D[ii] = std::lroundf(pidError.D);
         mainState.axisPID_F[ii] = std::lroundf(pidError.F);
+        //mainState.axisPID_S[ii] = std::lroundf(pidError.S);
         mainState.setpoint[ii] = static_cast<int16_t>(std::lroundf(pid.getSetpoint()));
 #if defined(USE_MAG)
         mainState.magADC[ii] = static_cast<int16_t>(mag.magADC.v[ii]);
 #endif
     }
+    // log the final throttle value used in the mixer
+    mainState.setpoint[3] = static_cast<int16_t>(std::lroundf(_flightController.getMixerThrottle() * 1000.0F));
 
     // interval [1000,2000] for THROTTLE and [-500,+500] for ROLL/PITCH/YAW
     const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM(); // returns controls in range [1000, 2000]
@@ -110,18 +113,15 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     mainState.rcCommand[2] = static_cast<int16_t>(controls.yawStick - ReceiverBase::CHANNEL_MIDDLE);
     mainState.rcCommand[3] = controls.throttleStick;
 
-    // log the final throttle value used in the mixer
-    mainState.setpoint[3] = static_cast<int16_t>(std::lroundf(_flightController.getMixerThrottle() * 1000.0F));
-
     for (int ii = 0; ii < blackboxMainState_t::DEBUG_VALUE_COUNT; ++ii) {
         mainState.debug[ii] = _flightController.getDebugValue(ii);
     }
 
-    const flight_controller_quadcopter_telemetry_t telemetry = _flightController.getTelemetryData();
-    for (int ii = 0; ii < telemetry.MOTOR_COUNT; ++ii) {
-        mainState.motor[ii] = static_cast<int16_t>(std::lroundf(telemetry.motors[ii].power)); // this equates to 5.50, 15.51, 25.51 and 35.52%
+    const MotorMixerBase& mixer = _flightController.getMixer();
+    for (size_t ii = 0; ii < mixer.getMotorCount(); ++ ii) {
+        mainState.motor[ii] = static_cast<int16_t>(std::lroundf(mixer.getMotorOutput(ii)));
 #if defined(USE_DSHOT_TELEMETRY)
-        mainState.erpm[ii] = static_cast<int16_t>(telemetry.motors[ii].rpm);
+        mainState.erpm[ii] = static_cast<int16_t>(mixer.getMotorRPM(ii));
 #endif
     }
     mainState.vbatLatest = static_cast<uint16_t>(_flightController.getBatteryVoltage()*10.0F);

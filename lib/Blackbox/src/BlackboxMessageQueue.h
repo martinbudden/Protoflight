@@ -23,7 +23,13 @@ public:
     BlackboxMessageQueue()
         : _queue(xQueueCreateStatic(QUEUE_LENGTH, sizeof(_queueItem), &_queueStorageArea[0], &_queueStatic))
     {}
-    inline int32_t WAIT_IF_EMPTY() const { return xQueuePeek(_queue, &_queueItem, portMAX_DELAY); }
+    virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroSeconds) const override {
+        const int32_t ret = xQueuePeek(_queue, &_queueItem, portMAX_DELAY);
+        if (ret) {
+            timeMicroSeconds = _queueItem.timeMicroSeconds;
+        }
+        return ret;
+    }
     inline int32_t RECEIVE(queue_item_t& queueItem) const { return xQueueReceive(_queue, &queueItem, portMAX_DELAY); }
     inline void SEND(const queue_item_t& queueItem) const { xQueueSend(_queue, &queueItem, portMAX_DELAY); }
     inline bool SEND_IF_NOT_FULL(const queue_item_t& queueItem) const { 
@@ -35,8 +41,8 @@ public:
     }
 #else
     BlackboxMessageQueue() = default;
-    inline int32_t WAIT_IF_EMPTY() const { return 0; }
-    inline int32_t RECEIVE(queue_item_t& queueItem) const { (void)queueItem; return 0; }
+    virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroSeconds) const override { timeMicroSeconds = 0; return 0; }
+    inline int32_t RECEIVE(queue_item_t& queueItem) const { queueItem = {}; return 0; }
     inline void SEND(const queue_item_t& queueItem) const { (void)queueItem; }
     inline bool SEND_IF_NOT_FULL(const queue_item_t& queueItem) const { (void)queueItem; return false; } // cppcheck-suppress knownConditionTrueFalse
 #endif // USE_FREERTOS

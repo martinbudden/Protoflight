@@ -175,6 +175,7 @@ public:
     static inline float yawRateNED_DPS(const xyz_t& gyroENU_RPS) { return -gyroENU_RPS.z * radiansToDegrees; }
 
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
+    const MotorMixerBase& getMixer() const { return _mixer; }
     const filters_t& getFilters() const { return _filters; }
     void setFilters(const filters_t& filters);
     uint32_t getTaskIntervalMicroSeconds() const { return _taskIntervalMicroSeconds; }
