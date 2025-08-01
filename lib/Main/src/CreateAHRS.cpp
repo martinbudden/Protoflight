@@ -4,9 +4,11 @@
 #include <AHRS.h>
 #include <IMU_BMI270.h>
 #include <IMU_BNO085.h>
+#include <IMU_ICM426xx.h>
 #include <IMU_LSM6DS3TR_C.h>
 #include <IMU_M5Stack.h>
 #include <IMU_M5Unified.h>
+#include <IMU_MPU6000.h>
 #include <IMU_MPU6886.h>
 #if defined(M5_UNIFIED)
 #include <M5Unified.h>
@@ -28,6 +30,12 @@ AHRS& Main::createAHRS(const MotorMixerBase& motorMixer)
 #elif defined(USE_IMU_MPU6886_SPI)
     const BUS_SPI::pins_t pins = IMU_SPI_PINS;
     static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
+#elif defined(USE_IMU_MPU6000_I2C)
+    const BUS_I2C::pins_t pins = IMU_I2C_PINS;
+    static IMU_MPU6000 imuSensor(IMU_AXIS_ORDER, pins);
+#elif defined(USE_IMU_MPU6000_SPI)
+    const BUS_SPI::pins_t pins = IMU_SPI_PINS;
+    static IMU_MPU6000 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
 #elif defined(USE_IMU_BMI270_I2C)
     const BUS_I2C::pins_t pins = IMU_I2C_PINS;
     static IMU_BMI270 imuSensor(IMU_AXIS_ORDER, pins);
@@ -40,6 +48,12 @@ AHRS& Main::createAHRS(const MotorMixerBase& motorMixer)
 #elif defined(USE_IMU_BNO085_SPI)
     const BUS_SPI::pins_t pins = IMU_SPI_PINS;
     static IMU_BNO085 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
+#elif defined(USE_IMU_ICM426XX_I2C)
+    const BUS_I2C::pins_t pins = IMU_I2C_PINS;
+    static IMU_ICM426xx imuSensor(IMU_AXIS_ORDER, pins);
+#elif defined(USE_IMU_ICM426XX_SPI)
+    const BUS_SPI::pins_t pins = IMU_SPI_PINS;
+    static IMU_ICM426xx imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
 #elif defined(USE_IMU_LSM6DS3TR_C_I2C) || defined(USE_IMU_ISM330DHCX_I2C) || defined(USE_LSM6DSOX_I2C)
     const BUS_I2C::pins_t pins = IMU_I2C_PINS;
     static IMU_LSM6DS3TR_C imuSensor(IMU_AXIS_ORDER, pins);

@@ -65,7 +65,6 @@ Crazyflie is a small, versatile quadcopter for research and education.
 It has an ecosystem of expansion decks, clients, and development tools.
 [source code](https://github.com/bitcraze/crazyflie-firmware)
 
-
 ### [ESP-Drone](https://docs.espressif.com/projects/espressif-esp-drone/en/latest/gettingstarted.html)
 
 ESP-Drone is an ESP32/ESP32-S2/ESP32-S3 based flying development board provided by Espressif.
