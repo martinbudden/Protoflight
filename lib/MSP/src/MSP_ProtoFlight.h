@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MSP_Base.h"
-#include "MSP_ProtoBox.h"
+#include "MSP_ProtoFlightBox.h"
 
 
 class AHRS;
@@ -29,7 +29,7 @@ public:
     virtual result_e processInCommand(int16_t cmdMSP, StreamBuf& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
     result_e processInCommand(int16_t cmdMSP, StreamBuf& src) { return processInCommand(cmdMSP, src, 0, nullptr); }
 private:
-    MSP_ProtoBox _mspBox;
+    MSP_ProtoFlightBox _mspBox;
     Features& _features;
     AHRS& _ahrs;
     FlightController& _flightController;

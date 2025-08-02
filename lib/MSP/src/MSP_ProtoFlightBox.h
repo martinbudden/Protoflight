@@ -26,7 +26,7 @@
 class FlightController;
 
 
-class MSP_ProtoBox : public MSP_Box {
+class MSP_ProtoFlightBox : public MSP_Box {
 public:
     size_t packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const FlightController& flightController);
     static bool getBoxIdState(const FlightController& flightController, boxId_e boxId);

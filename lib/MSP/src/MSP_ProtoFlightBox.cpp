@@ -19,14 +19,14 @@
  */
 
 
-#include "MSP_ProtoBox.h"
+#include "MSP_ProtoFlightBox.h"
 
 #include <FlightController.h>
 
 /*!
 return state of given boxId box, handling ARM and FLIGHT_MODE
 */
-bool MSP_ProtoBox::getBoxIdState(const FlightController& flightController, boxId_e boxId)
+bool MSP_ProtoFlightBox::getBoxIdState(const FlightController& flightController, boxId_e boxId)
 {
     static const uint8_t boxIdToFlightModeMap[BOX_ID_FLIGHTMODE_LAST+1] = { // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         [BOX_ARM]        = 0, // not used
@@ -54,7 +54,7 @@ bool MSP_ProtoBox::getBoxIdState(const FlightController& flightController, boxId
 pack used flightModeFlags into supplied bitset
 returns number of bits used
 */
-size_t MSP_ProtoBox::packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const FlightController& flightController)
+size_t MSP_ProtoFlightBox::packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const FlightController& flightController)
 {
     // Serialize the flags in the order we delivered them, ignoring BOX NAMES and BOX INDEXES
     flightModeFlags.reset();

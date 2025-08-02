@@ -7,13 +7,22 @@ It has the following design goals (in no particular order)
 1. A modular design that is built up from components in separate libraries (see below).
 2. Produce libraries that are usable in their own right.
 3. Be peformant. Support 8kHz Gyro/PID loop time.
-4. Support multi-core processors, in particular allow the Gyro/PID loop to have an entire core to itself.
+4. Support dual-core processors, in particular allow the Gyro/PID loop to have an entire core to itself.
 5. Run on bare metal or under [FREERTOS](https://www.freertos.org/).
 6. Be (relatively) easy to learn and modify.
 7. Give users the ability implement their own code or modifications.
 8. Modular architecture to make it easier to identify which bit of code to modify, without impacting other code.
 9. Be useful to people who want to experiment with and customize a flight controller.
 10. Be useful to someone who wants to understand how flight control software works.
+
+## ProtoFlight name
+
+I've called it ProtoFlight because:
+
+1. It can be used to prototype new ideas.
+2. One of the meanings of "proto" is "primitive". This software is nowhere near as sophisticated as BetaFlight or ArduPilot.
+3. It is related to "protean", meaning "able to change frequently or easily" or "versatile".
+4. It pays homage to [Protea](https://en.wikipedia.org/wiki/Protea), which was the codename for the [Psion Series 5](https://en.wikipedia.org/wiki/Psion_Series_5)
 
 ## Libraries used to build ProtoFlight
 
@@ -122,7 +131,7 @@ is proportional to the setpoint. (Betaflight also has an 'S' component for PIDs,
 aircraft and is proportional to the setpoint.)
 
 The project is still ongoing and has not yet achieved "first flight". The Self Balancing Robot has achieved "First Stabilized Drive"
-so I am confident in all the lower layers of the software stack (that is layers 1-10 listed above).
+so I am confident in all the lower layers of the software stack (that is libraries 1-10 listed above).
 
 I currently have ports of the software to ESP32 and Raspberry Pi Pico, but not yet to STM32.
 
@@ -134,7 +143,7 @@ ProtoFlight will run on a single core, but I find the dual core setup more inter
 ### Running the PIDs in *Quaternion Space*
 
 I have on occasion toyed with the idea of running the PIDs in *Quaternion Space*. That is, instead of having 3 PIDs (one for each of
-roll, pitch, and yaw) a transformation would be applied to these PIDs, mapping them onto 4 PIDs in *Quaternion Space*, one for each of
+roll, pitch, and yaw) a transformation would be applied to these PIDs, mapping them onto 4 PIDs in *Quaternion Space*, one PID for each of
 w, x, y, and z.
 
 The idea of operating in *Quaternion Space* is not without precedent: the Madgwick Sensor Fusion Filter can in some ways be regarded as
@@ -162,7 +171,7 @@ What about the fact that *sin(rollAngle)* is a non-linear function of *rollAngle
 I don't think that will be a problem. There also remains the possibility of changing the "rates" to compensate for this, if necessary.
 
 Since the "*intermediate between Euler Angle and Quaternion space*" is a bit of a mouthful, and this intermediate space is closer to
-*Quaternion Space than Euler Angle Space*, I'm takings some programmer's license and using the term *Quaternion Space* for this space.
+*Quaternion Space* than *Euler Angle Space*, I'm takings some programmer's license and using the term *Quaternion Space* for this space.
 
 Preliminary benchmarks (on an ESP32 S3 running at 240MHz) that the angle mode PID calculations take 80 microseconds with running in
 *Euler Angle Space* and 50 microseconds in *Quaternion Space*. By alternatively calculating the roll angle values and pitch angle values
@@ -197,11 +206,10 @@ The heart of the loop is the `AHRS::readIMUandUpdateOrientation` function, invoc
 11. The AHRS calls `FlightController::updateOutputsUsingPIDs` passing the gyro, accelerometer and orientation values *(acroMode:20us,angleModeQuaternionSpace:50us,angleModeEulerAngleSpace:80us)*.
 12. If the blackbox is active, data is copied to the blackbox for logging by the Blackbox task.
 
-Note: strictly speaking we don't have the full 125 microseconds - step 3 also eats into this time.
+Note: strictly speaking we don't have the full 125 microseconds - step 3 also uses a few microseconds of this time
+(which is why it is preferable to have an IMU that can be read in little-endian format - this avoids the need for byte reordering).
 
-## Class structure
-
-Simplified outline of the main classes.
+## Simplified Class Structure
 
 Classes with *"(eg)"* suffix give examples of specific instances.
 
@@ -368,9 +376,7 @@ classDiagram
     link ESPNOW_Transceiver "https://github.com/martinbudden/Library-Receiver/blob/main/src/ESPNOW_Transceiver.h"
 ```
 
-## Task structure
-
-Simplified outline of the tasks.
+## Simplified Task Structure
 
 On a dual-core processor `AHRS_Task` has the second core all to itself.
 
@@ -525,7 +531,7 @@ classDiagram
     }
 ```
 
-## Blackbox
+## Simplified Blackbox Class Structure
 
 `BlackboxProtoFlight` encodes system information (ie the header of the blackbox file) when blackbox is started.
 
@@ -622,7 +628,7 @@ classDiagram
     BlackboxTask o-- Blackbox : calls update
 ```
 
-## MSP
+## Simplified MSP Class Structure
 
 `MSP_Base` has the virtual functions `processOutCommand` and `processInCommand` which are overridden in `MSP_ProtoFlight`.
 
@@ -657,7 +663,7 @@ classDiagram
         processOutCommand() result_e override
         processInCommand() result_e override
     }
-    MSP_ProtoFlight *-- MSP_ProtoBox
+    MSP_ProtoFlight *-- MSP_ProtoFlightBox
     MSP_ProtoFlight o-- Features
     MSP_ProtoFlight o-- AHRS
     MSP_ProtoFlight o-- FlightController
@@ -667,7 +673,7 @@ classDiagram
     }
     MSP_ProtoFlight o-- ReceiverBase
 
-    MSP_Box <|-- MSP_ProtoBox
+    MSP_Box <|-- MSP_ProtoFlightBox
 
     TaskBase <|-- MSP_Task
     class MSP_Task {
@@ -677,7 +683,7 @@ classDiagram
     MSP_Task o-- MSP_SerialBase : calls processInput
 ```
 
-## Backchannel
+## Simplified Backchannel Class Structure
 
 ```mermaid
 classDiagram
