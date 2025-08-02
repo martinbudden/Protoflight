@@ -1,4 +1,4 @@
-#include "ESC_DShot_RPI_Pico.h"
+#include "ESC_DShot.h"
 
 #if defined(FRAMEWORK_RPI_PICO)
 

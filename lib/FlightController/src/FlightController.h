@@ -1,9 +1,9 @@
 #pragma once
 
 #include "FlightControllerTelemetry.h"
-#include "MotorMixerBase.h"
 
 #include <Filters.h>
+#include <MotorMixerBase.h>
 #include <PIDF.h>
 #include <RadioControllerBase.h>
 #include <VehicleControllerBase.h>

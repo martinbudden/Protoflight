@@ -1,6 +1,5 @@
-#if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
-
 #include "MotorMixerQuadX_PWM.h"
+#include <cmath>
 
 #if defined(FRAMEWORK_RPI_PICO)
 #include <hardware/gpio.h>
@@ -12,21 +11,13 @@
 #include <Arduino.h>
 #if defined(USE_ARDUINO_ESP32)
 #include <esp32-hal-ledc.h>
-//framework-arduinoespressif32/tools/sdk/esp32s3/include/xtensa/esp32s3/include/xtensa/config/specreg.h:
-//has #define BR  4
-#if defined(BR)
-#undef BR
 #endif
-#endif
-#endif
+#endif // FRAMEWORK
 
 
-
-MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(const pins_t& pins, float deltaT)
+MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(const pins_t& pins)
     : _pins(pins)
 {
-    (void)deltaT;
-
 #if defined(FRAMEWORK_RPI_PICO)
 
     if (pins.fl != 0xFF) {
@@ -87,14 +78,11 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(const pins_t& pins, float deltaT)
 #endif
 
 #endif // FRAMEWORK
-
-    for (auto& filter : _motorFilters) {
-        filter.setCutoffFrequency(100, deltaT);
-    }
 }
 
 void MotorMixerQuadX_PWM::outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount)
 {
+    (void)deltaT;
     (void)tickCount;
 
     if (motorsIsOn()) {
@@ -104,23 +92,19 @@ void MotorMixerQuadX_PWM::outputToMotors(const commands_t& commands, float delta
         _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + commands.speed;
         _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + commands.speed;
 
-        // filter the motor output and scale to GPIO range ([0.0F, 65535.0F] for RPI Pico or [0.0F, 255.0F] for Arduino)
+        // scale motor output to GPIO range ([0.0F, 65535.0F] for RPI Pico or [0.0F, 255.0F] for Arduino)
 #if defined(FRAMEWORK_RPI_PICO)
         constexpr float scale = 65535.0F;
 #else
         constexpr float scale = 255.0F;
 #endif
-        _motorOutputs[MOTOR_BR] =  _motorFilters[MOTOR_BR].filter(_motorOutputs[MOTOR_BR], deltaT);
-        _motorOutputs[MOTOR_BR] =  std::roundf(scale*clip(_motorOutputs[MOTOR_BR], 0.0F, 1.0F));
+        _motorOutputs[MOTOR_BR] =  roundf(scale*clip(_motorOutputs[MOTOR_BR], 0.0F, 1.0F));
 
-        _motorOutputs[MOTOR_FR] =  _motorFilters[MOTOR_FR].filter(_motorOutputs[MOTOR_FR], deltaT);
-        _motorOutputs[MOTOR_FR] =  std::roundf(scale*clip(_motorOutputs[MOTOR_FR], 0.0F, 1.0F));
+        _motorOutputs[MOTOR_FR] =  roundf(scale*clip(_motorOutputs[MOTOR_FR], 0.0F, 1.0F));
 
-        _motorOutputs[MOTOR_BL] =  _motorFilters[MOTOR_BL].filter(_motorOutputs[MOTOR_BL], deltaT);
-        _motorOutputs[MOTOR_BL] =  std::roundf(scale*clip(_motorOutputs[MOTOR_BL], 0.0F, 1.0F));
+        _motorOutputs[MOTOR_BL] =  roundf(scale*clip(_motorOutputs[MOTOR_BL], 0.0F, 1.0F));
 
-        _motorOutputs[MOTOR_FL] =  _motorFilters[MOTOR_FL].filter(_motorOutputs[MOTOR_FL], deltaT);
-        _motorOutputs[MOTOR_FL] =  std::roundf(scale*clip(_motorOutputs[MOTOR_FL], 0.0F, 1.0F));
+        _motorOutputs[MOTOR_FL] =  roundf(scale*clip(_motorOutputs[MOTOR_FL], 0.0F, 1.0F));
 
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
@@ -172,5 +156,3 @@ void MotorMixerQuadX_PWM::outputToMotors(const commands_t& commands, float delta
 #endif // FRAMEWORK
 
 }
-
-#endif // USE_MOTOR_MIXER_QUAD_X_PWM

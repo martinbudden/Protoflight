@@ -270,7 +270,7 @@ classDiagram
         getMotorRPM() int32_t *
         getMotorFrequencyHz() float
     }
-    link MotorMixerBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/MotorMixerBase.h"
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerBase.h"
     MotorMixerBase <|-- MotorMixerQuadX_Base
 
     VehicleControllerBase <|-- FlightController

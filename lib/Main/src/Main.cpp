@@ -87,13 +87,12 @@ void Main::setup()
 #endif // USE_ESPNOW
 
     // Statically allocate the MotorMixer object as defined by the build flags.
-    const float deltaT = static_cast<float>(FC_TASK_INTERVAL_MICROSECONDS) * 0.000001F;
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
-    const MotorMixerQuadX_PWM::pins_t pins = MOTOR_PINS;
-    static MotorMixerQuadX_PWM motorMixer(pins, deltaT); // NOLINT(misc-const-correctness) false positive
+    const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
+    static MotorMixerQuadX_PWM motorMixer(pins); // NOLINT(misc-const-correctness) false positive
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
-    const MotorMixerQuadX_DShot::pins_t pins = MOTOR_PINS;
-    static MotorMixerQuadX_DShot motorMixer(pins, deltaT); // NOLINT(misc-const-correctness) false positive
+    const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
+    static MotorMixerQuadX_DShot motorMixer(pins); // NOLINT(misc-const-correctness) false positive
 #endif
 
     // Statically allocate the AHRS
