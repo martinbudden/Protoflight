@@ -17,6 +17,7 @@
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
 #include <BlackboxTask.h>
+#include <Debug.h>
 #include <Features.h>
 #include <FlightController.h>
 #include <MSP_ProtoFlight.h>
@@ -69,6 +70,9 @@ void Main::setup()
     uint8_t myMacAddress[ESP_NOW_ETH_ALEN];
     WiFi.macAddress(&myMacAddress[0]);
 
+    // Statically allocate the debug object
+    static Debug debug; // NOLINT(misc-const-correctness) false positive
+
     // Statically allocate and setup the receiver.
     static ReceiverAtomJoyStick receiver(&myMacAddress[0]);
     _receiver = &receiver;
@@ -107,7 +111,7 @@ void Main::setup()
 #define USE_MSP
 #if defined(USE_MSP)
     static Features features; // NOLINT(misc-const-correctness) false positive
-    static MSP_ProtoFlight mspProtoFlight(features, ahrs, flightController, radioController, receiver); // NOLINT(misc-const-correctness) false positive
+    static MSP_ProtoFlight mspProtoFlight(features, ahrs, flightController, radioController, receiver, debug); // NOLINT(misc-const-correctness) false positive
     static MSP_Stream mspStream(mspProtoFlight);
     static MSP_Serial mspSerial(mspStream); // NOLINT(misc-const-correctness) false positive
 #endif
@@ -119,7 +123,7 @@ void Main::setup()
 #endif
 #if defined(USE_BLACKBOX)
     static BlackboxMessageQueue blackboxMessageQueue;
-    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver);
+    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
     static BlackboxSerialDeviceSDCard blackboxSerialDevice;
     blackboxSerialDevice.init();
     static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController);
@@ -218,10 +222,10 @@ void Main::setup()
 #endif
 }
 
-void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver)
+void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, const Debug& debug)
 {
     static BlackboxMessageQueue blackboxMessageQueue; // NOLINT(misc-const-correctness) false positive
-    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver); // NOLINT(misc-const-correctness) false positive
+    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug); // NOLINT(misc-const-correctness) false positive
     static BlackboxSerialDeviceSDCard blackboxSerialDevice;
     blackboxSerialDevice.init();
 

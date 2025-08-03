@@ -99,20 +99,6 @@ float FlightController::getAmperage() const
     return 0.67F;
 }
 
-size_t FlightController::getDebugValueCount() const
-{
-    return DEBUG_VALUE_COUNT;
-}
-
-uint16_t FlightController::getDebugValue(size_t index) const
-{
-    static_assert(DEBUG_VALUE_COUNT >= AHRS::TIME_CHECKS_COUNT);
-    if (index < AHRS::TIME_CHECKS_COUNT) {
-        return static_cast<uint16_t>(_ahrs.getTimeChecksMicroSeconds(index));
-    }
-    return 0;
-}
-
 void FlightController::motorsSwitchOff()
 {
     _mixer.motorsSwitchOff();

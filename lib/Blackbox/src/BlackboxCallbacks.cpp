@@ -1,9 +1,10 @@
 #include "BlackboxCallbacks.h"
 #include "BlackboxMessageQueue.h"
-#include "RadioController.h"
 
 #include <AHRS.h>
+#include <Debug.h>
 #include <FlightController.h>
+#include <RadioController.h>
 #include <ReceiverBase.h>
 #include <cmath>
 
@@ -113,8 +114,9 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     mainState.rcCommand[2] = static_cast<int16_t>(controls.yawStick - ReceiverBase::CHANNEL_MIDDLE);
     mainState.rcCommand[3] = controls.throttleStick;
 
+    static_assert(static_cast<int>(blackboxMainState_t::DEBUG_VALUE_COUNT) == static_cast<int>(Debug::VALUE_COUNT));
     for (int ii = 0; ii < blackboxMainState_t::DEBUG_VALUE_COUNT; ++ii) {
-        mainState.debug[ii] = _flightController.getDebugValue(ii);
+        mainState.debug[ii] = _debug.get(ii);
     }
 
     const MotorMixerBase& mixer = _flightController.getMixer();

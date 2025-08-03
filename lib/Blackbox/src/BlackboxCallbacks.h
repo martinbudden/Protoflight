@@ -4,6 +4,7 @@
 
 class AHRS;
 class BlackboxMessageQueue;
+class Debug;
 class FlightController;
 class RadioControllerBase;
 class ReceiverBase;
@@ -11,12 +12,13 @@ class ReceiverBase;
 
 class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, AHRS& ahrs, FlightController& flightController, RadioControllerBase& radioController, ReceiverBase& receiver) :
+    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, AHRS& ahrs, FlightController& flightController, RadioControllerBase& radioController, ReceiverBase& receiver, const Debug& debug) :
         _messageQueue(messageQueue),
         _ahrs(ahrs),
         _flightController(flightController),
         _radioController(radioController),
-        _receiver(receiver)
+        _receiver(receiver),
+        _debug(debug)
         {}
 public:
     virtual void loadSlowState(blackboxSlowState_t& blackboxSlowState) override;
@@ -34,4 +36,5 @@ private:
     FlightController& _flightController;
     RadioControllerBase& _radioController;
     ReceiverBase& _receiver;
+    const Debug& _debug;
 };

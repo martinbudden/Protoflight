@@ -5,6 +5,7 @@
 #include "version.h"
 
 #include <AHRS.h>
+#include <Debug.h>
 #include <Features.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
@@ -75,12 +76,13 @@ static inline int constrain(int value, int low, int high)
 }
 
 
-MSP_ProtoFlight::MSP_ProtoFlight(Features& features, AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver) :
+MSP_ProtoFlight::MSP_ProtoFlight(Features& features, AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, const Debug& debug) :
     _features(features),
     _ahrs(ahrs),
     _flightController(flightController),
     _radioController(radioController),
-    _receiver(receiver)
+    _receiver(receiver),
+    _debug(debug)
 {
     //_mspBox.init(features, ahrs, flightController);
     enum { MSP_OVERRIDE_OFF = false, AIRMODE_OFF = false, ANTI_GRAVITY_OFF = false };
@@ -432,10 +434,8 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
 
     case MSP_DEBUG: {
-        const size_t count = _flightController.getDebugValueCount();
-        for (size_t ii = 0; ii < count; ++ii) {
-            //dst.writeU16(debug[i]);      // 4 variables are here for general monitoring purpose
-            dst.writeU16(_flightController.getDebugValue(ii));
+        for (size_t ii = 0; ii < Debug::VALUE_COUNT; ++ii) {
+            dst.writeU16(_debug.get(ii));
         }
         break;
     }

@@ -92,11 +92,6 @@ public:
         LOG2_FAILSAFE_MODE      = 10,
         LOG2_GPS_RESCUE_MODE    = 11
     };
-    enum debug_mode_e {
-        DEBUG_MODE_NONE,
-        DEBUG_MODE_AHRS_TIMINGS
-    };
-    enum { DEBUG_VALUE_COUNT = 8 };
 
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
     struct filters_t {
@@ -142,8 +137,6 @@ public:
 
     float getBatteryVoltage() const;
     float getAmperage() const;
-    size_t getDebugValueCount() const;
-    uint16_t getDebugValue(size_t index) const;
 
     uint8_t getCurrentPidProfileIndex() const { return 0; }
     uint8_t getPidProfileCount() const { return 1; }
@@ -180,8 +173,6 @@ public:
     void setFilters(const filters_t& filters);
     uint32_t getTaskIntervalMicroSeconds() const { return _taskIntervalMicroSeconds; }
     float getMixerThrottle() const { return _mixerThrottle; }
-    debug_mode_e getDebugMode() const { return _debugMode; }
-    void setDebugMode(debug_mode_e debugMode) { _debugMode = debugMode; }
 public:
     [[noreturn]] static void Task(void* arg);
     void loop();
@@ -201,7 +192,6 @@ private:
     Blackbox* _blackbox {nullptr};
     control_mode_e _controlMode {CONTROL_MODE_RATE};
     uint32_t _useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
-    debug_mode_e _debugMode {DEBUG_MODE_AHRS_TIMINGS}; // default to providing AHRS timings to blackbox
 
     float _mixerThrottle {0.0F};
 

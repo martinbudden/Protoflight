@@ -12,6 +12,7 @@ class Backchannel;
 class BackchannelTask;
 class BlackboxTask;
 class ButtonsBase;
+class Debug;
 class Features;
 class FlightController;
 class MotorMixerBase;
@@ -91,7 +92,7 @@ public:
     void setup();
     void loop();
 private:
-    void testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver);
+    void testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, const Debug& debug);
     static AHRS& createAHRS(const MotorMixerBase& motorMixer);
     static void checkGyroCalibration(SV_Preferences& preferences, AHRS& ahrs);
     static void resetPreferences(SV_Preferences& preferences, FlightController& flightController);
