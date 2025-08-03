@@ -4,6 +4,9 @@
 
 #if defined(FRAMEWORK_RPI_PICO)
 
+#include "pio/dshot_bidir_300.pio.h"
+#include "pio/dshot_bidir_600.pio.h"
+
 #include <hardware/dma.h>
 #include <hardware/gpio.h>
 #include <hardware/pwm.h>
@@ -20,7 +23,7 @@
 #endif // FRAMEWORK
 
 /*
-See: 
+See:
 https://betaflight.com/docs/wiki/guides/current/DSHOT-RPM-Filtering
 https://brushlesswhoop.com/dshot-and-bidirectional-dshot/
 
@@ -31,6 +34,7 @@ https://github.com/symonb/Bidirectional-DSHOT-and-RPM-Filter?tab=readme-ov-file
 */
 
 ESC_DShot::ESC_DShot(protocol_e protocol, uint16_t motorPoleCount) :
+    _protocol(protocol),
     _motorPoleCount(motorPoleCount)
 {
     setProtocol(protocol);
@@ -43,7 +47,24 @@ void ESC_DShot::init(uint16_t pin)
     _pin = pin;
 
 #if defined(FRAMEWORK_RPI_PICO)
-
+#if defined(USE_DSHOT_RPI_PICO_PIO)
+    if (_protocol == ESC_PROTOCOL_DSHOT300) {
+        const bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&dshot_bidir_300_program, &_pio, &_pioStateMachine, &_pioOffset, pin, 1, true);
+        hard_assert(success);
+        // Configure it to run our program, and start it, using the
+        // helper function we included in our .pio file.
+        //printf("Using gpio %d\n", pin);
+        dshot_bidir_300_program_init(_pio, _pioStateMachine, _pioOffset, pin);
+    } else {
+        const bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&dshot_bidir_600_program, &_pio, &_pioStateMachine, &_pioOffset, pin, 1, true);
+        hard_assert(success);
+        // Configure it to run our program, and start it, using the
+        // helper function we included in our .pio file.
+        //printf("Using gpio %d\n", pin);
+        dshot_bidir_600_program_init(_pio, _pioStateMachine, _pioOffset, pin);
+    }
+    // The PIO State Machine is now running, to use we push onto its TX FIFO and pull from the RX FIFO
+#else
     gpio_set_function(pin, GPIO_FUNC_PWM); // Set the pin to be PWM
 
     // RP2040 has 8 slices, RP2350 has 12 slices
@@ -81,7 +102,7 @@ void ESC_DShot::init(uint16_t pin)
         0, // transfer count, set when DMA is started
         DONT_START_YET
     );
-
+#endif // USE_DSHOT_RPI_PICO_PIO
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_TEST)
 
@@ -126,6 +147,7 @@ void ESC_DShot::setProtocol(protocol_e protocol)
     TH+TL = 1875ns  (T0H + T0L or T1H + T1L)
 */
 
+    _protocol = protocol;
     // DShot 150 specification
     enum { DSHOT150_T0H = 2500, DSHOT150_T1H = 5000, DSHOT150_T = 7500 };
 
@@ -202,6 +224,15 @@ uint16_t ESC_DShot::dShotShiftAndAddChecksum(uint16_t value)
 
 void ESC_DShot::write(uint16_t pulse) // NOLINT(readability-make-member-function-const)
 {
+#if defined(USE_DSHOT_RPI_PICO_PIO)
+    pulse = (pulse << 1) | 1;
+    // slightly different crc for inverted dshot
+    const uint16_t checksum = (~(pulse ^ (pulse >> 4) ^ (pulse >> 8))) & 0x0F;
+    // Shift and merge 12 bit pulse with 4 bit checksum
+    pulse =((pulse & 0xFFF) << 4) | checksum;
+    // put value to the PIO
+    pio_sm_put(_pio, _pioStateMachine, pulse);
+#else
     const uint16_t value = dShotConvert(pulse);
     const uint16_t frame = dShotShiftAndAddChecksum(value);
 
@@ -218,22 +249,74 @@ void ESC_DShot::write(uint16_t pulse) // NOLINT(readability-make-member-function
         }
     }
     _dmaBuffer[DMA_BUFFER_SIZE - 1] = 0; // zero last value,  array size is DSHOT_BIT_COUNT + 1
+#endif
 
 #if defined(FRAMEWORK_RPI_PICO)
-
+#if !defined(USE_DSHOT_RPI_PICO_PIO)
     // transfer DMA buffer to PWM
     dma_channel_set_trans_count(_dmaChannel, DMA_BUFFER_SIZE, DONT_START_YET);
     dma_channel_set_read_addr(_dmaChannel, &_dmaBuffer[0], START_IMMEDIATELY);
-
+#endif
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_TEST)
 #else // defaults to FRAMEWORK_ARDUINO
 #endif // FRAMEWORK
 }
 
+bool ESC_DShot::read()
+{
+    uint64_t value {};
+#if defined(USE_DSHOT_RPI_PICO_PIO)
+    const int32_t fifoCount = pio_sm_get_rx_fifo_level(_pio, _pioStateMachine);
+    if (fifoCount >= 2) {
+        // get DShot telemetry value from the PIO
+        //value = pio_sm_get(_pio, _pioStateMachine);
+        value = static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine)) << 32;
+        value |= static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine));
+    } else {
+        return false;
+    }
+#endif
+    ++_telemetryReadCount;
+    telemetry_type_e telemetryType {};
+    const uint32_t decoded = decodeTelemetry(value, telemetryType);
+    switch (telemetryType) {
+    case TELEMETRY_INVALID:
+        ++_telemetryErrorCount;
+        return false;
+    case TELEMETRY_TYPE_ERPM:
+        _eRPM = static_cast<int32_t>(decoded);
+        break;
+    case TELEMETRY_TYPE_TEMPERATURE:
+        [[fallthrough]];
+    case TELEMETRY_TYPE_VOLTAGE:
+        [[fallthrough]];
+    case TELEMETRY_TYPE_CURRENT:
+        [[fallthrough]];
+    case TELEMETRY_TYPE_DEBUG1:
+        [[fallthrough]];
+    case TELEMETRY_TYPE_DEBUG2:
+        [[fallthrough]];
+    case TELEMETRY_TYPE_STRESS_LEVEL:
+        [[fallthrough]];
+    case TELEMETRY_TYPE_STATE_EVENTS:
+        [[fallthrough]];
+    default:
+        break;
+    }
+    return true;
+}
+
 void ESC_DShot::end()
 {
 #if defined(FRAMEWORK_RPI_PICO)
+#if defined(USE_DSHOT_RPI_PICO_PIO)
+    if (_protocol == ESC_PROTOCOL_DSHOT300) {
+        pio_remove_program_and_unclaim_sm(&dshot_bidir_300_program, _pio, _pioStateMachine, _pioOffset);
+    } else {
+        pio_remove_program_and_unclaim_sm(&dshot_bidir_600_program, _pio, _pioStateMachine, _pioOffset);
+    }
+#endif
 #elif defined(FRAMEWORK_ESPIDF)
     ESP_ERROR_CHECK(rmt_disable(_txChannel));
 #elif defined(FRAMEWORK_TEST)
@@ -264,7 +347,7 @@ uint32_t ESC_DShot::decodeERPM(uint16_t value)
 uint32_t ESC_DShot::decodeTelemetry(uint16_t value, telemetry_type_e& telemetryType)
 {
     // value is of form "eeem mmmm mmmm": e - exponent, m - mantissa
-    // https://github.com/bird-sanctuary/extended-dshot-telemetry   
+    // https://github.com/bird-sanctuary/extended-dshot-telemetry
 
     // eRPM frames are of form "0000 mmmm mmmm" or "eee1 mmmm mmmm"
     const uint16_t type = (value & 0x0F00) >> 8;
@@ -278,6 +361,151 @@ uint32_t ESC_DShot::decodeTelemetry(uint16_t value, telemetry_type_e& telemetryT
     return value & 0x00FF;
 }
 
+static const std::array<uint32_t, 17> gcr_raw_bitlengths = {
+    0, // 0 consecutive bits, not a valid lookup
+    1, // 1 consecutive bits
+    1, // 2 consecutive bits
+    1, // 3 consecutive bits
+    2, // 4 consecutive bits
+    2, // 5 consecutive bits
+    2, // 6 consecutive bits
+    3, // 7 consecutive bits
+    3, // 8 consecutive bits
+    3, // 9 consecutive bits
+    3, //10 consecutive bits
+    4, //11 consecutive bits, not valid, but sometimes occurs at the end of the string
+    4, //12 consecutive bits
+    4, //13 consecutive bits
+    5, //14 consecutive bits
+    5, //15 consecutive bits
+    5, //16 consecutive bits
+    // more than 10 consecutive samples, means 4 0 or 1 in a row is invalid in GCR
+};
+
+static const std::array<uint32_t, 6> gcr_raw_set_bits = {
+    0b00000, // 0 consecutive bits, not a valid lookup
+    0b00001, // 1 consecutive bits
+    0b00011, // 2 consecutive bits
+    0b00111, // 3 consecutive bits
+    0b01111, // 4 consecutive bits
+    0b11111  // 5 consecutive bits
+};
+
+// array to map 5-bit GCR quintet onto 4-bit nibble
+static const std::array<uint32_t, 32> decodeQuintet = {
+    0, 0,  0,  0, 0,  0,  0,  0,
+    0, 9, 10, 11, 0, 13, 14, 15,
+    0, 0,  2,  3, 0,  5,  6,  7,
+    0, 0,  8,  1, 0,  4, 12,  0
+};
+
+
+int32_t ESC_DShot::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryType)
+{
+    // telemetry data must start with a 0, so if the first bit is high, we don't have any data
+    if (value & 0x8000000000000000L) {
+        telemetryType = TELEMETRY_INVALID;
+        return 0;
+    }
+
+    int consecutiveCount = 1;  // we always start with the MSB
+    bool current = false;
+    int bitCount = 0;
+    uint32_t gcr_result = 0;
+    // starting at 2nd bit since we know our data starts with a 0
+    // 56 samples @ 0.917us sample rate = 51.33us sampled
+    // loop the mask from 2nd MSB to  LSB
+    for (uint64_t mask = 0x4000000000000000; mask != 0; mask >>= 1) {
+        if (((value & mask) != 0) != current) {  // if the doesn't match the current string of bits, end the current string and flip current
+            // bitshift gcr_result by N, and
+            gcr_result = gcr_result << gcr_raw_bitlengths[consecutiveCount];
+            // then set set N bits in gcr_result, if current is 1
+            if (current) {
+                gcr_result |= gcr_raw_set_bits[gcr_raw_bitlengths[consecutiveCount]];
+            }
+            // count bitCount (for debugging)
+            bitCount += gcr_raw_bitlengths[consecutiveCount];
+            // invert current, and reset consecutiveCount
+            current = !current;
+            consecutiveCount = 1;  // first bit found in the string is the one we just processed
+        } else {  // otherwise increment consecutiveCount
+            ++consecutiveCount;
+            if (consecutiveCount > 16) {
+                // invalid run length at the current sample rate (outside of gcr_raw_bitlengths table)
+                telemetryType = TELEMETRY_INVALID;
+                return 0;
+            }
+        }
+    }
+
+    // outside the loop, we still need to account for the final bits if the string ends with 1s
+    // bitshift gcr_result by N, and
+    gcr_result <<= gcr_raw_bitlengths[consecutiveCount];
+    // then set set N bits in gcr_result, if current is 1
+    if (current) {
+        gcr_result |= gcr_raw_set_bits[gcr_raw_bitlengths[consecutiveCount]];
+    }
+    // count bitCount (for debugging)
+    bitCount += gcr_raw_bitlengths[consecutiveCount];
+
+    // GCR data should be 21 bits
+    if (bitCount < 21) {
+        telemetryType = TELEMETRY_INVALID;
+        return 0;
+    }
+
+    // chop the GCR data down to just the 21 MSB
+    gcr_result = gcr_result >> (bitCount - 21);
+
+    // convert edge transition GCR back to binary GCR
+    gcr_result = (gcr_result ^ (gcr_result >> 1));
+
+    // Serial.print("GCR: "); print_bin(gcr_result);
+
+#if false
+    // break the 20 bit gcr result into 4 quintets for converting back to regular 16 bit binary
+    uint8_t quintets[4] = { 
+        (uint8_t)(gcr_result >> 15) & (uint8_t)0b11111,
+        (uint8_t)(gcr_result >> 10) & (uint8_t)0b11111,
+        (uint8_t)(gcr_result >>  5) & (uint8_t)0b11111,
+        (uint8_t)(gcr_result      ) & (uint8_t)0b11111
+    };
+
+    for(int i=0; i<4; ++i) {
+        const uint8_t nibble = decodeQuintet[quintets[i]];
+        //const uint8_t nibble = decodeGCRNibble(quintets[i]);
+        result = (result << 4) | (nibble & 0b1111);
+    }
+#else
+    uint32_t result = decodeQuintet[gcr_result & 0x1F];
+    result |= decodeQuintet[(gcr_result >> 5) & 0x1F] << 4;
+    result |= decodeQuintet[(gcr_result >> 10) & 0x1F] << 8;
+    result |= decodeQuintet[(gcr_result >> 15) & 0x1F] << 12;
+#endif
+
+    // check CRC! (4 LSB in result)
+    const uint8_t result_crc = result & 0b1111;  //extract the telemetry nibble
+    result >>= 4;  // and then remove it from the result
+    const uint8_t calc_crc = (~(result ^ (result >> 4) ^ (result >> 8))) & 0x0F;
+    if (result_crc != calc_crc) {
+        telemetryType = TELEMETRY_INVALID;
+        return 0;
+    }
+
+    // todo: properly handle zero eRPM value (min representable eRPM period)
+    if (result & 0x100) {
+        telemetryType = TELEMETRY_TYPE_ERPM;
+        uint32_t eRPM_period_us = static_cast<uint32_t>(result) & 0b111111111;  // period base is 9 bits above 4 bit CRC
+        eRPM_period_us <<= (result >> 9);  // period base is the left shift amount stored in the 3 MSB
+        enum { ONE_MINUTE_IN_MICROSECONDS = 60000000 };
+        return static_cast<int32_t>(ONE_MINUTE_IN_MICROSECONDS / eRPM_period_us); // eRPM
+    }
+    // extended telemetry
+    telemetryType = static_cast<telemetry_type_e>(result >> 8);
+    return static_cast<int32_t>(result & 0xFF); // bottom 8 bits
+}
+
+
 uint32_t ESC_DShot::decodeGCR(const uint32_t timings[], uint32_t count) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     // decode 16 bit GCR (Group Coded Recording) Run Length Limited (RLL) encoding
@@ -285,7 +513,7 @@ uint32_t ESC_DShot::decodeGCR(const uint32_t timings[], uint32_t count) // NOLIN
 
     // see also https://github.com/bird-sanctuary/arduino-bi-directional-dshot/blob/master/src/arduino_dshot.cpp
 
-    // a 16-bit value is encoded as 21 bits in GCR: 
+    // a 16-bit value is encoded as 21 bits in GCR:
     //   each 4-bit nibble is encoded as 5 bits, giving 20 bits
     //   this 20-bit value is then encoded into 21 bits
     //   see https://brushlesswhoop.com/dshot-and-bidirectional-dshot/ for an example
@@ -312,18 +540,10 @@ uint32_t ESC_DShot::decodeGCR(const uint32_t timings[], uint32_t count) // NOLIN
         return TELEMETRY_INVALID;
     }
 
-    // array to map 5-bit value onto 4-bit value
-    static const std::array<uint32_t, 32> decode = {
-        0, 0,  0,  0, 0,  0,  0,  0, 
-        0, 9, 10, 11, 0, 13, 14, 15,
-        0, 0,  2,  3, 0,  5,  6,  7,
-        0, 0,  8,  1, 0,  4, 12,  0
-    };
-
-    uint32_t decodedValue = decode[value & 0x1F];
-    decodedValue |= decode[(value >> 5) & 0x1F] << 4;
-    decodedValue |= decode[(value >> 10) & 0x1F] << 8;
-    decodedValue |= decode[(value >> 15) & 0x1F] << 12;
+    uint32_t decodedValue = decodeQuintet[value & 0x1F];
+    decodedValue |= decodeQuintet[(value >> 5) & 0x1F] << 4;
+    decodedValue |= decodeQuintet[(value >> 10) & 0x1F] << 8;
+    decodedValue |= decodeQuintet[(value >> 15) & 0x1F] << 12;
 
     uint32_t checkSum = decodedValue;
     checkSum ^= (checkSum >> 8); // xor bytes

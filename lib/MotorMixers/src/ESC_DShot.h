@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #if defined(FRAMEWORK_RPI_PICO)
+#include "hardware/pio.h"
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_TEST)
 #else // defaults to FRAMEWORK_ARDUINO
@@ -45,8 +46,9 @@ public:
     enum { DSHOT_BIT_COUNT = 16 };
     void setProtocol(protocol_e protocol);
     void write(uint16_t pulse);
+    bool read();
 
-    int32_t getMotorRPM() const { return 2 * _eRPM / _motorPoleCount; } // eRPM = RPM * poles/2
+    int32_t getMotorRPM() const { return 2 * _eRPM / _motorPoleCount; } // eRPM = RPM * poles/2, /2 due to pole pairs, not poles
     float getMotorHz() const { return static_cast<float>(_eRPM) * _eRPMtoHz; }
     void end();
     uint32_t nanoSecondsToCycles(uint32_t nanoSeconds) const;
@@ -56,27 +58,38 @@ public:
     static  uint16_t dShotShiftAndAddChecksum(uint16_t value);
     static uint32_t decodeERPM(uint16_t value);
     static uint32_t decodeTelemetry(uint16_t value, telemetry_type_e& telemetryType);
+    static int32_t decodeTelemetry(uint64_t value, telemetry_type_e& telemetryType);
     static uint32_t decodeGCR(const uint32_t timings[], uint32_t count);
 // for testing
+    void setUseHighOrderBits(bool useHighOrderBits) { _useHighOrderBits = useHighOrderBits; }
     uint32_t getDataHighPulseWidth() const { return _dataHighPulseWidth; }
     uint32_t getDataLowPulseWidth() const { return _dataLowPulseWidth; }
     uint32_t getBufferItem(size_t index) const { return _dmaBuffer[index]; }
-    void setUseHighOrderBits(bool useHighOrderBits) { _useHighOrderBits = useHighOrderBits; }
 protected:
     uint64_t _cpuFrequency {150000000L};
+    protocol_e _protocol;
     uint32_t _useHighOrderBits = 0;
     uint32_t _wrapCycleCount {};
 #if defined(FRAMEWORK_RPI_PICO)
+#if defined(USE_DSHOT_RPI_PICO_PIO)
+    PIO _pio {};
+    uint _pioStateMachine {};
+    uint _pioOffset {};
+#else
     enum { START_IMMEDIATELY = true, DONT_START_YET = false };
     uint32_t _dmaChannel {};
+#endif // USE_DSHOT_RPI_PICO_PIO
 #endif
     uint32_t _dataHighPulseWidth {};
     uint32_t _dataLowPulseWidth {};
     enum { PIN_NOT_SET = 0xFFFF };
     uint16_t _pin {PIN_NOT_SET};
     uint16_t _motorPoleCount {14}; //!< number of poles the motor has, used to calculate RPM from telemetry data
-    int32_t _eRPM {}; //!< eRPM, ie not taking into account motor pole count
     float _eRPMtoHz {};
+    int32_t _eRPM {}; //!< eRPM, ie not taking into account motor pole count
+    uint32_t _telemetryReadCount {};
+    uint32_t _telemetryErrorCount {};
+
     enum { DMA_BUFFER_SIZE = DSHOT_BIT_COUNT + 1 }; // extra 1 for terminating zero value
     std::array<uint32_t, DMA_BUFFER_SIZE> _dmaBuffer {};
 };
