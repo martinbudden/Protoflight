@@ -1,5 +1,7 @@
 #include "ESC_DShot.h"
 
+#include <array>
+
 #if defined(FRAMEWORK_RPI_PICO)
 
 #include <hardware/dma.h>
@@ -17,6 +19,19 @@
 
 #endif // FRAMEWORK
 
+/*
+See: 
+https://betaflight.com/docs/wiki/guides/current/DSHOT-RPM-Filtering
+https://brushlesswhoop.com/dshot-and-bidirectional-dshot/
+*/
+
+ESC_DShot::ESC_DShot(protocol_e protocol, uint16_t motorPoleCount) :
+    _motorPoleCount(motorPoleCount)
+{
+    setProtocol(protocol);
+    constexpr float SECONDS_PER_MINUTE = 60.0F;
+    _eRPMtoHz = 2.0F * (100.0F / SECONDS_PER_MINUTE) / static_cast<float>(_motorPoleCount);
+}
 
 void ESC_DShot::init(uint16_t pin)
 {
@@ -28,9 +43,12 @@ void ESC_DShot::init(uint16_t pin)
 
     // RP2040 has 8 slices, RP2350 has 12 slices
     // Each slice can drive or measure 2 PWM signals, ie has 2 channels, PWM_CHAN_A and PWM_CHAN_B
+    enum { PWM_CHANNEL_A = 0, PWM_CHANNEL_B =  1};
 
     // get PWM channel for the pin
-    _pwmChannel = pwm_gpio_to_channel(_pin);
+    const uint32_t pwmChannel = pwm_gpio_to_channel(_pin);
+    // channel B uses high order bits on RPI Pico
+    _useHighOrderBits = pwmChannel == PWM_CHANNEL_B ? true : false;
 
     // Setup the PWM
     const uint32_t slice = pwm_gpio_to_slice_num(_pin);
@@ -43,7 +61,7 @@ void ESC_DShot::init(uint16_t pin)
 
     dma_channel_config dmaConfig = dma_channel_get_default_config(_dmaChannel); // NOLINT(cppcoreguidelines-init-variables) false positive
     channel_config_set_dreq(&dmaConfig, pwm_get_dreq(slice)); // Set the DMA Data Request (DREQ)
-    // transfer 32-bits at a time
+    // transfer 32 bits at a time
     // don't increment write address so we always transfer to the same PWM register.
     // increment read address so we pick up a new value each time
     channel_config_set_transfer_data_size(&dmaConfig, DMA_SIZE_32);
@@ -103,7 +121,6 @@ void ESC_DShot::setProtocol(protocol_e protocol)
     TH+TL = 1875ns  (T0H + T0L or T1H + T1L)
 */
 
-#if defined(FRAMEWORK_RPI_PICO) || defined(FRAMEWORK_TEST)
     // DShot 150 specification
     enum { DSHOT150_T0H = 2500, DSHOT150_T1H = 5000, DSHOT150_T = 7500 };
 
@@ -141,9 +158,6 @@ void ESC_DShot::setProtocol(protocol_e protocol)
         pwm_set_wrap(slice, _wrapCycleCount);
         pwm_set_enabled(slice, true); // restart the PWM
     }
-#endif
-#else
-    (void)protocol;
 #endif
 }
 
@@ -187,15 +201,14 @@ void ESC_DShot::write(uint16_t pulse) // NOLINT(readability-make-member-function
     const uint16_t frame = dShotShiftAndAddChecksum(value);
 
     uint16_t maskBit = 1U << (DSHOT_BIT_COUNT - 1); // NOLINT(misc-const-correctness,hicpp-signed-bitwise) false positive
-    if (_pwmChannel == 0) {
+    if (_useHighOrderBits) {
         for (auto& item : _dmaBuffer) {
-            item = (frame & maskBit) ? _dataHighPulseWidth : _dataLowPulseWidth;
+            item = ((frame & maskBit) ? _dataHighPulseWidth : _dataLowPulseWidth) << 16;
             maskBit >>= 1U;
         }
     } else {
         for (auto& item : _dmaBuffer) {
-            // channel B uses high order bits on RPI Pico
-            item = ((frame & maskBit) ? _dataHighPulseWidth : _dataLowPulseWidth) << 16;
+            item = (frame & maskBit) ? _dataHighPulseWidth : _dataLowPulseWidth;
             maskBit >>= 1U;
         }
     }
@@ -225,3 +238,96 @@ void ESC_DShot::end()
 #endif
 #endif // FRAMEWORK
 }
+
+// NOLINTBEGIN(hicpp-signed-bitwise)
+uint32_t ESC_DShot::decodeERPM(uint16_t value)
+{
+    // eRPM range
+    if (value == 0x0FFF) {
+        return 0;
+    }
+    const uint16_t m = value & 0x01FF;
+    const uint16_t e = (value & 0xFE00) >> 9;
+    value = m << e;
+    if (value == 0) {
+        return TELEMETRY_INVALID;
+    }
+    // Convert to eRPM * 100
+    return ((1000000 * 60 / 100) + value / 2) / value;
+}
+
+uint32_t ESC_DShot::decodeTelemetry(uint16_t value, telemetry_type_e& telemetryType)
+{
+    // value is of form "eeem mmmm mmmm": e - exponent, m - mantissa
+    // https://github.com/bird-sanctuary/extended-dshot-telemetry   
+
+    // eRPM frames are of form "0000 mmmm mmmm" or "eee1 mmmm mmmm"
+    const uint16_t type = (value & 0x0F00) >> 8;
+    const bool isErpm = (type & 0x01) || (type == 0);
+    if (isErpm) {
+        telemetryType = TELEMETRY_TYPE_ERPM;
+        return decodeERPM(value);
+    }
+    // note: type >> 1 is in range [0..7]
+    telemetryType = static_cast<telemetry_type_e>(type >> 1);
+    return value & 0x00FF;
+}
+
+uint32_t ESC_DShot::decodeGCR(const uint32_t timings[], uint32_t count) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+{
+    // decode 16 bit GCR (Group Coded Recording) Run Length Limited (RLL) encoding
+    // https://en.wikipedia.org/wiki/Run-length_limited#GCR:_(0,2)_RLL
+
+    // see also https://github.com/bird-sanctuary/arduino-bi-directional-dshot/blob/master/src/arduino_dshot.cpp
+
+    // a 16-bit value is encoded as 21 bits in GCR: 
+    //   each 4-bit nibble is encoded as 5 bits, giving 20 bits
+    //   this 20-bit value is then encoded into 21 bits
+    //   see https://brushlesswhoop.com/dshot-and-bidirectional-dshot/ for an example
+
+    uint32_t value = 0;
+    uint32_t bitCount = 0;
+    for (uint32_t ii = 1; ii < count; ++ii) {
+        const uint32_t diff = timings[ii] - timings[ii-1]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        const uint32_t runLength = (diff + 8) / 16;
+        value <<= runLength;
+        value |= 1 << (runLength - 1);
+        bitCount += runLength;
+        if (bitCount >= 21) {
+            break;
+        }
+    }
+    if (bitCount < 21) {
+        const uint32_t runLength = 21 - bitCount;
+        value <<= runLength;
+        value |= 1 << (runLength - 1);
+        bitCount += runLength;
+    }
+    if (bitCount != 21) {
+        return TELEMETRY_INVALID;
+    }
+
+    // array to map 5-bit value onto 4-bit value
+    static const std::array<uint32_t, 32> decode = {
+        0, 0,  0,  0, 0,  0,  0,  0, 
+        0, 9, 10, 11, 0, 13, 14, 15,
+        0, 0,  2,  3, 0,  5,  6,  7,
+        0, 0,  8,  1, 0,  4, 12,  0
+    };
+
+    uint32_t decodedValue = decode[value & 0x1F];
+    decodedValue |= decode[(value >> 5) & 0x1F] << 4;
+    decodedValue |= decode[(value >> 10) & 0x1F] << 8;
+    decodedValue |= decode[(value >> 15) & 0x1F] << 12;
+
+    uint32_t checkSum = decodedValue;
+    checkSum ^= (checkSum >> 8); // xor bytes
+    checkSum ^= (checkSum >> 4); // xor nibbles
+
+    if ((checkSum & 0xF) != 0xF) {
+        return TELEMETRY_INVALID;
+    }
+
+    return decodedValue >> 4;
+}
+// NOLINTEND(hicpp-signed-bitwise)
