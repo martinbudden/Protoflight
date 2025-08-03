@@ -712,7 +712,7 @@ classDiagram
     BackchannelTransceiverBase <|-- BackchannelTransceiverESPNOW
     BackchannelTransceiverESPNOW o-- ESPNOW_Transceiver
 
-    BackchannelBase <|-- BackchannelStabilizedVehicle
+    BackchannelBase <|-- BackchannelStabilizedVehicle : overrides sendPacket
     class BackchannelStabilizedVehicle {
         _backchannelID uint32_t
         _telemetryID uint32_t
@@ -728,7 +728,7 @@ classDiagram
     BackchannelStabilizedVehicle o-- ReceiverBase
     BackchannelStabilizedVehicle o-- VehicleControllerBase
 
-    BackchannelStabilizedVehicle <|--BackchannelFlightController
+    BackchannelStabilizedVehicle <|--BackchannelFlightController : overrides sendPacket
     class BackchannelFlightController {
         +sendPacket() bool override
         #packetControl() bool override;

@@ -23,6 +23,11 @@
 See: 
 https://betaflight.com/docs/wiki/guides/current/DSHOT-RPM-Filtering
 https://brushlesswhoop.com/dshot-and-bidirectional-dshot/
+
+https://github.com/josephduchesne/pico-dshot-bidir
+https://github.com/bastian2001/pico-bidir-dshot
+https://github.com/symonb/Bidirectional-DSHOT-and-RPM-Filter?tab=readme-ov-file
+
 */
 
 ESC_DShot::ESC_DShot(protocol_e protocol, uint16_t motorPoleCount) :

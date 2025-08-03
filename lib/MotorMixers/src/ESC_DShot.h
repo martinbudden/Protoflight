@@ -46,7 +46,7 @@ public:
     void setProtocol(protocol_e protocol);
     void write(uint16_t pulse);
 
-    int32_t getMotorRPM() const { return _eRPM * _motorPoleCount / 2; }
+    int32_t getMotorRPM() const { return 2 * _eRPM / _motorPoleCount; } // eRPM = RPM * poles/2
     float getMotorHz() const { return static_cast<float>(_eRPM) * _eRPMtoHz; }
     void end();
     uint32_t nanoSecondsToCycles(uint32_t nanoSeconds) const;

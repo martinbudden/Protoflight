@@ -85,6 +85,24 @@ M5Stack StampFly is based on [Kanazawa StampFly](https://github.com/M5Fly-kanaza
 Kouhei Ito is a Professor at Kanazawa Institute of Technology and has lots of great articles (in Japanese) about drones and the related mathematics on his [blog](https://rikei-tawamure.com/).
 Google Translate makes these articles accessible if you don't speak Japanese.
 
+### [RP2350 Flight Controller for FPV](https://github.com/bastian2001/Kolibri-FC)
+
+Main software features:
+
+1. Configurator
+2. Acro and angle modes
+3. altitude and position hold modes (working, but need to be tuned)
+4. ELRS
+5. GPS (UBlox) and Compass (HMC5883 + QMC5883L)
+6. Bidirectional DShot 4800 (tested up to 1200)
+7. Variable frequency beeper with WAV support
+8. SD-Blackbox incl. viewer
+9. Barometer (Goertek SPL06-001 + STM LPS22HB)
+
+"Practically speaking, is there any reason to choose this over Betaflight or iNav? Likely not, but I want to have a challenge."
+
+Includes [Bi directional DShot using RPI Pico PIO](https://github.com/bastian2001/pico-bidir-dshot/)
+
 ### [Reefwing](https://github.com/Reefwing-Software)
 
 not a flight controller as such, but a collection of libraries that support flight control software.
