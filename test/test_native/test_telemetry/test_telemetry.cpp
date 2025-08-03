@@ -1,6 +1,7 @@
 #include "FC_TelemetryData.h"
 
 #include <AHRS.h>
+#include <Debug.h>
 #include <FC_Telemetry.h>
 #include <Features.h>
 #include <IMU_FiltersBase.h>
@@ -60,9 +61,10 @@ void test_telemetry_msp()
     static RadioController radioController(receiver);
     static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
+    static Debug debug;
 
     // statically allocate an MSP object
-    static MSP_ProtoFlight msp(features, ahrs, flightController, radioController, receiver);
+    static MSP_ProtoFlight msp(features, ahrs, flightController, radioController, receiver, debug);
 
 //size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, MSP_Base& msp, int16_t cmdMSP)
     static std::array<uint8_t, 256> buf;

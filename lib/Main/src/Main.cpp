@@ -61,6 +61,9 @@ void Main::setup()
     Serial.begin(115200);
 #endif
 
+    // Statically allocate the debug object
+    static Debug debug; // NOLINT(misc-const-correctness) false positive
+
 #if defined(USE_ESPNOW)
     // Set WiFi to station mode
     WiFi.mode(WIFI_STA);
@@ -69,9 +72,6 @@ void Main::setup()
     // get my MAC address
     uint8_t myMacAddress[ESP_NOW_ETH_ALEN];
     WiFi.macAddress(&myMacAddress[0]);
-
-    // Statically allocate the debug object
-    static Debug debug; // NOLINT(misc-const-correctness) false positive
 
     // Statically allocate and setup the receiver.
     static ReceiverAtomJoyStick receiver(&myMacAddress[0]);

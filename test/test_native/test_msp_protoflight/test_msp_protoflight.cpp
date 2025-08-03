@@ -2,6 +2,7 @@
 #include "Features.h"
 #include "FlightController.h"
 #include <AHRS.h>
+#include <Debug.h>
 #include <IMU_FiltersBase.h>
 #include <IMU_Null.h>
 #include <MSP_ProtoFlight.h>
@@ -57,8 +58,9 @@ void test_msp_set_failsafe_config()
     static RadioController radioController(receiver);
     static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
+    static Debug debug;
 
-    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver);
+    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
     static MSP_Stream mspStream(msp);
 
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
@@ -126,8 +128,9 @@ void test_msp_pid_in()
     static RadioController radioController(receiver);
     static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
+    static Debug debug;
 
-    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver);
+    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -169,8 +172,9 @@ void test_msp_features()
     static RadioController radioController(receiver);
     static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
+    static Debug debug;
 
-    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver);
+    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -194,8 +198,9 @@ void test_msp_raw_imu()
     static RadioController radioController(receiver);
     static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
     static Features features;
+    static Debug debug;
 
-    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver);
+    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
     static MSP_Stream mspStream(msp);
     //static const MSP_Serial mspSerial(mspStream, msp);
 
