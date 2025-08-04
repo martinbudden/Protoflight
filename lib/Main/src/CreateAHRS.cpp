@@ -1,12 +1,10 @@
 #include "Main.h"
-#include "IMU_Filters.h"
 
 #include <AHRS.h>
 #include <IMU_BMI270.h>
 #include <IMU_BNO085.h>
 #include <IMU_ICM426xx.h>
 #include <IMU_LSM6DS3TR_C.h>
-#include <IMU_M5Stack.h>
 #include <IMU_M5Unified.h>
 #include <IMU_MPU6000.h>
 #include <IMU_MPU6886.h>
@@ -15,7 +13,7 @@
 #endif
 #include <SensorFusion.h>
 
-AHRS& Main::createAHRS(const MotorMixerBase& motorMixer)
+AHRS& Main::createAHRS(IMU_FiltersBase& imuFilters)
 {
     // Statically allocate the IMU according the the build flags
 // NOLINTBEGIN(misc-const-correctness) false positive
@@ -86,8 +84,6 @@ AHRS& Main::createAHRS(const MotorMixerBase& motorMixer)
     // approx 16 microseconds per update
     static MadgwickFilter sensorFusionFilter;
 #endif
-    // statically allocate the IMU_Filters
-    static IMU_Filters imuFilters(motorMixer, AHRS_TASK_INTERVAL_MICROSECONDS);
 // NOLINTEND(misc-const-correctness)
 
     // Statically allocate the AHRS object

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "RPM_Filter.h"
-
 #include <IMU_FiltersBase.h>
+#include <cstdint>
 #include <xyz_type.h>
 
 class MotorMixerBase;
+class RPM_Filter;
 
 
 class IMU_Filters : public IMU_FiltersBase {
@@ -28,7 +28,9 @@ public:
         uint8_t rpm_filter_min_hz;
     };
 public:
-    IMU_Filters(const MotorMixerBase& motorMixerBase, uint32_t looptimeUs);
+    IMU_Filters(const MotorMixerBase& motorMixer, uint32_t looptimeUs);
+    void setRPM_Filter(RPM_Filter* rpmFilter);
+    void setFilterFromAHRS(bool filterFromAHRS) { _filterFromAHRS = filterFromAHRS; }
     void init(float Q);
 public:
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
@@ -41,5 +43,6 @@ protected:
     size_t _motorCount;
     size_t _motorIndex {0};
     filters_t _filters {};
-    RPM_Filter _rpmFilter;
+    uint32_t _filterFromAHRS {false};
+    RPM_Filter* _rpmFilter {nullptr};
 };

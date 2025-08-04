@@ -1,9 +1,5 @@
 #include "Main.h"
 
-#if defined(M5_UNIFIED)
-#include "ButtonsM5.h"
-#include "ScreenM5.h"
-#endif
 
 #include <AHRS.h>
 #include <AHRS_Task.h>
@@ -17,22 +13,30 @@
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
 #include <BlackboxTask.h>
+#if defined(M5_UNIFIED)
+#include <ButtonsM5.h>
+#endif
 #include <Debug.h>
 #include <Features.h>
 #include <FlightController.h>
+#include <IMU_Filters.h>
+#if defined(M5_UNIFIED)
+#include <M5Unified.h>
+#endif
 #include <MSP_ProtoFlight.h>
 #include <MSP_Serial.h>
 #include <MSP_Task.h>
 #include <MotorMixerQuadX_DShot.h>
 #include <MotorMixerQuadX_PWM.h>
-#if defined(M5_UNIFIED)
-#include <M5Unified.h>
-#endif
+#include <RPM_Filter.h>
 #include <RadioController.h>
 #include <ReceiverAtomJoyStick.h>
 #include <ReceiverNull.h>
 #include <ReceiverTask.h>
 #include <SV_Preferences.h>
+#if defined(M5_UNIFIED)
+#include <ScreenM5.h>
+#endif
 #include <TimeMicroSeconds.h>
 #include <VehicleControllerTask.h>
 #if defined(USE_ESPNOW)
@@ -95,12 +99,20 @@ void Main::setup()
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
     static MotorMixerQuadX_PWM motorMixer(pins); // NOLINT(misc-const-correctness) false positive
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
+    enum { MOTOR_COUNT = 4 };
+    static RPM_Filter rpmFilter(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
-    static MotorMixerQuadX_DShot motorMixer(pins); // NOLINT(misc-const-correctness) false positive
+    static MotorMixerQuadX_DShot motorMixer(pins, rpmFilter); // NOLINT(misc-const-correctness) false positive
+#endif
+
+    // statically allocate the IMU_Filters
+    static IMU_Filters imuFilters(motorMixer, AHRS_TASK_INTERVAL_MICROSECONDS);
+#if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
+    imuFilters.setRPM_Filter(&rpmFilter);
 #endif
 
     // Statically allocate the AHRS
-    AHRS& ahrs = createAHRS(motorMixer);
+    AHRS& ahrs = createAHRS(imuFilters);
 
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);

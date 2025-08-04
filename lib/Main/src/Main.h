@@ -15,6 +15,7 @@ class ButtonsBase;
 class Debug;
 class Features;
 class FlightController;
+class IMU_FiltersBase;
 class MotorMixerBase;
 class MSP_Serial;
 class MSP_Task;
@@ -93,7 +94,7 @@ public:
     void loop();
 private:
     void testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, const Debug& debug);
-    static AHRS& createAHRS(const MotorMixerBase& motorMixer);
+    static AHRS& createAHRS(IMU_FiltersBase& imuFilters);
     static void checkGyroCalibration(SV_Preferences& preferences, AHRS& ahrs);
     static void resetPreferences(SV_Preferences& preferences, FlightController& flightController);
     static void loadPreferences(SV_Preferences& preferences, FlightController& flightController);

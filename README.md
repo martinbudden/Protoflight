@@ -195,8 +195,8 @@ The heart of the loop is the `AHRS::readIMUandUpdateOrientation` function, invoc
 2. The IMU device driver ISR (interrupt service routine) is called and it initiates a read of the IMU via DMA (direct memory access).
 3. The DMA completes. The IMU device driver converts the raw IMU data into real world units, taking into account the IMU orientation
    within the aircraft frame.
-4. The IMU device driver signals the AHRS task that there is a new IMU value available.
-5. The AHRS task receives the signal and calls the `AHRS::readIMUandUpdateOrientation` function.
+4. The IMU device driver signals the AHRS task that there is a new IMU value available by putting the IMU reading in a shared message queue
+5. The AHRS task receives the signal, gets the IMU value from the shared message queue, and calls the `AHRS::readIMUandUpdateOrientation` function.
 6. **THE CLOCK STARTS NOW**. For an **8kHz** update frequency we have **125 microseconds** (see note) to complete all the following steps,
    *(Timings for each step in microseconds on an 240MHz ESP32 S3 are given where available)*.
 7. The AHRS gets the IMU reading from the IMU device.
@@ -208,6 +208,14 @@ The heart of the loop is the `AHRS::readIMUandUpdateOrientation` function, invoc
 
 Note: strictly speaking we don't have the full 125 microseconds - step 3 also uses a few microseconds of this time
 (which is why it is preferable to have an IMU that can be read in little-endian format - this avoids the need for byte reordering).
+
+Note: steps 1-5 can be made more efficient when using a Raspberry Pi Pico and PIO, namely:
+
+1. The IMU generates a new reading and sets its interrupt pin.
+2. The PIO state machine that was waiting on the IMU interrupt PIN reads the IMU and puts the result in its TX FIFO.
+3. The AHRS task which, was waiting on the PIO TX FIFO, gets the IMU value and calls the `AHRS::readIMUandUpdateOrientation` function.
+
+This avoid both the ISR and the shared message queue.
 
 ## Simplified Class Structure
 
@@ -355,8 +363,10 @@ classDiagram
     MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot
     class MotorMixerQuadX_Base
     link MotorMixerQuadX_Base "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_Base.h"
+
     class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
     link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
+    MotorMixerQuadX_DShot o-- RPM_Filter
 
     IMU_Base <|-- IMU_BMI270
     class IMU_BMI270["IMU_BMI270(eg)"]
@@ -383,7 +393,7 @@ On a dual-core processor `AHRS_Task` has the second core all to itself.
 The `AHRS_Task` and the `ReceiverTask` may be either interrupt driven or timer driven.<br>
 All other tasks are timer driven.
 
-Tasks are statically (build-time) polymorphic, not dynamically (run-time) polymorphic. 
+Tasks are statically (build-time) polymorphic, not dynamically (run-time) polymorphic.
 They all have `task` and `loop` functions, but these functions are not virtual.
 This is deliberate.
 
