@@ -2,7 +2,8 @@
 
 #include <Filters.h>
 #include <array>
-#include <xyz_type.h>
+
+struct  xyz_t;
 
 /*!
 There are up to 6 RPM filters for each motor.

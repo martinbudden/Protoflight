@@ -1,5 +1,5 @@
 #include <RPM_Filter.h>
-
+#include <xyz_type.h>
 
 void RPM_Filter::init(uint32_t harmonicToUse, float Q)
 {

@@ -2,7 +2,6 @@
 
 #include <AHRS.h>
 #include <Blackbox.h> // just needed for //_blackbox->finish() and endlog()
-#include <Filters.h>
 
 #if !defined(UNIT_TEST_BUILD)
 //#define SERIAL_OUTPUT

@@ -1,5 +1,6 @@
 #include "MotorMixerQuadX_DShot.h"
-//#include <RPM_Filter.h>
+#include <Filters.h>
+#include <RPM_Filter.h>
 #include <cmath>
 
 
@@ -36,17 +37,17 @@ void MotorMixerQuadX_DShot::outputToMotors(const commands_t& commands, float del
     // and finally output to the motors and read to get the motor RPM from bidirectional dshot
     _motorBR.write(static_cast<uint16_t>(_motorOutputs[MOTOR_BR]));
     _motorBR.read();
-    //_rpmFilter.setFrequency(MOTOR_BR, _motorBR.getMotorHz());
+    _rpmFilter.setFrequency(MOTOR_BR, _motorBR.getMotorHz());
 
     _motorFR.write(static_cast<uint16_t>(_motorOutputs[MOTOR_FR]));
     _motorFR.read();
-    //_rpmFilter.setFrequency(MOTOR_FR, _motorBR.getMotorHz());
+    _rpmFilter.setFrequency(MOTOR_FR, _motorBR.getMotorHz());
 
     _motorBL.write(static_cast<uint16_t>(_motorOutputs[MOTOR_BL]));
     _motorBL.read();
-    //_rpmFilter.setFrequency(MOTOR_BL, _motorBR.getMotorHz());
+    _rpmFilter.setFrequency(MOTOR_BL, _motorBR.getMotorHz());
 
     _motorFL.write(static_cast<uint16_t>(_motorOutputs[MOTOR_FL]));
     _motorFL.read();
-    //_rpmFilter.setFrequency(MOTOR_FL, _motorBR.getMotorHz());
+    _rpmFilter.setFrequency(MOTOR_FL, _motorBR.getMotorHz());
 }
