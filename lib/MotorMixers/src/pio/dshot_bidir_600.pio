@@ -86,7 +86,7 @@ read_next32:
 
 
 % c-sdk {
-static inline void dshot_bidir_600_program_init(PIO pio, uint sm, uint offset, uint pin) {
+static inline void dshot_bidir_600_program_init(PIO pio, uint sm, uint offset, uint pin, uint cpuFrequency) {
     // State Machine configuration
     pio_sm_config smConfig = dshot_bidir_600_program_get_default_config(offset);
 
@@ -110,7 +110,7 @@ static inline void dshot_bidir_600_program_init(PIO pio, uint sm, uint offset, u
     enum { AUTOPUSH_ENABLED = true, AUTOPUSH_DISABLED = false };
     sm_config_set_in_shift(&smConfig, false, false, 32);
 
-    const double clocks_per_us = clock_get_hz(clk_sys) / 1000000;
+    const double clocks_per_us = cpuFrequency / 1000000;
     // 1.667us per bit for dshot600
     sm_config_set_clkdiv(&smConfig, static_cast<float>(1.667 / static_cast<double>(dshot_bidir_600_BIT_PERIOD) * clocks_per_us));
 

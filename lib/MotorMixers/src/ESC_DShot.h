@@ -66,7 +66,7 @@ public:
     uint32_t getDataLowPulseWidth() const { return _dataLowPulseWidth; }
     uint32_t getBufferItem(size_t index) const { return _dmaBuffer[index]; }
 protected:
-    uint64_t _cpuFrequency {150000000L};
+    uint32_t _cpuFrequency {150000000};
     protocol_e _protocol;
     uint32_t _useHighOrderBits = 0;
     uint32_t _wrapCycleCount {};

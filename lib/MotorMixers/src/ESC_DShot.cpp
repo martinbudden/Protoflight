@@ -54,14 +54,14 @@ void ESC_DShot::init(uint16_t pin)
         // Configure it to run our program, and start it, using the
         // helper function we included in our .pio file.
         //printf("Using gpio %d\n", pin);
-        dshot_bidir_300_program_init(_pio, _pioStateMachine, _pioOffset, pin);
+        dshot_bidir_300_program_init(_pio, _pioStateMachine, _pioOffset, pin, _cpuFrequency);
     } else {
         const bool success = pio_claim_free_sm_and_add_program_for_gpio_range(&dshot_bidir_600_program, &_pio, &_pioStateMachine, &_pioOffset, pin, 1, true);
         hard_assert(success);
         // Configure it to run our program, and start it, using the
         // helper function we included in our .pio file.
         //printf("Using gpio %d\n", pin);
-        dshot_bidir_600_program_init(_pio, _pioStateMachine, _pioOffset, pin);
+        dshot_bidir_600_program_init(_pio, _pioStateMachine, _pioOffset, pin, _cpuFrequency);
     }
     // The PIO State Machine is now running, to use we push onto its TX FIFO and pull from the RX FIFO
 #else
@@ -177,7 +177,7 @@ void ESC_DShot::setProtocol(protocol_e protocol)
         break;
     }
 
-#if defined(FRAMEWORK_RPI_PICO)
+#if defined(FRAMEWORK_RPI_PICO) && !defined(USE_DSHOT_RPI_PICO_PIO)
     if (_pin != PIN_NOT_SET) {
         // the pin has already been set, so we need to re-set the wrap value
         const uint32_t slice = pwm_gpio_to_slice_num(_pin);
@@ -192,11 +192,12 @@ uint32_t ESC_DShot::nanoSecondsToCycles(uint32_t nanoSeconds) const
 {
     // note: the k values cancel out, but give greater precision in the calculation
     const uint64_t k = 128;
-    const uint64_t d = k * 1000000000  / _cpuFrequency;
+    const uint64_t d = k * 1000000000L  / _cpuFrequency;
     const uint64_t ret = nanoSeconds * k / d;
     return static_cast<uint32_t>(ret);
 }
 
+// NOLINTBEGIN(hicpp-signed-bitwise)
 uint16_t ESC_DShot::dShotShiftAndAddChecksum(uint16_t value)
 {
     value <<= 1U;
@@ -216,10 +217,10 @@ uint16_t ESC_DShot::dShotShiftAndAddChecksum(uint16_t value)
 
     checksum ^= checksumData;
 
-    checksum &= 0xf; // NOLINT(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers,hicpp-signed-bitwise)
+    checksum &= 0xf; // NOLINT(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
 
     // lower 4 bits is checksum
-    return (value << 4U) | checksum; // NOLINT(hicpp-signed-bitwise)
+    return (value << 4U) | checksum;
 }
 
 void ESC_DShot::write(uint16_t pulse) // NOLINT(readability-make-member-function-const)
@@ -236,7 +237,7 @@ void ESC_DShot::write(uint16_t pulse) // NOLINT(readability-make-member-function
     const uint16_t value = dShotConvert(pulse);
     const uint16_t frame = dShotShiftAndAddChecksum(value);
 
-    uint16_t maskBit = 1U << (DSHOT_BIT_COUNT - 1); // NOLINT(misc-const-correctness,hicpp-signed-bitwise) false positive
+    uint16_t maskBit = 1U << (DSHOT_BIT_COUNT - 1); // NOLINT(misc-const-correctness) false positive
     if (_useHighOrderBits) {
         for (auto& item : _dmaBuffer) {
             item = ((frame & maskBit) ? _dataHighPulseWidth : _dataLowPulseWidth) << 16;
@@ -265,7 +266,7 @@ void ESC_DShot::write(uint16_t pulse) // NOLINT(readability-make-member-function
 
 bool ESC_DShot::read()
 {
-    uint64_t value {};
+    uint64_t value {}; // NOLINT(misc-const-correctness) false positive
 #if defined(USE_DSHOT_RPI_PICO_PIO)
     const int32_t fifoCount = pio_sm_get_rx_fifo_level(_pio, _pioStateMachine);
     if (fifoCount >= 2) {
@@ -327,7 +328,6 @@ void ESC_DShot::end()
 #endif // FRAMEWORK
 }
 
-// NOLINTBEGIN(hicpp-signed-bitwise)
 uint32_t ESC_DShot::decodeERPM(uint16_t value)
 {
     // eRPM range

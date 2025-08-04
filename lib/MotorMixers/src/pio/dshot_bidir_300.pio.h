@@ -12,10 +12,10 @@
 // dshot_bidir_300 //
 // --------------- //
 
-#define dshot_bidir_300_wrap_target 0
-#define dshot_bidir_300_wrap 30
+enum { dshot_bidir_300_wrap_target = 0 };
+enum { dshot_bidir_300_wrap = 30 };
 
-#define dshot_bidir_300_BIT_PERIOD 40
+enum { dshot_bidir_300_BIT_PERIOD = 40 };
 
 static const uint16_t dshot_bidir_300_program_instructions[] = {
             //     .wrap_target
@@ -58,6 +58,8 @@ static const struct pio_program dshot_bidir_300_program = {
     .instructions = dshot_bidir_300_program_instructions,
     .length = 31,
     .origin = -1,
+    .pio_version {},
+    .used_gpio_ranges {}
 };
 
 static inline pio_sm_config dshot_bidir_300_program_get_default_config(uint offset) {
@@ -66,7 +68,7 @@ static inline pio_sm_config dshot_bidir_300_program_get_default_config(uint offs
     return c;
 }
 
-static inline void dshot_bidir_300_program_init(PIO pio, uint sm, uint offset, uint pin) {
+static inline void dshot_bidir_300_program_init(PIO pio, uint sm, uint offset, uint pin, uint cpuFrequency) {
     pio_sm_config c = dshot_bidir_300_program_get_default_config(offset);
     sm_config_set_set_pins(&c, pin, 1);
     sm_config_set_in_pins(&c, pin);
@@ -76,11 +78,10 @@ static inline void dshot_bidir_300_program_init(PIO pio, uint sm, uint offset, u
     gpio_set_pulls(pin, true, false);  // up, down
     sm_config_set_out_shift(&c, false, false, 32);   // auto-pull enabled
     sm_config_set_in_shift(&c, false, false, 32);
-    const double clocks_per_us = 150.0; //!!TODO: check thisclock_get_hz(clk_sys) / 1000000;
+    const double clocks_per_us = cpuFrequency / 1000000;
     // 3.333us per bit for dshot300
     sm_config_set_clkdiv(&c, static_cast<float>(3.333 / static_cast<double>(dshot_bidir_300_BIT_PERIOD) * clocks_per_us));
     pio_sm_init(pio, sm, offset, &c);
 }
 
 #endif
-
