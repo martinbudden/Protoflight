@@ -196,11 +196,20 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
         telemetry.motors[ii].rpm = _mixer.getMotorRPM(ii);
     }
     if (motorsIsOn()) {
-        telemetry.rollRateError = _PIDS[ROLL_RATE_DPS].getError();
-        telemetry.pitchRateError = _PIDS[PITCH_RATE_DPS].getError();
-        telemetry.yawRateError = _PIDS[YAW_RATE_DPS].getError();
-        telemetry.rollAngleError = _PIDS[ROLL_ANGLE_DEGREES].getError();
-        telemetry.pitchAngleError = _PIDS[PITCH_ANGLE_DEGREES].getError();
+        const PIDF::error_t rollRateError = _PIDS[ROLL_RATE_DPS].getError();
+        telemetry.rollRateError = { rollRateError.P, rollRateError.I, rollRateError.D, rollRateError.F, rollRateError.S };
+
+        const PIDF::error_t pitchRateError = _PIDS[PITCH_RATE_DPS].getError();
+        telemetry.pitchRateError = { pitchRateError.P, pitchRateError.I, pitchRateError.D, pitchRateError.F, pitchRateError.S };
+
+        const PIDF::error_t yawRateError = _PIDS[YAW_RATE_DPS].getError();
+        telemetry.yawRateError = { yawRateError.P, yawRateError.I, yawRateError.D, yawRateError.F, yawRateError.S };
+
+        const PIDF::error_t rollAngleError = _PIDS[ROLL_ANGLE_DEGREES].getError();
+        telemetry.rollAngleError = { rollAngleError.P, rollAngleError.I, rollAngleError.D, rollAngleError.F, rollAngleError.S };
+
+        const PIDF::error_t pitchAngleError = _PIDS[PITCH_ANGLE_DEGREES].getError();
+        telemetry.pitchAngleError = { pitchAngleError.P, pitchAngleError.I, pitchAngleError.D, pitchAngleError.F, pitchAngleError.S };
     } else {
         telemetry.rollRateError =  { 0.0F, 0.0F, 0.0F, 0.0F, 0.0F };
         telemetry.pitchRateError = { 0.0F, 0.0F, 0.0F, 0.0F, 0.0F };
@@ -209,28 +218,6 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
         telemetry.pitchAngleError ={ 0.0F, 0.0F, 0.0F, 0.0F, 0.0F };
     }
     return telemetry;
-}
-
-void FlightController::outputToMotors(float deltaT, uint32_t tickCount)
-{
-    const MotorMixerBase::commands_t commands =
-    _radioController.getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED ?
-        MotorMixerBase::commands_t {
-            .speed  = 0.25F,
-            .roll   = 0.0F,
-            .pitch  = 0.0F,
-            .yaw    = 0.0F
-        }
-    :
-        MotorMixerBase::commands_t {
-            .speed  = _thrustOutput,
-            // scale roll, pitch, and yaw to range [0.0F, 1.0F]
-            .roll   = _outputs[ROLL_ANGLE_DEGREES] / _rollRateAtMaxPowerDPS,
-            .pitch  = _outputs[PITCH_ANGLE_DEGREES] / _pitchRateAtMaxPowerDPS,
-            .yaw    = _outputs[YAW_RATE_DPS] / _yawRateAtMaxPowerDPS
-        };
-    _mixerThrottle = commands.speed;
-    _mixer.outputToMotors(commands, deltaT, tickCount);
 }
 
 /*!
@@ -330,7 +317,8 @@ void FlightController::updateOutputsUsingPIDs(float deltaT)
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyroRPS, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
 
-NOTE: this function may be configured to be called either from the FlightController loop() function, or from the AHRS loop() function.
+NOTE: this function may be configured to be called either from the FlightController loop() function (ie in the VehicleController task),
+or from the AHRS loop() function (ie in the AHRS task).
 In the latter case it is typically called at frequency of between 1000Hz and 8000Hz, so it has to be FAST.
 */
 void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT)
@@ -447,14 +435,61 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
     const float rollRateDeltaDPS = _rollRateDTermFilter.filter(rollRateDPS - _PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
     _outputs[ROLL_RATE_DPS] = _PIDS[ROLL_RATE_DPS].updateDelta(rollRateDPS, rollRateDeltaDPS*_TPA, deltaT);
+    _outputs[ROLL_RATE_DPS] = _outputFilters[ROLL_RATE_DPS].filter(_outputs[ROLL_RATE_DPS]);
 
     const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
     const float pitchRateDeltaDPS = _pitchRateDTermFilter.filter(pitchRateDPS - _PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
     _outputs[PITCH_RATE_DPS] = _PIDS[PITCH_RATE_DPS].updateDelta(pitchRateDPS, pitchRateDeltaDPS*_TPA, deltaT);
+    _outputs[PITCH_RATE_DPS] = _outputFilters[PITCH_RATE_DPS].filter(_outputs[PITCH_RATE_DPS]);
 
     // DTerm is zero for yawRate, so no DTerm filtering required
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
     _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT);
+    _outputs[YAW_RATE_DPS] = _outputFilters[YAW_RATE_DPS].filter(_outputs[YAW_RATE_DPS]);
+
+    const FlightControllerMessageQueue::queue_item_t queueItem {
+        .roll = _outputs[ROLL_RATE_DPS],
+        .pitch = _outputs[PITCH_RATE_DPS],
+        .yaw = _outputs[YAW_RATE_DPS]
+    };
+    _messageQueue.OVERWRITE(queueItem);
+}
+
+void FlightController::outputToMotors(float deltaT, uint32_t tickCount)
+{
+    if (_radioController.getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
+        const MotorMixerBase::commands_t commands {
+            .speed  = 0.25F,
+            .roll   = 0.0F,
+            .pitch  = 0.0F,
+            .yaw    = 0.0F
+        };
+        _mixerThrottle = commands.speed;
+        _mixer.outputToMotors(commands, deltaT, tickCount);
+        return;
+    }
+
+#if true
+    FlightControllerMessageQueue::queue_item_t queueItem {}; // NOLINT(misc-const-correctness) false positive
+    _messageQueue.RECEIVE(queueItem);
+    const MotorMixerBase::commands_t commands {
+        .speed  = _thrustOutput,
+        // scale roll, pitch, and yaw to range [0.0F, 1.0F]
+        .roll   = queueItem.roll / _rollRateAtMaxPowerDPS,
+        .pitch  = queueItem.pitch / _pitchRateAtMaxPowerDPS,
+        .yaw    = queueItem.yaw / _yawRateAtMaxPowerDPS
+    };
+#else
+    MotorMixerBase::commands_t commands {
+        .speed  = _thrustOutput,
+        // scale roll, pitch, and yaw to range [0.0F, 1.0F]
+        .roll   = _outputs[ROLL_ANGLE_DEGREES] / _rollRateAtMaxPowerDPS,
+        .pitch  = _outputs[PITCH_ANGLE_DEGREES] / _pitchRateAtMaxPowerDPS,
+        .yaw    = _outputs[YAW_RATE_DPS] / _yawRateAtMaxPowerDPS
+    };
+#endif
+    _mixerThrottle = commands.speed;
+    _mixer.outputToMotors(commands, deltaT, tickCount);
 }
 
 /*!

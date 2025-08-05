@@ -1,4 +1,5 @@
-#include "RPM_Filter.h"
+#include <IMU_Filters.h> // test code won't build if this not included
+#include <RPM_Filter.h>
 #include <cmath>
 
 #include <unity.h>

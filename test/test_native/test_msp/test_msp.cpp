@@ -1,3 +1,4 @@
+#include <IMU_Filters.h> // test code won't build if this not included
 #include <MSP_Protocol_Base.h>
 #include <MSP_Serial.h>
 #include <MSP_Stream.h>

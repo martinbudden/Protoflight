@@ -1,4 +1,5 @@
 #include <ESC_DShot.h>
+#include <IMU_Filters.h> // test code won't build if this not included
 #include <array>
 #include <unity.h>
 

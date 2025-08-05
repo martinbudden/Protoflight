@@ -5,7 +5,7 @@ Packet definitions of telemetry data specific to Flight Controllers.
 */
 
 
-#include "FlightControllerTelemetry.h"
+#include <PIDF.h>
 #include <array>
 #include <cstdint>
 

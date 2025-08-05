@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FlightControllerMessageQueue.h"
 #include "FlightControllerTelemetry.h"
 
 #include <Filters.h>
@@ -64,21 +65,7 @@ public:
         WAS_EVER_ARMED = 0x02,
         WAS_ARMED_WITH_PREARM = 0x04
     };
-    enum flight_mode_flag_e {
-        ANGLE_MODE      = (1U << 0),
-        HORIZON_MODE    = (1U << 1U),
-        MAG_MODE        = (1U << 2U),
-        ALT_HOLD_MODE   = (1U << 3U),
-        GPS_HOME_MODE   = (1U << 4U),
-        GPS_HOLD_MODE   = (1U << 5U),
-        HEADFREE_MODE   = (1U << 6U),
-        UNUSED_MODE     = (1U << 7U), // old autotune
-        PASSTHRU_MODE   = (1U << 8U),
-        RANGEFINDER_MODE= (1U << 9U),
-        FAILSAFE_MODE   = (1U << 10U),
-        GPS_RESCUE_MODE = (1U << 11U)
-    };
-    enum log2_flight_mode_flag_e { // must be kept in step with flight_mode_flag_e
+    enum log2_flight_mode_flag_e {
         LOG2_ANGLE_MODE         = 0,
         LOG2_HORIZON_MODE       = 1,
         LOG2_MAG_MODE           = 2,
@@ -91,6 +78,20 @@ public:
         LOG2_RANGEFINDER_MODE   = 9,
         LOG2_FAILSAFE_MODE      = 10,
         LOG2_GPS_RESCUE_MODE    = 11
+    };
+    enum flight_mode_flag_e {
+        ANGLE_MODE      = (1U << LOG2_ANGLE_MODE),
+        HORIZON_MODE    = (1U << LOG2_HORIZON_MODE),
+        MAG_MODE        = (1U << LOG2_MAG_MODE),
+        ALT_HOLD_MODE   = (1U << LOG2_ALT_HOLD_MODE),
+        GPS_HOME_MODE   = (1U << LOG2_GPS_HOME_MODE),
+        GPS_HOLD_MODE   = (1U << LOG2_GPS_HOLD_MODE),
+        HEADFREE_MODE   = (1U << LOG2_HEADFREE_MODE),
+        UNUSED_MODE     = (1U << LOG2_UNUSED_MODE), // old autotune
+        PASSTHRU_MODE   = (1U << LOG2_PASSTHRU_MODE),
+        RANGEFINDER_MODE= (1U << LOG2_RANGEFINDER_MODE),
+        FAILSAFE_MODE   = (1U << LOG2_FAILSAFE_MODE),
+        GPS_RESCUE_MODE = (1U << LOG2_GPS_RESCUE_MODE)
     };
 
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
@@ -187,6 +188,7 @@ private:
     MotorMixerBase& motorMixer(uint32_t taskIntervalMicroSeconds);
 private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
+    FlightControllerMessageQueue _messageQueue;
     MotorMixerBase& _mixer;
     RadioControllerBase& _radioController;
     Blackbox* _blackbox {nullptr};
@@ -229,6 +231,7 @@ private:
 
     std::array<PIDF, PID_COUNT> _PIDS {};
     std::array<float, PID_COUNT> _outputs {}; //<! PID outputs. These are stored since the output from one PID may be used as the input to another
+    std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> _outputFilters;
     const std::array<PIDF::PIDF_t, PID_COUNT> _scaleFactors;
     float _rollRateAtMaxPowerDPS {1000.0};
     float _pitchRateAtMaxPowerDPS {1000.0};

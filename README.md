@@ -197,19 +197,23 @@ The heart of the loop is the `AHRS::readIMUandUpdateOrientation` function, invoc
    within the aircraft frame.
 4. The IMU device driver signals the AHRS task that there is a new IMU value available by putting the IMU reading in a shared message queue
 5. The AHRS task receives the signal, gets the IMU value from the shared message queue, and calls the `AHRS::readIMUandUpdateOrientation` function.
-6. **THE CLOCK STARTS NOW**. For an **8kHz** update frequency we have **125 microseconds** (see note) to complete all the following steps,
+6. **THE CLOCK STARTS NOW**. For an **8kHz** update frequency we have **125 microseconds** (see NOTE A) to complete all the following steps,
    *(Timings for each step in microseconds on an 240MHz ESP32 S3 are given where available)*.
 7. The AHRS gets the IMU reading from the IMU device.
-8. The AHRS sets the RPM filter for one motor using the current motor RPM values, so over 4 loops all RPM filter values are set *(1st harmonic only:16us(max25),1st+3rd:26us)*.
+8. The AHRS sets the RPM filter frequency for one motor using the current motor RPM values,
+   so over 4 loops all RPM filter frequencies are set *(1st harmonic only:16us(max25),1st+3rd:26us)* (see NOTE B).
 9. The AHRS filters the IMU reading, using the RPM filters and all other filters *(1st harmonic only:15us(max19),1st+3rd:21us)*.
 10. The AHRS calculates the current orientation using sensor fusion of the gyro and accelerometers values *(20us)*.
 11. The AHRS calls `FlightController::updateOutputsUsingPIDs` passing the gyro, accelerometer and orientation values *(acroMode:20us,angleModeQuaternionSpace:50us,angleModeEulerAngleSpace:80us)*.
-12. If the blackbox is active, data is copied to the blackbox for logging by the Blackbox task.
+12. If the blackbox is active, data is copied to the blackbox message queue for logging by the Blackbox task.
 
-Note: strictly speaking we don't have the full 125 microseconds - step 3 also uses a few microseconds of this time
+NOTE A: strictly speaking we don't have the full 125 microseconds - step 3 also uses a few microseconds of this time
 (which is why it is preferable to have an IMU that can be read in little-endian format - this avoids the need for byte reordering).
 
-Note: steps 1-5 can be made more efficient when using a Raspberry Pi Pico and PIO, namely:
+NOTE B: on reflection, I think I will change this so that the RPM filter frequencies are set in the VehicleController task, right after
+the motor outputs are set.
+
+NOTE C: steps 1-5 can be made more efficient when using a Raspberry Pi Pico and PIO, namely:
 
 1. The IMU generates a new reading and sets its interrupt pin.
 2. The PIO state machine that was waiting on the IMU interrupt PIN reads the IMU and puts the result in its TX FIFO.
@@ -283,21 +287,21 @@ classDiagram
     class MotorMixerBase {
         <<abstract>>
         outputToMotors() *
-        getMotorRPM() int32_t *
-        getMotorFrequencyHz() float
+        getMotorFrequencyHz() float *
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerBase.h"
     MotorMixerBase <|-- MotorMixerQuadX_Base
 
-    VehicleControllerBase <|-- FlightController
+    VehicleControllerBase <|-- FlightController : overrides loop updateOutputsUsingPIDs
     class FlightController {
         array~PIDF~ _pids
         Filter _rollRateDTermFilter
         Filter _pitchRateDTermFilter
         array~Filter~ _stickSetpointFilters
-        updateOutputsUsingPIDs() override
+        loop() override
         updateSetpoints()
-        updateMotorSpeedEstimates()
+        updateOutputsUsingPIDs() override
+        outputToMotors()
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     FlightController o-- Blackbox : calls start finish
@@ -310,7 +314,7 @@ classDiagram
     }
     link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
     AHRS o-- IMU_Base : calls readAccGyroRPS
-    AHRS o-- IMU_FiltersBase : calls setFilters filter
+    AHRS o-- IMU_FiltersBase : calls filter
     AHRS o-- SensorFusionFilterBase : calls update
     AHRS o-- AHRS_MessageQueueBase : calls append
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
@@ -344,8 +348,8 @@ classDiagram
 
     class RPM_Filter {
         array~NotchFilter~ _filters[MOTOR][HARMONIC][AXIS]
-        setFrequency(size_t motorIndex, float frequencyHz)
-        filter(xyz_t& axis, size_t motorIndex)
+        setFrequency()
+        filter()
     }
     link RPM_Filter "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RPM_Filter.h"
 
@@ -357,16 +361,16 @@ classDiagram
         filter() override
     }
     link IMU_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/IMU_Filters.h"
-    IMU_Filters o-- MotorMixerBase : calls getMotorFrequencyHz
-    IMU_Filters *-- RPM_Filter
+    IMU_Filters o-- MotorMixerBase
+    IMU_Filters *-- RPM_Filter : calls filter
 
-    MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot
+    MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot : overrides getMotorFrequencyHz
     class MotorMixerQuadX_Base
     link MotorMixerQuadX_Base "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_Base.h"
 
     class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
     link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
-    MotorMixerQuadX_DShot o-- RPM_Filter
+    MotorMixerQuadX_DShot o-- RPM_Filter : calls setFrequency
 
     IMU_Base <|-- IMU_BMI270
     class IMU_BMI270["IMU_BMI270(eg)"]
@@ -437,8 +441,11 @@ classDiagram
     }
     class FlightController {
         array~PIDF~ _pids
-        updateOutputsUsingPIDs() override
+        loop() override
+        loop() override
         updateSetpoints()
+        updateOutputsUsingPIDs() override
+        outputToMotors()
     }
     FlightController o-- Blackbox : calls start finish
     FlightController o-- RadioControllerBase : calls getFailsafePhase
@@ -473,7 +480,7 @@ classDiagram
     }
     link VehicleControllerTask "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerTask.h"
     VehicleControllerTask o-- VehicleControllerBase : calls loop
-    VehicleControllerBase <|-- FlightController
+    VehicleControllerBase <|-- FlightController : overrides loop updateOutputsUsingPIDs
 
     TaskBase <|-- AHRS_Task
     class AHRS_Task {
