@@ -219,7 +219,13 @@ NOTE C: steps 1-5 can be made more efficient when using a Raspberry Pi Pico and 
 2. The PIO state machine that was waiting on the IMU interrupt PIN reads the IMU and puts the result in its TX FIFO.
 3. The AHRS task which, was waiting on the PIO TX FIFO, gets the IMU value and calls the `AHRS::readIMUandUpdateOrientation` function.
 
-This avoid both the ISR and the shared message queue.
+This avoids both the ISR and the shared message queue.
+
+## UML Diagrams
+
+UML Diagrams have become somewhat unfashionable. But I like them.
+I agree that they have limited use in the design phase of a project, but I find they are very useful to document a design.
+The process of documenting a design can reveal subtleties that were overlooked, and indeed I found that when documenting ProtoFlight.
 
 ## Simplified Class Structure
 
@@ -234,6 +240,10 @@ RadioController is not really a good name and I am trying to think of a better o
 
 ```mermaid
 classDiagram
+    class ReceiverTask:::taskClass {
+        +loop()
+        -task() [[noreturn]]
+    }
     class SensorFusionFilterBase {
         <<abstract>>
         update() Quaternion *
@@ -252,17 +262,9 @@ classDiagram
         SEND(const queue_item_t& queueItem)
         SEND_IF_NOT_FULL(const queue_item_t& queueItem)
     }
-    AHRS_MessageQueueBase <-- BlackboxMessageQueueAHRS
+    AHRS_MessageQueueBase <-- BlackboxMessageQueueAHRS : overrides append
     BlackboxMessageQueueAHRS o-- BlackboxMessageQueue : calls SEND_IF_NOT_FULL
 
-    class Blackbox {
-        <<abstract>>
-        writeSystemInformation() *
-        start()
-        finish()
-        update() uint32_t
-    }
-    link Blackbox "https://github.com/martinbudden/Library-Blackbox/blob/main/src/Blackbox.h"
 
     class IMU_Base {
         <<abstract>>
@@ -290,9 +292,15 @@ classDiagram
         getMotorFrequencyHz() float *
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerBase.h"
-    MotorMixerBase <|-- MotorMixerQuadX_Base
+    MotorMixerBase <|-- MotorMixerQuadX_Base : overrides outputToMotors
+
+    class VehicleControllerTask:::taskClass {
+    }
+    VehicleControllerTask o-- VehicleControllerBase : calls loop
 
     VehicleControllerBase <|-- FlightController : overrides loop updateOutputsUsingPIDs
+    %%VehicleControllerBase o-- AHRS : historical
+    VehicleControllerBase o-- AHRS : historical
     class FlightController {
         array~PIDF~ _pids
         Filter _rollRateDTermFilter
@@ -304,10 +312,9 @@ classDiagram
         outputToMotors()
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    FlightController o-- Blackbox : calls start finish
-    FlightController --o RadioController : calls updateSetpoints
     FlightController o-- RadioControllerBase : calls getFailsafePhase
-    FlightController o-- MotorMixerBase : calls outputToMotors
+    FlightController --o RadioController : calls updateSetpoints
+    FlightController o-- MotorMixerBase : loop calls outputToMotors
 
     class AHRS {
         bool readIMUandUpdateOrientation()
@@ -317,8 +324,10 @@ classDiagram
     AHRS o-- IMU_FiltersBase : calls filter
     AHRS o-- SensorFusionFilterBase : calls update
     AHRS o-- AHRS_MessageQueueBase : calls append
+    class AHRS_Task:::taskClass {
+    }
+    AHRS_Task o-- AHRS : calls updateOutputUsingPIDS
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
-    VehicleControllerBase o-- AHRS : historical
 
     class ReceiverBase {
         <<abstract>>
@@ -337,8 +346,11 @@ classDiagram
     }
     link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
 
-    RadioControllerBase <|-- RadioController
-    RadioControllerBase o--ReceiverBase
+    ReceiverTask o-- RadioControllerBase : calls updateControls
+    %%RadioControllerBase --o ReceiverTask : calls updateControls
+
+    RadioControllerBase o--ReceiverBase : calls getSwitch
+    RadioControllerBase <|-- RadioController : overrides updateControls
     class RadioController {
         updateControls() override
         checkFailsafe() override
@@ -353,7 +365,7 @@ classDiagram
     }
     link RPM_Filter "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RPM_Filter.h"
 
-    IMU_FiltersBase <|-- IMU_Filters
+    IMU_FiltersBase <|-- IMU_Filters : overrides filter
     class IMU_Filters {
         array~LowPassFilter~ _gyroLPFs[AXIS]
         array~NotchFilter~ _gyroNotchFilters[AXIS]
@@ -372,11 +384,11 @@ classDiagram
     link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
     MotorMixerQuadX_DShot o-- RPM_Filter : calls setFrequency
 
-    IMU_Base <|-- IMU_BMI270
+    IMU_Base <|-- IMU_BMI270 : overrides readAccGyroRPS
     class IMU_BMI270["IMU_BMI270(eg)"]
     link IMU_BMI270 "https://github.com/martinbudden/Library-IMU/blob/main/src/IMU_BMI270.h"
 
-    SensorFusionFilterBase  <|-- MadgwickFilter
+    SensorFusionFilterBase  <|-- MadgwickFilter : overrides  update
     class MadgwickFilter["MadgwickFilter(eg)"] {
         update() Quaternion override
     }
@@ -388,6 +400,8 @@ classDiagram
     ReceiverAtomJoyStick *-- ESPNOW_Transceiver
     class ESPNOW_Transceiver
     link ESPNOW_Transceiver "https://github.com/martinbudden/Library-Receiver/blob/main/src/ESPNOW_Transceiver.h"
+
+    classDef taskClass fill:#f96
 ```
 
 ## Simplified Task Structure
@@ -408,13 +422,13 @@ It is called such because it implements the Arduino main `loop()` function.
 
 ```mermaid
 classDiagram
-    class TaskBase {
+    class TaskBase:::taskClass {
         uint32_t _taskIntervalMicroSeconds
     }
     link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
 
     TaskBase <|-- MainTask
-    class MainTask {
+    class MainTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
@@ -454,7 +468,7 @@ classDiagram
     RadioController o-- FlightController : calls updateSetpoints
 
     TaskBase <|-- ReceiverTask
-    class ReceiverTask {
+    class ReceiverTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
@@ -474,7 +488,7 @@ classDiagram
         updateOutputsUsingPIDs() *
     }
     TaskBase <|-- VehicleControllerTask
-    class VehicleControllerTask {
+    class VehicleControllerTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
@@ -483,7 +497,7 @@ classDiagram
     VehicleControllerBase <|-- FlightController : overrides loop updateOutputsUsingPIDs
 
     TaskBase <|-- AHRS_Task
-    class AHRS_Task {
+    class AHRS_Task:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
@@ -500,21 +514,21 @@ classDiagram
     }
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
     AHRS o-- BlackboxMessageQueue : (indirectly) calls SEND_IF_NOT_FULL
-    VehicleControllerBase o-- AHRS : historical
+    AHRS o-- VehicleControllerBase : historical
 
     TaskBase <|-- BlackboxTask
     class Backchannel {
         processedReceivedPacket() bool
     }
     TaskBase <|-- BackchannelTask
-    class BackchannelTask {
+    class BackchannelTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
     link BackchannelTask "https://github.com/martinbudden/Library-Backchannel/blob/main/src/BackchannelTask.h"
     BackchannelTask o-- Backchannel : calls processedReceivedPacket
 
-    class BlackboxTask {
+    class BlackboxTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
@@ -534,7 +548,7 @@ classDiagram
     link BlackboxProtoFlight "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxProtoFlight.h"
 
     TaskBase <|-- MSP_Task
-    class MSP_Task {
+    class MSP_Task:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
@@ -546,6 +560,8 @@ classDiagram
         sendFrame() int *
         processInput() *
     }
+
+    classDef taskClass fill:#f96
 ```
 
 ## Simplified Blackbox Class Structure
@@ -636,13 +652,17 @@ classDiagram
     RadioController --o BlackboxProtoFlight : calls getRates
 
 
+    class TaskBase:::taskClass {
+    }
     TaskBase <|-- BlackboxTask
-    class BlackboxTask {
+    class BlackboxTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
     BlackboxTask o-- BlackboxMessageQueueBase : calls WAIT_IF_EMPTY
     BlackboxTask o-- Blackbox : calls update
+
+    classDef taskClass fill:#f96
 ```
 
 ## Simplified MSP Class Structure
@@ -692,12 +712,16 @@ classDiagram
 
     MSP_Box <|-- MSP_ProtoFlightBox
 
+    class TaskBase:::taskClass {
+    }
     TaskBase <|-- MSP_Task
-    class MSP_Task {
+    class MSP_Task:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
     MSP_Task o-- MSP_SerialBase : calls processInput
+
+    classDef taskClass fill:#f96
 ```
 
 ## Simplified Backchannel Class Structure
@@ -756,13 +780,14 @@ classDiagram
     BackchannelFlightController o-- SV_Preferences
 
 
-    class TaskBase {
-        uint32_t _taskIntervalMicroSeconds
+    class TaskBase:::taskClass {
     }
     TaskBase <|-- BackchannelTask
-    class BackchannelTask {
+    class BackchannelTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
     BackchannelTask o-- BackchannelBase : calls processedReceivedPacket sendPacket
+
+    classDef taskClass fill:#f96
 ```
