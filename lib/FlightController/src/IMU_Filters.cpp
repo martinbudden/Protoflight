@@ -24,9 +24,9 @@ void IMU_Filters::init(float Q)
     }
 }
 
-void IMU_Filters::setFilters(const filters_t& filters)
+void IMU_Filters::setFiltersConfig(const filters_config_t& filtersConfig)
 {
-    _filters = filters;
+    _filtersConfig = filtersConfig;
 }
 
 /*!

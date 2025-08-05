@@ -150,8 +150,8 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
     }
 
     case MSP_SET_FILTER_CONFIG: {
-        IMU_Filters::filters_t imuFilters {};
-        FlightController::filters_t fcFilters {};
+        IMU_Filters::filters_config_t imuFilters {};
+        FlightController::filters_config_t fcFilters {};
 
         imuFilters.gyro_lpf1_hz = src.readU8();
         fcFilters.dterm_lpf1_hz = src.readU16();
@@ -212,8 +212,8 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             src.readU8();
         }
         IMU_FiltersBase& imuFiltersObject = _ahrs.getIMU_Filters();
-        static_cast<IMU_Filters&>(imuFiltersObject).setFilters(imuFilters); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-        _flightController.setFilters(fcFilters);
+        static_cast<IMU_Filters&>(imuFiltersObject).setFiltersConfig(imuFilters); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        _flightController.setFiltersConfig(fcFilters);
         break;
     }
 

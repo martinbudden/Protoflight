@@ -238,11 +238,15 @@ It handles failsafe.
 It is the place where any intelligence (ie waypointing, return to home, crash detection etc) should be added.
 RadioController is not really a good name and I am trying to think of a better one.
 
+When the hardware supports it `AHRS_Task` and `Receiver_Task` are interrupt-driven.
+`VehicleController_Task` is driven by a timer, however I am considering the option of allowing to be triggered when
+`AHRS::readIMUandUpdateOrientation` completes.
+
+On dual-core processors `AHRS_Task` has the entire second core to itself.
+
 ```mermaid
 classDiagram
     class ReceiverTask:::taskClass {
-        +loop()
-        -task() [[noreturn]]
     }
     class SensorFusionFilterBase {
         <<abstract>>
@@ -298,9 +302,6 @@ classDiagram
     }
     VehicleControllerTask o-- VehicleControllerBase : calls loop
 
-    VehicleControllerBase <|-- FlightController : overrides loop updateOutputsUsingPIDs
-    %%VehicleControllerBase o-- AHRS : historical
-    VehicleControllerBase o-- AHRS : historical
     class FlightController {
         array~PIDF~ _pids
         Filter _rollRateDTermFilter
@@ -327,7 +328,11 @@ classDiagram
     class AHRS_Task:::taskClass {
     }
     AHRS_Task o-- AHRS : calls updateOutputUsingPIDS
+
+    VehicleControllerBase <|-- FlightController : overrides loop updateOutputsUsingPIDs
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
+    VehicleControllerBase o-- AHRS : historical
+    %%AHRS --o VehicleControllerBase : historical
 
     class ReceiverBase {
         <<abstract>>
@@ -342,7 +347,7 @@ classDiagram
         <<abstract>>
         updateControls() *
         checkFailsafe() *
-        getFailsafePhase() uint32_t const *
+        getFailsafePhase() uint32_t *
     }
     link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
 
@@ -354,7 +359,7 @@ classDiagram
     class RadioController {
         updateControls() override
         checkFailsafe() override
-        getFailsafePhase() uint32_t const override
+        getFailsafePhase() uint32_t override
     }
     link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
 
@@ -406,10 +411,10 @@ classDiagram
 
 ## Simplified Task Structure
 
-On a dual-core processor `AHRS_Task` has the second core all to itself.
-
 The `AHRS_Task` and the `ReceiverTask` may be either interrupt driven or timer driven.<br>
 All other tasks are timer driven.
+
+On a dual-core processor `AHRS_Task` has the second core all to itself.
 
 Tasks are statically (build-time) polymorphic, not dynamically (run-time) polymorphic.
 They all have `task` and `loop` functions, but these functions are not virtual.
@@ -439,12 +444,12 @@ classDiagram
         <<abstract>>
         updateControls() *
         checkFailsafe() *
-        getFailsafePhase() uint32_t const *
+        getFailsafePhase() uint32_t *
     }
     class RadioController {
         updateControls() override
         checkFailsafe() override
-        getFailsafePhase() uint32_t const override
+        getFailsafePhase() uint32_t override
     }
     class ReceiverBase {
         <<abstract>>
@@ -513,8 +518,8 @@ classDiagram
         bool readIMUandUpdateOrientation()
     }
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
-    AHRS o-- BlackboxMessageQueue : (indirectly) calls SEND_IF_NOT_FULL
     AHRS o-- VehicleControllerBase : historical
+    AHRS o-- BlackboxMessageQueue : (indirectly) calls SEND_IF_NOT_FULL
 
     TaskBase <|-- BlackboxTask
     class Backchannel {
@@ -574,6 +579,8 @@ All writing to the serial device is done via the `BlackboxEncoder`
 
 ```mermaid
 classDiagram
+    class AHRS {
+    }
     class Blackbox {
         <<abstract>>
         writeSystemInformation() *
@@ -591,8 +598,9 @@ classDiagram
     class BlackboxMessageQueue {
         WAIT_IF_EMPTY() override
         RECEIVE(queue_item_t& queueItem) int32_t
+        SEND_IF_NOT_FULL(const queue_item_t& queueItem) bool
     }
-
+    AHRS o-- BlackboxMessageQueue : indirectly calls SEND_IF_NOT_FULL
     class RadioControllerBase {
         <<abstract>>
     }

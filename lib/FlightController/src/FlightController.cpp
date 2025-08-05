@@ -147,27 +147,27 @@ void FlightController::setControlMode(control_mode_e controlMode)
     }
 }
 
-void FlightController::setFilters(const filters_t& filters)
+void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 {
-    _filters = filters;
+    _filtersConfig = filtersConfig;
     const float dT = static_cast<float>(_taskIntervalMicroSeconds) / 1000000.0F;
 
-    if (filters.dterm_lpf1_hz == 0) {
+    if (filtersConfig.dterm_lpf1_hz == 0) {
         _rollRateDTermFilter.setToPassthrough();
         _pitchRateDTermFilter.setToPassthrough();
     } else {
         // if the user has selected a filter, then provide a PowerTransfer1 filter.
         // If no filter selected, then set the filter to passthrough
-        switch (filters.dterm_lpf1_type) {
-        case filters_t::PT1:
+        switch (filtersConfig.dterm_lpf1_type) {
+        case filters_config_t::PT1:
             [[fallthrough]];
-        case filters_t::PT2:
+        case filters_config_t::PT2:
             [[fallthrough]];
-        case filters_t::PT3:
+        case filters_config_t::PT3:
             [[fallthrough]];
-        case filters_t::BIQUAD:
-            _rollRateDTermFilter.setCutoffFrequencyAndReset(filters.dterm_lpf1_hz, dT);
-            _pitchRateDTermFilter.setCutoffFrequencyAndReset(filters.dterm_lpf1_hz, dT);
+        case filters_config_t::BIQUAD:
+            _rollRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _pitchRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
             break;
         default:
             _rollRateDTermFilter.setToPassthrough();

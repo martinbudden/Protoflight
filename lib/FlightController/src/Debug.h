@@ -119,6 +119,7 @@ public:
         }
     }
     inline void set(size_t index, int16_t value) { _debug[index] = value; }
+    inline void set(size_t index, int32_t value) { _debug[index] = static_cast<int16_t>(value); }
     inline int16_t get(size_t index) const { return _debug[index]; }
     inline debug_type_e getMode() const { return _mode; }
 private:

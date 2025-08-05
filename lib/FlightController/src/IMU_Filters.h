@@ -11,7 +11,7 @@ class RPM_Filter;
 class IMU_Filters : public IMU_FiltersBase {
 public:
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
-    struct filters_t {
+    struct filters_config_t {
         enum { PT1 = 0, BIQUAD, PT2, PT3 }; // filter types
         uint16_t gyro_notch1_hz;
         uint16_t gyro_notch1_cutoff;
@@ -35,14 +35,14 @@ public:
 public:
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
     virtual void setFilters() override;
-    void setFilters(const filters_t& filters);
-    const filters_t& getFilters() const { return _filters; }
+    void setFiltersConfig(const filters_config_t& filtersConfig);
+    const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
 protected:
     const MotorMixerBase& _motorMixer;
     uint32_t _looptimeUs;
     size_t _motorCount;
     size_t _motorIndex {0};
-    filters_t _filters {};
+    filters_config_t _filtersConfig {};
     uint32_t _filterFromAHRS {false};
     RPM_Filter* _rpmFilter {nullptr};
 };

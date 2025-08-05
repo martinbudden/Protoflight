@@ -2,6 +2,7 @@
 #include "FlightController.h"
 
 #include <AHRS.h>
+#include <Debug.h>
 #include <IMU_FiltersBase.h>
 #include <IMU_Null.h>
 #include <MotorMixerBase.h>
@@ -51,10 +52,11 @@ void test_flight_controller()
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
 
     enum { MOTOR_COUNT = 4 };
-    static MotorMixerBase motorMixer(MOTOR_COUNT);
+    static Debug debug;
+    static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
+    FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
     TEST_ASSERT_FALSE(fc.motorsIsOn());
 
     fc.motorsSwitchOn();

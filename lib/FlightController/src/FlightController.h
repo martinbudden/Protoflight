@@ -14,6 +14,7 @@
 
 class AHRS;
 class Blackbox;
+class Debug;
 class RadioControllerBase;
 class Quaternion;
 
@@ -34,7 +35,7 @@ positive yaw is nose right
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskIntervalMicroSeconds, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController);
+    FlightController(uint32_t taskIntervalMicroSeconds, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController, Debug& debug);
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
@@ -95,7 +96,7 @@ public:
     };
 
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
-    struct filters_t {
+    struct filters_config_t {
         enum { PT1 = 0, BIQUAD, PT2, PT3 };
         uint16_t dterm_lpf1_hz;
         uint16_t dterm_lpf2_hz;
@@ -170,8 +171,8 @@ public:
 
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
     const MotorMixerBase& getMixer() const { return _mixer; }
-    const filters_t& getFilters() const { return _filters; }
-    void setFilters(const filters_t& filters);
+    const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
+    void setFiltersConfig(const filters_config_t& filtersConfig);
     uint32_t getTaskIntervalMicroSeconds() const { return _taskIntervalMicroSeconds; }
     float getMixerThrottle() const { return _mixerThrottle; }
 public:
@@ -191,6 +192,7 @@ private:
     FlightControllerMessageQueue _messageQueue;
     MotorMixerBase& _mixer;
     RadioControllerBase& _radioController;
+    Debug& _debug;
     Blackbox* _blackbox {nullptr};
     control_mode_e _controlMode {CONTROL_MODE_RATE};
     uint32_t _useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
@@ -242,7 +244,7 @@ private:
     float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };
     uint32_t _crashRecovery { false };
 
-    filters_t _filters {};
+    filters_config_t _filtersConfig {};
     PowerTransferFilter1 _rollRateDTermFilter {};
     PowerTransferFilter1 _pitchRateDTermFilter {};
     PowerTransferFilter1 _rollStickFilter {};

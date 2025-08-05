@@ -56,12 +56,12 @@ void test_telemetry_msp()
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
 
     enum { MOTOR_COUNT = 4 };
-    static MotorMixerBase motorMixer(MOTOR_COUNT);
+    static Debug debug;
+    static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
+    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
     static Features features;
-    static Debug debug;
 
     // statically allocate an MSP object
     static MSP_ProtoFlight msp(features, ahrs, flightController, radioController, receiver, debug);

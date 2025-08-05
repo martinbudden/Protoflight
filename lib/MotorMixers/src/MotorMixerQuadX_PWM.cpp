@@ -15,8 +15,9 @@
 #endif // FRAMEWORK
 
 
-MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(const pins_t& pins)
-    : _pins(pins)
+MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
+    MotorMixerQuadX_Base(debug),
+    _pins(pins)
 {
 #if defined(FRAMEWORK_RPI_PICO)
 

@@ -5,7 +5,7 @@
 
 class MotorMixerQuadX_PWM : public MotorMixerQuadX_Base {
 public:
-    explicit MotorMixerQuadX_PWM (const pins_t& pins);
+    MotorMixerQuadX_PWM (Debug& debug, const pins_t& pins);
 public:
     virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) override;
 protected:

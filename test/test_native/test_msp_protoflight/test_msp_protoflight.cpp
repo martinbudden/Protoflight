@@ -53,12 +53,12 @@ void test_msp_set_failsafe_config()
     static IMU_FiltersNull imuFilters;
     static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
     enum { MOTOR_COUNT = 4 };
-    static MotorMixerBase motorMixer(MOTOR_COUNT);
+    static Debug debug;
+    static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
+    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
     static Features features;
-    static Debug debug;
 
     static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
     static MSP_Stream mspStream(msp);
@@ -123,12 +123,12 @@ void test_msp_pid_in()
     static IMU_FiltersNull imuFilters;
     static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
     enum { MOTOR_COUNT = 4 };
-    static MotorMixerBase motorMixer(MOTOR_COUNT);
+    static Debug debug;
+    static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
+    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
     static Features features;
-    static Debug debug;
 
     static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
     static const MSP_Stream mspStream(msp);
@@ -167,12 +167,12 @@ void test_msp_features()
     static IMU_FiltersNull imuFilters;
     static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
     enum { MOTOR_COUNT = 4 };
-    static MotorMixerBase motorMixer(MOTOR_COUNT);
+    static Debug debug;
+    static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
+    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
     static Features features;
-    static Debug debug;
 
     static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
     static const MSP_Stream mspStream(msp);
@@ -193,12 +193,12 @@ void test_msp_raw_imu()
     static IMU_FiltersNull imuFilters;
     static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
     enum { MOTOR_COUNT = 4 };
-    static MotorMixerBase motorMixer(MOTOR_COUNT);
+    static Debug debug;
+    static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
+    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
     static Features features;
-    static Debug debug;
 
     static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
     static MSP_Stream mspStream(msp);

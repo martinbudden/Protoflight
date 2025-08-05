@@ -316,8 +316,8 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_FILTER_CONFIG : {
-        const IMU_Filters::filters_t imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()).getFilters(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-        const FlightController::filters_t fcFilters = _flightController.getFilters();;
+        const IMU_Filters::filters_config_t imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()).getFiltersConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        const FlightController::filters_config_t fcFilters = _flightController.getFiltersConfig();;
         dst.writeU8(static_cast<uint8_t>(imuFilters.gyro_lpf1_hz));
         dst.writeU16(fcFilters.dterm_lpf1_hz);
         dst.writeU16(fcFilters.yaw_lpf_hz);

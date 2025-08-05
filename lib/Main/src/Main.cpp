@@ -97,12 +97,12 @@ void Main::setup()
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
-    static MotorMixerQuadX_PWM motorMixer(pins); // NOLINT(misc-const-correctness) false positive
+    static MotorMixerQuadX_PWM motorMixer(debug, pins); // NOLINT(misc-const-correctness) false positive
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filter rpmFilter(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
-    static MotorMixerQuadX_DShot motorMixer(pins, rpmFilter); // NOLINT(misc-const-correctness) false positive
+    static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilter, FC_TASK_INTERVAL_MICROSECONDS); // NOLINT(misc-const-correctness) false positive
 #endif
 
     // statically allocate the IMU_Filters
@@ -115,7 +115,7 @@ void Main::setup()
     AHRS& ahrs = createAHRS(imuFilters);
 
     // Statically allocate the flightController.
-    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController);
+    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
 
