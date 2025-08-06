@@ -1,67 +1,97 @@
 #include "MotorMixerQuadX_DShot.h"
 #include<Debug.h>
 #include <Filters.h>
-#include <RPM_Filter.h>
+#include <RPM_Filters.h>
 #include <algorithm>
 #include <cmath>
 
 
-MotorMixerQuadX_DShot::MotorMixerQuadX_DShot(Debug& debug, const pins_t& pins, RPM_Filter& rpmFilter, uint32_t taskIntervalMicroSeconds) :
+MotorMixerQuadX_DShot::MotorMixerQuadX_DShot(Debug& debug, const pins_t& pins, RPM_Filters& rpmFilters, uint32_t taskIntervalMicroSeconds) :
     MotorMixerQuadX_Base(debug),
-    _rpmFilter(rpmFilter),
+    _rpmFilters(rpmFilters),
     _taskIntervalMicroSeconds(taskIntervalMicroSeconds)
 {
     _motorBR.init(pins.br);
     _motorFR.init(pins.fr);
     _motorBL.init(pins.bl);
     _motorFL.init(pins.fl);
+    const dynamic_idle_controller_config_t config = {
+        .minRPM = 0,
+        .maxIncrease = 150,
+        .kp = 50,
+        .ki = 50,
+        .kd = 50,
+    };
+    MotorMixerQuadX_DShot::setDynamicIdleControllerConfig(config);
 }
 
 void MotorMixerQuadX_DShot::setDynamicIdleControllerConfig(const dynamic_idle_controller_config_t& config)
 {
-    _minRPS = config.minRPM * 100.0f / 60.0f;
-    _minRPS_MaxIncrease = config.maxIncrease * 0.001f;
+    _dynamicIdleControllerConfig = config;
 
-    _minRPS_PID.setSetpoint(_minRPS);
-    _minRPS_PID.setP(config.kp * 0.00015f);
+    _minimumAllowedMotorHz = static_cast<float>(config.minRPM) * 100.0F / 60.0F;
+    _dynamicIdleMaxIncrease = static_cast<float>(config.maxIncrease) * 0.001F;
+
+    _dynamicIdlePID.setSetpoint(_minimumAllowedMotorHz);
+    // use Betaflight multipliers for compatibility with Betaflight Configurator
+    _dynamicIdlePID.setP(static_cast<float>(config.kp) * 0.00015F);
     const float deltaT = static_cast<float>(_taskIntervalMicroSeconds) * 0.000001F;
-    _minRPS_PID.setI(config.ki * 0.01f * deltaT);
-    _minRPS_PID.setD(config.kd * 0.0000003f / deltaT);
+    _dynamicIdlePID.setI(static_cast<float>(config.ki) * 0.01F * deltaT);
+
+#if false
+    _dynamicIdlePID.setD(static_cast<float>(config.kd) * 0.0000003F / deltaT);
+    _minHzDelayK = 800 * deltaT / 20.0F; //approx 20ms D delay, arbitrarily suits many motors
+#else
+    //_dynamicIdlePID.setD(static_cast<float>(config.kd) * (0.0000003F / deltaT) * (800 * deltaT / 20.0F);
+    _dynamicIdlePID.setD(static_cast<float>(config.kd) * 0.000012F / (deltaT * deltaT));
+#endif
 }
 
-float MotorMixerQuadX_DShot::calculateMinMotorRPS() const
+float MotorMixerQuadX_DShot::calculateSlowestMotorHz() const
 {
-    float minRPS = _motorBR.getMotorHz();
-    float motorRPS = _motorFR.getMotorHz();
-    if (motorRPS < minRPS) {
-        minRPS = motorRPS;
+    float slowestMotorHz = _motorBR.getMotorHz();
+    float motorHz = _motorFR.getMotorHz();
+    if (motorHz < slowestMotorHz) {
+        slowestMotorHz = motorHz;
     }
-    motorRPS = _motorBL.getMotorHz();
-    if (motorRPS < minRPS) {
-        minRPS = motorRPS;
+    motorHz = _motorBL.getMotorHz();
+    if (motorHz < slowestMotorHz) {
+        slowestMotorHz = motorHz;
     }
-    motorRPS = _motorFL.getMotorHz();
-    if (motorRPS < minRPS) {
-        minRPS = motorRPS;
+    motorHz = _motorFL.getMotorHz();
+    if (motorHz < slowestMotorHz) {
+        slowestMotorHz = motorHz;
     }
-    return minRPS;
+    return slowestMotorHz;
 }
 
 void MotorMixerQuadX_DShot::outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount)
 {
     (void)deltaT;
     (void)tickCount;
-    float motorOutputMin = _motorOutputMin;
-    if (_minRPS > 0.0F) {
-        float minRPS = calculateMinMotorRPS();
-        float minRPS_Delta = minRPS - _minRPS_PID.getPreviousMeasurement();
-        minRPS_Delta = _minRPS_DTermFilter.filter(minRPS_Delta);
-        float motorRPS_Increase = _minRPS_PID.updateDelta(minRPS, minRPS_Delta, deltaT);
+    float motorIncrease = 0.0F;
 
-        motorRPS_Increase = clip(motorRPS_Increase, 0.0F, _minRPS_MaxIncrease);
-        motorOutputMin = motorRPS_Increase * 1000.0F;
+    if (_minimumAllowedMotorHz > 0.0F) {
+        /*  dynamic idle: use PID controller to boost motor speeds so that slowest motor does not go below minimum allowed RPM
+            A minimum RPM is required because the ESC will desynchronize if the motors turn too slowly (since they won't generate
+            enough back EMF for the ESC know the position of the rotor relative to the windings).
+            Note that a simple minimum output value is not sufficient: consider the case where the throttle is cut while hovering,
+            the quad will start to fall and this falling will generate a reverse torque on the motors which will eventually
+            overcome the fixed output value. Many types of maneuver can generate this reverse torque.
+
+            Instead we have a PID controller that increases output to the motors as the slowest motor nears the minimum allowed RPM.
+        */
+
+        const float slowestMotorHz = calculateSlowestMotorHz();
+
+        const float slowestMotorHzDelta = _dynamicIdleDTermFilter.filter(slowestMotorHz - _dynamicIdlePID.getPreviousMeasurement());
+        //slowestMotorHzDelta = _dynamicIdledelayK * _dynamicIdleDTermFilter.filter(slowestMotorHzDelta);
+        motorIncrease = _dynamicIdlePID.updateDelta(slowestMotorHz, slowestMotorHzDelta, deltaT);
+
+        //!!TODO: need to check this is scaled to the correct units
+        motorIncrease = clip(motorIncrease, 0.0F, _dynamicIdleMaxIncrease);
         if (_debug.getMode() == DEBUG_DYN_IDLE) {
-            const PIDF::error_t error = _minRPS_PID.getError();
+            const PIDF::error_t error = _dynamicIdlePID.getError();
             _debug.set(0, static_cast<int16_t>(std::max(-1000L, std::lroundf(error.P * 10000))));
             _debug.set(1, static_cast<int16_t>(std::lroundf(error.I * 10000)));
             _debug.set(2, static_cast<int16_t>(std::lroundf(error.D * 10000)));
@@ -70,16 +100,16 @@ void MotorMixerQuadX_DShot::outputToMotors(const commands_t& commands, float del
 
     if (motorsIsOn()) {
         // calculate the "mix" for the QuadX motor configuration
-        _motorOutputs[MOTOR_BR] = -commands.roll - commands.pitch - commands.yaw + commands.speed;
-        _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + commands.speed;
-        _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + commands.speed;
-        _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + commands.speed;
+        _motorOutputs[MOTOR_BR] = -commands.roll - commands.pitch - commands.yaw + commands.speed + motorIncrease;
+        _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + commands.speed + motorIncrease;
+        _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + commands.speed + motorIncrease;
+        _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + commands.speed + motorIncrease;
 
         // scale motor output to [0.0F, 1000.0F], which is the range required for DShot
-        _motorOutputs[MOTOR_BR] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_BR], motorOutputMin, 1.0F));
-        _motorOutputs[MOTOR_FR] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_FR], motorOutputMin, 1.0F));
-        _motorOutputs[MOTOR_BL] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_BL], motorOutputMin, 1.0F));
-        _motorOutputs[MOTOR_FL] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_FL], motorOutputMin, 1.0F));
+        _motorOutputs[MOTOR_BR] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_BR], _motorOutputMin, 1.0F));
+        _motorOutputs[MOTOR_FR] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_FR], _motorOutputMin, 1.0F));
+        _motorOutputs[MOTOR_BL] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_BL], _motorOutputMin, 1.0F));
+        _motorOutputs[MOTOR_FL] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_FL], _motorOutputMin, 1.0F));
 
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
@@ -87,17 +117,17 @@ void MotorMixerQuadX_DShot::outputToMotors(const commands_t& commands, float del
     // and finally output to the motors and read to get the motor RPM from bidirectional dshot
     _motorBR.write(static_cast<uint16_t>(_motorOutputs[MOTOR_BR]));
     _motorBR.read();
-    _rpmFilter.setFrequency(MOTOR_BR, _motorBR.getMotorHz());
+    _rpmFilters.setFrequency(MOTOR_BR, _motorBR.getMotorHz());
 
     _motorFR.write(static_cast<uint16_t>(_motorOutputs[MOTOR_FR]));
     _motorFR.read();
-    _rpmFilter.setFrequency(MOTOR_FR, _motorBR.getMotorHz());
+    _rpmFilters.setFrequency(MOTOR_FR, _motorBR.getMotorHz());
 
     _motorBL.write(static_cast<uint16_t>(_motorOutputs[MOTOR_BL]));
     _motorBL.read();
-    _rpmFilter.setFrequency(MOTOR_BL, _motorBR.getMotorHz());
+    _rpmFilters.setFrequency(MOTOR_BL, _motorBR.getMotorHz());
 
     _motorFL.write(static_cast<uint16_t>(_motorOutputs[MOTOR_FL]));
     _motorFL.read();
-    _rpmFilter.setFrequency(MOTOR_FL, _motorBR.getMotorHz());
+    _rpmFilters.setFrequency(MOTOR_FL, _motorBR.getMotorHz());
 }

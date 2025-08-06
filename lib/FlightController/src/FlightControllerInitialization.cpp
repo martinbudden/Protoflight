@@ -17,11 +17,24 @@ FlightController::FlightController(uint32_t taskIntervalMicroSeconds, const AHRS
     for (size_t ii = 0; ii < PID_COUNT; ++ii) {
         _PIDS[ii].setPID(gDefaultPIDs[ii]);
     };
+    const filters_config_t filtersConfig = {
+        .dterm_lpf1_hz = 100,
+        .dterm_lpf2_hz = 0,
+        .dterm_notch_hz = 0,
+        .dterm_notch_cutoff =160,
+        .dterm_dynamic_lpf1_min_hz = 0,
+        .dterm_dynamic_lpf1_max_hz = 0,
+        .yaw_lpf_hz = 0,
+        .dterm_lpf1_type = filters_config_t::PT1,
+        .dterm_lpf2_type = filters_config_t::PT1
+    };
+    setFiltersConfig(filtersConfig);
 
-    enum { DEFAULT_DTERM_FILTER_CUTOFF_FREQUENCY_HZ = 100 };
     const float deltaT = static_cast<float>(taskIntervalMicroSeconds) * 0.000001F;
-    _rollRateDTermFilter.setCutoffFrequency(DEFAULT_DTERM_FILTER_CUTOFF_FREQUENCY_HZ, deltaT);
-    _pitchRateDTermFilter.setCutoffFrequency(DEFAULT_DTERM_FILTER_CUTOFF_FREQUENCY_HZ, deltaT);
+    _rollRateDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
+    _pitchRateDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
+    _rollAngleDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
+    _pitchAngleDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
 
 #if false
     // set the motor output filters to passthrough, by default

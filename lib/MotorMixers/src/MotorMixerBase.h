@@ -16,11 +16,11 @@ public:
     };
     struct dynamic_idle_controller_config_t {
         uint8_t minRPM; // minimum motor speed enforced by the dynamic idle controller
+        uint8_t maxIncrease; // limit on maximum possible increase in motor idle drive during active control
         // PID constants
         uint8_t kp;
         uint8_t ki;
         uint8_t kd;
-        uint8_t maxIncrease; // limit on maximum possible increase in motor idle drive during active control
     };
 
 public:
@@ -31,6 +31,7 @@ public:
     inline void motorsSwitchOff() { _motorsIsOn = false; }
     inline bool motorsIsDisabled() const { return _motorsIsDisabled; }
 
+    const dynamic_idle_controller_config_t& getDynamicIdleControllerConfig() const { return _dynamicIdleControllerConfig; }
     virtual void setDynamicIdleControllerConfig(const dynamic_idle_controller_config_t& dynamicIdleControllerConfig)
         { (void)dynamicIdleControllerConfig; }
     virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount)
@@ -48,5 +49,6 @@ protected:
     Debug& _debug;
     int32_t _motorsIsOn {false};
     int32_t _motorsIsDisabled {false};
-    float _minMotorOutput {}; // minimum motor output, typically set to 5.5% to avoid ESC desynchronization 
+    float _minMotorOutput {}; // minimum motor output, typically set to 5.5% to avoid ESC desynchronization
+    dynamic_idle_controller_config_t _dynamicIdleControllerConfig {};
 };

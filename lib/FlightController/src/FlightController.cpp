@@ -373,14 +373,16 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
             if (_angleModeCalculate == CALCULATE_ROLL) {
                 _angleModeCalculate = CALCULATE_PITCH;
                 _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
-                _outputs[ROLL_SIN_ANGLE] = _PIDS[ROLL_SIN_ANGLE].update(_rollSinAngle, deltaT);
+                const float rollSinAngleDelta = _rollAngleDTermFilter.filter(_rollSinAngle - _PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
+                _outputs[ROLL_SIN_ANGLE] = _PIDS[ROLL_SIN_ANGLE].update(_rollSinAngle, rollSinAngleDelta, deltaT);
                 _rollRateSetpointDPS = _outputs[ROLL_SIN_ANGLE];
                 // a component of YAW changes roll, so update accordingly !!TODO:check sign
                 _rollRateSetpointDPS -= yawRateSetpointDPS * _rollSinAngle;
             } else {
                 _angleModeCalculate = CALCULATE_ROLL;
                 _pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
-                _outputs[PITCH_SIN_ANGLE] = _PIDS[PITCH_SIN_ANGLE].update(_pitchSinAngle, deltaT);
+                const float pitchSinAngleDelta = _rollAngleDTermFilter.filter(_pitchSinAngle - _PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
+                _outputs[PITCH_SIN_ANGLE] = _PIDS[PITCH_SIN_ANGLE].update(_pitchSinAngle, pitchSinAngleDelta, deltaT);
                 _pitchRateSetpointDPS = _outputs[PITCH_SIN_ANGLE];
                 // a component of YAW changes roll, so update accordingly !!TODO:check sign
                 _pitchRateSetpointDPS += yawRateSetpointDPS * _pitchSinAngle;
@@ -394,14 +396,16 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
                 _angleModeCalculate = CALCULATE_PITCH;
                 _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
                 _rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
-                _outputs[ROLL_ANGLE_DEGREES] = _PIDS[ROLL_ANGLE_DEGREES].update(_rollAngleDegreesRaw, deltaT) * _maxRollRateDPS;
+                const float rollAngleDelta = _rollAngleDTermFilter.filter(_rollAngleDegreesRaw - _PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
+                _outputs[ROLL_ANGLE_DEGREES] = _PIDS[ROLL_ANGLE_DEGREES].update(_rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
                 _rollRateSetpointDPS = _outputs[ROLL_ANGLE_DEGREES];
                 _rollRateSetpointDPS -= yawRateSetpointDPS * _rollSinAngle;
             } else {
                 _angleModeCalculate = CALCULATE_ROLL;
                 _pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
                 _pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
-                _outputs[PITCH_ANGLE_DEGREES] = _PIDS[PITCH_ANGLE_DEGREES].update(_pitchAngleDegreesRaw, deltaT) * _maxPitchRateDPS;
+                const float pitchAngleDelta = _pitchAngleDTermFilter.filter(_pitchAngleDegreesRaw - _PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
+                _outputs[PITCH_ANGLE_DEGREES] = _PIDS[PITCH_ANGLE_DEGREES].update(_pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
                 _pitchRateSetpointDPS = _outputs[PITCH_ANGLE_DEGREES];
                 _pitchRateSetpointDPS += yawRateSetpointDPS * _pitchSinAngle;
             }

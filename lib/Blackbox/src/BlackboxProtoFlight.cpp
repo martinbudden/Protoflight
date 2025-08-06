@@ -1,4 +1,5 @@
 #include "BlackboxProtoFlight.h"
+#include "IMU_Filters.h"
 #include "RadioController.h"
 
 #include <BlackboxCallbacksBase.h>
@@ -33,7 +34,10 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
         return WRITE_NOT_COMPLETE;
     }
 // See https://github.com/betaflight/blackbox-log-viewer/blob/master/src/flightlog_parser.js for parsing of fields
+    const FlightController::filters_config_t fcFiltersConfig = _flightController.getFiltersConfig();
     const RadioController::rates_t rates = _radioController.getRates();
+    const IMU_Filters::filters_config_t imuFiltersConfig = _imuFilters.getFiltersConfig();
+    const MotorMixerBase::dynamic_idle_controller_config_t dynamicIdleControllerConfig = _flightController.getMixer().getDynamicIdleControllerConfig();
     //const BlackboxCallbacksBase::rates_t& currentControlRateProfile = _callbacks.currentControlRateProfile();
     //const pidProfile_t& currentPidProfile = _callbacks.getCurrentPidProfile();
     //enum { PID_ROLL, PID_PITCH, PID_YAW, PID_LEVEL, PID_MAG, PID_ITEM_COUNT };
@@ -160,22 +164,22 @@ H pidAtMinThrottle:1
 H anti_gravity_threshold:350
 H anti_gravity_gain:1000
 */
-        //BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_type", "%d",        currentPidProfile.dterm_lpf1_type);
-        //BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_static_hz", "%d",   currentPidProfile.dterm_lpf1_static_hz);
-        //BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_type", "%d",        currentPidProfile.dterm_lpf2_type);
-        //BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_static_hz", "%d",   currentPidProfile.dterm_lpf2_static_hz);
-        //BLACKBOX_PRINT_HEADER_LINE("yaw_lowpass_hz", "%d",         currentPidProfile.yaw_lowpass_hz);
-        //BLACKBOX_PRINT_HEADER_LINE("dterm_notch_hz", "%d",         currentPidProfile.dterm_notch_hz);
-        //BLACKBOX_PRINT_HEADER_LINE("dterm_notch_cutoff", "%d",     currentPidProfile.dterm_notch_cutoff);
-        //BLACKBOX_PRINT_HEADER_LINE("iterm_windup", "%d",           currentPidProfile.itermWindup);
-        //BLACKBOX_PRINT_HEADER_LINE("pid_at_min_throttle", "%d",    currentPidProfile.pidAtMinThrottle);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_type", "%d",                 fcFiltersConfig.dterm_lpf1_type);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_static_hz", "%d",            fcFiltersConfig.dterm_lpf1_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_type", "%d",                 fcFiltersConfig.dterm_lpf2_type);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_static_hz", "%d",            fcFiltersConfig.dterm_lpf2_hz);
+        //BLACKBOX_PRINT_HEADER_LINE("yaw_lowpass_hz", "%d",                  currentPidProfile.yaw_lowpass_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_hz", "%d",                  fcFiltersConfig.dterm_notch_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_cutoff", "%d",              fcFiltersConfig.dterm_notch_cutoff);
+        //BLACKBOX_PRINT_HEADER_LINE("iterm_windup", "%d",                    currentPidProfile.itermWindup);
+        //BLACKBOX_PRINT_HEADER_LINE("pid_at_min_throttle", "%d",             currentPidProfile.pidAtMinThrottle);
 
         // Betaflight PID controller parameters
-        //BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",      1000);
-        //BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",    currentPidProfile.anti_gravity_cutoff_hz);
-        //BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",    currentPidProfile.anti_gravity_p_gain);
+        //BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",             1000);
+        //BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",        currentPidProfile.anti_gravity_cutoff_hz);
+        //BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",           currentPidProfile.anti_gravity_p_gain);
 #ifdef USE_INTEGRATED_YAW_CONTROL
-        BLACKBOX_PRINT_HEADER_LINE("use_integrated_yaw", "%d",     currentPidProfile.use_integrated_yaw);
+        BLACKBOX_PRINT_HEADER_LINE("use_integrated_yaw", "%d",              currentPidProfile.use_integrated_yaw);
 #endif
         BLACKBOX_PRINT_HEADER_LINE("ff_weight", "%d,%d,%d",                 _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kf,
                                                                             _flightController.getPID_MSP(FlightController::PITCH_RATE_DPS).kf,
@@ -198,10 +202,12 @@ H gyro_lowpass_hz:90
 H gyro_notch_hz:0,0
 H gyro_notch_cutoff:300,100
 */
-        //BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_type", "%d",         gyroConfig()->gyro_lpf2_type);
-        //BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_static_hz", "%d",    gyroConfig()->gyro_lpf2_static_hz);
-        //BLACKBOX_PRINT_HEADER_LINE("gyro_notch_hz", "%d,%d",                0,0);
-        //BLACKBOX_PRINT_HEADER_LINE("gyro_notch_cutoff", "%d,%d",            300,100);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_type", "%d",                  imuFiltersConfig.gyro_lpf1_type);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_static_hz", "%d",             imuFiltersConfig.gyro_lpf1_hz);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_type", "%d",                  imuFiltersConfig.gyro_lpf2_type);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_static_hz", "%d",             imuFiltersConfig.gyro_lpf2_hz);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_notch_hz", "%d,%d",                0,0);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_notch_cutoff", "%d,%d",            300,100);
 /*
 H acc_lpf_hz:1000
 H acc_hardware:1
@@ -229,6 +235,13 @@ H features:541130760
         BLACKBOX_PRINT_HEADER_LINE("motor_idle", "%d",                      550);
         BLACKBOX_PRINT_HEADER_LINE("debug_mode", "%d",                      getDebugMode());
         BLACKBOX_PRINT_HEADER_LINE("features", "%d",                        541130760); //0x2041'0008
+
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_min_rpm", "%d",                dynamicIdleControllerConfig.minRPM);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_p_gain", "%d",                 dynamicIdleControllerConfig.kp);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_i_gain", "%d",                 dynamicIdleControllerConfig.ki);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_d_gain", "%d",                 dynamicIdleControllerConfig.kd);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_max_increase", "%d",           dynamicIdleControllerConfig.maxIncrease);
+
 // NOLINTEND(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         default:
             return WRITE_COMPLETE;

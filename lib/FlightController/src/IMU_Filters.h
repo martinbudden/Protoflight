@@ -1,15 +1,19 @@
 #pragma once
 
+#include <Filters.h>
 #include <IMU_FiltersBase.h>
+#include <array>
 #include <cstdint>
 #include <xyz_type.h>
 
 class MotorMixerBase;
-class RPM_Filter;
+class RPM_Filters;
 
 
 class IMU_Filters : public IMU_FiltersBase {
 public:
+    enum { X = 0, Y = 1, Z = 2, AXIS_COUNT = 3 };
+
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
     struct filters_config_t {
         enum { PT1 = 0, BIQUAD, PT2, PT3 }; // filter types
@@ -23,26 +27,37 @@ public:
         uint16_t gyro_dynamic_lpf1_max_hz;
         uint8_t gyro_lpf1_type;
         uint8_t gyro_lpf2_type;
-        uint8_t gyro_hardware_lpf;
+        uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
         uint8_t rpm_filter_harmonics;
         uint8_t rpm_filter_min_hz;
     };
 public:
     IMU_Filters(const MotorMixerBase& motorMixer, uint32_t looptimeUs);
-    void setRPM_Filter(RPM_Filter* rpmFilter);
+    void setRPM_Filters(RPM_Filters* rpmFilters);
     void setFilterFromAHRS(bool filterFromAHRS) { _filterFromAHRS = filterFromAHRS; }
     void init(float Q);
 public:
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
     virtual void setFilters() override;
-    void setFiltersConfig(const filters_config_t& filtersConfig);
+    void setFiltersConfig(const filters_config_t& config);
     const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
 protected:
     const MotorMixerBase& _motorMixer;
     uint32_t _looptimeUs;
+    float _deltaT;
     size_t _motorCount;
     size_t _motorIndex {0};
     filters_config_t _filtersConfig {};
     uint32_t _filterFromAHRS {false};
-    RPM_Filter* _rpmFilter {nullptr};
+    RPM_Filters* _rpmFilters {nullptr};
+    FilterNull _filterNull;
+    std::array<FilterBase*, AXIS_COUNT> _gyroLPF1 {};
+    std::array<FilterBase*, AXIS_COUNT> _gyroLPF2 {};
+    std::array<FilterBase*, AXIS_COUNT> _gyroNotch1 {};
+    std::array<FilterBase*, AXIS_COUNT> _gyroNotch2 {};
+
+    std::array<PowerTransferFilter1, AXIS_COUNT> _lpf2PT1;
+    std::array<PowerTransferFilter2, AXIS_COUNT> _lpf2PT2;
+    std::array<BiquadFilter, AXIS_COUNT> _lpf2Biquad;
+    std::array<BiquadFilter, AXIS_COUNT> _notch1Biquad;
 };

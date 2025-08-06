@@ -1,7 +1,7 @@
-#include <RPM_Filter.h>
+#include <RPM_Filters.h>
 #include <xyz_type.h>
 
-void RPM_Filter::init(uint32_t harmonicToUse, float Q)
+void RPM_Filters::init(uint32_t harmonicToUse, float Q)
 {
     _harmonicToUse = harmonicToUse;
     _Q = Q;
@@ -33,7 +33,7 @@ void RPM_Filter::init(uint32_t harmonicToUse, float Q)
 /*!
 This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */
-void RPM_Filter::setFrequency(size_t motorIndex, float frequencyHz)
+void RPM_Filters::setFrequency(size_t motorIndex, float frequencyHz)
 {
     const float frequencyHzUnclipped = frequencyHz;
     frequencyHz = clip(frequencyHz, _minFrequencyHz, _maxFrequencyHz);
@@ -54,7 +54,7 @@ void RPM_Filter::setFrequency(size_t motorIndex, float frequencyHz)
     float weight = _weights[FUNDAMENTAL]*weightMultiplier;
 
     LOCK_FILTERS();
-    xFilter.setNotchFrequency(sinOmega, two_cosOmega, weight);
+    xFilter.setNotchFrequencyWeighted(sinOmega, two_cosOmega, weight);
     // copy the parameters to the Y and Z filters
     _filters[motorIndex][FUNDAMENTAL][Y].setParameters(xFilter);
     _filters[motorIndex][FUNDAMENTAL][Z].setParameters(xFilter);
@@ -80,7 +80,7 @@ void RPM_Filter::setFrequency(size_t motorIndex, float frequencyHz)
         const float two_cos_2Omega = two_cosOmega * two_cosOmega - 2.0F;
         weight = _weights[HARMONIC]*weightMultiplier;
         LOCK_FILTERS();
-        xFilter.setNotchFrequency(sin_2Omega, two_cos_2Omega, weight);
+        xFilter.setNotchFrequencyWeighted(sin_2Omega, two_cos_2Omega, weight);
         // copy the parameters to the Y and Z filters
         _filters[motorIndex][HARMONIC][Y].setParameters(xFilter);
         _filters[motorIndex][HARMONIC][Z].setParameters(xFilter);
@@ -106,7 +106,7 @@ void RPM_Filter::setFrequency(size_t motorIndex, float frequencyHz)
     const float two_cos_3Omega = two_cosOmega * (four_cosSquaredOmega - 3.0F);
     weight = _weights[HARMONIC]*weightMultiplier;
     LOCK_FILTERS();
-    xFilter.setNotchFrequency(sin_3Omega, two_cos_3Omega, weight);
+    xFilter.setNotchFrequencyWeighted(sin_3Omega, two_cos_3Omega, weight);
     // copy the parameters to the Y and Z filters
     _filters[motorIndex][HARMONIC][Y].setParameters(xFilter);
     _filters[motorIndex][HARMONIC][Z].setParameters(xFilter);
@@ -118,7 +118,7 @@ void RPM_Filter::setFrequency(size_t motorIndex, float frequencyHz)
 /*!
 This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */
-void RPM_Filter::filter(xyz_t& input, size_t motorIndex)
+void RPM_Filters::filter(xyz_t& input, size_t motorIndex)
 {
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     input.x = _filters[motorIndex][FUNDAMENTAL][X].filterWeighted(input.x);

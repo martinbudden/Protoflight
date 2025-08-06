@@ -28,15 +28,17 @@ or the THIRD HARMONIC (ie 3 times the FUNDAMENTAL frequency).
 Generally speaking, the SECOND HARMONIC is used for 2-bladed propellors, and the THIRD HARMONIC is used
 for 3-bladed propellors.
 */
-class RPM_Filter {
+class RPM_Filters {
 public:
     enum { FUNDAMENTAL = 0, HARMONIC = 1, MAX_HARMONICS_COUNT = 2 };
     enum { MAX_MOTOR_COUNT = 4 };
     enum { X = 0, Y = 1, Z = 2, AXIS_COUNT = 3 };
     enum { USE_FUNDAMENTAL_ONLY = 0, USE_FUNDAMENTAL_AND_SECOND_HARMONIC = 1, USE_FUNDAMENTAL_AND_THIRD_HARMONIC = 2 };
 public:
-    RPM_Filter(size_t motorCount, uint32_t looptimeUs) : _motorCount(motorCount), _looptimeUs(looptimeUs) {}
+    RPM_Filters(size_t motorCount, uint32_t looptimeUs) : _motorCount(motorCount), _looptimeUs(looptimeUs) {}
     void init(uint32_t harmonicToUse, float Q);
+    void setHarmonicToUse(uint8_t harmonicToUse) {_harmonicToUse = harmonicToUse; }
+    void setMinimumFrequencyHz(float minFrequencyHz) { _minFrequencyHz = minFrequencyHz; }
     void setFrequency(size_t motorIndex, float frequencyHz);
     void filter(xyz_t& input, size_t motorIndex);
     size_t getMotorCount() const { return _motorCount; }

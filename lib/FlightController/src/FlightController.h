@@ -247,6 +247,8 @@ private:
     filters_config_t _filtersConfig {};
     PowerTransferFilter1 _rollRateDTermFilter {};
     PowerTransferFilter1 _pitchRateDTermFilter {};
+    PowerTransferFilter1 _rollAngleDTermFilter {};
+    PowerTransferFilter1 _pitchAngleDTermFilter {};
     PowerTransferFilter1 _rollStickFilter {};
     PowerTransferFilter1 _pitchStickFilter {};
 };

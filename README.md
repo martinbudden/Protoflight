@@ -331,7 +331,7 @@ classDiagram
 
     VehicleControllerBase <|-- FlightController : overrides loop updateOutputsUsingPIDs
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
-    VehicleControllerBase o-- AHRS : historical
+    VehicleControllerBase o-- AHRS
     %%AHRS --o VehicleControllerBase : historical
 
     class ReceiverBase {
@@ -363,12 +363,12 @@ classDiagram
     }
     link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
 
-    class RPM_Filter {
+    class RPM_Filters {
         array~NotchFilter~ _filters[MOTOR][HARMONIC][AXIS]
         setFrequency()
         filter()
     }
-    link RPM_Filter "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RPM_Filter.h"
+    link RPM_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RPM_Filters.h"
 
     IMU_FiltersBase <|-- IMU_Filters : overrides filter
     class IMU_Filters {
@@ -379,7 +379,7 @@ classDiagram
     }
     link IMU_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/IMU_Filters.h"
     IMU_Filters o-- MotorMixerBase
-    IMU_Filters *-- RPM_Filter : calls filter
+    IMU_Filters *-- RPM_Filters : calls filter
 
     MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot : overrides getMotorFrequencyHz
     class MotorMixerQuadX_Base
@@ -387,7 +387,7 @@ classDiagram
 
     class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
     link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
-    MotorMixerQuadX_DShot o-- RPM_Filter : calls setFrequency
+    MotorMixerQuadX_DShot o-- RPM_Filters : calls setFrequency
 
     IMU_Base <|-- IMU_BMI270 : overrides readAccGyroRPS
     class IMU_BMI270["IMU_BMI270(eg)"]
@@ -446,11 +446,13 @@ classDiagram
         checkFailsafe() *
         getFailsafePhase() uint32_t *
     }
+    link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
     class RadioController {
         updateControls() override
         checkFailsafe() override
         getFailsafePhase() uint32_t override
     }
+    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
     class ReceiverBase {
         <<abstract>>
         WAIT_FOR_DATA_RECEIVED() int32_t *
@@ -466,6 +468,7 @@ classDiagram
         updateOutputsUsingPIDs() override
         outputToMotors()
     }
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     FlightController o-- Blackbox : calls start finish
     FlightController o-- RadioControllerBase : calls getFailsafePhase
     RadioControllerBase o--ReceiverBase
@@ -604,14 +607,17 @@ classDiagram
     class RadioControllerBase {
         <<abstract>>
     }
+    link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
     class RadioController {
         getRates() rates_t  const
     }
+    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
     class ReceiverBase {
         <<abstract>>
     }
     class FlightController {
     }
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
 
     class BlackboxProtoFlight {
         writeSystemInformation() override
@@ -662,11 +668,13 @@ classDiagram
 
     class TaskBase:::taskClass {
     }
+    link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
     TaskBase <|-- BlackboxTask
     class BlackboxTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
+    link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
     BlackboxTask o-- BlackboxMessageQueueBase : calls WAIT_IF_EMPTY
     BlackboxTask o-- Blackbox : calls update
 
@@ -722,6 +730,7 @@ classDiagram
 
     class TaskBase:::taskClass {
     }
+    link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
     TaskBase <|-- MSP_Task
     class MSP_Task:::taskClass {
         +loop()
@@ -790,6 +799,7 @@ classDiagram
 
     class TaskBase:::taskClass {
     }
+    link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
     TaskBase <|-- BackchannelTask
     class BackchannelTask:::taskClass {
         +loop()

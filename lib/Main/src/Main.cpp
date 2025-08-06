@@ -28,7 +28,7 @@
 #include <MSP_Task.h>
 #include <MotorMixerQuadX_DShot.h>
 #include <MotorMixerQuadX_PWM.h>
-#include <RPM_Filter.h>
+#include <RPM_Filters.h>
 #include <RadioController.h>
 #include <ReceiverAtomJoyStick.h>
 #include <ReceiverNull.h>
@@ -100,15 +100,15 @@ void Main::setup()
     static MotorMixerQuadX_PWM motorMixer(debug, pins); // NOLINT(misc-const-correctness) false positive
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
-    static RPM_Filter rpmFilter(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
+    static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
-    static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilter, FC_TASK_INTERVAL_MICROSECONDS); // NOLINT(misc-const-correctness) false positive
+    static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilters, FC_TASK_INTERVAL_MICROSECONDS); // NOLINT(misc-const-correctness) false positive
 #endif
 
     // statically allocate the IMU_Filters
     static IMU_Filters imuFilters(motorMixer, AHRS_TASK_INTERVAL_MICROSECONDS);
 #if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
-    imuFilters.setRPM_Filter(&rpmFilter);
+    imuFilters.setRPM_Filters(&rpmFilters);
 #endif
 
     // Statically allocate the AHRS
@@ -138,7 +138,7 @@ void Main::setup()
     static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
     static BlackboxSerialDeviceSDCard blackboxSerialDevice;
     blackboxSerialDevice.init();
-    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController);
+    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
     static BlackboxMessageQueueAHRS blackboxMessageQueueAHRS(blackboxMessageQueue);
     ahrs.setMessageQueue(&blackboxMessageQueueAHRS);
     flightController.setBlackbox(blackbox);
@@ -234,14 +234,14 @@ void Main::setup()
 #endif
 }
 
-void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, const Debug& debug)
+void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters)
 {
     static BlackboxMessageQueue blackboxMessageQueue; // NOLINT(misc-const-correctness) false positive
     static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug); // NOLINT(misc-const-correctness) false positive
     static BlackboxSerialDeviceSDCard blackboxSerialDevice;
     blackboxSerialDevice.init();
 
-    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController);
+    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
     flightController.setBlackbox(blackbox);
     blackbox.init({
         .sample_rate = Blackbox::RATE_ONE,
@@ -258,9 +258,8 @@ void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, RadioCon
 #else
     Serial.printf("***StartLog\r\n");
 #endif
-    enum { DEBUG_MODE_RX_STATE_TIME = 76 };
     blackbox.start({
-        .debugMode = DEBUG_MODE_RX_STATE_TIME,
+        .debugMode = debug.getMode(),
         .motorCount = 4,
         .servoCount = 0
     });
