@@ -76,7 +76,7 @@ static inline int constrain(int value, int low, int high)
 }
 
 
-MSP_ProtoFlight::MSP_ProtoFlight(Features& features, AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, const Debug& debug) :
+MSP_ProtoFlight::MSP_ProtoFlight(Features& features, AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, Debug& debug) :
     _features(features),
     _ahrs(ahrs),
     _flightController(flightController),

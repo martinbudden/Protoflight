@@ -22,8 +22,7 @@ public:
 protected:
     RPM_Filters& _rpmFilters;
     uint32_t _taskIntervalMicroSeconds;
-    float _motorOutputMin {0.048F}; // minimum motor speed when dynamic idling off
-    float _minimumAllowedMotorHz {}; // minimum motor Hz, dynamically controlled
+    float _dynamicIdleMinimumAllowedMotorHz {}; // minimum motor Hz, dynamically controlled
     float _dynamicIdleMaxIncrease {};
     //float _dynamicIdleMaxIncreaseDelayK {};
     PIDF _dynamicIdlePID {}; // PID to dynamic idle, ie to ensure slowest motor does not go below min RPS

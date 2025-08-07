@@ -8,6 +8,7 @@ class MotorMixerQuadX_Base : public MotorMixerBase {
 public:
     enum { MOTOR_BR=0, MOTOR_FR=1, MOTOR_BL=2, MOTOR_FL=3, MOTOR_COUNT=4, MOTOR_BEGIN=0 };
     explicit MotorMixerQuadX_Base(Debug& debug) : MotorMixerBase(MOTOR_COUNT, debug) {}
+    virtual float getMotorOutput(size_t motorIndex) const override { return _motorOutputs[motorIndex]; } // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 public:
     // 4 2
     // 3 1

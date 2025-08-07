@@ -12,7 +12,7 @@ class ReceiverBase;
 
 class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, AHRS& ahrs, FlightController& flightController, RadioControllerBase& radioController, ReceiverBase& receiver, const Debug& debug) :
+    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioControllerBase& radioController, const ReceiverBase& receiver, const Debug& debug) :
         _messageQueue(messageQueue),
         _ahrs(ahrs),
         _flightController(flightController),
@@ -32,9 +32,9 @@ public:
     virtual uint32_t rcModeActivationMask() const override;
 private:
     BlackboxMessageQueue& _messageQueue;
-    AHRS& _ahrs;
-    FlightController& _flightController;
-    RadioControllerBase& _radioController;
-    ReceiverBase& _receiver;
+    const AHRS& _ahrs;
+    const FlightController& _flightController;
+    const RadioControllerBase& _radioController;
+    const ReceiverBase& _receiver;
     const Debug& _debug;
 };

@@ -117,7 +117,7 @@ Execution time varies, however, and may take up to about 50 microseconds.
 void IMU_Filters::setFilters()
 {
     if (_filterFromAHRS && _rpmFilters) {
-        _rpmFilters->setFrequency(_motorIndex, _motorMixer.getMotorFrequencyHz(_motorIndex));
+        _rpmFilters->setFrequencyHz(_motorIndex, _motorMixer.getMotorFrequencyHz(_motorIndex));
         ++_motorIndex;
         if (_motorIndex==_motorCount) {
             _motorIndex = 0;

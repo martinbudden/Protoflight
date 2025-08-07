@@ -8,17 +8,13 @@
 
 class AHRS;
 class AHRS_Task;
-class Backchannel;
 class BackchannelTask;
 class BlackboxTask;
 class ButtonsBase;
 class Debug;
-class Features;
 class FlightController;
 class IMU_Filters;
 class IMU_FiltersBase;
-class MotorMixerBase;
-class MSP_Serial;
 class MSP_Task;
 class RadioController;
 class ReceiverBase;
@@ -27,43 +23,6 @@ class ReceiverWatcher;
 class SV_Preferences;
 class ScreenBase;
 class VehicleControllerTask;
-
-enum { MAIN_LOOP_TASK_INTERVAL_MICROSECONDS = 5000 };
-
-#if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
-enum { AHRS_TASK_INTERVAL_MICROSECONDS = 4000 }; // 250 Hz
-#endif
-
-#if !defined(FC_TASK_INTERVAL_MICROSECONDS)
-enum { FC_TASK_INTERVAL_MICROSECONDS = 4000 };
-#endif
-
-#if !defined(RECEIVER_TASK_INTERVAL_MICROSECONDS)
-enum { RECEIVER_TASK_INTERVAL_MICROSECONDS = 4000 };
-#endif
-
-#if !defined(BACKCHANNEL_TASK_INTERVAL_MICROSECONDS)
-enum { BACKCHANNEL_TASK_INTERVAL_MICROSECONDS = 8000 }; // 125 Hz
-#endif
-
-// MSP should run in range 100 to 2000 Hz
-#if !defined(MSP_TASK_INTERVAL_MICROSECONDS)
-enum { MSP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
-#endif
-
-#if !defined(BLACKBOX_TASK_INTERVAL_MICROSECONDS)
-enum { BLACKBOX_TASK_INTERVAL_MICROSECONDS = 4000 }; // 250 Hz
-#endif
-
-enum {
-    AHRS_TASK_PRIORITY = 6,
-    FC_TASK_PRIORITY = 5,
-    RECEIVER_TASK_PRIORITY = FC_TASK_PRIORITY,
-    MOTORS_TASK_PRIORITY = 4,
-    BACKCHANNEL_TASK_PRIORITY = 3,
-    MSP_TASK_PRIORITY = 2,
-    BLACKBOX_TASK_PRIORITY = 3
-};
 
 #if !defined(PRO_CPU_NUM)
 #define PRO_CPU_NUM (0)
@@ -94,8 +53,8 @@ public:
     void setup();
     void loop();
 private:
-    void testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters);
-    static AHRS& createAHRS(IMU_FiltersBase& imuFilters);
+    void testBlackbox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters);
+    static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_FiltersBase& imuFilters);
     static void checkGyroCalibration(SV_Preferences& preferences, AHRS& ahrs);
     static void resetPreferences(SV_Preferences& preferences, FlightController& flightController);
     static void loadPreferences(SV_Preferences& preferences, FlightController& flightController);

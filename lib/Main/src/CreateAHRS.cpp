@@ -13,7 +13,7 @@
 #endif
 #include <SensorFusion.h>
 
-AHRS& Main::createAHRS(IMU_FiltersBase& imuFilters)
+AHRS& Main::createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_FiltersBase& imuFilters)
 {
     // Statically allocate the IMU according the the build flags
 // NOLINTBEGIN(misc-const-correctness) false positive
@@ -64,7 +64,7 @@ AHRS& Main::createAHRS(IMU_FiltersBase& imuFilters)
     static_assert(false);
 #endif
 
-    //static_cast<IMU_Base&>(imuSensor).init(1000000 / AHRS_TASK_INTERVAL_MICROSECONDS);
+    //static_cast<IMU_Base&>(imuSensor).init(1000000 / AHRS_taskIntervalMicroSeconds);
     static_cast<IMU_Base&>(imuSensor).init();
 
     // Statically allocate the Sensor Fusion Filter
@@ -76,10 +76,10 @@ AHRS& Main::createAHRS(IMU_FiltersBase& imuFilters)
     // approx 10 microseconds per update
     static MahonyFilter sensorFusionFilter;
 #elif defined(USE_VQF)
-    const float deltaT = static_cast<float>(AHRS_TASK_INTERVAL_MICROSECONDS) / 1000000.0F;
+    const float deltaT = static_cast<float>(AHRS_taskIntervalMicroSeconds) / 1000000.0F;
     static VQF sensorFusionFilter(deltaT, deltaT, deltaT, true, false, false);
 #elif defined(USE_VQF_BASIC)
-    static BasicVQF sensorFusionFilter(static_cast<float>(AHRS_TASK_INTERVAL_MICROSECONDS) / 1000000.0F);
+    static BasicVQF sensorFusionFilter(static_cast<float>(AHRS_taskIntervalMicroSeconds) / 1000000.0F);
 #else
     // approx 16 microseconds per update
     static MadgwickFilter sensorFusionFilter;
@@ -87,7 +87,7 @@ AHRS& Main::createAHRS(IMU_FiltersBase& imuFilters)
 // NOLINTEND(misc-const-correctness)
 
     // Statically allocate the AHRS object
-    static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imuSensor, imuFilters);
+    static AHRS ahrs(AHRS_taskIntervalMicroSeconds, sensorFusionFilter, imuSensor, imuFilters);
     return ahrs;
 }
 

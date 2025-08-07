@@ -17,6 +17,7 @@
 #include <ButtonsM5.h>
 #endif
 #include <Debug.h>
+#include <Defaults.h>
 #include <Features.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
@@ -41,10 +42,6 @@
 #include <VehicleControllerTask.h>
 #if defined(USE_ESPNOW)
 #include <WiFi.h>
-#endif
-
-#if defined(USE_FREERTOS)
-#include <freertos/FreeRTOS.h>
 #endif
 
 
@@ -103,6 +100,15 @@ void Main::setup()
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
     static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilters, FC_TASK_INTERVAL_MICROSECONDS); // NOLINT(misc-const-correctness) false positive
+//#define USE_DYNAMIC_IDLE
+#if defined(USE_DYNAMIC_IDLE)
+    motorMixer.setMotorOutputMin(0.0F);
+    motorMixer.setDynamicIdleControllerConfig(DEFAULTS::dynamicIdleControllerConfig);
+#else
+    motorMixer.setMotorOutputMin(0.055F); // 5.5%
+#endif
+#else
+    static_assert(false && "MotorMixer not specified");
 #endif
 
     // statically allocate the IMU_Filters
@@ -112,7 +118,7 @@ void Main::setup()
 #endif
 
     // Statically allocate the AHRS
-    AHRS& ahrs = createAHRS(imuFilters);
+    AHRS& ahrs = createAHRS(AHRS_TASK_INTERVAL_MICROSECONDS, imuFilters);
 
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
@@ -234,7 +240,7 @@ void Main::setup()
 #endif
 }
 
-void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters)
+void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters)
 {
     static BlackboxMessageQueue blackboxMessageQueue; // NOLINT(misc-const-correctness) false positive
     static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug); // NOLINT(misc-const-correctness) false positive

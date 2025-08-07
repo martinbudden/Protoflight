@@ -33,7 +33,7 @@ void RPM_Filters::init(uint32_t harmonicToUse, float Q)
 /*!
 This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */
-void RPM_Filters::setFrequency(size_t motorIndex, float frequencyHz)
+void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
 {
     const float frequencyHzUnclipped = frequencyHz;
     frequencyHz = clip(frequencyHz, _minFrequencyHz, _maxFrequencyHz);
