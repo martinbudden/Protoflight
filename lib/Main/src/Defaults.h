@@ -1,20 +1,22 @@
 #pragma once
 
 #include <DynamicIdleController.h>
+#include <IMU_Filters.h>
+#include <RPM_Filters.h>
 
 
-enum { MAIN_LOOP_TASK_INTERVAL_MICROSECONDS = 5000 };
+enum { MAIN_LOOP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
 
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
-enum { AHRS_TASK_INTERVAL_MICROSECONDS = 4000 }; // 250 Hz
+enum { AHRS_TASK_INTERVAL_MICROSECONDS = 500 }; // 2000 Hz
 #endif
 
 #if !defined(FC_TASK_INTERVAL_MICROSECONDS)
-enum { FC_TASK_INTERVAL_MICROSECONDS = 4000 };
+enum { FC_TASK_INTERVAL_MICROSECONDS = 500 }; // 2000 Hz
 #endif
 
 #if !defined(RECEIVER_TASK_INTERVAL_MICROSECONDS)
-enum { RECEIVER_TASK_INTERVAL_MICROSECONDS = 4000 };
+enum { RECEIVER_TASK_INTERVAL_MICROSECONDS = 4000 }; // 250 Hz
 #endif
 
 #if !defined(BACKCHANNEL_TASK_INTERVAL_MICROSECONDS)
@@ -42,6 +44,22 @@ enum {
 
 
 namespace DEFAULTS {
+
+const IMU_Filters::config_t imuFiltersConfig = {
+    .gyro_notch1_hz = 0,
+    .gyro_notch1_cutoff = 0,
+    .gyro_notch2_hz = 0,
+    .gyro_notch2_cutoff = 0,
+    .gyro_lpf1_hz = 0, // switched off, alternative is 250
+    .gyro_lpf2_hz = 500, // this is an anti-alias filter
+    .gyro_dynamic_lpf1_min_hz = 0,
+    .gyro_dynamic_lpf1_max_hz = 0,
+    .gyro_lpf1_type = 0,
+    .gyro_lpf2_type = IMU_Filters::config_t::PT1,
+    .gyro_hardware_lpf = 0,
+    .rpm_filter_harmonics = RPM_Filters::USE_FUNDAMENTAL_ONLY,
+    .rpm_filter_min_hz = 100
+};
 
 const DynamicIdleController::config_t dynamicIdleControllerConfig = {
     .dyn_idle_min_rpm_100 = 0,

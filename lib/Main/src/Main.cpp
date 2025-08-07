@@ -91,6 +91,8 @@ void Main::setup()
     static RadioController radioController(receiver);
 #endif // USE_ESPNOW
 
+    uint32_t AHRS_taskIntervalMicroSeconds = AHRS_TASK_INTERVAL_MICROSECONDS;
+    static IMU_Base& imuSensor = createIMU(AHRS_taskIntervalMicroSeconds); // NOLINT(misc-const-correctness) false positive
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
@@ -111,13 +113,14 @@ void Main::setup()
 #endif
 
     // statically allocate the IMU_Filters
-    static IMU_Filters imuFilters(motorMixer, AHRS_TASK_INTERVAL_MICROSECONDS);
+    static IMU_Filters imuFilters(motorMixer, AHRS_taskIntervalMicroSeconds);
+    imuFilters.setConfig(DEFAULTS::imuFiltersConfig);
 #if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     imuFilters.setRPM_Filters(&rpmFilters);
 #endif
 
     // Statically allocate the AHRS
-    AHRS& ahrs = createAHRS(AHRS_TASK_INTERVAL_MICROSECONDS, imuFilters);
+    AHRS& ahrs = createAHRS(AHRS_taskIntervalMicroSeconds, imuSensor, imuFilters);
 
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);

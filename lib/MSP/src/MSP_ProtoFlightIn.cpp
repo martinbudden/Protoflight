@@ -150,40 +150,40 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
     }
 
     case MSP_SET_FILTER_CONFIG: {
-        IMU_Filters::filters_config_t imuFilters {};
+        IMU_Filters::config_t imuFiltersConfig {};
         FlightController::filters_config_t fcFilters {};
 
-        imuFilters.gyro_lpf1_hz = src.readU8();
+        imuFiltersConfig.gyro_lpf1_hz = src.readU8();
         fcFilters.dterm_lpf1_hz = src.readU16();
         fcFilters.yaw_lpf_hz = src.readU16();
         if (src.bytesRemaining() >= 8) {
-            imuFilters.gyro_notch1_hz = src.readU16();
-            imuFilters.gyro_notch1_cutoff = src.readU16();
+            imuFiltersConfig.gyro_notch1_hz = src.readU16();
+            imuFiltersConfig.gyro_notch1_cutoff = src.readU16();
             fcFilters.dterm_notch_hz = src.readU16();
             fcFilters.dterm_notch_cutoff = src.readU16();
         }
         if (src.bytesRemaining() >= 4) {
-            imuFilters.gyro_notch2_hz = src.readU16();
-            imuFilters.gyro_notch2_cutoff = src.readU16();
+            imuFiltersConfig.gyro_notch2_hz = src.readU16();
+            imuFiltersConfig.gyro_notch2_cutoff = src.readU16();
         }
         if (src.bytesRemaining() >= 1) {
             fcFilters.dterm_lpf1_type = src.readU8();
         }
         if (src.bytesRemaining() >= 10) {
-            imuFilters.gyro_hardware_lpf = src.readU8();
+            imuFiltersConfig.gyro_hardware_lpf = src.readU8();
             src.readU8(); // was gyro_32khz_hardware_lpf
-            imuFilters.gyro_lpf1_hz = src.readU16();
-            imuFilters.gyro_lpf2_hz = src.readU16();
-            imuFilters.gyro_lpf1_type = src.readU8();
-            imuFilters.gyro_lpf2_type = src.readU8();
+            imuFiltersConfig.gyro_lpf1_hz = src.readU16();
+            imuFiltersConfig.gyro_lpf2_hz = src.readU16();
+            imuFiltersConfig.gyro_lpf1_type = src.readU8();
+            imuFiltersConfig.gyro_lpf2_type = src.readU8();
             fcFilters.dterm_lpf2_hz = src.readU16();
         }
 
         if (src.bytesRemaining() >= 9) {
             // Added in MSP API 1.41
             fcFilters.dterm_lpf2_type = src.readU8();
-            imuFilters.gyro_dynamic_lpf1_min_hz = src.readU16();
-            imuFilters.gyro_dynamic_lpf1_max_hz = src.readU16();
+            imuFiltersConfig.gyro_dynamic_lpf1_min_hz = src.readU16();
+            imuFiltersConfig.gyro_dynamic_lpf1_max_hz = src.readU16();
             fcFilters.dterm_dynamic_lpf1_min_hz = src.readU16();
             fcFilters.dterm_dynamic_lpf1_max_hz = src.readU16();
         }
@@ -196,8 +196,8 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             src.readU16();
             //dynamic_notch_min_hz =
             src.readU16();
-            imuFilters.rpm_filter_harmonics = src.readU8();
-            imuFilters.rpm_filter_min_hz = src.readU8();
+            imuFiltersConfig.rpm_filter_harmonics = src.readU8();
+            imuFiltersConfig.rpm_filter_min_hz = src.readU8();
         }
         if (src.bytesRemaining() >= 2) {
             // Added in MSP API 1.43
@@ -212,7 +212,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             src.readU8();
         }
         IMU_FiltersBase& imuFiltersObject = _ahrs.getIMU_Filters();
-        static_cast<IMU_Filters&>(imuFiltersObject).setFiltersConfig(imuFilters); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        static_cast<IMU_Filters&>(imuFiltersObject).setConfig(imuFiltersConfig); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         _flightController.setFiltersConfig(fcFilters);
         break;
     }

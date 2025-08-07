@@ -39,7 +39,7 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
 
     const RadioController::rates_t rates = _radioController.getRates();
 
-    const IMU_Filters::filters_config_t imuFiltersConfig = _imuFilters.getFiltersConfig();
+    const IMU_Filters::config_t imuFiltersConfig = _imuFilters.getConfig();
 
     const DynamicIdleController* dynamicIdleController = _flightController.getMixer().getDynamicIdleController();
     const DynamicIdleController::config_t* dynamicIdleControllerConfig = dynamicIdleController ? &dynamicIdleController->getConfig() : nullptr;

@@ -303,6 +303,38 @@ void FlightController::detectCrashOrSpin(uint32_t tickCount)
     //switchPID_integrationOff();
 }
 
+void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT)
+{
+    if (fabsf(gyroENU_RPS.z) > _yawSpinRecoveredRPS) {
+        _thrustOutput = 0.5F; // half throttle gives maximum yaw authority, since outputs will have maximum range before being clipped
+        // use the YAW_RATE_DPS PID to bring the spin down to zero
+        _PIDS[YAW_RATE_DPS].setSetpoint(0.0F);
+        const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
+        _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT);
+
+        if (fabsf(gyroENU_RPS.z) > _yawSpinPartiallyRecoveredRPS) {
+            // we are at a high spin rate, so don't yet attempt to recover the roll and pitch spin
+            _outputs[ROLL_RATE_DPS] = 0.0F;
+            _outputs[PITCH_RATE_DPS] = 0.0F;
+        } else {
+            // we have partially recovered from the spin, so try and also correct any roll and pitch spin
+            _PIDS[ROLL_RATE_DPS].setSetpoint(0.0F);
+            const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
+            _outputs[ROLL_RATE_DPS] = _PIDS[ROLL_RATE_DPS].update(rollRateDPS, deltaT);
+
+            _PIDS[PITCH_RATE_DPS].setSetpoint(0.0F);
+            const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
+            _outputs[PITCH_RATE_DPS] = _PIDS[PITCH_RATE_DPS].update(pitchRateDPS, deltaT);
+        }
+    } else {
+        // come out of yaw spin recovery
+        _yawSpinRecovery = false;
+        // switch PID integration back on
+        switchPID_integrationOn();
+    }
+}
+
+
 void FlightController::updateOutputsUsingPIDs(float deltaT)
 {
     // get orientation, gyro, and acceleration from AHRS in ENU (East-North-Up) format
@@ -324,38 +356,13 @@ In the latter case it is typically called at frequency of between 1000Hz and 800
 void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT)
 {
     if (_yawSpinRecovery) {
-        if (fabsf(gyroENU_RPS.z) > _yawSpinRecoveredRPS) {
-            _thrustOutput = 0.5F; // half throttle gives maximum yaw authority, since outputs will have maximum range before being clipped
-            // use the YAW_RATE_DPS PID to bring the spin down to zero
-            _PIDS[YAW_RATE_DPS].setSetpoint(0.0F);
-            const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
-            _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT);
-
-            if (fabsf(gyroENU_RPS.z) > _yawSpinPartiallyRecoveredRPS) {
-                // we are at a high spin rate, so don't yet attempt to recover the roll and pitch spin
-                _outputs[ROLL_RATE_DPS] = 0.0F;
-                _outputs[PITCH_RATE_DPS] = 0.0F;
-            } else {
-                // we have partially recovered from the spin, so try and also correct any roll and pitch spin
-                _PIDS[ROLL_RATE_DPS].setSetpoint(0.0F);
-                const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
-                _outputs[ROLL_RATE_DPS] = _PIDS[ROLL_RATE_DPS].update(rollRateDPS, deltaT);
-
-                _PIDS[PITCH_RATE_DPS].setSetpoint(0.0F);
-                const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
-                _outputs[PITCH_RATE_DPS] = _PIDS[PITCH_RATE_DPS].update(pitchRateDPS, deltaT);
-            }
-        } else {
-            // come out of yaw spin recovery
-            _yawSpinRecovery = false;
-            // switch PID integration back on
-            switchPID_integrationOn();
-        }
+        recoverFromYawSpin(gyroENU_RPS, deltaT);
         return;
     }
 
     if (_useAngleMode) {
         // In angle mode, the roll and pitch angles are used to set the setpoints for the rollRate and pitchRate PIDs
+        // In NFE(Not Fast Enough) Racer mode (aka level race mode) is equivalent to angle mode on roll and acro mode on pitch
 
         (void)accENU; // not using acc, since we use the orientation quaternion instead
 
@@ -371,7 +378,10 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
             // Runs the angle PIDs in "quaternion space" rather than "angle space",
             // avoiding the computationally expensive Quaternion::calculateRoll and Quaternion::calculatePitch
             if (_angleModeCalculate == CALCULATE_ROLL) {
-                _angleModeCalculate = CALCULATE_PITCH;
+                if (!_useAngleModeOnRollAcroModeOnPitch) {
+                    // don't advance calculation to pitch axis when in level race mode
+                    _angleModeCalculate = CALCULATE_PITCH;
+                }
                 _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
                 const float rollSinAngleDelta = _rollAngleDTermFilter.filter(_rollSinAngle - _PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
                 _outputs[ROLL_SIN_ANGLE] = _PIDS[ROLL_SIN_ANGLE].update(_rollSinAngle, rollSinAngleDelta, deltaT);
@@ -393,7 +403,10 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
             //!!TODO: this all needs checking, especially for scale
             //!!TODO: PID constants need to be scaled so these outputs are in the range [-1, 1]
             if (_angleModeCalculate == CALCULATE_ROLL) {
-                _angleModeCalculate = CALCULATE_PITCH;
+                if (!_useAngleModeOnRollAcroModeOnPitch) {
+                    // don't advance calculation to pitch axis when in level race mode
+                    _angleModeCalculate = CALCULATE_PITCH;
+                }
                 _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
                 _rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
                 const float rollAngleDelta = _rollAngleDTermFilter.filter(_rollAngleDegreesRaw - _PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());

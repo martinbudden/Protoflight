@@ -15,7 +15,7 @@ public:
     enum { X = 0, Y = 1, Z = 2, AXIS_COUNT = 3 };
 
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
-    struct filters_config_t {
+    struct config_t {
         enum { PT1 = 0, BIQUAD, PT2, PT3 }; // filter types
         uint16_t gyro_notch1_hz;
         uint16_t gyro_notch1_cutoff;
@@ -39,15 +39,15 @@ public:
 public:
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
     virtual void setFilters() override;
-    void setFiltersConfig(const filters_config_t& config);
-    const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
+    void setConfig(const config_t& config);
+    const config_t& getConfig() const { return _config; }
 protected:
     const MotorMixerBase& _motorMixer;
     uint32_t _looptimeUs;
     float _deltaT;
     size_t _motorCount;
     size_t _motorIndex {0};
-    filters_config_t _filtersConfig {};
+    config_t _config {};
     uint32_t _filterFromAHRS {false};
     RPM_Filters* _rpmFilters {nullptr};
     FilterNull _filterNull;

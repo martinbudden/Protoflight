@@ -9,22 +9,6 @@ IMU_Filters::IMU_Filters(const MotorMixerBase& motorMixer, uint32_t looptimeUs) 
     _deltaT(static_cast<float>(looptimeUs) * 0.000001F),
     _motorCount(motorMixer.getMotorCount())
 {
-    const filters_config_t config = {
-        .gyro_notch1_hz = 0,
-        .gyro_notch1_cutoff = 0,
-        .gyro_notch2_hz = 0,
-        .gyro_notch2_cutoff = 0,
-        .gyro_lpf1_hz = 0, // switched off, alternative is 250
-        .gyro_lpf2_hz = 500, // this is an anti-alias filter
-        .gyro_dynamic_lpf1_min_hz = 0,
-        .gyro_dynamic_lpf1_max_hz = 0,
-        .gyro_lpf1_type = 0,
-        .gyro_lpf2_type = filters_config_t::PT1,
-        .gyro_hardware_lpf = 0,
-        .rpm_filter_harmonics = RPM_Filters::USE_FUNDAMENTAL_ONLY,
-        .rpm_filter_min_hz = 100
-    };
-    setFiltersConfig(config);
 }
 
 void IMU_Filters::setRPM_Filters(RPM_Filters* rpmFilters)
@@ -32,6 +16,8 @@ void IMU_Filters::setRPM_Filters(RPM_Filters* rpmFilters)
     _rpmFilters = rpmFilters;
     constexpr float defaultQ = 5.0F;
     _rpmFilters->init(RPM_Filters::USE_FUNDAMENTAL_ONLY, defaultQ);
+    _rpmFilters->setMinimumFrequencyHz(_config.rpm_filter_min_hz);
+    //_rpmFilters->setHarmonicToUse(_config.rpm_filter_harmonics);
 }
 
 void IMU_Filters::init(float Q)
@@ -41,11 +27,9 @@ void IMU_Filters::init(float Q)
     }
 }
 
-void IMU_Filters::setFiltersConfig(const filters_config_t& config)
+void IMU_Filters::setConfig(const config_t& config)
 {
-    _filtersConfig = config;
-    _rpmFilters->setMinimumFrequencyHz(config.rpm_filter_min_hz);
-    _rpmFilters->setHarmonicToUse(config.rpm_filter_harmonics);
+    _config = config;
 
     // gyro LPF1 currently not used
     _gyroLPF1[X] = &_filterNull;
@@ -55,7 +39,7 @@ void IMU_Filters::setFiltersConfig(const filters_config_t& config)
     // set up gyroLPF2. This is the anti-alias filter and should not be disabled.
     const uint16_t gyro_lpf2_hz = config.gyro_lpf2_hz == 0 ? 500 : config.gyro_lpf2_hz;
     switch (config.gyro_lpf2_type) {
-    case filters_config_t::BIQUAD: {
+    case config_t::BIQUAD: {
         static constexpr float Q = 0.7071067811865475F; // 1 / sqrt(2)
         _lpf2Biquad[X].initLowPass(gyro_lpf2_hz, _looptimeUs, Q);
         _lpf2Biquad[Y].initLowPass(gyro_lpf2_hz, _looptimeUs, Q);
@@ -65,10 +49,10 @@ void IMU_Filters::setFiltersConfig(const filters_config_t& config)
         _gyroLPF2[Z] = &_lpf2Biquad[Z];
         break;
     }
-    case filters_config_t::PT3:
+    case config_t::PT3:
         // just used PT2 if PT3 specified
         [[fallthrough]];
-    case filters_config_t::PT2:
+    case config_t::PT2:
         _lpf2PT2[X].setCutoffFrequency(gyro_lpf2_hz, _deltaT);
         _lpf2PT2[Y].setCutoffFrequency(gyro_lpf2_hz, _deltaT);
         _lpf2PT2[Z].setCutoffFrequency(gyro_lpf2_hz, _deltaT);
@@ -76,7 +60,7 @@ void IMU_Filters::setFiltersConfig(const filters_config_t& config)
         _gyroLPF2[Y] = &_lpf2PT2[Y];
         _gyroLPF2[Z] = &_lpf2PT2[Z];
         break;
-    case filters_config_t::PT1:
+    case config_t::PT1:
         [[fallthrough]];
     default:
         _lpf2PT1[X].setCutoffFrequency(gyro_lpf2_hz, _deltaT);

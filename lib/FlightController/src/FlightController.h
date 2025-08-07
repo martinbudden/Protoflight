@@ -180,6 +180,7 @@ public:
     void loop();
 public:
     void detectCrashOrSpin(uint32_t tickCount);
+    void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
     void updateSetpoints(const controls_t& controls);
     void updateOutputsUsingPIDs(float deltaT);
     virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
@@ -196,6 +197,7 @@ private:
     Blackbox* _blackbox {nullptr};
     control_mode_e _controlMode {CONTROL_MODE_RATE};
     uint32_t _useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
+    uint32_t _useAngleModeOnRollAcroModeOnPitch {false}; // used for "level race mode" aka "NFE race mode"
 
     float _mixerThrottle {0.0F};
 

@@ -316,32 +316,32 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_FILTER_CONFIG : {
-        const IMU_Filters::filters_config_t imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()).getFiltersConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-        const FlightController::filters_config_t fcFilters = _flightController.getFiltersConfig();;
-        dst.writeU8(static_cast<uint8_t>(imuFilters.gyro_lpf1_hz));
+        const IMU_Filters::config_t imuFiltersConfig = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()).getConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        const FlightController::filters_config_t fcFilters = _flightController.getFiltersConfig();
+        dst.writeU8(static_cast<uint8_t>(imuFiltersConfig.gyro_lpf1_hz));
         dst.writeU16(fcFilters.dterm_lpf1_hz);
         dst.writeU16(fcFilters.yaw_lpf_hz);
-        dst.writeU8(static_cast<uint8_t>(imuFilters.gyro_lpf1_hz));
+        dst.writeU8(static_cast<uint8_t>(imuFiltersConfig.gyro_lpf1_hz));
         dst.writeU16(fcFilters.dterm_lpf1_hz);
         dst.writeU16(fcFilters.yaw_lpf_hz);
-        dst.writeU16(imuFilters.gyro_notch1_hz);
-        dst.writeU16(imuFilters.gyro_notch1_cutoff);
+        dst.writeU16(imuFiltersConfig.gyro_notch1_hz);
+        dst.writeU16(imuFiltersConfig.gyro_notch1_cutoff);
         dst.writeU16(fcFilters.dterm_notch_hz);
         dst.writeU16(fcFilters.dterm_notch_cutoff);
-        dst.writeU16(imuFilters.gyro_notch2_hz);
-        dst.writeU16(imuFilters.gyro_notch2_cutoff);
+        dst.writeU16(imuFiltersConfig.gyro_notch2_hz);
+        dst.writeU16(imuFiltersConfig.gyro_notch2_cutoff);
         dst.writeU8(fcFilters.dterm_lpf1_type);
-        dst.writeU8(imuFilters.gyro_hardware_lpf);
+        dst.writeU8(imuFiltersConfig.gyro_hardware_lpf);
         dst.writeU8(0); // was gyro_32khz_hardware_lpf
-        dst.writeU16(imuFilters.gyro_lpf1_hz);
-        dst.writeU16(imuFilters.gyro_lpf2_hz);
-        dst.writeU8(imuFilters.gyro_lpf1_type);
-        dst.writeU8(imuFilters.gyro_lpf2_type);
+        dst.writeU16(imuFiltersConfig.gyro_lpf1_hz);
+        dst.writeU16(imuFiltersConfig.gyro_lpf2_hz);
+        dst.writeU8(imuFiltersConfig.gyro_lpf1_type);
+        dst.writeU8(imuFiltersConfig.gyro_lpf2_type);
         dst.writeU16(fcFilters.dterm_lpf2_hz);
         // Added in MSP API 1.41
         dst.writeU8(fcFilters.dterm_lpf2_type);
-        dst.writeU16(imuFilters.gyro_dynamic_lpf1_min_hz);
-        dst.writeU16(imuFilters.gyro_dynamic_lpf1_max_hz);
+        dst.writeU16(imuFiltersConfig.gyro_dynamic_lpf1_min_hz);
+        dst.writeU16(imuFiltersConfig.gyro_dynamic_lpf1_max_hz);
         dst.writeU16(fcFilters.dterm_dynamic_lpf1_min_hz);
         dst.writeU16(fcFilters.dterm_dynamic_lpf1_max_hz);
         break;

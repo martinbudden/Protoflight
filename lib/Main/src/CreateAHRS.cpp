@@ -13,7 +13,13 @@
 #endif
 #include <SensorFusion.h>
 
-AHRS& Main::createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_FiltersBase& imuFilters)
+/*!
+Create the AHRS using the IMU specified by the build flags.
+Set the IMU target output data rate to AHRS_taskIntervalMicroSeconds and then
+AHRS_taskIntervalMicroSeconds to the actual data rate returned by the IMU.
+The actual data rate may be less than the target data rate if the IMU does not support the target data rate.
+*/
+IMU_Base& Main::createIMU(uint32_t& AHRS_taskIntervalMicroSeconds)
 {
     // Statically allocate the IMU according the the build flags
 // NOLINTBEGIN(misc-const-correctness) false positive
@@ -63,10 +69,16 @@ AHRS& Main::createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_FiltersBase& 
 #else
     static_assert(false);
 #endif
-
     //static_cast<IMU_Base&>(imuSensor).init(1000000 / AHRS_taskIntervalMicroSeconds);
-    static_cast<IMU_Base&>(imuSensor).init();
+    //!!TODO: uncomment this when new Library-IMU available
+    //AHRS_taskIntervalMicroSeconds = static_cast<IMU_Base&>(imuSensor).init();
+    static_cast<IMU_Base&>(imuSensor).init(AHRS_taskIntervalMicroSeconds);
 
+    return imuSensor;
+}
+
+AHRS& Main::createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters)
+{
     // Statically allocate the Sensor Fusion Filter
     // Timings are for 240MHz ESP32-S3
 #if defined(USE_COMPLEMENTARY_FILTER)

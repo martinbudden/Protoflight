@@ -13,7 +13,7 @@ void tearDown()
 // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)
 void test_dynamic_idle_controller()
 {
-    enum { FC_TASK_INTERVAL_MICROSECONDS = 1000 };
+    enum { TASK_INTERVAL_MICROSECONDS = 1000 };
     const DynamicIdleController::config_t dynamicIdleControllerConfig = {
         .dyn_idle_min_rpm_100 = 0,
         .dyn_idle_p_gain = 50,
@@ -22,8 +22,8 @@ void test_dynamic_idle_controller()
         .dyn_idle_max_increase = 150,
     };
     static Debug debug;
-    static DynamicIdleController dynamicIdleController(dynamicIdleControllerConfig, FC_TASK_INTERVAL_MICROSECONDS, debug);
-    const float deltaT = static_cast<float>(FC_TASK_INTERVAL_MICROSECONDS) * 0.000001F;
+    static DynamicIdleController dynamicIdleController(dynamicIdleControllerConfig, TASK_INTERVAL_MICROSECONDS, debug);
+    const float deltaT = static_cast<float>(TASK_INTERVAL_MICROSECONDS) * 0.000001F;
 
     TEST_ASSERT_EQUAL(0, dynamicIdleController.getConfig().dyn_idle_min_rpm_100);
 
@@ -39,7 +39,7 @@ void test_dynamic_idle_controller_p_only()
     const float motorHz1000RPM = 1000.0F/ 60.0F;
     const float motorHz2000RPM = 2000.0F/ 60.0F;
 
-    enum { FC_TASK_INTERVAL_MICROSECONDS = 1000 };
+    enum { TASK_INTERVAL_MICROSECONDS = 1000 };
     const DynamicIdleController::config_t dynamicIdleControllerConfig = {
         .dyn_idle_min_rpm_100 = 10, // 10*100 = 1000 rpm
         .dyn_idle_p_gain = 50,
@@ -48,8 +48,8 @@ void test_dynamic_idle_controller_p_only()
         .dyn_idle_max_increase = 150,
     };
     static Debug debug;
-    static DynamicIdleController dynamicIdleController(dynamicIdleControllerConfig, FC_TASK_INTERVAL_MICROSECONDS, debug);
-    const float deltaT = static_cast<float>(FC_TASK_INTERVAL_MICROSECONDS) * 0.000001F;
+    static DynamicIdleController dynamicIdleController(dynamicIdleControllerConfig, TASK_INTERVAL_MICROSECONDS, debug);
+    const float deltaT = static_cast<float>(TASK_INTERVAL_MICROSECONDS) * 0.000001F;
 
     TEST_ASSERT_EQUAL(10, dynamicIdleController.getConfig().dyn_idle_min_rpm_100);
     TEST_ASSERT_EQUAL_FLOAT(motorHz1000RPM, dynamicIdleController.getMinimumAllowedMotorHz());
