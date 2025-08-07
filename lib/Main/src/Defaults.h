@@ -1,6 +1,6 @@
 #pragma once
 
-#include <MotorMixerBase.h>
+#include <DynamicIdleController.h>
 
 
 enum { MAIN_LOOP_TASK_INTERVAL_MICROSECONDS = 5000 };
@@ -43,12 +43,12 @@ enum {
 
 namespace DEFAULTS {
 
-const MotorMixerBase::dynamic_idle_controller_config_t dynamicIdleControllerConfig = {
-    .minRPM = 0,
-    .maxIncrease = 150,
-    .kp = 50,
-    .ki = 50,
-    .kd = 50,
+const DynamicIdleController::config_t dynamicIdleControllerConfig = {
+    .dyn_idle_min_rpm_100 = 0,
+    .dyn_idle_p_gain = 50,
+    .dyn_idle_i_gain = 50,
+    .dyn_idle_d_gain = 50,
+    .dyn_idle_max_increase = 150,
 };
 
 } // END namespace

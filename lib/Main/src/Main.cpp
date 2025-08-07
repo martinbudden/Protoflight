@@ -99,11 +99,10 @@ void Main::setup()
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
-    static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilters, FC_TASK_INTERVAL_MICROSECONDS); // NOLINT(misc-const-correctness) false positive
-//#define USE_DYNAMIC_IDLE
+    static DynamicIdleController dynamicIdleController(DEFAULTS::dynamicIdleControllerConfig, FC_TASK_INTERVAL_MICROSECONDS, debug);
+    static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilters, dynamicIdleController); // NOLINT(misc-const-correctness) false positive
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
-    motorMixer.setDynamicIdleControllerConfig(DEFAULTS::dynamicIdleControllerConfig);
 #else
     motorMixer.setMotorOutputMin(0.055F); // 5.5%
 #endif

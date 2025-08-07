@@ -4,7 +4,7 @@
 #include <cstdint>
 
 class Debug;
-
+class DynamicIdleController;
 
 class MotorMixerBase {
 public:
@@ -14,15 +14,6 @@ public:
         float pitch;
         float yaw;
     };
-    struct dynamic_idle_controller_config_t {
-        uint8_t minRPM; // minimum motor speed enforced by the dynamic idle controller
-        uint8_t maxIncrease; // limit on maximum possible increase in motor idle drive during active control
-        // PID constants
-        uint8_t kp;
-        uint8_t ki;
-        uint8_t kd;
-    };
-
 public:
     MotorMixerBase(uint32_t motorCount, Debug& debug) : _motorCount(motorCount), _debug(debug) {}
     inline size_t getMotorCount() const { return _motorCount; }
@@ -34,14 +25,13 @@ public:
     void setMotorOutputMin(float motorOutputMin) { _motorOutputMin = motorOutputMin; }
     float getMotorOutputMin() const { return _motorOutputMin; }
 
-    const dynamic_idle_controller_config_t& getDynamicIdleControllerConfig() const { return _dynamicIdleControllerConfig; }
-    virtual void setDynamicIdleControllerConfig(const dynamic_idle_controller_config_t& dynamicIdleControllerConfig) { (void)dynamicIdleControllerConfig; }
-
     virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) { (void)commands; (void)deltaT; (void)tickCount; }
     virtual float getMotorOutput(size_t motorIndex) const { (void)motorIndex; return 0.0F; }
 
     virtual int32_t getMotorRPM(size_t motorIndex) const { (void)motorIndex; return 0; }
     virtual float getMotorFrequencyHz(size_t motorIndex) const { (void)motorIndex; return 0; }
+
+    virtual DynamicIdleController* getDynamicIdleController() const { return nullptr; }
 public:
     static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
 protected:
@@ -50,5 +40,4 @@ protected:
     int32_t _motorsIsOn {false};
     int32_t _motorsIsDisabled {false};
     float _motorOutputMin {0.0F}; // minimum motor output, typically set to 5.5% to avoid ESC desynchronization
-    dynamic_idle_controller_config_t _dynamicIdleControllerConfig {};
 };

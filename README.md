@@ -14,6 +14,7 @@ It has the following design goals (in no particular order)
 8. Modular architecture to make it easier to identify which bit of code to modify, without impacting other code.
 9. Be useful to people who want to experiment with and customize a flight controller.
 10. Be useful to someone who wants to understand how flight control software works.
+11. Be Betaflight "Tool compatible". This is be able to use Betaflight Configurator and Betaflight Blackbox Explorer.
 
 ## ProtoFlight name
 
@@ -258,14 +259,17 @@ classDiagram
         <<abstract>>
         append() *
     }
+    link AHRS_MessageQueueBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_MessageQueueBase.h"
     class BlackboxMessageQueueAHRS {
         append() override
     }
+    link BlackboxMessageQueueAHRS "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueueAHRS.h"
     class BlackboxMessageQueue {
         RECEIVE(queue_item_t& queueItem) int32_t
         SEND(const queue_item_t& queueItem)
         SEND_IF_NOT_FULL(const queue_item_t& queueItem)
     }
+    link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
     AHRS_MessageQueueBase <-- BlackboxMessageQueueAHRS : overrides append
     BlackboxMessageQueueAHRS o-- BlackboxMessageQueue : calls SEND_IF_NOT_FULL
 
@@ -382,11 +386,18 @@ classDiagram
     IMU_Filters *-- RPM_Filters : calls filter
 
     MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot : overrides getMotorFrequencyHz
-    class MotorMixerQuadX_Base
+    class MotorMixerQuadX_Base {
+        array~float,4~ _motorOutputs
+    }
     link MotorMixerQuadX_Base "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_Base.h"
 
+    class DynamicIdleController {
+        calculateSpeedIncrease() float
+    }
+    link DynamicIdleController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/DynamicIdleController.h"
     class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
     link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
+    MotorMixerQuadX_DShot o-- DynamicIdleController : calls calculateSpeedIncrease
     MotorMixerQuadX_DShot o-- RPM_Filters : calls setFrequency
 
     IMU_Base <|-- IMU_BMI270 : overrides readAccGyroRPS
@@ -460,6 +471,7 @@ classDiagram
         getStickValues() *
         getAuxiliaryChannel() uint32_t *
     }
+    link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
     class FlightController {
         array~PIDF~ _pids
         loop() override
@@ -517,9 +529,11 @@ classDiagram
         SEND(const queue_item_t& queueItem)
         SEND_IF_NOT_FULL(const queue_item_t& queueItem)
     }
+    link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
     class AHRS {
         bool readIMUandUpdateOrientation()
     }
+    link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs
     AHRS o-- VehicleControllerBase : historical
     AHRS o-- BlackboxMessageQueue : (indirectly) calls SEND_IF_NOT_FULL
@@ -584,25 +598,30 @@ All writing to the serial device is done via the `BlackboxEncoder`
 classDiagram
     class AHRS {
     }
+    link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
     class Blackbox {
         <<abstract>>
         writeSystemInformation() *
         update() uint32_t
     }
+    link Blackbox "https://github.com/martinbudden/Library-Blackbox/blob/main/src/Blackbox.h"
 
     class BlackboxCallbacks {
         void loadSlowState() override
         void loadMainState() override
     }
+    link BlackboxCallbacks "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxCallbacks.h"
     class BlackboxMessageQueueBase {
         <<abstract>>
         WAIT_IF_EMPTY() *
     }
+    link BlackboxMessageQueueBase "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxMessageQueueBase.h"
     class BlackboxMessageQueue {
         WAIT_IF_EMPTY() override
         RECEIVE(queue_item_t& queueItem) int32_t
         SEND_IF_NOT_FULL(const queue_item_t& queueItem) bool
     }
+    link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
     AHRS o-- BlackboxMessageQueue : indirectly calls SEND_IF_NOT_FULL
     class RadioControllerBase {
         <<abstract>>
@@ -615,6 +634,7 @@ classDiagram
     class ReceiverBase {
         <<abstract>>
     }
+    link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
     class FlightController {
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
@@ -622,19 +642,25 @@ classDiagram
     class BlackboxProtoFlight {
         writeSystemInformation() override
     }
+    link BlackboxProtoFlight "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxProtoFlight.h"
 
     class BlackboxCallbacksBase {
         <<abstract>>
         virtual void loadSlowState() *
         virtual void loadMainState() *
     }
-
+    link BlackboxCallbacksBase "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxCallbacksBase.h"
     class BlackboxSerialDevice {
         <<abstract>>
     }
+    link BlackboxSerialDevice "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxSerialDevice.h"
     class BlackboxSerialDeviceSDCard["BlackboxSerialDeviceSDCard(eg)"]
-
+    link BlackboxSerialDeviceSDCard "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxSerialDeviceSDCard.h"
     Blackbox o-- BlackboxCallbacksBase : calls loadState
+
+    class BlackboxEncoder {
+    }
+    link BlackboxEncoder "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxEncoder.h"
 
     %%BlackboxEncoder --* Blackbox : calls write
     %%BlackboxSerialDevice --o Blackbox : calls open close
@@ -695,12 +721,15 @@ classDiagram
         sendFrame() int *
         processInput() *
     }
+    link MSP_SerialBase "https://github.com/martinbudden/Library-MultiWiiSerialProtocol/blob/main/src/MSP_SerialBase.h"
     class MSP_Base {
         virtual processOutCommand() result_e
         virtual processInCommand() result_e
     }
+    link MSP_Base "https://github.com/martinbudden/Library-MultiWiiSerialProtocol/blob/main/src/MSP_Base.h"
     class MSP_Stream {
     }
+    link MSP_Stream "https://github.com/martinbudden/Library-MultiWiiSerialProtocol/blob/main/src/MSP_Stream.h"
     MSP_Stream *-- MSP_Base
     MSP_Stream o-- MSP_SerialBase
 
@@ -709,6 +738,7 @@ classDiagram
         sendFrame() int override
         processInput() override
     }
+    link MSP_Serial "https://github.com/martinbudden/protoflight/blob/main/lib/MSP/src/MSP_Serial.h"
     MSP_Serial o-- MSP_Stream
 
     MSP_Base <|-- MSP_ProtoFlight
@@ -716,6 +746,10 @@ classDiagram
         processOutCommand() result_e override
         processInCommand() result_e override
     }
+    link MSP_ProtoFlight "https://github.com/martinbudden/protoflight/blob/main/lib/MSP/src/MSP_ProtoFlight.h"
+    class MSP_ProtoFlightBox {
+    }
+    link MSP_ProtoFlightBox "https://github.com/martinbudden/protoflight/blob/main/lib/MSP/src/MSP_ProtoFlightBox.h"
     MSP_ProtoFlight *-- MSP_ProtoFlightBox
     MSP_ProtoFlight o-- Features
     MSP_ProtoFlight o-- AHRS
@@ -724,8 +758,12 @@ classDiagram
     class ReceiverBase {
         <<abstract>>
     }
+    link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
     MSP_ProtoFlight o-- ReceiverBase
 
+    class MSP_Box {
+    }
+    link MSP_Box "https://github.com/martinbudden/Library-MultiWiiSerialProtocol/blob/main/src/MSP_Box.h"
     MSP_Box <|-- MSP_ProtoFlightBox
 
     class TaskBase:::taskClass {
@@ -736,6 +774,7 @@ classDiagram
         +loop()
         -task() [[noreturn]]
     }
+    link MSP_Task "https://github.com/martinbudden/Library-MultiWiiSerialProtocol/blob/main/src/MSP_Task.h"
     MSP_Task o-- MSP_SerialBase : calls processInput
 
     classDef taskClass fill:#f96

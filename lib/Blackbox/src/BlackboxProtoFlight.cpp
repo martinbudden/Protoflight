@@ -3,6 +3,7 @@
 #include "RadioController.h"
 
 #include <BlackboxCallbacksBase.h>
+#include <DynamicIdleController.h>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage)
 #ifndef BLACKBOX_PRINT_HEADER_LINE
@@ -35,9 +36,14 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
     }
 // See https://github.com/betaflight/blackbox-log-viewer/blob/master/src/flightlog_parser.js for parsing of fields
     const FlightController::filters_config_t fcFiltersConfig = _flightController.getFiltersConfig();
+
     const RadioController::rates_t rates = _radioController.getRates();
+
     const IMU_Filters::filters_config_t imuFiltersConfig = _imuFilters.getFiltersConfig();
-    const MotorMixerBase::dynamic_idle_controller_config_t dynamicIdleControllerConfig = _flightController.getMixer().getDynamicIdleControllerConfig();
+
+    const DynamicIdleController* dynamicIdleController = _flightController.getMixer().getDynamicIdleController();
+    const DynamicIdleController::config_t* dynamicIdleControllerConfig = dynamicIdleController ? &dynamicIdleController->getConfig() : nullptr;
+
     //const BlackboxCallbacksBase::rates_t& currentControlRateProfile = _callbacks.currentControlRateProfile();
     //const pidProfile_t& currentPidProfile = _callbacks.getCurrentPidProfile();
     //enum { PID_ROLL, PID_PITCH, PID_YAW, PID_LEVEL, PID_MAG, PID_ITEM_COUNT };
@@ -236,11 +242,11 @@ H features:541130760
         BLACKBOX_PRINT_HEADER_LINE("debug_mode", "%d",                      getDebugMode());
         BLACKBOX_PRINT_HEADER_LINE("features", "%d",                        541130760); //0x2041'0008
 
-        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_min_rpm", "%d",                dynamicIdleControllerConfig.minRPM);
-        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_p_gain", "%d",                 dynamicIdleControllerConfig.kp);
-        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_i_gain", "%d",                 dynamicIdleControllerConfig.ki);
-        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_d_gain", "%d",                 dynamicIdleControllerConfig.kd);
-        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_max_increase", "%d",           dynamicIdleControllerConfig.maxIncrease);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_min_rpm_100", "%d",                dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_min_rpm_100 : 0);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_p_gain", "%d",                 dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_p_gain : 0);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_i_gain", "%d",                 dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_i_gain : 0);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_d_gain", "%d",                 dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_d_gain : 0);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_max_increase", "%d",           dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_max_increase : 0);
 
 // NOLINTEND(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         default:
