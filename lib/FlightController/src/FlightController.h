@@ -180,6 +180,7 @@ public:
     void loop();
 public:
     void detectCrashOrSpin(uint32_t tickCount);
+    void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _yawSpinThresholdDPS = yawSpinThresholdDPS; }
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
     void updateSetpoints(const controls_t& controls);
     void updateOutputsUsingPIDs(float deltaT);
@@ -241,6 +242,7 @@ private:
     float _pitchRateAtMaxPowerDPS {1000.0};
     float _yawRateAtMaxPowerDPS {1000.0};
     float _thrustOutput {0.0F};
+    float _yawSpinThresholdDPS {0.0F};
     uint32_t _yawSpinRecovery { false };
     float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };
     float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };

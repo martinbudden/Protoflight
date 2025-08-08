@@ -2,22 +2,17 @@
 #include "RadioController.h"
 #include <cmath>
 
-static const RadioController::rates_t defaultRates {
-    .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
-    .rcRates = { 7, 7, 7 },
-    .rcExpos = { 0, 0, 0 },
-    .rates = { 67, 67, 67 },
-    .throttleMidpoint = 50,
-    .throttleExpo = 0,
-    .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
-    .throttleLimitPercent = 100,
-    .ratesType = RadioController::RATES_TYPE_ACTUAL
-};
-
-RadioController::RadioController(ReceiverBase& receiver) :
+RadioController::RadioController(ReceiverBase& receiver, const rates_t& rates) :
     RadioControllerBase(receiver),
-    _rates(defaultRates)
+    _rates(rates)
 {
+}
+
+void RadioController::setFlightController(FlightController* flightController)
+{
+    _flightController = flightController;
+    // set yaw spin detect threshold at 25% greater than max yaw rate stick input
+    _flightController->setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
 }
 
 void RadioController::setRatesToPassThrough()

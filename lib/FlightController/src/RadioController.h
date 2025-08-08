@@ -10,8 +10,6 @@ class FlightController;
 
 class RadioController : public RadioControllerBase {
 public:
-    explicit RadioController(ReceiverBase& receiver);
-public:
     enum { ROLL = 0, PITCH = 1, YAW = 2, AXIS_COUNT = 3 };
     enum { RATE_LIMIT_MAX = 1998 };
     enum throttleLimitType_e { THROTTLE_LIMIT_TYPE_OFF = 0, THROTTLE_LIMIT_TYPE_SCALE, THROTTLE_LIMIT_TYPE_CLIP, THROTTLE_LIMIT_TYPE_COUNT };
@@ -46,7 +44,9 @@ public:
         uint16_t throttle_low_delay;
     };
 public:
-    void setFlightController(FlightController* flightController) { _flightController = flightController; }
+    RadioController(ReceiverBase& receiver, const rates_t& rates);
+
+    void setFlightController(FlightController* flightController);
 
     virtual void updateControls(const controls_t& controls) override;
     virtual uint32_t getFailsafePhase() const override;

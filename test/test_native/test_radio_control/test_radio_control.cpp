@@ -4,6 +4,19 @@
 
 #include <unity.h>
 
+
+static const RadioController::rates_t radioControllerRates {
+    .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
+    .rcRates = { 7, 7, 7 },
+    .rcExpos = { 0, 0, 0 },
+    .rates = { 67, 67, 67 },
+    .throttleMidpoint = 50,
+    .throttleExpo = 0,
+    .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitPercent = 100,
+    .ratesType = RadioController::RATES_TYPE_ACTUAL
+};
+
 void setUp() {
 }
 
@@ -13,7 +26,7 @@ void tearDown() {
 void test_radio_controller()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver);
+    static RadioController radioController(receiver, radioControllerRates);
 
     RadioController::rates_t rates = radioController.getRates();
 
@@ -55,7 +68,7 @@ void test_radio_controller()
 void test_radio_controller_passthrough()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver);
+    static RadioController radioController(receiver, radioControllerRates);
 
     radioController.setRatesToPassThrough();
 
@@ -74,7 +87,7 @@ void test_radio_controller_passthrough()
 void test_radio_controller_defaults()
 {
     static ReceiverNull receiver;
-    static const RadioController radioController(receiver);
+    static RadioController radioController(receiver, radioControllerRates);
 
     const RadioController::rates_t rates = radioController.getRates();
 
@@ -111,7 +124,7 @@ void test_radio_controller_defaults()
 void test_radio_controller_constrain()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver);
+    static RadioController radioController(receiver, radioControllerRates);
 
     RadioController::rates_t rates = radioController.getRates(); // NOLINT(misc-const-correctness)
     rates.rcRates = {200, 200, 200};
@@ -132,7 +145,7 @@ void test_radio_controller_constrain()
 void test_radio_controller_throttle()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver);
+    static RadioController radioController(receiver, radioControllerRates);
 
     float throttle = radioController.mapThrottle(0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, throttle);

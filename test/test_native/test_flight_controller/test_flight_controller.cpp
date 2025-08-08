@@ -36,6 +36,18 @@ public:
     IMU_FiltersNull& operator=(IMU_FiltersNull&&) = delete;
 };
 
+static const RadioController::rates_t radioControllerRates {
+    .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
+    .rcRates = { 7, 7, 7 },
+    .rcExpos = { 0, 0, 0 },
+    .rates = { 67, 67, 67 },
+    .throttleMidpoint = 50,
+    .throttleExpo = 0,
+    .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitPercent = 100,
+    .ratesType = RadioController::RATES_TYPE_ACTUAL
+};
+
 void setUp() {
 }
 
@@ -55,7 +67,7 @@ void test_flight_controller()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static RadioController radioController(receiver);
+    static RadioController radioController(receiver, radioControllerRates);
     FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
     TEST_ASSERT_FALSE(fc.motorsIsOn());
 
@@ -106,8 +118,8 @@ void test_flight_controller_flight_mode_flags()
 {
     // NOLINTBEGIN(hicpp-signed-bitwise)
     TEST_ASSERT_EQUAL(FlightController::ANGLE_MODE, 1U << FlightController::LOG2_ANGLE_MODE);
-    TEST_ASSERT_EQUAL(FlightController::HORIZON_MODE, 1U << FlightController::LOG2_ANGLE_MODE);
-    TEST_ASSERT_EQUAL(FlightController::MAG_MODE, 1U << FlightController::LOG2_ANGLE_MODE);
+    TEST_ASSERT_EQUAL(FlightController::HORIZON_MODE, 1U << FlightController::LOG2_HORIZON_MODE);
+    TEST_ASSERT_EQUAL(FlightController::MAG_MODE, 1U << FlightController::LOG2_MAG_MODE);
     TEST_ASSERT_EQUAL(FlightController::ALT_HOLD_MODE, 1U << FlightController::LOG2_ALT_HOLD_MODE);
     TEST_ASSERT_EQUAL(FlightController::GPS_HOME_MODE, 1U << FlightController::LOG2_GPS_HOME_MODE);
     TEST_ASSERT_EQUAL(FlightController::GPS_HOLD_MODE, 1U << FlightController::LOG2_GPS_HOLD_MODE);
@@ -126,6 +138,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 
     RUN_TEST(test_flight_controller);
     RUN_TEST(test_flight_controller_pid_indexes);
+    RUN_TEST(test_flight_controller_flight_mode_flags);
 
     UNITY_END();
 }

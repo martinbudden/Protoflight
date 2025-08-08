@@ -40,6 +40,18 @@ public:
     IMU_FiltersNull& operator=(IMU_FiltersNull&&) = delete;
 };
 
+static const RadioController::rates_t radioControllerRates {
+    .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
+    .rcRates = { 7, 7, 7 },
+    .rcExpos = { 0, 0, 0 },
+    .rates = { 67, 67, 67 },
+    .throttleMidpoint = 50,
+    .throttleExpo = 0,
+    .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitPercent = 100,
+    .ratesType = RadioController::RATES_TYPE_ACTUAL
+};
+
 void setUp() {
 }
 
@@ -59,7 +71,7 @@ void test_telemetry_msp()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static RadioController radioController(receiver);
+    static RadioController radioController(receiver, radioControllerRates);
     static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
     static Features features;
 

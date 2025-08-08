@@ -298,9 +298,11 @@ Detect crash or yaw spin. Runs in context of Receiver Task.
 void FlightController::detectCrashOrSpin(uint32_t tickCount)
 {
     (void)tickCount;
-    // if yaw spin detected
-    //_yawSpinRecovery = true;
-    //switchPID_integrationOff();
+    if (_yawSpinThresholdDPS !=0.0F && fabsf(_PIDS[YAW_RATE_DPS].getPreviousMeasurement()) > _yawSpinThresholdDPS) {
+        // yaw spin detected
+        _yawSpinRecovery = true;
+        switchPID_integrationOff();
+    }
 }
 
 void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT)

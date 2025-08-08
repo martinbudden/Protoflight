@@ -55,7 +55,7 @@ public:
     void loop();
 private:
     void testBlackbox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters);
-    static IMU_Base& createIMU(uint32_t& AHRS_taskIntervalMicroSeconds);
+    static IMU_Base& createIMU(int32_t& imuSampleRateHz, uint32_t AHRS_taskIntervalMicroSeconds);
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static void checkGyroCalibration(SV_Preferences& preferences, AHRS& ahrs);
     static void resetPreferences(SV_Preferences& preferences, FlightController& flightController);

@@ -77,7 +77,7 @@ void Main::setup()
     // Statically allocate and setup the receiver.
     static ReceiverAtomJoyStick receiver(&myMacAddress[0]);
     _receiver = &receiver;
-    static RadioController radioController(receiver);
+    static RadioController radioController(receiver, DEFAULTS::radioControllerRates);
 #if !defined(RECEIVER_CHANNEL)
     enum { RECEIVER_CHANNEL = 3 };
 #endif
@@ -88,11 +88,13 @@ void Main::setup()
     // Statically allocate and setup the receiver.
     static ReceiverNull receiver;
     _receiver = &receiver;
-    static RadioController radioController(receiver);
+    static RadioController radioController(receiver, DEFAULTS::radioControllerRates);
 #endif // USE_ESPNOW
 
     uint32_t AHRS_taskIntervalMicroSeconds = AHRS_TASK_INTERVAL_MICROSECONDS;
-    static IMU_Base& imuSensor = createIMU(AHRS_taskIntervalMicroSeconds); // NOLINT(misc-const-correctness) false positive
+    int32_t imuSampleRateHz {};
+    static IMU_Base& imuSensor = createIMU(imuSampleRateHz, AHRS_taskIntervalMicroSeconds); // NOLINT(misc-const-correctness) false positive
+    (void)imuSampleRateHz;
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
