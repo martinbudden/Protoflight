@@ -17,11 +17,11 @@ class IMU_Base;
 class IMU_Filters;
 class IMU_FiltersBase;
 class MSP_Task;
+class NonVolatileStorage;
 class RadioController;
 class ReceiverBase;
 class ReceiverTask;
 class ReceiverWatcher;
-class SV_Preferences;
 class ScreenBase;
 class VehicleControllerTask;
 
@@ -94,9 +94,9 @@ private:
     void testBlackbox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters);
     static IMU_Base& createIMU(int32_t& imuSampleRateHz, uint32_t AHRS_taskIntervalMicroSeconds);
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
-    static void checkGyroCalibration(SV_Preferences& preferences, AHRS& ahrs);
-    static void resetPreferences(SV_Preferences& preferences, FlightController& flightController);
-    static void loadPreferences(SV_Preferences& preferences, FlightController& flightController);
+    static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);
+    static void resetNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);
+    static void loadNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);
     static void reportMainTask();
     struct tasks_t {
         MainTask* mainTask;

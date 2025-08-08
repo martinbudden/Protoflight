@@ -833,7 +833,7 @@ classDiagram
     }
     VehicleControllerBase <|-- FlightController
     BackchannelFlightController o-- FlightController
-    BackchannelFlightController o-- SV_Preferences
+    BackchannelFlightController o-- NonVolatileStorage
 
 
     class TaskBase:::taskClass {

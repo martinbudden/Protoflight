@@ -34,7 +34,6 @@
 #include <ReceiverAtomJoyStick.h>
 #include <ReceiverNull.h>
 #include <ReceiverTask.h>
-#include <SV_Preferences.h>
 #if defined(M5_UNIFIED)
 #include <ScreenM5.h>
 #endif
@@ -162,25 +161,22 @@ void Main::setup()
         //.mode = Blackbox::MODE_ALWAYS_ON
     });
 #endif
-#if defined(BACKCHANNEL_MAC_ADDRESS) && defined(USE_ESPNOW)
-    static SV_Preferences preferences;
-#endif
 
 #if defined(M5_UNIFIED)
     // Holding BtnA down while switching on enters calibration mode.
     //if (M5.BtnA.isPressed()) {
-    //    calibrateGyro(*ahrs, preferences, CALIBRATE_ACC_AND_GYRO);
+    //    calibrateGyro(*ahrs, nvs, CALIBRATE_ACC_AND_GYRO);
     //}
 #endif
-    //!!checkGyroCalibration(preferences, ahrs);
+    //!!checkGyroCalibration(nvs, ahrs);
 
 #if defined(M5_UNIFIED)
-    // Holding BtnC down while switching on resets the preferences.
+    // Holding BtnC down while switching on resets the nvs.
     if (M5.BtnC.isPressed()) {
-        resetPreferences(preferences, flightController);
+        resetNonVolatileStorage(nvs, flightController);
     }
 #endif
-    //!!loadPreferences(preferences, flightController);
+    //!!loadNonVolatileStorage(nvs, flightController);
 
 #if defined(M5_UNIFIED)
     // Statically allocate the screen.
@@ -239,7 +235,7 @@ void Main::setup()
         ahrs,
         receiver,
         &mainTask,
-        preferences
+        nvs
     );
 
     _tasks.backchannelTask = BackchannelTask::createTask(backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
@@ -328,22 +324,22 @@ void Main::reportMainTask()
 }
 #endif
 
-void Main::checkGyroCalibration(SV_Preferences& preferences, AHRS& ahrs)
+void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs)
 {
     // Set the gyro offsets from non-volatile storage.
     IMU_Base::xyz_int32_t offset {};
-    if (preferences.getGyroOffset(offset.x, offset.y, offset.z)) {
+    if (nvs.getGyroOffset(offset.x, offset.y, offset.z)) {
         ahrs.setGyroOffset(offset);
         std::array<char, 128> buf;
-        sprintf(&buf[0], "**** AHRS gyroOffsets loaded from preferences: gx:%5d, gy:%5d, gz:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
+        sprintf(&buf[0], "**** AHRS gyroOffsets loaded from NVS: gx:%5d, gy:%5d, gz:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
 #if defined(FRAMEWORK_RPI_PICO)
         printf(&buf[0]);
 #else
         Serial.print(&buf[0]);
 #endif
-        if (preferences.getAccOffset(offset.x, offset.y, offset.z)) {
+        if (nvs.getAccOffset(offset.x, offset.y, offset.z)) {
             ahrs.setAccOffset(offset);
-            sprintf(&buf[0], "**** AHRS accOffsets loaded from preferences: ax:%5d, ay:%5d, az:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
+            sprintf(&buf[0], "**** AHRS accOffsets loaded from NVS: ax:%5d, ay:%5d, az:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
 #if defined(FRAMEWORK_RPI_PICO)
             printf(&buf[0]);
 #else
@@ -352,47 +348,47 @@ void Main::checkGyroCalibration(SV_Preferences& preferences, AHRS& ahrs)
         }
     } else {
         // when calibrateGyro called automatically on startup, just calibrate the gyroscope.
-        //calibrateGyro(ahrs, *preferences, CALIBRATE_JUST_GYRO);
+        //calibrateGyro(ahrs, *nvs, CALIBRATE_JUST_GYRO);
     }
 }
 
 /*!
-Resets the PID preferences to SV_Preferences::NOT_SET (which represents unset).
+Resets the PID non volatile storage to NonVolatileStorage::NOT_SET (which represents unset).
 */
-void Main::resetPreferences(SV_Preferences& preferences, FlightController& flightController)
+void Main::resetNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController)
 {
-    //preferences.clear();
-    //preferences.removeGyroOffset();
-    //preferences.removeAccOffset();
+    //nvs.clear();
+    //nvs.removeGyroOffset();
+    //nvs.removeAccOffset();
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
         const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
-        constexpr PIDF::PIDF_t pidNOT_SET { SV_Preferences::NOT_SET, SV_Preferences::NOT_SET, SV_Preferences::NOT_SET, SV_Preferences::NOT_SET, SV_Preferences::NOT_SET };
-        preferences.putPID(pidName, pidNOT_SET);
+        constexpr PIDF::PIDF_t pidNOT_SET { NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET };
+        nvs.putPID(pidName, pidNOT_SET);
     }
 #if defined(FRAMEWORK_RPI_PICO)
-        printf("**** preferences reset\r\n");
+        printf("**** NVS reset\r\n");
 #else
-        Serial.println("**** preferences reset");
+        Serial.println("**** NVS reset");
 #endif
 }
 
 /*!
 Loads the PID settings for the FlightController. Must be called *after* the FlightController is created.
 */
-void Main::loadPreferences(SV_Preferences& preferences, FlightController& flightController)
+void Main::loadNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController)
 {
-    // Set all the preferences to zero if they have not been set
-    if (!preferences.isSetPID()) {
-        resetPreferences(preferences, flightController);
+    // Set all the non volatile storage to zero if they have not been set
+    if (!nvs.isSetPID()) {
+        resetNonVolatileStorage(nvs, flightController);
     }
-    // Load the PID constants from preferences, and if they are non-zero then use them to set the FlightController PIDs.
+    // Load the PID constants from non volatile storage, and if they are non-zero then use them to set the FlightController PIDs.
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
         std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
-        const PIDF::PIDF_t pid = preferences.getPID(pidName);
-        if (pid.kp != SV_Preferences::NOT_SET) {
+        const PIDF::PIDF_t pid = nvs.getPID(pidName);
+        if (pid.kp != NonVolatileStorage::NOT_SET) {
             flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
             std::array<char, 128> buf;
-            sprintf(&buf[0], "**** %s PID loaded from preferences: P:%f, I:%f, D:%f, F:%f\r\n", pidName.c_str(), static_cast<double>(pid.kp), static_cast<double>(pid.ki), static_cast<double>(pid.kd), static_cast<double>(pid.kf));
+            sprintf(&buf[0], "**** %s PID loaded from NVS: P:%f, I:%f, D:%f, F:%f\r\n", pidName.c_str(), static_cast<double>(pid.kp), static_cast<double>(pid.ki), static_cast<double>(pid.kd), static_cast<double>(pid.kf));
 #if defined(FRAMEWORK_RPI_PICO)
             printf(&buf[0]);
 #else
