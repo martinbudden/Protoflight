@@ -5,6 +5,7 @@
 
 AHRS& Main::createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters)
 {
+// NOLINTBEGIN(misc-const-correctness)
     // Statically allocate the Sensor Fusion Filter
     // Timings are for 240MHz ESP32-S3
 #if defined(USE_COMPLEMENTARY_FILTER)

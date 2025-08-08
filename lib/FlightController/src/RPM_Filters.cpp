@@ -8,24 +8,24 @@ void RPM_Filters::init(uint32_t harmonicToUse, float Q)
 
     // just under  Nyquist frequency (ie just under half sampling rate)
     // for 8kHz loop this is 3840Hz
-    _maxFrequencyHz = 480000.0F / static_cast<float>(_looptimeUs);
+    _maxFrequencyHz = 480000.0F / static_cast<float>(_looptimeSeconds);
     _halfOfMaxFrequencyHz = _maxFrequencyHz / 2.0F;
     _thirdOfMaxFrequencyHz = _maxFrequencyHz / 3.0F;
 
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     for (size_t motorIndex = 0; motorIndex < _motorCount; ++motorIndex) {
-        _filters[motorIndex][FUNDAMENTAL][X].initNotch(_minFrequencyHz, _looptimeUs, _Q);
-        _filters[motorIndex][FUNDAMENTAL][Y].initNotch(_minFrequencyHz, _looptimeUs, _Q);
-        _filters[motorIndex][FUNDAMENTAL][Z].initNotch(_minFrequencyHz, _looptimeUs, _Q);
+        _filters[motorIndex][FUNDAMENTAL][X].initNotch(_minFrequencyHz, _looptimeSeconds, _Q);
+        _filters[motorIndex][FUNDAMENTAL][Y].initNotch(_minFrequencyHz, _looptimeSeconds, _Q);
+        _filters[motorIndex][FUNDAMENTAL][Z].initNotch(_minFrequencyHz, _looptimeSeconds, _Q);
     }
     if (_harmonicToUse == USE_FUNDAMENTAL_ONLY) {
         return;
     }
     const float minHarmonicFrequency = (_harmonicToUse == USE_FUNDAMENTAL_AND_SECOND_HARMONIC) ? 2.0F * _minFrequencyHz : 3.0F * _minFrequencyHz;
     for (size_t motorIndex = 0; motorIndex < _motorCount; ++motorIndex) {
-        _filters[motorIndex][HARMONIC][Y].initNotch(minHarmonicFrequency, _looptimeUs, _Q);
-        _filters[motorIndex][HARMONIC][Y].initNotch(minHarmonicFrequency, _looptimeUs, _Q);
-        _filters[motorIndex][HARMONIC][Z].initNotch(minHarmonicFrequency, _looptimeUs, _Q);
+        _filters[motorIndex][HARMONIC][Y].initNotch(minHarmonicFrequency, _looptimeSeconds, _Q);
+        _filters[motorIndex][HARMONIC][Y].initNotch(minHarmonicFrequency, _looptimeSeconds, _Q);
+        _filters[motorIndex][HARMONIC][Z].initNotch(minHarmonicFrequency, _looptimeSeconds, _Q);
     }
     // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 }
@@ -46,7 +46,7 @@ void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
 
     const float omega = xFilter.calculateOmega(frequencyHz);
     // omega = frequency * _2PiLoopTimeSeconds
-    // maxFrequency < 500'000 / looptimeUs = 0.5 / looptimeSeconds
+    // maxFrequency < 0.5 / looptimeSeconds
     // maxOmega = (0.5 / looptimeSeconds) * 2PiLooptimeSeconds = 0.5 * 2PI = PI;
     // so omega is in range [0, PI]
     const float sinOmega = sinOrder5(omega);

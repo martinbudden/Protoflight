@@ -35,7 +35,7 @@ public:
     enum { X = 0, Y = 1, Z = 2, AXIS_COUNT = 3 };
     enum { USE_FUNDAMENTAL_ONLY = 0, USE_FUNDAMENTAL_AND_SECOND_HARMONIC = 1, USE_FUNDAMENTAL_AND_THIRD_HARMONIC = 2 };
 public:
-    RPM_Filters(size_t motorCount, uint32_t looptimeUs) : _motorCount(motorCount), _looptimeUs(looptimeUs) {}
+    RPM_Filters(size_t motorCount, float looptimeSeconds) : _motorCount(motorCount), _looptimeSeconds(looptimeSeconds) {}
     void init(uint32_t harmonicToUse, float Q);
     void setHarmonicToUse(uint8_t harmonicToUse) {_harmonicToUse = harmonicToUse; }
     void setMinimumFrequencyHz(float minFrequencyHz) { _minFrequencyHz = minFrequencyHz; }
@@ -86,7 +86,7 @@ public:
     static constexpr float M_PI_F = 3.141592653589793F;
 private:
     size_t _motorCount;
-    uint32_t _looptimeUs;
+    float _looptimeSeconds;
     uint32_t _harmonicToUse {USE_FUNDAMENTAL_ONLY};
     uint32_t _filterHarmonic {};
     std::array<float, MAX_HARMONICS_COUNT> _weights = { 1.0F, 1.0F };

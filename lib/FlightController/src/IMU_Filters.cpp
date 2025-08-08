@@ -3,10 +3,9 @@
 #include <RPM_Filters.h>
 
 
-IMU_Filters::IMU_Filters(const MotorMixerBase& motorMixer, uint32_t looptimeUs) :
+IMU_Filters::IMU_Filters(const MotorMixerBase& motorMixer, float looptimeSeconds) :
     _motorMixer(motorMixer),
-    _looptimeUs(looptimeUs),
-    _deltaT(static_cast<float>(looptimeUs) * 0.000001F),
+    _looptimeSeconds(looptimeSeconds),
     _motorCount(motorMixer.getMotorCount())
 {
 }
@@ -41,9 +40,9 @@ void IMU_Filters::setConfig(const config_t& config)
     switch (config.gyro_lpf2_type) {
     case config_t::BIQUAD: {
         static constexpr float Q = 0.7071067811865475F; // 1 / sqrt(2)
-        _lpf2Biquad[X].initLowPass(gyro_lpf2_hz, _looptimeUs, Q);
-        _lpf2Biquad[Y].initLowPass(gyro_lpf2_hz, _looptimeUs, Q);
-        _lpf2Biquad[Z].initLowPass(gyro_lpf2_hz, _looptimeUs, Q);
+        _lpf2Biquad[X].initLowPass(gyro_lpf2_hz, _looptimeSeconds, Q);
+        _lpf2Biquad[Y].initLowPass(gyro_lpf2_hz, _looptimeSeconds, Q);
+        _lpf2Biquad[Z].initLowPass(gyro_lpf2_hz, _looptimeSeconds, Q);
         _gyroLPF2[X] = &_lpf2Biquad[X];
         _gyroLPF2[Y] = &_lpf2Biquad[Y];
         _gyroLPF2[Z] = &_lpf2Biquad[Z];
@@ -53,9 +52,9 @@ void IMU_Filters::setConfig(const config_t& config)
         // just used PT2 if PT3 specified
         [[fallthrough]];
     case config_t::PT2:
-        _lpf2PT2[X].setCutoffFrequency(gyro_lpf2_hz, _deltaT);
-        _lpf2PT2[Y].setCutoffFrequency(gyro_lpf2_hz, _deltaT);
-        _lpf2PT2[Z].setCutoffFrequency(gyro_lpf2_hz, _deltaT);
+        _lpf2PT2[X].setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
+        _lpf2PT2[Y].setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
+        _lpf2PT2[Z].setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
         _gyroLPF2[X] = &_lpf2PT2[X];
         _gyroLPF2[Y] = &_lpf2PT2[Y];
         _gyroLPF2[Z] = &_lpf2PT2[Z];
@@ -63,9 +62,9 @@ void IMU_Filters::setConfig(const config_t& config)
     case config_t::PT1:
         [[fallthrough]];
     default:
-        _lpf2PT1[X].setCutoffFrequency(gyro_lpf2_hz, _deltaT);
-        _lpf2PT1[Y].setCutoffFrequency(gyro_lpf2_hz, _deltaT);
-        _lpf2PT1[Z].setCutoffFrequency(gyro_lpf2_hz, _deltaT);
+        _lpf2PT1[X].setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
+        _lpf2PT1[Y].setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
+        _lpf2PT1[Z].setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
         _gyroLPF2[X] = &_lpf2PT1[X];
         _gyroLPF2[Y] = &_lpf2PT1[Y];
         _gyroLPF2[Z] = &_lpf2PT1[Z];
@@ -73,7 +72,7 @@ void IMU_Filters::setConfig(const config_t& config)
     }
 
     // set gyroNotch1
-    const uint32_t frequencyNyquist = (1000000 / _looptimeUs) / 2;
+    const uint32_t frequencyNyquist = static_cast<uint32_t>(std::lroundf((1.0F/_looptimeSeconds)/2.0F));
     if (config.gyro_notch1_hz == 0 || config.gyro_notch1_hz > frequencyNyquist || config.gyro_notch1_cutoff == 0) {
         _gyroNotch1[X] = &_filterNull;
         _gyroNotch1[Y] = &_filterNull;

@@ -32,7 +32,7 @@ public:
         uint8_t rpm_filter_min_hz;
     };
 public:
-    IMU_Filters(const MotorMixerBase& motorMixer, uint32_t looptimeUs);
+    IMU_Filters(const MotorMixerBase& motorMixer, float looptimeSeconds);
     void setRPM_Filters(RPM_Filters* rpmFilters);
     void setFilterFromAHRS(bool filterFromAHRS) { _filterFromAHRS = filterFromAHRS; }
     void init(float Q);
@@ -43,8 +43,7 @@ public:
     const config_t& getConfig() const { return _config; }
 protected:
     const MotorMixerBase& _motorMixer;
-    uint32_t _looptimeUs;
-    float _deltaT;
+    float _looptimeSeconds;
     size_t _motorCount;
     size_t _motorIndex {0};
     config_t _config {};

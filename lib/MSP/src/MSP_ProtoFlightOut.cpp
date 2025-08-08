@@ -76,7 +76,8 @@ static inline int constrain(int value, int low, int high)
 }
 
 
-MSP_ProtoFlight::MSP_ProtoFlight(Features& features, AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, Debug& debug) :
+MSP_ProtoFlight::MSP_ProtoFlight(NonVolatileStorage& nonVolatileStorage, Features& features, AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, Debug& debug) :
+    _nonVolatileStorage(nonVolatileStorage),
     _features(features),
     _ahrs(ahrs),
     _flightController(flightController),

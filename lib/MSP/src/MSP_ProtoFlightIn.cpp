@@ -5,8 +5,10 @@
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #include <MSP_Protocol.h>
+#include <NonVolatileStorage.h>
 #include <RadioController.h>
 #include <ReceiverBase.h>
+
 
 MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) // NOLINT(readability-function-cognitive-complexity)
 {
@@ -231,8 +233,12 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
         break;
 #endif
     case MSP_EEPROM_WRITE:
+        if (_flightController.motorsIsOn()) {
+            // can't save to non volatile storage if the motors are on
+            return RESULT_ERROR;
+        }
+        _nonVolatileStorage.storeAll();
         break;
-
     case MSP_SET_BOARD_ALIGNMENT_CONFIG:
         //rollDegrees = src.readU16();
         //pitchDegrees = src.readU16();

@@ -17,7 +17,6 @@
 #include <ButtonsM5.h>
 #endif
 #include <Debug.h>
-#include <Defaults.h>
 #include <Features.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
@@ -29,6 +28,7 @@
 #include <MSP_Task.h>
 #include <MotorMixerQuadX_DShot.h>
 #include <MotorMixerQuadX_PWM.h>
+#include <NonVolatileStorage.h>
 #include <RPM_Filters.h>
 #include <RadioController.h>
 #include <ReceiverAtomJoyStick.h>
@@ -50,6 +50,7 @@ Setup for the main loop, motor control task, and AHRS(Attitude and Heading Refer
 */
 void Main::setup()
 {
+// NOLINTBEGIN(misc-const-correctness)
 #if defined(M5_UNIFIED)
     // Initialize the M5Stack object
     auto cfg = M5.config(); // NOLINT(readability-static-accessed-through-instance)
@@ -63,7 +64,8 @@ void Main::setup()
 #endif
 
     // Statically allocate the debug object
-    static Debug debug; // NOLINT(misc-const-correctness) false positive
+    static Debug debug;
+    static NonVolatileStorage nvs;
 
 #if defined(USE_ESPNOW)
     // Set WiFi to station mode
@@ -77,7 +79,7 @@ void Main::setup()
     // Statically allocate and setup the receiver.
     static ReceiverAtomJoyStick receiver(&myMacAddress[0]);
     _receiver = &receiver;
-    static RadioController radioController(receiver, DEFAULTS::radioControllerRates);
+    static RadioController radioController(receiver, nvs.loadRadioControllerRates());
 #if !defined(RECEIVER_CHANNEL)
     enum { RECEIVER_CHANNEL = 3 };
 #endif
@@ -88,23 +90,23 @@ void Main::setup()
     // Statically allocate and setup the receiver.
     static ReceiverNull receiver;
     _receiver = &receiver;
-    static RadioController radioController(receiver, DEFAULTS::radioControllerRates);
+    static RadioController radioController(receiver, nvs.loadRadioControllerRates());
 #endif // USE_ESPNOW
 
     uint32_t AHRS_taskIntervalMicroSeconds = AHRS_TASK_INTERVAL_MICROSECONDS;
     int32_t imuSampleRateHz {};
-    static IMU_Base& imuSensor = createIMU(imuSampleRateHz, AHRS_taskIntervalMicroSeconds); // NOLINT(misc-const-correctness) false positive
+    static IMU_Base& imuSensor = createIMU(imuSampleRateHz, AHRS_taskIntervalMicroSeconds);
     (void)imuSampleRateHz;
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
-    static MotorMixerQuadX_PWM motorMixer(debug, pins); // NOLINT(misc-const-correctness) false positive
+    static MotorMixerQuadX_PWM motorMixer(debug, pins);
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
-    static DynamicIdleController dynamicIdleController(DEFAULTS::dynamicIdleControllerConfig, FC_TASK_INTERVAL_MICROSECONDS, debug);
-    static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilters, dynamicIdleController); // NOLINT(misc-const-correctness) false positive
+    static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(), FC_TASK_INTERVAL_MICROSECONDS, debug);
+    static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilters, dynamicIdleController);
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
 #else
@@ -116,7 +118,7 @@ void Main::setup()
 
     // statically allocate the IMU_Filters
     static IMU_Filters imuFilters(motorMixer, AHRS_taskIntervalMicroSeconds);
-    imuFilters.setConfig(DEFAULTS::imuFiltersConfig);
+    imuFilters.setConfig(nvs.loadImuFiltersConfig());
 #if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     imuFilters.setRPM_Filters(&rpmFilters);
 #endif
@@ -132,10 +134,10 @@ void Main::setup()
     // Statically allocate the MSP and associated objects
 #define USE_MSP
 #if defined(USE_MSP)
-    static Features features; // NOLINT(misc-const-correctness) false positive
-    static MSP_ProtoFlight mspProtoFlight(features, ahrs, flightController, radioController, receiver, debug); // NOLINT(misc-const-correctness) false positive
+    static Features features;
+    static MSP_ProtoFlight mspProtoFlight(nvs, features, ahrs, flightController, radioController, receiver, debug);
     static MSP_Stream mspStream(mspProtoFlight);
-    static MSP_Serial mspSerial(mspStream); // NOLINT(misc-const-correctness) false positive
+    static MSP_Serial mspSerial(mspStream);
 #endif
 
     // Statically allocate the Blackbox and associated objects
@@ -218,14 +220,14 @@ void Main::setup()
     _tasks.mspTask = MSP_Task::createTask(mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
 #endif
 #if defined(USE_BLACKBOX)
-    TaskBase::task_info_t taskInfo {}; // NOLINT(misc-const-correctness) false positive
+    TaskBase::task_info_t taskInfo {};
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
     vTaskResume(taskInfo.taskHandle);
 #endif
 
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(USE_ESPNOW)
     // statically allocate an MSP object
-    // static MSP_ProtoFlight mspProtoFlightBackchannel(features, ahrs, flightController, radioController, receiver); // NOLINT(misc-const-correctness) false positive
+    // static MSP_ProtoFlight mspProtoFlightBackchannel(features, ahrs, flightController, radioController, receiver);
     // Statically allocate the backchannel.
     constexpr uint8_t backchannelMacAddress[ESP_NOW_ETH_ALEN] BACKCHANNEL_MAC_ADDRESS;
     static BackchannelTransceiverESPNOW backchannelTransceiverESPNOW(receiver.getESPNOW_Transceiver(), &backchannelMacAddress[0]);
@@ -246,8 +248,8 @@ void Main::setup()
 
 void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters)
 {
-    static BlackboxMessageQueue blackboxMessageQueue; // NOLINT(misc-const-correctness) false positive
-    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug); // NOLINT(misc-const-correctness) false positive
+    static BlackboxMessageQueue blackboxMessageQueue;
+    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
     static BlackboxSerialDeviceSDCard blackboxSerialDevice;
     blackboxSerialDevice.init();
 
@@ -302,6 +304,7 @@ void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, const Ra
     delay(5000);
 #endif
 }
+// NOLINTEND(misc-const-correctness)
 
 void Main::reportMainTask()
 {

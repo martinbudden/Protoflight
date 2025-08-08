@@ -23,6 +23,7 @@ void setUp() {
 void tearDown() {
 }
 
+// NOLINTBEGIN(misc-const-correctness)
 void test_radio_controller()
 {
     static ReceiverNull receiver;
@@ -189,6 +190,7 @@ void test_radio_controller_throttle()
     throttle = radioController.mapThrottle(1.0F);
     TEST_ASSERT_EQUAL_FLOAT(1.0F, throttle);
 }
+// NOLINTEND(misc-const-correctness)
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {

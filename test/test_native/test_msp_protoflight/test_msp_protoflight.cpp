@@ -10,6 +10,7 @@
 #include <MSP_Serial.h>
 #include <MSP_Stream.h>
 #include <MotorMixerBase.h>
+#include <NonVolatileStorage.h>
 #include <RadioController.h>
 #include <ReceiverNull.h>
 #include <SensorFusion.h>
@@ -60,6 +61,8 @@ void tearDown() {
 // NOLINTBEGIN(misc-const-correctness)
 void test_msp_set_failsafe_config()
 {
+    static NonVolatileStorage nvs;
+    static Features features;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersNull imuFilters;
@@ -70,9 +73,8 @@ void test_msp_set_failsafe_config()
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
     static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
-    static Features features;
 
-    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
+    static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
     static MSP_Stream mspStream(msp);
 
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
@@ -130,6 +132,8 @@ void test_msp_set_failsafe_config()
 
 void test_msp_pid_in()
 {
+    static NonVolatileStorage nvs;
+    static Features features;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersNull imuFilters;
@@ -140,9 +144,8 @@ void test_msp_pid_in()
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
     static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
-    static Features features;
 
-    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
+    static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -174,6 +177,8 @@ void test_msp_pid_in()
 
 void test_msp_features()
 {
+    static NonVolatileStorage nvs;
+    static Features features;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersNull imuFilters;
@@ -184,9 +189,8 @@ void test_msp_features()
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
     static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
-    static Features features;
 
-    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
+    static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -200,6 +204,8 @@ void test_msp_features()
 
 void test_msp_raw_imu()
 {
+    static NonVolatileStorage nvs;
+    static Features features;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersNull imuFilters;
@@ -210,9 +216,8 @@ void test_msp_raw_imu()
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
     static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
-    static Features features;
 
-    static MSP_ProtoFlight msp(features, ahrs, fc, radioController, receiver, debug);
+    static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
     static MSP_Stream mspStream(msp);
     //static const MSP_Serial mspSerial(mspStream, msp);
 

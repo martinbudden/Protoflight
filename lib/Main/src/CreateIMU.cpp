@@ -67,6 +67,8 @@ IMU_Base& Main::createIMU(int32_t& imuSampleRateHz, uint32_t AHRS_taskIntervalMi
 #else
     static_assert(false);
 #endif
+// NOLINTEND(misc-const-correctness) false positive
+
     //static_cast<IMU_Base&>(imuSensor).init(1000000 / AHRS_taskIntervalMicroSeconds);
     //!!TODO: uncomment this when new Library-IMU available
     //AHRS_taskIntervalMicroSeconds = static_cast<IMU_Base&>(imuSensor).init();
