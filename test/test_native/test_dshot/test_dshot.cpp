@@ -1,6 +1,6 @@
+#include <DShotCodec.h>
 #include <ESC_DShot.h>
 #include <IMU_Filters.h> // test code won't build if this not included
-#include <array>
 #include <unity.h>
 
 void setUp()
@@ -47,39 +47,39 @@ void test_dshot()
     TEST_ASSERT_EQUAL(700, esc.nanoSecondsToCycles(4666));
     TEST_ASSERT_EQUAL(1000, esc.nanoSecondsToCycles(6666));
 
-    TEST_ASSERT_EQUAL(47, ESC_DShot::pwmToDShot(1000));
-    TEST_ASSERT_EQUAL(2047, ESC_DShot::pwmToDShot(2000));
+    TEST_ASSERT_EQUAL(47, DShotCodec::pwmToDShot(1000));
+    TEST_ASSERT_EQUAL(2047, DShotCodec::pwmToDShot(2000));
 
-    TEST_ASSERT_EQUAL(0, ESC_DShot::dShotConvert(0));
-    TEST_ASSERT_EQUAL(0, ESC_DShot::dShotConvert(10));
-    TEST_ASSERT_EQUAL(0, ESC_DShot::dShotConvert(999));
+    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(0));
+    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(10));
+    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(999));
 
-    TEST_ASSERT_EQUAL(0, ESC_DShot::dShotConvert(1000)); // should this be 0 or 48 ?
-    //TEST_ASSERT_EQUAL(48, ESC_DShot::dShotConvert(1000)); // should this be 0 or 48 ?
-    TEST_ASSERT_EQUAL(49, ESC_DShot::dShotConvert(1001));
-    TEST_ASSERT_EQUAL(51, ESC_DShot::dShotConvert(1002));
-    TEST_ASSERT_EQUAL(53, ESC_DShot::dShotConvert(1003));
-    TEST_ASSERT_EQUAL(1047, ESC_DShot::dShotConvert(1500));
-    TEST_ASSERT_EQUAL(2045, ESC_DShot::dShotConvert(1999));
-    TEST_ASSERT_EQUAL(2047, ESC_DShot::dShotConvert(2000));
-    TEST_ASSERT_EQUAL(2047, ESC_DShot::dShotConvert(2001));
+    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(1000)); // should this be 0 or 48 ?
+    //TEST_ASSERT_EQUAL(48, DShotCodec::dShotConvert(1000)); // should this be 0 or 48 ?
+    TEST_ASSERT_EQUAL(49, DShotCodec::dShotConvert(1001));
+    TEST_ASSERT_EQUAL(51, DShotCodec::dShotConvert(1002));
+    TEST_ASSERT_EQUAL(53, DShotCodec::dShotConvert(1003));
+    TEST_ASSERT_EQUAL(1047, DShotCodec::dShotConvert(1500));
+    TEST_ASSERT_EQUAL(2045, DShotCodec::dShotConvert(1999));
+    TEST_ASSERT_EQUAL(2047, DShotCodec::dShotConvert(2000));
+    TEST_ASSERT_EQUAL(2047, DShotCodec::dShotConvert(2001));
 
 
-    TEST_ASSERT_EQUAL(1542, ESC_DShot::dShotShiftAndAddChecksum(48)); //0x606
-    TEST_ASSERT_EQUAL(1572, ESC_DShot::dShotShiftAndAddChecksum(49)); // 0x624
-    TEST_ASSERT_EQUAL(33547, ESC_DShot::dShotShiftAndAddChecksum(1048)); // 0x830B
-    TEST_ASSERT_EQUAL(65484, ESC_DShot::dShotShiftAndAddChecksum(2046)); // 0xFFCC
-    TEST_ASSERT_EQUAL(65518, ESC_DShot::dShotShiftAndAddChecksum(2047)); // 0xFFEB, 0xFFFF=65535
+    TEST_ASSERT_EQUAL(1542, DShotCodec::dShotShiftAndAddChecksum(48)); //0x606
+    TEST_ASSERT_EQUAL(1572, DShotCodec::dShotShiftAndAddChecksum(49)); // 0x624
+    TEST_ASSERT_EQUAL(33547, DShotCodec::dShotShiftAndAddChecksum(1048)); // 0x830B
+    TEST_ASSERT_EQUAL(65484, DShotCodec::dShotShiftAndAddChecksum(2046)); // 0xFFCC
+    TEST_ASSERT_EQUAL(65518, DShotCodec::dShotShiftAndAddChecksum(2047)); // 0xFFEB, 0xFFFF=65535
 
     // testing out of range values
-    TEST_ASSERT_EQUAL(0, ESC_DShot::dShotShiftAndAddChecksum(0));
-    TEST_ASSERT_EQUAL(34, ESC_DShot::dShotShiftAndAddChecksum(1));
-    TEST_ASSERT_EQUAL(68, ESC_DShot::dShotShiftAndAddChecksum(2));
-    TEST_ASSERT_EQUAL(325, ESC_DShot::dShotShiftAndAddChecksum(10));
+    TEST_ASSERT_EQUAL(0, DShotCodec::dShotShiftAndAddChecksum(0));
+    TEST_ASSERT_EQUAL(34, DShotCodec::dShotShiftAndAddChecksum(1));
+    TEST_ASSERT_EQUAL(68, DShotCodec::dShotShiftAndAddChecksum(2));
+    TEST_ASSERT_EQUAL(325, DShotCodec::dShotShiftAndAddChecksum(10));
 
-    TEST_ASSERT_EQUAL(1, ESC_DShot::dShotShiftAndAddChecksum(2048));
-    TEST_ASSERT_EQUAL(35, ESC_DShot::dShotShiftAndAddChecksum(2049));
-    TEST_ASSERT_EQUAL(69, ESC_DShot::dShotShiftAndAddChecksum(2050));
+    TEST_ASSERT_EQUAL(1, DShotCodec::dShotShiftAndAddChecksum(2048));
+    TEST_ASSERT_EQUAL(35, DShotCodec::dShotShiftAndAddChecksum(2049));
+    TEST_ASSERT_EQUAL(69, DShotCodec::dShotShiftAndAddChecksum(2050));
 
     esc.end();
 }
@@ -95,7 +95,7 @@ void test_dshot_write()
     const uint32_t LO = esc.getDataLowPulseWidth();
 
     esc.write(1000);
-    const uint16_t frame1000 = ESC_DShot::dShotShiftAndAddChecksum(ESC_DShot::dShotConvert(1000));
+    const uint16_t frame1000 = DShotCodec::dShotShiftAndAddChecksum(DShotCodec::dShotConvert(1000));
     TEST_ASSERT_EQUAL(0, frame1000);
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(0));
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(1));
@@ -115,8 +115,8 @@ void test_dshot_write()
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(15));
     TEST_ASSERT_EQUAL(0, esc.getBufferItem(16)); // check haven't written past end of buffer
 
-    const uint16_t value = ESC_DShot::dShotConvert(1500);
-    const uint16_t frame = ESC_DShot::dShotShiftAndAddChecksum(value);
+    const uint16_t value = DShotCodec::dShotConvert(1500);
+    const uint16_t frame = DShotCodec::dShotShiftAndAddChecksum(value);
     TEST_ASSERT_EQUAL(33508, frame); // 0x82E4, 1000 0010 1110 0100
     esc.write(1500);
     // 1000 0010 1110 0100
@@ -142,7 +142,7 @@ void test_dshot_write()
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(15));
     TEST_ASSERT_EQUAL(0, esc.getBufferItem(16));
 
-    const uint16_t frame2000 = ESC_DShot::dShotShiftAndAddChecksum(ESC_DShot::dShotConvert(2000));
+    const uint16_t frame2000 = DShotCodec::dShotShiftAndAddChecksum(DShotCodec::dShotConvert(2000));
     TEST_ASSERT_EQUAL(65518, frame2000); // 0xFFEE, 1111 1111 1110 1110
     esc.write(2000);
     // 1111
@@ -171,14 +171,14 @@ void test_dshot_write_channel_b()
     const uint32_t LO = esc.getDataLowPulseWidth() << 16;
 
     esc.write(1000);
-    const uint16_t frame1000 = ESC_DShot::dShotShiftAndAddChecksum(ESC_DShot::dShotConvert(1000));
+    const uint16_t frame1000 = DShotCodec::dShotShiftAndAddChecksum(DShotCodec::dShotConvert(1000));
     TEST_ASSERT_EQUAL(0, frame1000);
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(0));
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(15));
     TEST_ASSERT_EQUAL(0, esc.getBufferItem(16)); // check haven't written past end of buffer
 
-    const uint16_t value = ESC_DShot::dShotConvert(1500);
-    const uint16_t frame = ESC_DShot::dShotShiftAndAddChecksum(value);
+    const uint16_t value = DShotCodec::dShotConvert(1500);
+    const uint16_t frame = DShotCodec::dShotShiftAndAddChecksum(value);
     TEST_ASSERT_EQUAL(33508, frame); // 0x82E4, 1000 0010 1110 0100
     esc.write(1500);
     // 1000 0010 1110 0100
@@ -204,7 +204,7 @@ void test_dshot_write_channel_b()
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(15));
     TEST_ASSERT_EQUAL(0, esc.getBufferItem(16));
 
-    const uint16_t frame2000 = ESC_DShot::dShotShiftAndAddChecksum(ESC_DShot::dShotConvert(2000));
+    const uint16_t frame2000 = DShotCodec::dShotShiftAndAddChecksum(DShotCodec::dShotConvert(2000));
     TEST_ASSERT_EQUAL(65518, frame2000); // 0xFFEE, 1111 1111 1110 1110
     esc.write(2000);
     // 1111
@@ -221,6 +221,8 @@ void test_dshot_write_channel_b()
 }
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)
 
+// See for example for testing GCR encoding https://github.com/betaflight/betaflight/pull/8554#issuecomment-512507625
+// see also https://elmagnifico.tech/2023/04/07/bi-directional-DSHOT/
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
     UNITY_BEGIN();

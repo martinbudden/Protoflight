@@ -25,41 +25,22 @@ public:
         ESC_PROTOCOL_PROSHOT,
         ESC_PROTOCOL_COUNT
     };
-    enum telemetry_type_e {
-        TELEMETRY_TYPE_ERPM           = 0,
-        TELEMETRY_TYPE_TEMPERATURE    = 1, // Temperature Celsius
-        TELEMETRY_TYPE_VOLTAGE        = 2, // Voltage with a step size of 0.25V ie [0, 0.25 ..., 63.75]
-        TELEMETRY_TYPE_CURRENT        = 3, // Current with a step size of 1A ie [0, 1, ..., 255]
-        TELEMETRY_TYPE_DEBUG1         = 4,
-        TELEMETRY_TYPE_DEBUG2         = 5,
-        TELEMETRY_TYPE_STRESS_LEVEL   = 6,
-        TELEMETRY_TYPE_STATE_EVENTS   = 7,
-        TELEMETRY_TYPE_COUNT,
-        TELEMETRY_INVALID = 0xFFFF
-    };
+    enum { DEFAULT_MOTOR_POLE_COUNT = 14 };
 public:
     ESC_DShot(protocol_e protocol, uint16_t motorPoleCount);
-    explicit ESC_DShot(protocol_e protocol) : ESC_DShot(protocol, 14) {}
-    ESC_DShot() : ESC_DShot(ESC_PROTOCOL_DSHOT300, 14) {}
+    explicit ESC_DShot(protocol_e protocol) : ESC_DShot(protocol, DEFAULT_MOTOR_POLE_COUNT) {}
+    ESC_DShot() : ESC_DShot(ESC_PROTOCOL_DSHOT300, DEFAULT_MOTOR_POLE_COUNT) {}
     void init(uint16_t pin);
 public:
     enum { DSHOT_BIT_COUNT = 16 };
     void setProtocol(protocol_e protocol);
-    void write(uint16_t pulse);
+    void write(uint16_t value);
     bool read();
 
     int32_t getMotorRPM() const { return 2 * _eRPM / _motorPoleCount; } // eRPM = RPM * poles/2, /2 due to pole pairs, not poles
     float getMotorHz() const { return static_cast<float>(_eRPM) * _eRPMtoHz; }
     void end();
     uint32_t nanoSecondsToCycles(uint32_t nanoSeconds) const;
-// static functions
-    static inline uint16_t pwmToDShot(uint16_t v) { return static_cast<uint16_t>(((v - 1000) * 2) + 47); }
-    static inline uint16_t dShotConvert(uint16_t pulse) { return pulse > 2000 ? pwmToDShot(2000) : pulse > 1000 ? pwmToDShot(pulse) : 0; }
-    static  uint16_t dShotShiftAndAddChecksum(uint16_t value);
-    static uint32_t decodeERPM(uint16_t value);
-    static uint32_t decodeTelemetry(uint16_t value, telemetry_type_e& telemetryType);
-    static int32_t decodeTelemetry(uint64_t value, telemetry_type_e& telemetryType);
-    static uint32_t decodeGCR(const uint32_t timings[], uint32_t count);
 // for testing
     void setUseHighOrderBits(bool useHighOrderBits) { _useHighOrderBits = useHighOrderBits; }
     uint32_t getDataHighPulseWidth() const { return _dataHighPulseWidth; }
@@ -84,7 +65,7 @@ protected:
     uint32_t _dataLowPulseWidth {};
     enum { PIN_NOT_SET = 0xFFFF };
     uint16_t _pin {PIN_NOT_SET};
-    uint16_t _motorPoleCount {14}; //!< number of poles the motor has, used to calculate RPM from telemetry data
+    uint16_t _motorPoleCount {DEFAULT_MOTOR_POLE_COUNT}; //!< number of poles the motor has, used to calculate RPM from telemetry data
     float _eRPMtoHz {};
     int32_t _eRPM {}; //!< eRPM, ie not taking into account motor pole count
     uint32_t _telemetryReadCount {};
