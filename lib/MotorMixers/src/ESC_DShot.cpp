@@ -32,6 +32,9 @@ https://github.com/josephduchesne/pico-dshot-bidir
 https://github.com/bastian2001/pico-bidir-dshot
 https://github.com/symonb/Bidirectional-DSHOT-and-RPM-Filter?tab=readme-ov-file
 
+For ESP32:
+https://github.com/wjxway/ESP32-Bidirectional-DShot/blob/main/src/MotorCtrl.cpp (requires 2 wires)
+
 */
 
 ESC_DShot::ESC_DShot(protocol_e protocol, uint16_t motorPoleCount) :
@@ -198,6 +201,15 @@ uint32_t ESC_DShot::nanoSecondsToCycles(uint32_t nanoSeconds) const
     return static_cast<uint32_t>(ret);
 }
 
+/*!
+Unidirectional DShot can use the hardware PWM generators and DMA.
+
+For bidirectional DShot we need to wait for the response from the DMA and it seems bit-banging is required.
+See [ESC BDShot protocol implementation](https://symonb.github.io/docs/drone/ESC/ESC_prot_impl_2_2#esc-bdshot-protocol-implementation)
+for description and STM32 implementation.
+
+On Raspberry Pi Pico we can use the Programmable IO (PIO) for this bit-banging.
+*/
 void ESC_DShot::write(uint16_t value) // NOLINT(readability-make-member-function-const)
 {
 #if defined(USE_DSHOT_RPI_PICO_PIO)

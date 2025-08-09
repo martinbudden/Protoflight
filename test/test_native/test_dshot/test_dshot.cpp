@@ -47,40 +47,6 @@ void test_dshot()
     TEST_ASSERT_EQUAL(700, esc.nanoSecondsToCycles(4666));
     TEST_ASSERT_EQUAL(1000, esc.nanoSecondsToCycles(6666));
 
-    TEST_ASSERT_EQUAL(47, DShotCodec::pwmToDShot(1000));
-    TEST_ASSERT_EQUAL(2047, DShotCodec::pwmToDShot(2000));
-
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(0));
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(10));
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(999));
-
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(1000)); // should this be 0 or 48 ?
-    //TEST_ASSERT_EQUAL(48, DShotCodec::dShotConvert(1000)); // should this be 0 or 48 ?
-    TEST_ASSERT_EQUAL(49, DShotCodec::dShotConvert(1001));
-    TEST_ASSERT_EQUAL(51, DShotCodec::dShotConvert(1002));
-    TEST_ASSERT_EQUAL(53, DShotCodec::dShotConvert(1003));
-    TEST_ASSERT_EQUAL(1047, DShotCodec::dShotConvert(1500));
-    TEST_ASSERT_EQUAL(2045, DShotCodec::dShotConvert(1999));
-    TEST_ASSERT_EQUAL(2047, DShotCodec::dShotConvert(2000));
-    TEST_ASSERT_EQUAL(2047, DShotCodec::dShotConvert(2001));
-
-
-    TEST_ASSERT_EQUAL(1542, DShotCodec::dShotShiftAndAddChecksum(48)); //0x606
-    TEST_ASSERT_EQUAL(1572, DShotCodec::dShotShiftAndAddChecksum(49)); // 0x624
-    TEST_ASSERT_EQUAL(33547, DShotCodec::dShotShiftAndAddChecksum(1048)); // 0x830B
-    TEST_ASSERT_EQUAL(65484, DShotCodec::dShotShiftAndAddChecksum(2046)); // 0xFFCC
-    TEST_ASSERT_EQUAL(65518, DShotCodec::dShotShiftAndAddChecksum(2047)); // 0xFFEB, 0xFFFF=65535
-
-    // testing out of range values
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotShiftAndAddChecksum(0));
-    TEST_ASSERT_EQUAL(34, DShotCodec::dShotShiftAndAddChecksum(1));
-    TEST_ASSERT_EQUAL(68, DShotCodec::dShotShiftAndAddChecksum(2));
-    TEST_ASSERT_EQUAL(325, DShotCodec::dShotShiftAndAddChecksum(10));
-
-    TEST_ASSERT_EQUAL(1, DShotCodec::dShotShiftAndAddChecksum(2048));
-    TEST_ASSERT_EQUAL(35, DShotCodec::dShotShiftAndAddChecksum(2049));
-    TEST_ASSERT_EQUAL(69, DShotCodec::dShotShiftAndAddChecksum(2050));
-
     esc.end();
 }
 

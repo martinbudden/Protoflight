@@ -23,24 +23,17 @@ const std::array<uint32_t, 17> DShotCodec::gcr_raw_bitlengths = {
 
 const std::array<uint32_t, 6> DShotCodec::gcr_raw_set_bits = {
     0b00000, // 0 consecutive bits, not a valid lookup
-    0b00001, // 1 consecutive bits
+    0b00001, // 1 consecutive bit
     0b00011, // 2 consecutive bits
     0b00111, // 3 consecutive bits
     0b01111, // 4 consecutive bits
     0b11111  // 5 consecutive bits
 };
 
-// array to map 5-bit GCR quintet onto 4-bit nibble
-const std::array<uint32_t, 32> DShotCodec::decodeQuintet = {
-    0, 0,  0,  0, 0,  0,  0,  0,
-    0, 9, 10, 11, 0, 13, 14, 15,
-    0, 0,  2,  3, 0,  5,  6,  7,
-    0, 0,  8,  1, 0,  4, 12,  0
-};
 
 
 // NOLINTBEGIN(hicpp-signed-bitwise)
-uint16_t DShotCodec::dShotShiftAndAddChecksum(uint16_t value)
+uint16_t DShotCodec::dShotShiftAndAddChecksumOriginal(uint16_t value)
 {
     value <<= 1U;
 
@@ -106,29 +99,30 @@ int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryT
         return 0;
     }
 
-    int consecutiveCount = 1;  // we always start with the MSB
-    bool current = false;
+    int consecutiveBitCount = 1;  // we always start with the MSB
+    uint32_t currentBit = 0;
     int bitCount = 0;
     uint32_t gcr_result = 0;
     // starting at 2nd bit since we know our data starts with a 0
     // 56 samples @ 0.917us sample rate = 51.33us sampled
     // loop the mask from 2nd MSB to  LSB
     for (uint64_t mask = 0x4000000000000000; mask != 0; mask >>= 1) {
-        if (((value & mask) != 0) != current) {  // if the doesn't match the current string of bits, end the current string and flip current
+        if (((value & mask) != 0) != currentBit) {  
+            // if the masked bit doesn't match the current string of bits then end the current string and flip currentBit
             // bitshift gcr_result by N, and
-            gcr_result = gcr_result << gcr_raw_bitlengths[consecutiveCount];
-            // then set set N bits in gcr_result, if current is 1
-            if (current) {
-                gcr_result |= gcr_raw_set_bits[gcr_raw_bitlengths[consecutiveCount]];
+            gcr_result = gcr_result << gcr_raw_bitlengths[consecutiveBitCount];
+            // then set N bits in gcr_result, if currentBit is 1
+            if (currentBit) {
+                gcr_result |= gcr_raw_set_bits[gcr_raw_bitlengths[consecutiveBitCount]];
             }
-            // count bitCount (for debugging)
-            bitCount += gcr_raw_bitlengths[consecutiveCount];
-            // invert current, and reset consecutiveCount
-            current = !current;
-            consecutiveCount = 1;  // first bit found in the string is the one we just processed
-        } else {  // otherwise increment consecutiveCount
-            ++consecutiveCount;
-            if (consecutiveCount > 16) {
+            bitCount += gcr_raw_bitlengths[consecutiveBitCount];
+            // invert currentBit, and reset consecutiveBitCount
+            currentBit = !currentBit;
+            consecutiveBitCount = 1;  // first bit found in the string is the one we just processed
+        } else {
+            // otherwise increment consecutiveBitCount
+            ++consecutiveBitCount;
+            if (consecutiveBitCount > 16) {
                 // invalid run length at the current sample rate (outside of gcr_raw_bitlengths table)
                 telemetryType = TELEMETRY_INVALID;
                 return 0;
@@ -138,13 +132,13 @@ int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryT
 
     // outside the loop, we still need to account for the final bits if the string ends with 1s
     // bitshift gcr_result by N, and
-    gcr_result <<= gcr_raw_bitlengths[consecutiveCount];
-    // then set set N bits in gcr_result, if current is 1
-    if (current) {
-        gcr_result |= gcr_raw_set_bits[gcr_raw_bitlengths[consecutiveCount]];
+    gcr_result <<= gcr_raw_bitlengths[consecutiveBitCount];
+    // then set set N bits in gcr_result, if currentBit is 1
+    if (currentBit) {
+        gcr_result |= gcr_raw_set_bits[gcr_raw_bitlengths[consecutiveBitCount]];
     }
     // count bitCount (for debugging)
-    bitCount += gcr_raw_bitlengths[consecutiveCount];
+    bitCount += gcr_raw_bitlengths[consecutiveBitCount];
 
     // GCR data should be 21 bits
     if (bitCount < 21) {
@@ -158,7 +152,6 @@ int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryT
     // convert edge transition GCR back to binary GCR
     gcr_result = (gcr_result ^ (gcr_result >> 1));
 
-    // Serial.print("GCR: "); print_bin(gcr_result);
 
 #if false
     // break the 20 bit gcr result into 4 quintets for converting back to regular 16 bit binary
@@ -170,22 +163,22 @@ int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryT
     };
 
     for(int i=0; i<4; ++i) {
-        const uint8_t nibble = decodeQuintet[quintets[i]];
+        const uint8_t nibble = quintetToNibble[quintets[i]];
         //const uint8_t nibble = decodeGCRNibble(quintets[i]);
         result = (result << 4) | (nibble & 0b1111);
     }
 #else
-    uint32_t result = decodeQuintet[gcr_result & 0x1F];
-    result |= decodeQuintet[(gcr_result >> 5) & 0x1F] << 4;
-    result |= decodeQuintet[(gcr_result >> 10) & 0x1F] << 8;
-    result |= decodeQuintet[(gcr_result >> 15) & 0x1F] << 12;
+    uint32_t result = quintetToNibble[gcr_result & 0x1F];
+    result |= quintetToNibble[(gcr_result >> 5) & 0x1F] << 4;
+    result |= quintetToNibble[(gcr_result >> 10) & 0x1F] << 8;
+    result |= quintetToNibble[(gcr_result >> 15) & 0x1F] << 12;
 #endif
 
-    // check CRC! (4 LSB in result)
-    const uint8_t result_crc = result & 0b1111;  //extract the telemetry nibble
-    result >>= 4;  // and then remove it from the result
-    const uint8_t calc_crc = (~(result ^ (result >> 4) ^ (result >> 8))) & 0x0F;
-    if (result_crc != calc_crc) {
+    // check the CRC (4 least significant bits in result)
+    const uint8_t crc = result & 0b1111;
+    result >>= 4;  // remove the crc from the result
+    const uint8_t calculatedCRC = (~(result ^ (result >> 4) ^ (result >> 8))) & 0x0F;
+    if (crc != calculatedCRC) {
         telemetryType = TELEMETRY_INVALID;
         return 0;
     }
@@ -238,10 +231,10 @@ uint32_t DShotCodec::decodeGCR(const uint32_t timings[], uint32_t count) // NOLI
         return TELEMETRY_INVALID;
     }
 
-    uint32_t decodedValue = decodeQuintet[value & 0x1F];
-    decodedValue |= decodeQuintet[(value >> 5) & 0x1F] << 4;
-    decodedValue |= decodeQuintet[(value >> 10) & 0x1F] << 8;
-    decodedValue |= decodeQuintet[(value >> 15) & 0x1F] << 12;
+    uint32_t decodedValue = quintetToNibble[value & 0x1F];
+    decodedValue |= quintetToNibble[(value >> 5) & 0x1F] << 4;
+    decodedValue |= quintetToNibble[(value >> 10) & 0x1F] << 8;
+    decodedValue |= quintetToNibble[(value >> 15) & 0x1F] << 12;
 
     uint32_t checkSum = decodedValue;
     checkSum ^= (checkSum >> 8); // xor bytes
@@ -253,4 +246,44 @@ uint32_t DShotCodec::decodeGCR(const uint32_t timings[], uint32_t count) // NOLI
 
     return decodedValue >> 4;
 }
+
+uint32_t DShotCodec::eRPM_to_GCR20(uint16_t value)
+{
+    uint32_t ret = nibbleToQuintet[value & 0x1F];
+    ret |= nibbleToQuintet[(value >> 4) & 0x1F] << 5;
+    ret |= nibbleToQuintet[(value >> 8) & 0x1F] << 10;
+    ret |= nibbleToQuintet[(value >> 12) & 0x1F] << 15;
+    return ret;
+}
+
+uint32_t DShotCodec::GR20_to_GCR21(uint32_t value)
+{   
+// Map the GCR to a 21 bit value, this new value starts with a 0 and the rest of the bits are set by the following two rules:
+//    1. If the current input bit in GCR data is a 1 then the output bit is the inverse of the previous output bit
+//    2. If the current input bit in GCR data is a 0 then the output bit is the same as the previous output
+
+    uint32_t ret = 0;
+    uint32_t previousOutputBit = 0;
+
+    for (uint32_t mask = 1U << 20; mask != 0; mask >>= 1U) {
+        ret <<= 1;
+        const uint32_t inputBit = value & mask;
+        const uint32_t outputBit = inputBit ? !previousOutputBit : previousOutputBit;
+        previousOutputBit = outputBit;
+        ret |= outputBit;
+    }
+
+    return ret;
+}
+
+uint16_t DShotCodec::GCR20_to_eRPM(uint32_t value)
+{
+    uint32_t ret = quintetToNibble[value & 0x1F];
+    ret |= quintetToNibble[(value >> 5) & 0x1F] << 4;
+    ret |= quintetToNibble[(value >> 10) & 0x1F] << 8;
+    ret |= quintetToNibble[(value >> 15) & 0x1F] << 12;
+
+    return static_cast<uint16_t>(ret);
+}
+
 // NOLINTEND(hicpp-signed-bitwise)
