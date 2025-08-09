@@ -61,7 +61,7 @@ void test_dshot_write()
     const uint32_t LO = esc.getDataLowPulseWidth();
 
     esc.write(1000);
-    const uint16_t frame1000 = DShotCodec::dShotShiftAndAddChecksum(DShotCodec::dShotConvert(1000));
+    const uint16_t frame1000 = DShotCodec::frameUnidirectional(DShotCodec::dShotConvert(1000));
     TEST_ASSERT_EQUAL(0, frame1000);
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(0));
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(1));
@@ -82,7 +82,7 @@ void test_dshot_write()
     TEST_ASSERT_EQUAL(0, esc.getBufferItem(16)); // check haven't written past end of buffer
 
     const uint16_t value = DShotCodec::dShotConvert(1500);
-    const uint16_t frame = DShotCodec::dShotShiftAndAddChecksum(value);
+    const uint16_t frame = DShotCodec::frameUnidirectional(value);
     TEST_ASSERT_EQUAL(33508, frame); // 0x82E4, 1000 0010 1110 0100
     esc.write(1500);
     // 1000 0010 1110 0100
@@ -108,7 +108,7 @@ void test_dshot_write()
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(15));
     TEST_ASSERT_EQUAL(0, esc.getBufferItem(16));
 
-    const uint16_t frame2000 = DShotCodec::dShotShiftAndAddChecksum(DShotCodec::dShotConvert(2000));
+    const uint16_t frame2000 = DShotCodec::frameUnidirectional(DShotCodec::dShotConvert(2000));
     TEST_ASSERT_EQUAL(65518, frame2000); // 0xFFEE, 1111 1111 1110 1110
     esc.write(2000);
     // 1111
@@ -137,14 +137,14 @@ void test_dshot_write_channel_b()
     const uint32_t LO = esc.getDataLowPulseWidth() << 16;
 
     esc.write(1000);
-    const uint16_t frame1000 = DShotCodec::dShotShiftAndAddChecksum(DShotCodec::dShotConvert(1000));
+    const uint16_t frame1000 = DShotCodec::frameUnidirectional(DShotCodec::dShotConvert(1000));
     TEST_ASSERT_EQUAL(0, frame1000);
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(0));
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(15));
     TEST_ASSERT_EQUAL(0, esc.getBufferItem(16)); // check haven't written past end of buffer
 
     const uint16_t value = DShotCodec::dShotConvert(1500);
-    const uint16_t frame = DShotCodec::dShotShiftAndAddChecksum(value);
+    const uint16_t frame = DShotCodec::frameUnidirectional(value);
     TEST_ASSERT_EQUAL(33508, frame); // 0x82E4, 1000 0010 1110 0100
     esc.write(1500);
     // 1000 0010 1110 0100
@@ -170,7 +170,7 @@ void test_dshot_write_channel_b()
     TEST_ASSERT_EQUAL(LO, esc.getBufferItem(15));
     TEST_ASSERT_EQUAL(0, esc.getBufferItem(16));
 
-    const uint16_t frame2000 = DShotCodec::dShotShiftAndAddChecksum(DShotCodec::dShotConvert(2000));
+    const uint16_t frame2000 = DShotCodec::frameUnidirectional(DShotCodec::dShotConvert(2000));
     TEST_ASSERT_EQUAL(65518, frame2000); // 0xFFEE, 1111 1111 1110 1110
     esc.write(2000);
     // 1111

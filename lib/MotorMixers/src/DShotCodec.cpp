@@ -1,6 +1,6 @@
 #include "DShotCodec.h"
 
-const std::array<uint32_t, 17> DShotCodec::gcr_raw_bitlengths = {
+const std::array<uint32_t, 17> DShotCodec::gcrBitLengths = {
     0, // 0 consecutive bits, not a valid lookup
     1, // 1 consecutive bits
     1, // 2 consecutive bits
@@ -21,7 +21,7 @@ const std::array<uint32_t, 17> DShotCodec::gcr_raw_bitlengths = {
     // more than 10 consecutive samples, means 4 0 or 1 in a row is invalid in GCR
 };
 
-const std::array<uint32_t, 6> DShotCodec::gcr_raw_set_bits = {
+const std::array<uint32_t, 6> DShotCodec::gcrSetBits = {
     0b00000, // 0 consecutive bits, not a valid lookup
     0b00001, // 1 consecutive bit
     0b00011, // 2 consecutive bits
@@ -33,31 +33,6 @@ const std::array<uint32_t, 6> DShotCodec::gcr_raw_set_bits = {
 
 
 // NOLINTBEGIN(hicpp-signed-bitwise)
-uint16_t DShotCodec::dShotShiftAndAddChecksumOriginal(uint16_t value)
-{
-    value <<= 1U;
-
-    // compute checksum
-    uint16_t checksum = 0;
-    uint16_t checksumData = value;
-
-    checksum ^= checksumData;
-    checksumData >>= 4U;
-
-    checksum ^= checksumData;
-    checksumData >>= 4U;
-
-    checksum ^= checksumData;
-    checksumData >>= 4U;
-
-    checksum ^= checksumData;
-
-    checksum &= 0xf; // NOLINT(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
-
-    // lower 4 bits is checksum
-    return (value << 4U) | checksum;
-}
-
 uint32_t DShotCodec::decodeERPM(uint16_t value)
 {
     // eRPM range
@@ -70,11 +45,10 @@ uint32_t DShotCodec::decodeERPM(uint16_t value)
     if (value == 0) {
         return TELEMETRY_INVALID;
     }
-    // Convert to eRPM * 100
-    return ((1000000 * 60 / 100) + value / 2) / value;
+    return value;
 }
 
-uint32_t DShotCodec::decodeTelemetry(uint16_t value, telemetry_type_e& telemetryType)
+uint32_t DShotCodec::decodeTelemetryFrame(uint16_t value, telemetry_type_e& telemetryType)
 {
     // value is of form "eeem mmmm mmmm": e - exponent, m - mantissa
     // https://github.com/bird-sanctuary/extended-dshot-telemetry
@@ -84,14 +58,27 @@ uint32_t DShotCodec::decodeTelemetry(uint16_t value, telemetry_type_e& telemetry
     const bool isErpm = (type & 0x01) || (type == 0);
     if (isErpm) {
         telemetryType = TELEMETRY_TYPE_ERPM;
-        return decodeERPM(value);
+        const uint16_t m = value & 0x01FF;
+        const uint16_t e = (value & 0xFE00) >> 9;
+        value = m << e;
+        if (value == 0) {
+            return TELEMETRY_INVALID;
+        }
+        return value;
     }
-    // note: type >> 1 is in range [0..7]
+    // Extended DShot Telemetry (EDT) frame is of the form:
+    // ppp0mmmmmmmm
+    // where ppp is the telemetry type and mmmmmmmm is the value
     telemetryType = static_cast<telemetry_type_e>(type >> 1);
     return value & 0x00FF;
 }
 
-int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryType)
+/*!
+Decode timings returned by Raspberry Pi PIO implementation.
+
+Returns the value of the Extended DShot Telemetry (EDT) frame (without the  checksum).
+*/
+uint32_t DShotCodec::decodeTimings(uint64_t value, telemetry_type_e& telemetryType)
 {
     // telemetry data must start with a 0, so if the first bit is high, we don't have any data
     if (value & 0x8000000000000000L) {
@@ -99,7 +86,7 @@ int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryT
         return 0;
     }
 
-    int consecutiveBitCount = 1;  // we always start with the MSB
+    uint32_t consecutiveBitCount = 1;  // we always start with the MSB
     uint32_t currentBit = 0;
     int bitCount = 0;
     uint32_t gcr_result = 0;
@@ -110,12 +97,12 @@ int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryT
         if (((value & mask) != 0) != currentBit) {  
             // if the masked bit doesn't match the current string of bits then end the current string and flip currentBit
             // bitshift gcr_result by N, and
-            gcr_result = gcr_result << gcr_raw_bitlengths[consecutiveBitCount];
+            gcr_result = gcr_result << gcrBitLengths[consecutiveBitCount];
             // then set N bits in gcr_result, if currentBit is 1
             if (currentBit) {
-                gcr_result |= gcr_raw_set_bits[gcr_raw_bitlengths[consecutiveBitCount]];
+                gcr_result |= gcrSetBits[gcrBitLengths[consecutiveBitCount]];
             }
-            bitCount += gcr_raw_bitlengths[consecutiveBitCount];
+            bitCount += gcrBitLengths[consecutiveBitCount];
             // invert currentBit, and reset consecutiveBitCount
             currentBit = !currentBit;
             consecutiveBitCount = 1;  // first bit found in the string is the one we just processed
@@ -123,7 +110,7 @@ int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryT
             // otherwise increment consecutiveBitCount
             ++consecutiveBitCount;
             if (consecutiveBitCount > 16) {
-                // invalid run length at the current sample rate (outside of gcr_raw_bitlengths table)
+                // invalid run length at the current sample rate (outside of gcrBitLengths table)
                 telemetryType = TELEMETRY_INVALID;
                 return 0;
             }
@@ -132,13 +119,13 @@ int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryT
 
     // outside the loop, we still need to account for the final bits if the string ends with 1s
     // bitshift gcr_result by N, and
-    gcr_result <<= gcr_raw_bitlengths[consecutiveBitCount];
+    gcr_result <<= gcrBitLengths[consecutiveBitCount];
     // then set set N bits in gcr_result, if currentBit is 1
     if (currentBit) {
-        gcr_result |= gcr_raw_set_bits[gcr_raw_bitlengths[consecutiveBitCount]];
+        gcr_result |= gcrSetBits[gcrBitLengths[consecutiveBitCount]];
     }
     // count bitCount (for debugging)
-    bitCount += gcr_raw_bitlengths[consecutiveBitCount];
+    bitCount += gcrBitLengths[consecutiveBitCount];
 
     // GCR data should be 21 bits
     if (bitCount < 21) {
@@ -146,58 +133,28 @@ int32_t DShotCodec::decodeTelemetry(uint64_t value, telemetry_type_e& telemetryT
         return 0;
     }
 
-    // chop the GCR data down to just the 21 MSB
+    // chop the GCR data down to just the 21 most significant bits
     gcr_result = gcr_result >> (bitCount - 21);
 
-    // convert edge transition GCR back to binary GCR
-    gcr_result = (gcr_result ^ (gcr_result >> 1));
+    // convert 21-bit edge transition GCR to 20-bit binary GCR
+    const uint32_t gcr20 = GR21_to_GCR20(gcr_result);
 
+    const uint16_t result = GCR20_to_eRPM(gcr20);
 
-#if false
-    // break the 20 bit gcr result into 4 quintets for converting back to regular 16 bit binary
-    uint8_t quintets[4] = { 
-        (uint8_t)(gcr_result >> 15) & (uint8_t)0b11111,
-        (uint8_t)(gcr_result >> 10) & (uint8_t)0b11111,
-        (uint8_t)(gcr_result >>  5) & (uint8_t)0b11111,
-        (uint8_t)(gcr_result      ) & (uint8_t)0b11111
-    };
-
-    for(int i=0; i<4; ++i) {
-        const uint8_t nibble = quintetToNibble[quintets[i]];
-        //const uint8_t nibble = decodeGCRNibble(quintets[i]);
-        result = (result << 4) | (nibble & 0b1111);
-    }
-#else
-    uint32_t result = quintetToNibble[gcr_result & 0x1F];
-    result |= quintetToNibble[(gcr_result >> 5) & 0x1F] << 4;
-    result |= quintetToNibble[(gcr_result >> 10) & 0x1F] << 8;
-    result |= quintetToNibble[(gcr_result >> 15) & 0x1F] << 12;
-#endif
-
-    // check the CRC (4 least significant bits in result)
-    const uint8_t crc = result & 0b1111;
-    result >>= 4;  // remove the crc from the result
-    const uint8_t calculatedCRC = (~(result ^ (result >> 4) ^ (result >> 8))) & 0x0F;
-    if (crc != calculatedCRC) {
+    if (!checksumBidirectionalIsOK(result)) {
         telemetryType = TELEMETRY_INVALID;
         return 0;
     }
-
-    // todo: properly handle zero eRPM value (min representable eRPM period)
-    if (result & 0x100) {
-        telemetryType = TELEMETRY_TYPE_ERPM;
-        uint32_t eRPM_period_us = static_cast<uint32_t>(result) & 0b111111111;  // period base is 9 bits above 4 bit CRC
-        eRPM_period_us <<= (result >> 9);  // period base is the left shift amount stored in the 3 MSB
-        enum { ONE_MINUTE_IN_MICROSECONDS = 60000000 };
-        return static_cast<int32_t>(ONE_MINUTE_IN_MICROSECONDS / eRPM_period_us); // eRPM
-    }
-    // extended telemetry
-    telemetryType = static_cast<telemetry_type_e>(result >> 8);
-    return static_cast<int32_t>(result & 0xFF); // bottom 8 bits
+    return decodeTelemetryFrame(result >> 4, telemetryType);
 }
 
 
-uint32_t DShotCodec::decodeGCR(const uint32_t timings[], uint32_t count) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+/*!
+Decode timings value returned by bit-banging.
+
+Returns the value of the Extended DShot Telemetry (EDT) frame (without the  checksum).
+*/
+uint32_t DShotCodec::decodeTimings(const uint32_t timings[], uint32_t count, telemetry_type_e& telemetryType) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     // decode 16 bit GCR (Group Coded Recording) Run Length Limited (RLL) encoding
     // https://en.wikipedia.org/wiki/Run-length_limited#GCR:_(0,2)_RLL
@@ -231,20 +188,23 @@ uint32_t DShotCodec::decodeGCR(const uint32_t timings[], uint32_t count) // NOLI
         return TELEMETRY_INVALID;
     }
 
-    uint32_t decodedValue = quintetToNibble[value & 0x1F];
-    decodedValue |= quintetToNibble[(value >> 5) & 0x1F] << 4;
-    decodedValue |= quintetToNibble[(value >> 10) & 0x1F] << 8;
-    decodedValue |= quintetToNibble[(value >> 15) & 0x1F] << 12;
+    const uint16_t result = GCR20_to_eRPM(value);
 
-    uint32_t checkSum = decodedValue;
-    checkSum ^= (checkSum >> 8); // xor bytes
-    checkSum ^= (checkSum >> 4); // xor nibbles
-
-    if ((checkSum & 0xF) != 0xF) {
-        return TELEMETRY_INVALID;
+    if (!checksumBidirectionalIsOK(result)) {
+        telemetryType = TELEMETRY_INVALID;
+        return 0;
     }
+    return decodeTelemetryFrame(result >> 4, telemetryType);
+}
 
-    return decodedValue >> 4;
+uint16_t DShotCodec::GCR20_to_eRPM(uint32_t value)
+{
+    uint32_t ret = quintetToNibble[value & 0x1F];
+    ret |= quintetToNibble[(value >> 5) & 0x1F] << 4;
+    ret |= quintetToNibble[(value >> 10) & 0x1F] << 8;
+    ret |= quintetToNibble[(value >> 15) & 0x1F] << 12;
+
+    return static_cast<uint16_t>(ret);
 }
 
 uint32_t DShotCodec::eRPM_to_GCR20(uint16_t value)
@@ -274,16 +234,6 @@ uint32_t DShotCodec::GR20_to_GCR21(uint32_t value)
     }
 
     return ret;
-}
-
-uint16_t DShotCodec::GCR20_to_eRPM(uint32_t value)
-{
-    uint32_t ret = quintetToNibble[value & 0x1F];
-    ret |= quintetToNibble[(value >> 5) & 0x1F] << 4;
-    ret |= quintetToNibble[(value >> 10) & 0x1F] << 8;
-    ret |= quintetToNibble[(value >> 15) & 0x1F] << 12;
-
-    return static_cast<uint16_t>(ret);
 }
 
 // NOLINTEND(hicpp-signed-bitwise)

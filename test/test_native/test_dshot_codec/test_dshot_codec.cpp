@@ -31,6 +31,18 @@ void test_dshot_quintets()
     static_assert(DShotCodec::quintetToNibble[DShotCodec::nibbleToQuintet[15]] == 15);
 }
 
+void test_dshot_codec_checksum()
+{
+    TEST_ASSERT_EQUAL(0b000000000110, DShotCodec::checksumUnidirectional(0b100000101100));
+    TEST_ASSERT_EQUAL(0b000000001001, DShotCodec::checksumBidirectional (0b100000101100));
+
+    TEST_ASSERT_EQUAL(0b1000001011000110, DShotCodec::frameUnidirectional(0b010000010110));
+    TEST_ASSERT_EQUAL(0b1000001011001001, DShotCodec::frameBidirectional (0b010000010110));
+
+    TEST_ASSERT_TRUE(DShotCodec::checksumUnidirectionalIsOK(DShotCodec::frameUnidirectional(0b010000010110)));
+    TEST_ASSERT_TRUE(DShotCodec::checksumBidirectionalIsOK(DShotCodec::frameBidirectional(0b010000010110)));
+}
+
 void test_dshot_codec_mappings()
 {
     TEST_ASSERT_EQUAL(0b11010100101111010110, DShotCodec::eRPM_to_GCR20(0b1000001011000110));
@@ -62,21 +74,21 @@ void test_dshot_codec()
     TEST_ASSERT_EQUAL(2047, DShotCodec::dShotConvert(4000));
 
 
-    TEST_ASSERT_EQUAL(1542, DShotCodec::dShotShiftAndAddChecksum(48)); //0x606
-    TEST_ASSERT_EQUAL(1572, DShotCodec::dShotShiftAndAddChecksum(49)); // 0x624
-    TEST_ASSERT_EQUAL(33547, DShotCodec::dShotShiftAndAddChecksum(1048)); // 0x830B
-    TEST_ASSERT_EQUAL(65484, DShotCodec::dShotShiftAndAddChecksum(2046)); // 0xFFCC
-    TEST_ASSERT_EQUAL(65518, DShotCodec::dShotShiftAndAddChecksum(2047)); // 0xFFEB, 0xFFFF=65535
+    TEST_ASSERT_EQUAL(1542, DShotCodec::frameUnidirectional(48)); //0x606
+    TEST_ASSERT_EQUAL(1572, DShotCodec::frameUnidirectional(49)); // 0x624
+    TEST_ASSERT_EQUAL(33547, DShotCodec::frameUnidirectional(1048)); // 0x830B
+    TEST_ASSERT_EQUAL(65484, DShotCodec::frameUnidirectional(2046)); // 0xFFCC
+    TEST_ASSERT_EQUAL(65518, DShotCodec::frameUnidirectional(2047)); // 0xFFEB, 0xFFFF=65535
 
     // testing out of range values
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotShiftAndAddChecksum(0));
-    TEST_ASSERT_EQUAL(34, DShotCodec::dShotShiftAndAddChecksum(1));
-    TEST_ASSERT_EQUAL(68, DShotCodec::dShotShiftAndAddChecksum(2));
-    TEST_ASSERT_EQUAL(325, DShotCodec::dShotShiftAndAddChecksum(10));
+    TEST_ASSERT_EQUAL(0, DShotCodec::frameUnidirectional(0));
+    TEST_ASSERT_EQUAL(34, DShotCodec::frameUnidirectional(1));
+    TEST_ASSERT_EQUAL(68, DShotCodec::frameUnidirectional(2));
+    TEST_ASSERT_EQUAL(325, DShotCodec::frameUnidirectional(10));
 
-    //TEST_ASSERT_EQUAL(1, DShotCodec::dShotShiftAndAddChecksum(2048));
-    //TEST_ASSERT_EQUAL(35, DShotCodec::dShotShiftAndAddChecksum(2049));
-    //TEST_ASSERT_EQUAL(69, DShotCodec::dShotShiftAndAddChecksum(2050));
+    //TEST_ASSERT_EQUAL(1, DShotCodec::frameUnidirectional(2048));
+    //TEST_ASSERT_EQUAL(35, DShotCodec::frameUnidirectional(2049));
+    //TEST_ASSERT_EQUAL(69, DShotCodec::frameUnidirectional(2050));
 }
 
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)
@@ -88,6 +100,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
     UNITY_BEGIN();
 
+    RUN_TEST(test_dshot_codec_checksum);
     RUN_TEST(test_dshot_codec_mappings);
     RUN_TEST(test_dshot_codec);
 

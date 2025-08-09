@@ -202,6 +202,8 @@ uint32_t ESC_DShot::nanoSecondsToCycles(uint32_t nanoSeconds) const
 }
 
 /*!
+value should be in the range [1000,2000]
+
 Unidirectional DShot can use the hardware PWM generators and DMA.
 
 For bidirectional DShot we need to wait for the response from the DMA and it seems bit-banging is required.
@@ -213,12 +215,14 @@ On Raspberry Pi Pico we can use the Programmable IO (PIO) for this bit-banging.
 void ESC_DShot::write(uint16_t value) // NOLINT(readability-make-member-function-const)
 {
 #if defined(USE_DSHOT_RPI_PICO_PIO)
-    // put value to the PIO
-    value = DShotCodec::dShotShiftAndAddChecksumInverted(value);
+    // use the value to create a bidirectional DShot frame and send it to the PIO state machin
+    value = DShotCodec::dShotConvert(value); // converts from range [1000,2000] to range [47,2047]
+    value = DShotCodec::frameBidirectional(value);
     pio_sm_put(_pio, _pioStateMachine, value);
 #else
-    value = DShotCodec::dShotConvert(value);
-    const uint16_t frame = DShotCodec::dShotShiftAndAddChecksum(value);
+    // set up a unidirectional DShot frame for sending via DMA
+    value = DShotCodec::dShotConvert(value); // converts from range [1000,2000] to range [47,2047]
+    const uint16_t frame = DShotCodec::frameUnidirectional(value);
 
     uint16_t maskBit = 1U << (DSHOT_BIT_COUNT - 1); // NOLINT(misc-const-correctness,hicpp-signed-bitwise)
     if (_useHighOrderBits) {
@@ -249,30 +253,40 @@ void ESC_DShot::write(uint16_t value) // NOLINT(readability-make-member-function
 
 bool ESC_DShot::read()
 {
-    uint64_t value {}; // NOLINT(misc-const-correctness) false positive
+    DShotCodec::telemetry_type_e telemetryType {};
+    uint32_t value {};
 
 #if defined(USE_DSHOT_RPI_PICO_PIO)
     const int32_t fifoCount = pio_sm_get_rx_fifo_level(_pio, _pioStateMachine);
     if (fifoCount >= 2) {
         // get DShot telemetry value from the PIO
         //value = pio_sm_get(_pio, _pioStateMachine);
-        value = static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine)) << 32;
-        value |= static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine));
+        uint64_t timings = static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine)) << 32;
+        timings |= static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine));
+        value = DShotCodec::decodeTimings(timings, telemetryType);
     } else {
         return false;
     }
+#else
+    //!! TODO: get timings from bit banging
+    std::array<uint32_t, 106> timings {};
+    const uint32_t count = 10;
+    value = DShotCodec::decodeTimings(&timings[0], count, telemetryType);
 #endif
 
     ++_telemetryReadCount;
-    DShotCodec::telemetry_type_e telemetryType {};
-    const uint32_t decoded = DShotCodec::decodeTelemetry(value, telemetryType);
     switch (telemetryType) {
     case DShotCodec::TELEMETRY_INVALID:
         ++_telemetryErrorCount;
         return false;
-    case DShotCodec::TELEMETRY_TYPE_ERPM:
-        _eRPM = static_cast<int32_t>(decoded);
+    case DShotCodec::TELEMETRY_TYPE_ERPM: {
+        // Convert to eRPM * 100
+        //return ((1000000 * 60 / 100) + value / 2) / value;
+        enum { ONE_MINUTE_IN_MICROSECONDS = 60000000 };
+        // value is eRPM period in microseconds
+        _eRPM = static_cast<int32_t>(ONE_MINUTE_IN_MICROSECONDS / value);
         break;
+    }
     case DShotCodec::TELEMETRY_TYPE_TEMPERATURE:
         [[fallthrough]];
     case DShotCodec::TELEMETRY_TYPE_VOLTAGE:
