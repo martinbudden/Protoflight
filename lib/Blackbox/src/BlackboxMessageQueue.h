@@ -32,7 +32,7 @@ public:
     }
     inline int32_t RECEIVE(queue_item_t& queueItem) const { return xQueueReceive(_queue, &queueItem, portMAX_DELAY); }
     inline void SEND(const queue_item_t& queueItem) const { xQueueSend(_queue, &queueItem, portMAX_DELAY); }
-    inline bool SEND_IF_NOT_FULL(const queue_item_t& queueItem) const { 
+    inline bool SEND_IF_NOT_FULL(const queue_item_t& queueItem) const {
         if (uxQueueSpacesAvailable(_queue)) {
             xQueueSend(_queue, &queueItem, portMAX_DELAY);
             return true;

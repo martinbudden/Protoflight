@@ -58,7 +58,7 @@ classDiagram
     BlackboxCallbacksProtoFlight o-- ReceiverBase : calls getControls
     BlackboxCallbacksProtoFlight o-- RadioControllerBase : calls getFailSafePhase
     BlackboxCallbacksProtoFlight o-- FlightController : calls getPID
-    %%FlightController --o BlackboxCallbacksProtoFlight 
+    %%FlightController --o BlackboxCallbacksProtoFlight
     %%FlightController o-- Blackbox : calls start finish
     Blackbox --o FlightController : calls start finish
     BlackboxCallbacksBase <|-- BlackboxCallbacksProtoFlight

@@ -94,7 +94,7 @@ uint32_t DShotCodec::decodeSamples(uint64_t value, telemetry_type_e& telemetryTy
     // 56 samples @ 0.917us sample rate = 51.33us sampled
     // loop the mask from 2nd MSB to  LSB
     for (uint64_t mask = 0x4000000000000000; mask != 0; mask >>= 1) {
-        if (((value & mask) != 0) != currentBit) {  
+        if (((value & mask) != 0) != currentBit) {
             // if the masked bit doesn't match the current string of bits then end the current string and flip currentBit
             // bitshift gcr_result by N, and
             gcr_result = gcr_result << gcrBitLengths[consecutiveBitCount];
@@ -217,7 +217,7 @@ uint32_t DShotCodec::eRPM_to_GCR20(uint16_t value)
 }
 
 uint32_t DShotCodec::GR20_to_GCR21(uint32_t value)
-{   
+{
 // Map the GCR to a 21 bit value, this new value starts with a 0 and the rest of the bits are set by the following two rules:
 //    1. If the current input bit in GCR data is a 1 then the output bit is the inverse of the previous output bit
 //    2. If the current input bit in GCR data is a 0 then the output bit is the same as the previous output

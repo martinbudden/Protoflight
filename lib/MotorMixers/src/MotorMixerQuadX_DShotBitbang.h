@@ -18,8 +18,12 @@ public:
     virtual DynamicIdleController* getDynamicIdleController() const override;
     float calculateSlowestMotorHz() const;
 protected:
+    enum { DEFAULT_MOTOR_POLE_COUNT = 14 };
+    uint16_t _motorPoleCount {DEFAULT_MOTOR_POLE_COUNT}; //!< number of poles the motor has, used to calculate RPM from telemetry data
+    float _eRPMtoHz {};
     RPM_Filters& _rpmFilters;
     DynamicIdleController& _dynamicIdleController;
 
     ESC_DShotBitbang _escBitbang {};
+    std::array<float, MOTOR_COUNT> _motorFrequenciesHz {};
 };

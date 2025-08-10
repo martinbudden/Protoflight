@@ -142,20 +142,25 @@ void ESC_DShot::setProtocol(protocol_e protocol)
     DShot150 means 150 kilobytes/second
     DShot 150 specification is
     T0H = 2500ns (data low pulse width)
+    T0L = 4180ns (data low gap width)
     T1H = 5000ns (data high pulse width)
-    TxH+TxL = 7500ns  (T0H + T0L or T1H + T1L)
+    T1L = 1680ns (data high gap width)
+    TxH+TxL = 6680ns  (T0H + T0L or T1H + T1L)
 
     DShot 300 specification is
     T0H = 1250ns (data low pulse width)
-    T0L = 2500ns (data low gap width)
+    T0L = 2090ns (data low gap width)
     T1H = 2500ns (data high pulse width)
-    T1L = 1250ns (data high gap width)
-    TxH+TxL = 3750ns  (T0H + T0L or T1H + T1L)
+    T1L =  840ns (data high gap width)
+    TxH+TxL = 3340ns  (T0H + T0L or T1H + T1L)
 
+    see https://blck.mn/2016/11/dshot-the-new-kid-on-the-block/
     DShot 600 specification is
-    T0H =  625ns
-    T1H = 1250ns
-    TH+TL = 1875ns  (T0H + T0L or T1H + T1L)
+    T0H =  625ns (data low pulse width)
+    T0L = 1045ns (data low gap width)
+    T1H = 1250ns (data high pulse width)
+    T0L =  420ns (data hig gap width)
+    TxH+TxL = 1670ns  (T0H + T0L or T1H + T1L)
 */
 
     _protocol = protocol;

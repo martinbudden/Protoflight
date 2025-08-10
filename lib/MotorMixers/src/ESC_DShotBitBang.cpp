@@ -31,7 +31,7 @@ void DMA2_Stream6_IRQHandler()
             TIM1->ARR = DSHOT_BB_FRAME_LENGTH * DSHOT_MODE / BDSHOT_RESPONSE_BITRATE / ESC_DShotBitbang::RESPONSE_OVERSAMPLING - 1;
             TIM1->CCR1 = DSHOT_BB_FRAME_LENGTH * DSHOT_MODE / BDSHOT_RESPONSE_BITRATE / ESC_DShotBitbang::RESPONSE_OVERSAMPLING;
 
-            /// Set DMA to copy GPIOA->IDR register value to the dma_input_buffer_1_4 buffer). 
+            // Set DMA to copy GPIOA->IDR register value to the dma_input_buffer_1_4 buffer).
             DMA2_Stream6->CR &= ~(DMA_SxCR_DIR);
             DMA2_Stream6->PAR = (uint32_t)(&(GPIOA->IDR));
             DMA2_Stream6->M0AR = (uint32_t)(&ESC_DShotBitbang::self->dma_input_buffer_1_4[0]);
@@ -109,93 +109,93 @@ void ESC_DShotBitbang::init()
 {
     presetDMA_outputBuffers();
 #if defined(USE_ARDUINO_STM32)
-	//	TIM1 - only for generating time basement all outputs are set by GPIOs:
+    //    TIM1 - only for generating time basement all outputs are set by GPIOs:
 
-	// enable TIM1 clock:
+    // enable TIM1 clock:
 
-	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
 
-	// register is buffered and overflow DMA request:
-    
+    // register is buffered and overflow DMA request:
+
     // CR: control register
-	TIM1->CR1 = 0x0;
-	TIM1->CR1 |= TIM_CR1_ARPE | TIM_CR1_URS;
+    TIM1->CR1 = 0x0;
+    TIM1->CR1 |= TIM_CR1_ARPE | TIM_CR1_URS;
 
-	// DMA request:
+    // DMA request:
     // DIER: DMA/interrupt enable register
     // CCR: capture/compare register
     // PSC: prescaler
     // ARR: auto-reload register
 #if defined(BIT_BANGING_V1)
-	TIM1->DIER |= TIM_DIER_CC1DE; // channel 1 request
-	TIM1->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
+    TIM1->DIER |= TIM_DIER_CC1DE; // channel 1 request
+    TIM1->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
 
-	//	TIM1 is 168 MHz:
-	TIM1->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
-	TIM1->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
+    //    TIM1 is 168 MHz:
+    TIM1->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
+    TIM1->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
 #elif defined(BIT_BANGING_V2)
-	TIM1->DIER |= TIM_DIER_CC1DE; // CC1DE: Capture/Compare 1 DMA request enable
-	TIM1->DIER |= TIM_DIER_CC2DE; // channel 2 request
-	TIM1->DIER |= TIM_DIER_CC3DE; // channel 3 request
+    TIM1->DIER |= TIM_DIER_CC1DE; // CC1DE: Capture/Compare 1 DMA request enable
+    TIM1->DIER |= TIM_DIER_CC2DE; // channel 2 request
+    TIM1->DIER |= TIM_DIER_CC3DE; // channel 3 request
 
-	TIM1->CCR1 = 0;
-	TIM1->CCR2 = DSHOT_BB_0_LENGTH;
-	TIM1->CCR3 = DSHOT_BB_1_LENGTH;
+    TIM1->CCR1 = 0;
+    TIM1->CCR2 = DSHOT_BB_0_LENGTH;
+    TIM1->CCR3 = DSHOT_BB_1_LENGTH;
 
-	// TIM1 is 168 MHz:
-	TIM1->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
-	TIM1->ARR = DSHOT_BB_FRAME_LENGTH - 1;
+    // TIM1 is 168 MHz:
+    TIM1->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
+    TIM1->ARR = DSHOT_BB_FRAME_LENGTH - 1;
 #endif
 
-	//	TIM1 enable:
+    //    TIM1 enable:
     // EGR: event generation register
-	TIM1->EGR |= TIM_EGR_UG;  // UG: Update Generation
-	TIM1->CR1 |= TIM_CR1_CEN; //CEN: counter enable
+    TIM1->EGR |= TIM_EGR_UG;  // UG: Update Generation
+    TIM1->CR1 |= TIM_CR1_CEN; //CEN: counter enable
 
-	//	TIM8 - only for generating time basement all outputs are set by GPIOs:
+    //    TIM8 - only for generating time basement all outputs are set by GPIOs:
 
-	// enable TIM8 clock:
+    // enable TIM8 clock:
 
-	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;
 
-	// register is buffered and overflow DMA request:
-	TIM8->CR1 = 0x0;
-	TIM8->CR1 |= TIM_CR1_ARPE | TIM_CR1_URS;
+    // register is buffered and overflow DMA request:
+    TIM8->CR1 = 0x0;
+    TIM8->CR1 |= TIM_CR1_ARPE | TIM_CR1_URS;
 
-	// DMA request:
-	TIM8->DIER |= TIM_DIER_CC1DE; // channel 1 request
+    // DMA request:
+    TIM8->DIER |= TIM_DIER_CC1DE; // channel 1 request
 #if defined(BIT_BANGING_V1)
-	TIM8->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
-	//	TIM8 is 168 MHz:
-	TIM8->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
-	TIM8->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
+    TIM8->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
+    //    TIM8 is 168 MHz:
+    TIM8->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
+    TIM8->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
 #elif defined(BIT_BANGING_V2)
-	TIM8->DIER |= TIM_DIER_CC2DE; // channel 2 request
-	TIM8->DIER |= TIM_DIER_CC3DE; // channel 3 request
+    TIM8->DIER |= TIM_DIER_CC2DE; // channel 2 request
+    TIM8->DIER |= TIM_DIER_CC3DE; // channel 3 request
 
-	TIM8->CCR1 = 0;
-	TIM8->CCR2 = DSHOT_BB_0_LENGTH;
-	TIM8->CCR3 = DSHOT_BB_1_LENGTH;
+    TIM8->CCR1 = 0;
+    TIM8->CCR2 = DSHOT_BB_0_LENGTH;
+    TIM8->CCR3 = DSHOT_BB_1_LENGTH;
 
-	//	TIM8 is 168 MHz:
-	TIM8->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
-	TIM8->ARR = DSHOT_BB_FRAME_LENGTH - 1;
+    //    TIM8 is 168 MHz:
+    TIM8->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
+    TIM8->ARR = DSHOT_BB_FRAME_LENGTH - 1;
 #endif
-	//	TIM8 enable:
-	TIM8->EGR |= TIM_EGR_UG;
-	TIM8->CR1 |= TIM_CR1_CEN;
+    //    TIM8 enable:
+    TIM8->EGR |= TIM_EGR_UG;
+    TIM8->CR1 |= TIM_CR1_CEN;
 #endif // USE_ARDUINO_STM32
 }
 
-void ESC_DShotBitbang::update_motors()
+void ESC_DShotBitbang::outputToMotors(uint16_t m1, uint16_t m2, uint16_t m3, uint16_t m4)
 {
     update_motors_rpm();
 
-    // prepare_BDshot_package converts value in range of [2000,4000] to value in  Dshot range [48,2047]
-    setDMA_outputBuffersV2(prepare_BDshot_package(motor_1_value),
-                          prepare_BDshot_package(motor_2_value),
-                          prepare_BDshot_package(motor_3_value),
-                          prepare_BDshot_package(motor_4_value));
+    // !!TODO: m1..m4 above in the range [0,1000], need to convert to Dshot range [48,2047]
+    setDMA_outputBuffersV2(m1, m2, m3, m4);
+    // was
+    // setDMA_outputBuffersV2(prepare_BDshot_package(motor_1_value),...
+
 
     bdshot_reception_1 = true;
     bdshot_reception_2 = true;
@@ -225,7 +225,7 @@ void ESC_DShotBitbang::update_motors()
     // It uses only 1 CCR on each timer.
     // Idea for reception is the same.
 
-    //	TIM1 setup:
+    //    TIM1 setup:
     TIM1->CR1 &= ~TIM_CR1_CEN;
     TIM1->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
     TIM1->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
@@ -252,7 +252,7 @@ void ESC_DShotBitbang::update_motors()
     // but uses 3 CCR (capture/compare register) for each timer (probably not a big deal)
     // It works for transferring but for reception it is not useful
 
-    //	TIM1 setup:
+    //    TIM1 setup:
     TIM1->CCR1 = 0;
     TIM1->CCR2 = DSHOT_BB_0_LENGTH;
     TIM1->CCR3 = DSHOT_BB_1_LENGTH;
@@ -310,14 +310,15 @@ Note bidirectional DShot is inverted, corresponding outputs for unidirectional D
 1 bit = 11111111110000
 
 DShot 300 specification is
-T0H = 1250ns (data low pulse width)
-T0L = 2500ns (data low gap width)
-T1H = 2500ns (data high pulse width)
-T1L = 1250ns (data high gap width)
-TxH+TxL = 3750ns  (T0H + T0L or T1H + T1L)
+    DShot 300 specification is
+    T0H = 1250ns (data low pulse width)
+    T0L = 2090ns (data low gap width)
+    T1H = 2500ns (data high pulse width)
+    T1L =  840ns (data high gap width)
+    TxH+TxL = 3340ns  (T0H + T0L or T1H + T1L)
 
-actual timings are 10/14*3750 = 2679
-actual timings are  4/14*3750 = 1071
+actual timings are 3340*10/14 = 2385 (note 3340*10/16 = 2087)
+actual timings are 3340*4/14  = 954  (note 3340*4/16 = 835)
 
 The larger buffers increase the DMA load as well
 */
@@ -343,7 +344,7 @@ void ESC_DShotBitbang::presetDMA_outputBuffersV1()
 
 void ESC_DShotBitbang::setDMA_outputBuffersV1(uint16_t m1_value, uint16_t m2_value, uint16_t m3_value, uint16_t m4_value)
 {
-    // For each bit DMA is transfering DSHOT_BB_FRAME_SECTION (7) times data into GPIO register. 
+    // For each bit DMA is transfering DSHOT_BB_FRAME_SECTION (7) times data into GPIO register.
     // But we need to decide only about 3 values (begining, 0-bit time, 1-bit time).
     // For Rest values we send 0x0 into register so GPIOs stay the same.
     // Moreover each bit is preset (lowering edge at first and rising edge after DSHOT_1_length rest values are 0x0 so there will be no changes in GPIO output registers).
@@ -382,11 +383,11 @@ void ESC_DShotBitbang::presetDMA_outputBuffersV2()
 
     //static std::array<uint32_t, DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS> dma_output_buffer_1_4;
     // make 2 high frames after Dshot frame:
-    for (size_t i = 0; i < DSHOT_BB_FRAME_SECTIONS * 2; i++) {
+    for (auto i = 0; i < DSHOT_BB_FRAME_SECTIONS * 2; i++) {
         dma_output_buffer_1_4[DSHOT_BUFFER_LENGTH*DSHOT_BB_FRAME_SECTIONS - i - 1] = GPIO_BSRR_BS_0 << MOTOR_1 | GPIO_BSRR_BS_0 << MOTOR_4;
         dma_output_buffer_2_3[DSHOT_BUFFER_LENGTH*DSHOT_BB_FRAME_SECTIONS - i - 1] = GPIO_BSRR_BS_0 << MOTOR_2 | GPIO_BSRR_BS_0 << MOTOR_3;
     }
-    for (size_t i = 0; i < (DSHOT_BB_BUFFER_LENGTH - 2); i++) { // last 2 bits are always high (logic 0)
+    for (auto i = 0; i < (DSHOT_BB_BUFFER_LENGTH - 2); i++) { // last 2 bits are always high (logic 0)
         //  first section always lower edge:
         dma_output_buffer_1_4[i * DSHOT_BB_FRAME_SECTIONS] = GPIO_BSRR_BR_0 << MOTOR_1 | GPIO_BSRR_BR_0 << MOTOR_4; // NOLINT(bugprone-implicit-widening-of-multiplication-result)
         dma_output_buffer_2_3[i * DSHOT_BB_FRAME_SECTIONS] = GPIO_BSRR_BR_0 << MOTOR_2 | GPIO_BSRR_BR_0 << MOTOR_3; // NOLINT(bugprone-implicit-widening-of-multiplication-result)
@@ -400,8 +401,8 @@ void ESC_DShotBitbang::presetDMA_outputBuffersV2()
 void ESC_DShotBitbang::setDMA_outputBuffersV2(uint16_t m1_value, uint16_t m2_value, uint16_t m3_value, uint16_t m4_value)
 {
     // each bite frame is divided in sections where slope can vary:
-    for (size_t i = 0; i < DSHOT_BB_BUFFER_LENGTH - 2; i++) { // last 2 bits are always high (logic 0)
-        const size_t index = i * DSHOT_BB_FRAME_SECTIONS + 1;
+    for (auto i = 0; i < DSHOT_BB_BUFFER_LENGTH - 2; i++) { // last 2 bits are always high (logic 0)
+        const auto index = i * DSHOT_BB_FRAME_SECTIONS + 1;
 
         const uint16_t motorMask = 1 << (DSHOT_BB_BUFFER_LENGTH - 3 - i);
         // if bit is ONE send 0x00 so that GPIOs output will not change (will stay low):
@@ -476,14 +477,14 @@ uint32_t ESC_DShotBitbang::samples_to_GCR21(const uint32_t* samples, uint32_t mo
 /*!
 Converts gcr21 value to a buffer of samples, used for test code
 */
-void ESC_DShotBitbang::GCR21_to_sample(uint32_t* samples, uint32_t motorMask, uint32_t gcr21)
+void ESC_DShotBitbang::GCR21_to_samples(uint32_t* samples, uint32_t motorMask, uint32_t gcr21)
 {
     *samples = 0;
     (void)motorMask;
     (void)gcr21;
 }
 
-
+#if false
 void ESC_DShotBitbang::read_BDshot_response(uint32_t gcr21, uint8_t motor)
 {
     // BDshot frame contain 21 bytes but first is always 0 (used only for detection).
@@ -506,7 +507,7 @@ void ESC_DShotBitbang::read_BDshot_response(uint32_t gcr21, uint8_t motor)
     decoded_value |= GCR_table[((gcr20 >> 15) & 0x1F)] << 12;
 
     // if wrongly decoded decoded_value will be bigger than uint16_t:
-    if (decoded_value < 0xFFFF && BDshot_check_checksum(static_cast<uint16_t>(decoded_value))) {
+    if (decoded_value < 0xFFFF && DShotCodec::checksumUnidirectionalIsOK(static_cast<uint16_t>(decoded_value))) {
         // if checksum is correct real save real RPM.
         // value sent by ESC is a period between each pole changes [us].
         // to achieve eRPM we need to find out how many of these changes are in one minute.
@@ -519,20 +520,30 @@ void ESC_DShotBitbang::read_BDshot_response(uint32_t gcr21, uint8_t motor)
         motors_error[motor - 1] = 0.9F * motors_error[motor - 1] + 10; // increase motor error
     }
 }
+#endif
 
 void ESC_DShotBitbang::update_motors_rpm()
 {
     // BDshot bit banging reads whole GPIO register.
     // Now it's time to create BDshot responses from all motors (made of individual bits).
-    const uint32_t motor_1_response = samples_to_GCR21(&dma_input_buffer_1_4[0], 1 << MOTOR_1);
-    const uint32_t motor_2_response = samples_to_GCR21(&dma_input_buffer_2_3[0], 1 << MOTOR_2);
-    const uint32_t motor_3_response = samples_to_GCR21(&dma_input_buffer_2_3[0], 1 << MOTOR_3);
-    const uint32_t motor_4_response = samples_to_GCR21(&dma_input_buffer_1_4[0], 1 << MOTOR_4);
+    const std::array<uint32_t, 4> motorGCR21s  = {
+        samples_to_GCR21(&dma_input_buffer_1_4[0], 1 << MOTOR_1),
+        samples_to_GCR21(&dma_input_buffer_2_3[0], 1 << MOTOR_2),
+        samples_to_GCR21(&dma_input_buffer_2_3[0], 1 << MOTOR_3),
+        samples_to_GCR21(&dma_input_buffer_1_4[0], 1 << MOTOR_4)
+    };
+    for (size_t ii = 0; ii < motorGCR21s.size(); ++ii) {
+        const uint32_t motorGCR20 = DShotCodec::GCR21_to_GCR20(motorGCR21s[ii]);
+        const uint16_t eRPM = DShotCodec::GCR20_to_eRPM(motorGCR20);
+        if (DShotCodec::checksumBidirectionalIsOK(eRPM)) {
+            DShotCodec::telemetry_type_e telemetryType {};
+            const auto eRPM_periodMicroSeconds = DShotCodec::decodeTelemetryFrame(eRPM >> 4, telemetryType);
+            enum { ONE_MINUTE_IN_MICROSECONDS = 60000000 };
+            // value is eRPM period in microseconds
+            _eRPMs[ii] = static_cast<int32_t>(ONE_MINUTE_IN_MICROSECONDS / eRPM_periodMicroSeconds);
+        }
+    }
 
-    read_BDshot_response(motor_1_response, 1);
-    read_BDshot_response(motor_2_response, 2);
-    read_BDshot_response(motor_3_response, 3);
-    read_BDshot_response(motor_4_response, 4);
 }
 
 // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)

@@ -15,7 +15,7 @@
 
 const char* const targetName = "TARGETNAME";
 
-const char* const buildDate = "MMM DD YYYY"; /// MMM = Jan/Feb/...
+const char* const buildDate = "MMM DD YYYY"; // MMM = Jan/Feb/...
 
 const char* const buildTime = "HH:MM:SS";
 

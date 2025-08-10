@@ -1,4 +1,6 @@
+#include "DShotCodec.h"
 #include <array>
+#include <cstddef>
 #include <cstdint>
 
 #if defined(USE_ARDUINO_STM32)
@@ -15,15 +17,15 @@ enum { BDSHOT_RESPONSE_LENGTH = 21 };   // number of bits in ESC response
 enum { DSHOT_BUFFER_LENGTH = 18 };      // 16 bits of Dshot and 2 for clearing
 
 #if defined(BIT_BANGING_V2)
-    enum { DSHOT_BB_0_LENGTH = 26 };// number of sections for 0-bit, BITBANG_0_LENGTH
-    enum { DSHOT_BB_1_LENGTH = 13 }; // number of sections for 1-bit, BITBANG_1_LENGTH
-    enum { DSHOT_BB_FRAME_LENGTH = 35 };   //	how many counts of the timer gives one bit frame
-    enum : size_t { DSHOT_BB_FRAME_SECTIONS = 3 };   // in how many sections is bit frame divided
+    enum { DSHOT_BB_0_LENGTH = 26 };        // number of sections for 0-bit, BITBANG_0_LENGTH
+    enum { DSHOT_BB_1_LENGTH = 13 };        // number of sections for 1-bit, BITBANG_1_LENGTH
+    enum { DSHOT_BB_FRAME_LENGTH = 35 };    // how many counts of the timer gives one bit frame
+    enum { DSHOT_BB_FRAME_SECTIONS = 3 };   // in how many sections is bit frame divided
 #else
-    enum { DSHOT_BB_0_LENGTH = 10 };// number of sections for 0-bit, BITBANG_0_LENGTH
-    enum { DSHOT_BB_1_LENGTH = 4 }; // number of sections for 1-bit, BITBANG_1_LENGTH
-    enum { DSHOT_BB_FRAME_LENGTH = 140 }; //	how many counts of the timer gives one bit frame
-    enum : size_t { DSHOT_BB_FRAME_SECTIONS = 14 }; // in how many sections is bit frame divided (for V1 must be factor of DSHOT_BB_FRAME_LENGTH)
+    enum { DSHOT_BB_0_LENGTH = 10 };        // number of sections for 0-bit, BITBANG_0_LENGTH
+    enum { DSHOT_BB_1_LENGTH = 4 };         // number of sections for 1-bit, BITBANG_1_LENGTH
+    enum { DSHOT_BB_FRAME_LENGTH = 140 };   // how many counts of the timer gives one bit frame
+    enum { DSHOT_BB_FRAME_SECTIONS = 14 };  // in how many sections is bit frame divided (for V1 must be factor of DSHOT_BB_FRAME_LENGTH)
 #endif
 
 class ESC_DShotBitbang {
@@ -44,10 +46,12 @@ public:
     void setDMA_outputBuffersV1(uint16_t m1_value, uint16_t m2_value, uint16_t m3_value, uint16_t m4_value);
     void presetDMA_outputBuffersV2();
     void setDMA_outputBuffersV2(uint16_t m1_value, uint16_t m2_value, uint16_t m3_value, uint16_t m4_value);
-    void update_motors();
+
+    void outputToMotors(uint16_t m1, uint16_t m2, uint16_t m3, uint16_t m4);
     void update_motors_rpm();
+
     static uint32_t samples_to_GCR21(const uint32_t* samples, uint32_t motorMask);
-    static void GCR21_to_sample(uint32_t* samples, uint32_t motorMask, uint32_t gcr21); // for test code
+    static void GCR21_to_samples(uint32_t* samples, uint32_t motorMask, uint32_t gcr21); // for test code
     void read_BDshot_response(uint32_t gcr21, uint8_t motor);
     static uint16_t prepare_BDshot_package(uint16_t value) {
         // value is in range of 2000-4000 so need to transform it into Dshot range (48-2047)
@@ -55,32 +59,17 @@ public:
         if (value > 0 && value < 48) {
             value = 48;
         }
-        return ((value << 5) | calculate_BDshot_checksum(value));
+        return ((value << 5) | DShotCodec::checksumBidirectional(value<<1));
     }
-
-    static uint16_t calculate_BDshot_checksum(uint16_t value) {
-        // 12th bit for telemetry on/off (1/0):
-        value <<= 1;
-        return (~(value ^ (value >> 4) ^ (value >> 8))) & 0x0F;
-    }
-    static bool BDshot_check_checksum(uint16_t value) {
-        // BDshot frame has 4 last bits CRC:
-        return (((value ^ (value >> 4) ^ (value >> 8) ^ (value >> 12)) & 0x0F) == 0x0F) ? true : false;
-    }
+    int32_t getMotorERPM(size_t motorIndex) { return _eRPMs[motorIndex]; }
 public:
     static ESC_DShotBitbang* self; // alias of `this` to be used in ISR
 
 private:
-    uint32_t _motorPoleCount {14};
-    uint16_t motor_1_value {};
-    uint16_t motor_2_value {};
-    uint16_t motor_3_value {};
-    uint16_t motor_4_value {};
-
-    uint32_t motors_rpm[MOTOR_COUNT] {};
-    float motors_error[MOTOR_COUNT] {};
-    // flags for reception or transmission:
+    std::array<int32_t, MOTOR_COUNT> _eRPMs {};
+    std::array<int32_t, MOTOR_COUNT> _motorErrors {};
 public:
+    // flags for reception or transmission:
     bool bdshot_reception_1 {true};
     bool bdshot_reception_2 {true};
     // BDSHOT response is being sampled just after transmission. There is ~33 [us] break before response (additional sampling) and bitrate is increased by 5/4:
