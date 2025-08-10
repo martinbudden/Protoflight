@@ -27,6 +27,7 @@
 #include <MSP_Serial.h>
 #include <MSP_Task.h>
 #include <MotorMixerQuadX_DShot.h>
+#include <MotorMixerQuadX_DShotBitbang.h>
 #include <MotorMixerQuadX_PWM.h>
 #include <NonVolatileStorage.h>
 #include <RPM_Filters.h>
@@ -105,7 +106,11 @@ void Main::setup()
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
     static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(), FC_TASK_INTERVAL_MICROSECONDS, debug);
+#if defined(USE_ARDUINO_STM32)
+    static MotorMixerQuadX_DShotBitbang motorMixer(debug, pins, rpmFilters, dynamicIdleController);
+#else
     static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilters, dynamicIdleController);
+#endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
 #else

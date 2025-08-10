@@ -74,11 +74,11 @@ uint32_t DShotCodec::decodeTelemetryFrame(uint16_t value, telemetry_type_e& tele
 }
 
 /*!
-Decode timings returned by Raspberry Pi PIO implementation.
+Decode samples returned by Raspberry Pi PIO implementation.
 
 Returns the value of the Extended DShot Telemetry (EDT) frame (without the  checksum).
 */
-uint32_t DShotCodec::decodeTimings(uint64_t value, telemetry_type_e& telemetryType)
+uint32_t DShotCodec::decodeSamples(uint64_t value, telemetry_type_e& telemetryType)
 {
     // telemetry data must start with a 0, so if the first bit is high, we don't have any data
     if (value & 0x8000000000000000L) {
@@ -137,7 +137,7 @@ uint32_t DShotCodec::decodeTimings(uint64_t value, telemetry_type_e& telemetryTy
     gcr_result = gcr_result >> (bitCount - 21);
 
     // convert 21-bit edge transition GCR to 20-bit binary GCR
-    const uint32_t gcr20 = GR21_to_GCR20(gcr_result);
+    const uint32_t gcr20 = GCR21_to_GCR20(gcr_result);
 
     const uint16_t result = GCR20_to_eRPM(gcr20);
 
@@ -150,11 +150,11 @@ uint32_t DShotCodec::decodeTimings(uint64_t value, telemetry_type_e& telemetryTy
 
 
 /*!
-Decode timings value returned by bit-banging.
+Decode samples value returned by bit-banging.
 
 Returns the value of the Extended DShot Telemetry (EDT) frame (without the  checksum).
 */
-uint32_t DShotCodec::decodeTimings(const uint32_t timings[], uint32_t count, telemetry_type_e& telemetryType) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+uint32_t DShotCodec::decodeSamples(const uint32_t* samples, uint32_t count, telemetry_type_e& telemetryType) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     // decode 16 bit GCR (Group Coded Recording) Run Length Limited (RLL) encoding
     // https://en.wikipedia.org/wiki/Run-length_limited#GCR:_(0,2)_RLL
@@ -169,7 +169,7 @@ uint32_t DShotCodec::decodeTimings(const uint32_t timings[], uint32_t count, tel
     uint32_t value = 0;
     uint32_t bitCount = 0;
     for (uint32_t ii = 1; ii < count; ++ii) {
-        const uint32_t diff = timings[ii] - timings[ii-1]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        const uint32_t diff = samples[ii] - samples[ii-1]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         const uint32_t runLength = (diff + 8) / 16;
         value <<= runLength;
         value |= 1 << (runLength - 1);

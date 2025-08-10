@@ -71,14 +71,14 @@ public:
 
     static uint32_t decodeERPM(uint16_t value);
     static uint32_t decodeTelemetryFrame(uint16_t value, telemetry_type_e& telemetryType);
-    static uint32_t decodeTimings(uint64_t value, telemetry_type_e& telemetryType);
-    static uint32_t decodeTimings(const uint32_t timings[], uint32_t count, telemetry_type_e& telemetryType);
+    static uint32_t decodeSamples(uint64_t value, telemetry_type_e& telemetryType);
+    static uint32_t decodeSamples(const uint32_t* samples, uint32_t count, telemetry_type_e& telemetryType);
 
     // see [DSHOT - the missing Handbook](https://brushlesswhoop.com/dshot-and-bidirectional-dshot/)
     // for a good description of these conversions
     static uint32_t eRPM_to_GCR20(uint16_t value);
     static uint32_t GR20_to_GCR21(uint32_t value);
-    static inline uint32_t GR21_to_GCR20(uint32_t value) { return (value ^ (value >> 1U)); }
+    static inline uint32_t GCR21_to_GCR20(uint32_t value) { return (value ^ (value >> 1U)); }
     static uint16_t GCR20_to_eRPM(uint32_t value);
 public:
     static const std::array<uint32_t, 17> gcrBitLengths;

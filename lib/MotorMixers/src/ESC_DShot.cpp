@@ -137,13 +137,20 @@ void ESC_DShot::setProtocol(protocol_e protocol)
     T1H = 800ns +/- 150ns
     T0L = 850ns +/- 150ns
     T1L = 450ns +/- 150ns
-    TH+TL = 1250ns +/- 600ns (T0H + T0L or T1H + T1L)
+    TxH+TxL = 1250ns +/- 600ns (T0H + T0L or T1H + T1L)
 
     DShot150 means 150 kilobytes/second
     DShot 150 specification is
     T0H = 2500ns (data low pulse width)
     T1H = 5000ns (data high pulse width)
-    TH+TL = 7500ns  (T0H + T0L or T1H + T1L)
+    TxH+TxL = 7500ns  (T0H + T0L or T1H + T1L)
+
+    DShot 300 specification is
+    T0H = 1250ns (data low pulse width)
+    T0L = 2500ns (data low gap width)
+    T1H = 2500ns (data high pulse width)
+    T1L = 1250ns (data high gap width)
+    TxH+TxL = 3750ns  (T0H + T0L or T1H + T1L)
 
     DShot 600 specification is
     T0H =  625ns
@@ -261,17 +268,17 @@ bool ESC_DShot::read()
     if (fifoCount >= 2) {
         // get DShot telemetry value from the PIO
         //value = pio_sm_get(_pio, _pioStateMachine);
-        uint64_t timings = static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine)) << 32;
-        timings |= static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine));
-        value = DShotCodec::decodeTimings(timings, telemetryType);
+        uint64_t samples = static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine)) << 32;
+        samples |= static_cast<uint64_t>(pio_sm_get_blocking(_pio, _pioStateMachine));
+        value = DShotCodec::decodeSamples(samples, telemetryType);
     } else {
         return false;
     }
 #else
-    //!! TODO: get timings from bit banging
-    std::array<uint32_t, 106> timings {};
+    //!! TODO: get samples from bit banging
+    std::array<uint32_t, 106> samples {};
     const uint32_t count = 10;
-    value = DShotCodec::decodeTimings(&timings[0], count, telemetryType);
+    value = DShotCodec::decodeSamples(&samples[0], count, telemetryType);
 #endif
 
     ++_telemetryReadCount;
