@@ -13,6 +13,7 @@ MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(Debug& debug, const p
     _rpmFilters(rpmFilters),
     _dynamicIdleController(dynamicIdleController)
 {
+    (void)pins; // !!TODO: set pins
 }
 
 float MotorMixerQuadX_DShotBitbang::calculateSlowestMotorHz() const

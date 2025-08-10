@@ -5,11 +5,14 @@
 #include <stm32f4xx.h>
 #endif
 
+/*!
+Pointer to the ESC_DShotBitbang use in ISRs
+*/
+ESC_DShotBitbang* ESC_DShotBitbang::self; // alias of `this` to be used in ISR
+
 
 // implementation ported from: https://github.com/symonb/Bidirectional-DSHOT-and-RPM-Filter/blob/main/Src/bdshot.c
 // explanation of code at:     https://symonb.github.io/docs/drone/ESC/ESC_prot_impl_2_2
-bool ESC_DShotBitbang::bdshot_reception_1 = true;
-bool ESC_DShotBitbang::bdshot_reception_2 = true;
 
 #if defined(USE_ARDUINO_STM32)
 void DMA2_Stream6_IRQHandler()
@@ -17,7 +20,7 @@ void DMA2_Stream6_IRQHandler()
     if (DMA2->HISR & DMA_HISR_TCIF6) {
         DMA2->HIFCR |= DMA_HIFCR_CTCIF6;
 
-        if (ESC_DShotBitbang::bdshot_reception_1) {
+        if (ESC_DShotBitbang::self->bdshot_reception_1) {
             // set GPIOs as inputs:
             GPIOA->MODER &= ~GPIO_MODER_MODER2;
             GPIOA->MODER &= ~GPIO_MODER_MODER3;
@@ -31,7 +34,7 @@ void DMA2_Stream6_IRQHandler()
             /// Set DMA to copy GPIOA->IDR register value to the dma_input_buffer_1_4 buffer). 
             DMA2_Stream6->CR &= ~(DMA_SxCR_DIR);
             DMA2_Stream6->PAR = (uint32_t)(&(GPIOA->IDR));
-            DMA2_Stream6->M0AR = (uint32_t)(&ESC_DShotBitbang::dma_input_buffer_1_4[0]);
+            DMA2_Stream6->M0AR = (uint32_t)(&ESC_DShotBitbang::self->dma_input_buffer_1_4[0]);
             // Main idea:
             // After sending DShot frame to ESC start receiving GPIO values.
             // Capture data (probing longer than ESC response).
@@ -40,7 +43,7 @@ void DMA2_Stream6_IRQHandler()
             DMA2_Stream6->NDTR = ((int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * ESC_DShotBitbang::RESPONSE_OVERSAMPLING);
 
             DMA2_Stream6->CR |= DMA_SxCR_EN;
-            ESC_DShotBitbang::bdshot_reception_1 = false;
+            ESC_DShotBitbang::self->bdshot_reception_1 = false;
         }
     }
 
@@ -60,7 +63,7 @@ void DMA2_Stream2_IRQHandler()
     if (DMA2->LISR & DMA_LISR_TCIF2) {
         DMA2->LIFCR |= DMA_LIFCR_CTCIF2;
 
-        if (ESC_DShotBitbang::bdshot_reception_2) {
+        if (ESC_DShotBitbang::self->bdshot_reception_2) {
             // set GPIOs as inputs:
             GPIOB->MODER &= ~GPIO_MODER_MODER0;
             GPIOB->MODER &= ~GPIO_MODER_MODER1;
@@ -73,7 +76,7 @@ void DMA2_Stream2_IRQHandler()
 
             DMA2_Stream2->CR &= ~(DMA_SxCR_DIR);
             DMA2_Stream2->PAR = (uint32_t)(&(GPIOB->IDR));
-            DMA2_Stream2->M0AR = (uint32_t)(&ESC_DShotBitbang::dma_input_buffer_2_3[0]);
+            DMA2_Stream2->M0AR = (uint32_t)(&ESC_DShotBitbang::self->dma_input_buffer_2_3[0]);
             // Main idea:
             // After sending DShot frame to ESC start receiving GPIO values.
             // Capture data (probing longer than ESC response).
@@ -81,7 +84,7 @@ void DMA2_Stream2_IRQHandler()
             DMA2_Stream2->NDTR = ((int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * ESC_DShotBitbang::RESPONSE_OVERSAMPLING);
 
             DMA2_Stream2->CR |= DMA_SxCR_EN;
-            ESC_DShotBitbang::bdshot_reception_2 = false;
+            ESC_DShotBitbang::self->bdshot_reception_2 = false;
         }
     }
 
@@ -96,6 +99,11 @@ void DMA2_Stream2_IRQHandler()
     }
 }
 #endif
+
+ESC_DShotBitbang::ESC_DShotBitbang()
+{
+    self = this;
+}
 
 void ESC_DShotBitbang::init()
 {
