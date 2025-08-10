@@ -10,9 +10,9 @@ DShot Encoder/Decoder
 DShot Frame Structure
 The DShot Frame defines which information is at which position in the data stream:
 
-    11 bit throttle(S): 2048 possible values. 
-        0 is reserved for disarmed. 
-        1 to 47 are reserved for special commands. 
+    11 bit throttle(S): 2048 possible values.
+        0 is reserved for disarmed.
+        1 to 47 are reserved for special commands.
         48 to 2047 (2000 steps) are for the actual throttle value
     1 bit telemetry request(T) - if this is set, telemetry data is sent back via a separate channel
     4 bit checksum(C) aka CRC (Cyclic Redundancy Check) to validate the frame

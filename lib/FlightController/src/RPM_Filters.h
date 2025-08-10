@@ -100,7 +100,7 @@ private:
 #if defined(USE_FREERTOS)
 #if false
     mutable portMUX_TYPE _spinlock = portMUX_INITIALIZER_UNLOCKED;
-    // taskENTER_CRITICAL disables interrupts. This also means context switches are prevented. 
+    // taskENTER_CRITICAL disables interrupts. This also means context switches are prevented.
     inline void LOCK_FILTERS() const { taskENTER_CRITICAL(&_spinlock); }
     inline void UNLOCK_FILTERS() const { taskEXIT_CRITICAL(&_spinlock); }
 #else
