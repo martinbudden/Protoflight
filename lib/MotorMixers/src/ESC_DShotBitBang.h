@@ -3,6 +3,14 @@
 #include <cstddef>
 #include <cstdint>
 
+/*
+Implementation ported from: https://github.com/symonb/Bidirectional-DSHOT-and-RPM-Filter/blob/main/Src/bdshot.c
+
+Explanation of code at:     https://symonb.github.io/docs/drone/ESC/ESC_prot_impl_2_2
+
+Motor pins etc still hard coded.
+*/
+
 #if defined(USE_ARDUINO_STM32)
 #define BIT_BANGING_V1
 #else
@@ -32,17 +40,18 @@ enum { DSHOT_BUFFER_LENGTH = 18 };      // 16 bits of Dshot and 2 for clearing
 class ESC_DShotBitbang {
 public:
     enum { MOTOR_1 = 3 }; // PA3
+    enum { MOTOR_4 = 2 }; // PA2
     enum { MOTOR_2 = 0 }; // PB0
     enum { MOTOR_3 = 1 }; // PB1
-    enum { MOTOR_4 = 2 }; // PA2
     enum { MOTOR_COUNT = 4 };
 
     static constexpr uint16_t RESPONSE_OVERSAMPLING = 3;  // it has to be a factor of DSHOT_BB_FRAME_LENGTH * DSHOT_MODE / BIDIRECTIONAL_DSHOT_RESPONSE_BITRATE
 
     ESC_DShotBitbang();
     void init();
-    static void setupGPIO();
+    void setupGPIO();
     static void setupDMA();
+    static void setupTimers();
     static void setupNVIC();
     void presetDMA_outputBuffers();
     void setDMA_outputBuffers(uint16_t m1_frame, uint16_t m2_frame, uint16_t m3_frame, uint16_t m4_frame);
@@ -76,14 +85,14 @@ private:
     std::array<int32_t, MOTOR_COUNT> _motorErrors {};
 public:
     // flags for reception or transmission:
-    bool _reception_1_4 {true};
-    bool _reception_2_3 {true};
+    bool _receptionA {true};
+    bool _receptionB {true};
     // BDSHOT response is being sampled just after transmission. There is ~33 [us] break before response (additional sampling) and bitrate is increased by 5/4:
     // 2 receiving buffers, one for motors 1&4, the other for motors 2&3
-    std::array<uint32_t, (int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * RESPONSE_OVERSAMPLING> _dmaInputBuffer_1_4 {};
-    std::array<uint32_t, (int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * RESPONSE_OVERSAMPLING> _dmaInputBuffer_2_3 {};
+    std::array<uint32_t, (int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * RESPONSE_OVERSAMPLING> _dmaInputBufferA {};
+    std::array<uint32_t, (int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * RESPONSE_OVERSAMPLING> _dmaInputBufferB {};
 private:
     // 2 sending buffers, one for motors 1&4, the other for motors 2&3
-    std::array<uint32_t, DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS> _dmaOutputBuffer_1_4 {};
-    std::array<uint32_t, DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS> _dmaOutputBuffer_2_3 {};
+    std::array<uint32_t, DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS> _dmaOutputBufferA {};
+    std::array<uint32_t, DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS> _dmaOutputBufferB {};
 };
