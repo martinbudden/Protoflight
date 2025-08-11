@@ -84,15 +84,13 @@ private:
     std::array<int32_t, MOTOR_COUNT> _eRPMs {};
     std::array<int32_t, MOTOR_COUNT> _motorErrors {};
 public:
-    // flags for reception or transmission:
-    bool _receptionA {true};
-    bool _receptionB {true};
-    // BDSHOT response is being sampled just after transmission. There is ~33 [us] break before response (additional sampling) and bitrate is increased by 5/4:
-    // 2 receiving buffers, one for motors 1&4, the other for motors 2&3
-    std::array<uint32_t, (int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * RESPONSE_OVERSAMPLING> _dmaInputBufferA {};
-    std::array<uint32_t, (int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * RESPONSE_OVERSAMPLING> _dmaInputBufferB {};
-private:
-    // 2 sending buffers, one for motors 1&4, the other for motors 2&3
-    std::array<uint32_t, DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS> _dmaOutputBufferA {};
-    std::array<uint32_t, DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS> _dmaOutputBufferB {};
+    struct port_t {
+        // flag for reception or transmission:
+        bool reception;
+        // BDSHOT response is being sampled just after transmission. There is ~33 [us] break before response (additional sampling) and bitrate is increased by 5/4:
+        std::array<uint32_t, (int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * RESPONSE_OVERSAMPLING> dmaInputBuffer;
+        std::array<uint32_t, DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS> dmaOutputBuffer;
+    };
+    port_t _portA {};
+    port_t _portB {};
 };
