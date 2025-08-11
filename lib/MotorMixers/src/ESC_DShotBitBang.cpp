@@ -1,9 +1,6 @@
 #include <ESC_DShotBitbang.h>
 #include <algorithm>
 #include <array>
-#if defined(USE_ARDUINO_STM32)
-#include <stm32f4xx.h>
-#endif
 
 
 ESC_DShotBitbang* ESC_DShotBitbang::self; // alias of `this` to be used in ISR
@@ -11,41 +8,15 @@ ESC_DShotBitbang* ESC_DShotBitbang::self; // alias of `this` to be used in ISR
 #if defined(USE_ARDUINO_STM32)
 void DMA2_Stream6_IRQHandler()
 {
-    // DMA:
     // HISR:  DMA high interrupt status register
     // HIFCR: DMA high interrupt flag clear register
     if (DMA2->HISR & DMA_HISR_TCIF6) {
         DMA2->HIFCR |= DMA_HIFCR_CTCIF6;
-
-        if (ESC_DShotBitbang::self->_portA.reception) {
-            // set GPIOs as inputs:
-            // MOTOR_1 PA3
-            // MOTOR_4 PA2
-            GPIOA->MODER &= ~GPIO_MODER_MODER2;
-            GPIOA->MODER &= ~GPIO_MODER_MODER3;
-            // set pull up for those pins:
-            GPIOA->PUPDR |= GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0;
-
-            // set timer:
-            TIM1->ARR = DSHOT_BB_FRAME_LENGTH * DSHOT_MODE / BDSHOT_RESPONSE_BITRATE / ESC_DShotBitbang::RESPONSE_OVERSAMPLING - 1;
-            TIM1->CCR1 = DSHOT_BB_FRAME_LENGTH * DSHOT_MODE / BDSHOT_RESPONSE_BITRATE / ESC_DShotBitbang::RESPONSE_OVERSAMPLING;
-
-            // Set DMA to copy GPIOA->IDR register value to the _dmaInputBufferA buffer).
-            DMA2_Stream6->CR &= ~(DMA_SxCR_DIR);
-            DMA2_Stream6->PAR = reinterpret_cast<uint32_t>(&(GPIOA->IDR));
-            DMA2_Stream6->M0AR = reinterpret_cast<uint32_t>(&ESC_DShotBitbang::self->_portA.dmaInputBuffer[0]);
-            // Main idea:
-            // After sending DShot frame to ESC start receiving GPIO values.
-            // Capture data (probing longer than ESC response).
-            // There is ~33 [us] gap before the response so it is necessary to add more samples:
-            // NDTR: number of data register
-            DMA2_Stream6->NDTR = ((int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * ESC_DShotBitbang::RESPONSE_OVERSAMPLING);
-
-            DMA2_Stream6->CR |= DMA_SxCR_EN;
-            ESC_DShotBitbang::self->_portA.reception = false;
+        ESC_DShotBitbang::port_t& port = ESC_DShotBitbang::self->_portA;
+        if (port.reception) {
+            ESC_DShotBitbang::IRQ_Handler(port);
         }
     }
-
     if (DMA2->HISR & DMA_HISR_HTIF6) {
         DMA2->HIFCR |= DMA_HIFCR_CHTIF6;
     }
@@ -59,39 +30,13 @@ void DMA2_Stream6_IRQHandler()
 
 void DMA2_Stream2_IRQHandler()
 {
-    // DMA:
-    // LISR:  DMA low interrupt status register
-    // LIFCR: DMA low interrupt flag clear register
     if (DMA2->LISR & DMA_LISR_TCIF2) {
         DMA2->LIFCR |= DMA_LIFCR_CTCIF2;
-
-        if (ESC_DShotBitbang::self->_portB.reception) {
-            // set GPIOs as inputs:
-            // MOTOR_2 PB0
-            // MOTOR_3 PB1
-            GPIOB->MODER &= ~GPIO_MODER_MODER0;
-            GPIOB->MODER &= ~GPIO_MODER_MODER1;
-            // set pull up for these pins:
-            GPIOB->PUPDR |= GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0;
-
-            // set timer:
-            TIM8->ARR = DSHOT_BB_FRAME_LENGTH * DSHOT_MODE / BDSHOT_RESPONSE_BITRATE / ESC_DShotBitbang::RESPONSE_OVERSAMPLING - 1;
-            TIM8->CCR1 = DSHOT_BB_FRAME_LENGTH * DSHOT_MODE / BDSHOT_RESPONSE_BITRATE / ESC_DShotBitbang::RESPONSE_OVERSAMPLING;
-
-            DMA2_Stream2->CR &= ~(DMA_SxCR_DIR);
-            DMA2_Stream2->PAR = reinterpret_cast<uint32_t>(&(GPIOB->IDR));
-            DMA2_Stream2->M0AR = reinterpret_cast<uint32_t>(&ESC_DShotBitbang::self->_portB.dmaInputBuffer[0]);
-            // Main idea:
-            // After sending DShot frame to ESC start receiving GPIO values.
-            // Capture data (probing longer than ESC response).
-            // There is ~33 [us] gap before the response so it is necessary to add more samples:
-            DMA2_Stream2->NDTR = ((int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * ESC_DShotBitbang::RESPONSE_OVERSAMPLING);
-
-            DMA2_Stream2->CR |= DMA_SxCR_EN;
-            ESC_DShotBitbang::self->_portB.reception = false;
+        ESC_DShotBitbang::port_t& port = ESC_DShotBitbang::self->_portB;
+        if (port.reception) {
+            ESC_DShotBitbang::IRQ_Handler(port);
         }
     }
-
     if (DMA2->LISR & DMA_LISR_HTIF2) {
         DMA2->LIFCR |= DMA_LIFCR_CHTIF2;
     }
@@ -101,6 +46,34 @@ void DMA2_Stream2_IRQHandler()
     if (DMA2->LISR & DMA_LISR_TEIF2) {
         DMA2->LIFCR |= DMA_LIFCR_CTEIF2;
     }
+}
+
+void ESC_DShotBitbang::IRQ_Handler(port_t& port)
+{
+    // set GPIOs as inputs:
+    //port.GPIO->MODER &= ~GPIO_MODER_MODER2;
+    //port.GPIO->MODER &= ~GPIO_MODER_MODER3;
+    port.GPIO->MODER &= port.GPIO_input;
+    // set pull up for those pins:
+    port.GPIO->PUPDR |= port.GPIO_PUPDR;
+
+    // set timer:
+    port.TIM->ARR = DSHOT_BB_FRAME_LENGTH * DSHOT_MODE / BDSHOT_RESPONSE_BITRATE / ESC_DShotBitbang::RESPONSE_OVERSAMPLING - 1;
+    port.TIM->CCR1 = DSHOT_BB_FRAME_LENGTH * DSHOT_MODE / BDSHOT_RESPONSE_BITRATE / ESC_DShotBitbang::RESPONSE_OVERSAMPLING;
+
+    // Set DMA to copy GPIOA->IDR register value to the _dmaInputBufferA buffer).
+    port.DMA_Stream->CR &= ~(DMA_SxCR_DIR);
+    port.DMA_Stream->PAR = reinterpret_cast<uint32_t>(&(GPIOA->IDR));
+    port.DMA_Stream->M0AR = reinterpret_cast<uint32_t>(&ESC_DShotBitbang::self->_portA.dmaInputBuffer[0]);
+    // Main idea:
+    // After sending DShot frame to ESC start receiving GPIO values.
+    // Capture data (probing longer than ESC response).
+    // There is ~33 [us] gap before the response so it is necessary to add more samples:
+    // NDTR: number of data register
+    port.DMA_Stream->NDTR = ((int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * ESC_DShotBitbang::RESPONSE_OVERSAMPLING);
+
+    port.DMA_Stream->CR |= DMA_SxCR_EN;
+    port.reception = false;
 }
 #endif
 
@@ -114,69 +87,29 @@ void ESC_DShotBitbang::init()
 {
     presetDMA_outputBuffers();
 #if defined(USE_ARDUINO_STM32)
-    setupGPIO();
-    setupDMA();
-    setupTimers();
-    setupNVIC();
-#endif
-}
 
-/* IMPORTANT:
-APB2 max frequency is 84 [MHz], 168 [MHz] only for timers
-APB1 max frequency is 42 [MHz], 84 [MHz] only for timers
-*/
+    _portA.GPIO = GPIOA;
+    _portB.GPIO_input = ~(GPIO_MODER_MODER2   | GPIO_MODER_MODER3);
+    _portA.GPIO_output =  GPIO_MODER_MODER2_0 | GPIO_MODER_MODER3_0;
+    _portA.GPIO_PUPDR =   GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0;
+    setupGPIO(_portA.GPIO, RCC_AHB1ENR_GPIOAEN, GPIO_OSPEEDER_OSPEEDR2 | GPIO_OSPEEDER_OSPEEDR3);
 
+    _portB.GPIO = GPIOB;
+    _portB.GPIO_input = ~(GPIO_MODER_MODER0   | GPIO_MODER_MODER1);
+    _portB.GPIO_output =  GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0;
+    _portB.GPIO_PUPDR =   GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0;
+    setupGPIO(_portB.GPIO, RCC_AHB1ENR_GPIOBEN, GPIO_OSPEEDER_OSPEEDR0 | GPIO_OSPEEDER_OSPEEDR1);
 
-void ESC_DShotBitbang::setupGPIO()
-{
-#if defined(USE_ARDUINO_STM32)
-    // enable GPIOA clock:
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-    // set mode (00-input; 01-output; 10-alternate):
-    // will be set in bdshot routine
-    // set speed (max speed):
-    // MOTOR_1 PA3
-    // MOTOR_4 PA2
-    GPIOA->OSPEEDR |= (GPIO_OSPEEDER_OSPEEDR2 | GPIO_OSPEEDER_OSPEEDR3);
+    _portA.DMA_Stream = DMA2_Stream6;
+    setupDMA(_portA.DMA_Stream, RCC_AHB1ENR_DMA1EN);
+    _portB.DMA_Stream = DMA2_Stream2;
+    setupDMA(_portB.DMA_Stream, RCC_AHB1ENR_DMA2EN);
 
-    // enable GPIOB clock:
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-    // set mode (00-input; 01-output; 10-alternate):
-    // will be set in bdshot routine
-    // set speed: (max speed)
-    // MOTOR_2 PB0
-    // MOTOR_3 PB1
-    GPIOB->OSPEEDR |= (GPIO_OSPEEDER_OSPEEDR0 | GPIO_OSPEEDER_OSPEEDR1);
-#endif
-}
+    _portA.TIM = TIM1;
+    setupTimers(_portA.TIM, RCC_APB2ENR_TIM1EN);
+    _portB.TIM = TIM8;
+    setupTimers(_portB.TIM, RCC_APB2ENR_TIM8EN);
 
-void ESC_DShotBitbang::setupDMA()
-{
-#if defined(USE_ARDUINO_STM32)
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-
-    // bidirectional DSHOT:
-    // for TIM1
-    DMA2_Stream6->CR = 0x0;
-    while (DMA2_Stream6->CR & DMA_SxCR_EN) {
-        ; // wait
-    }
-    DMA2_Stream6->CR |= DMA_SxCR_MSIZE_1 | DMA_SxCR_PSIZE_1 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_TCIE | DMA_SxCR_PL_0;
-    // all the other parameters will be set afterward
-
-    DMA2_Stream2->CR = 0x0;
-    while (DMA2_Stream2->CR & DMA_SxCR_EN) {
-        ; // wait
-    }
-    DMA2_Stream2->CR |= DMA_SxCR_MSIZE_1 | DMA_SxCR_PSIZE_1 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_TCIE | DMA_SxCR_PL_0;
-    // all the other parameters will be set afterward
-#endif
-}
-
-void ESC_DShotBitbang::setupNVIC()
-{
-#if defined(USE_ARDUINO_STM32)
     // Nested Vectored Interrupt Controller
     // enable DMA interrupts
     NVIC_EnableIRQ(DMA2_Stream6_IRQn);
@@ -186,71 +119,72 @@ void ESC_DShotBitbang::setupNVIC()
 #endif
 }
 
-void ESC_DShotBitbang::setupTimers()
-{
+/* IMPORTANT:
+APB2 max frequency is 84 [MHz], 168 [MHz] only for timers
+APB1 max frequency is 42 [MHz], 84 [MHz] only for timers
+*/
+
+
 #if defined(USE_ARDUINO_STM32)
-// TIM1 - only for generating time basement all outputs are set by GPIOs:
+void ESC_DShotBitbang::setupGPIO(GPIO_TypeDef* GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn)
+{
+    // enable GPIOA clock:
+    RCC->AHB1ENR |= GPIOxEN;
+    // mode (00-input; 01-output; 10-alternate) will be set later
+    // set speed (max speed):
+    GPIO->OSPEEDR |= GPIO_OSPEEDER_OSPEEDRn;
+}
+
+void ESC_DShotBitbang::setupDMA(DMA_Stream_TypeDef* DMA_Stream, uint32_t DMAxEN)
+{
+    RCC->AHB1ENR |= DMAxEN;
+
+    DMA_Stream->CR = 0x0;
+    while (DMA_Stream->CR & DMA_SxCR_EN) {
+        ; // wait
+    }
+    DMA_Stream->CR |= DMA_SxCR_MSIZE_1 | DMA_SxCR_PSIZE_1 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_TCIE | DMA_SxCR_PL_0;
+    // all the other parameters will be set later
+}
+
+void ESC_DShotBitbang::setupTimers(TIM_TypeDef* TIM, uint32_t TIMxEN)
+{
+// TIM - only for generating time basement all outputs are set by GPIOs:
     // enable TIM1 clock:
-    RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+    // RCC: Reset and Clock Control
+    RCC->APB2ENR |= TIMxEN;
     // register is buffered and overflow DMA request:
 
     // CR: control register
-    TIM1->CR1 = 0x0;
-    TIM1->CR1 |= TIM_CR1_ARPE | TIM_CR1_URS;
+    TIM->CR1 = 0x0;
+    TIM->CR1 |= TIM_CR1_ARPE | TIM_CR1_URS;
 
     // DMA request:
     // DIER: DMA/interrupt enable register
     // CCR: capture/compare register
     // PSC: prescaler
     // ARR: auto-reload register
-    TIM1->DIER |= TIM_DIER_CC1DE; // CC1DE: Capture/Compare 1 DMA request enable
+    TIM->DIER |= TIM_DIER_CC1DE; // CC1DE: Capture/Compare 1 DMA request enable
     // TIM1 is 168 MHz:
-    TIM1->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
+    TIM->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
 #if defined(BIT_BANGING_V1)
-    TIM1->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
-    TIM1->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
+    TIM->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
+    TIM->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
 #elif defined(BIT_BANGING_V2)
-    TIM1->DIER |= TIM_DIER_CC2DE; // channel 2 request
-    TIM1->DIER |= TIM_DIER_CC3DE; // channel 3 request
-    TIM1->CCR1 = 0;
-    TIM1->CCR2 = DSHOT_BB_0_LENGTH;
-    TIM1->CCR3 = DSHOT_BB_1_LENGTH;
-    TIM1->ARR = DSHOT_BB_FRAME_LENGTH - 1;
+    TIM->DIER |= TIM_DIER_CC2DE; // channel 2 request
+    TIM->DIER |= TIM_DIER_CC3DE; // channel 3 request
+    TIM->CCR1 = 0;
+    TIM->CCR2 = DSHOT_BB_0_LENGTH;
+    TIM->CCR3 = DSHOT_BB_1_LENGTH;
+    TIM->ARR = DSHOT_BB_FRAME_LENGTH - 1;
 #endif
 
-    // TIM1 enable:
+    // TIM enable:
     // EGR: event generation register
-    TIM1->EGR |= TIM_EGR_UG;  // UG: Update Generation
-    TIM1->CR1 |= TIM_CR1_CEN; //CEN: counter enable
-
-// TIM8 - only for generating time basement all outputs are set by GPIOs:
-    // enable TIM8 clock:
-    RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;
-
-    // register is buffered and overflow DMA request:
-    TIM8->CR1 = 0x0;
-    TIM8->CR1 |= TIM_CR1_ARPE | TIM_CR1_URS;
-    // TIM8 is 168 MHz:
-    TIM8->PSC = 168000 / DSHOT_MODE / DSHOT_BB_FRAME_LENGTH - 1;
-
-    // DMA request:
-    TIM8->DIER |= TIM_DIER_CC1DE; // channel 1 request
-#if defined(BIT_BANGING_V1)
-    TIM8->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
-    TIM8->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
-#elif defined(BIT_BANGING_V2)
-    TIM8->DIER |= TIM_DIER_CC2DE; // channel 2 request
-    TIM8->DIER |= TIM_DIER_CC3DE; // channel 3 request
-    TIM8->CCR1 = 0;
-    TIM8->CCR2 = DSHOT_BB_0_LENGTH;
-    TIM8->CCR3 = DSHOT_BB_1_LENGTH;
-    TIM8->ARR = DSHOT_BB_FRAME_LENGTH - 1;
-#endif
-    // TIM8 enable:
-    TIM8->EGR |= TIM_EGR_UG;
-    TIM8->CR1 |= TIM_CR1_CEN;
-#endif // USE_ARDUINO_STM32
+    TIM->EGR |= TIM_EGR_UG;  // UG: Update Generation
+    TIM->CR1 |= TIM_CR1_CEN; //CEN: counter enable
 }
+#endif //USE_ARDUINO_STM32
 
 void ESC_DShotBitbang::outputToMotors(uint16_t m1, uint16_t m2, uint16_t m3, uint16_t m4)
 {
@@ -267,28 +201,22 @@ void ESC_DShotBitbang::outputToMotors(uint16_t m1, uint16_t m2, uint16_t m3, uin
 #if defined(USE_ARDUINO_STM32)
     // set GPIOs as output:
     // MODER: GPIO port mode register
-
-    // MOTOR_1 PA3
-    // MOTOR_4 PA2
-    GPIOA->MODER |= GPIO_MODER_MODER2_0 | GPIO_MODER_MODER3_0;
-
-    // MOTOR_2 PB0
-    // MOTOR_3 PB1
-    GPIOB->MODER |= GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0;
+    _portA.GPIO->MODER |= _portA.GPIO_output;
+    _portB.GPIO->MODER |= _portB.GPIO_output;
 
     // CR:   DMA stream x configuration register
     // NDTR: DMA stream x number of data register
     // PAR:  DMA stream x peripheral address register
     // M0AR: DMA stream x memory 0 address register
-    DMA2_Stream6->CR |= DMA_SxCR_DIR_0;
-    DMA2_Stream6->PAR = reinterpret_cast<uint32_t>(&(GPIOA->BSRR));
-    DMA2_Stream6->M0AR = reinterpret_cast<uint32_t>(&_portA.dmaOutputBuffer[0]);
-    DMA2_Stream6->NDTR = DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS;
+    _portA.DMA_Stream->CR |= DMA_SxCR_DIR_0;
+    _portA.DMA_Stream->PAR = reinterpret_cast<uint32_t>(&(_portA.GPIO->BSRR));
+    _portA.DMA_Stream->M0AR = reinterpret_cast<uint32_t>(&_portA.dmaOutputBuffer[0]);
+    _portA.DMA_Stream->NDTR = DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS;
 
-    DMA2_Stream2->CR |= DMA_SxCR_DIR_0;
-    DMA2_Stream2->PAR = reinterpret_cast<uint32_t>(&(GPIOB->BSRR));
-    DMA2_Stream2->M0AR = reinterpret_cast<uint32_t>(&_portB.dmaOutputBuffer[0]);
-    DMA2_Stream2->NDTR = DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS;
+    _portB.DMA_Stream->CR |= DMA_SxCR_DIR_0;
+    _portB.DMA_Stream->PAR = reinterpret_cast<uint32_t>(&(_portB.GPIO->BSRR));
+    _portB.DMA_Stream->M0AR = reinterpret_cast<uint32_t>(&_portB.dmaOutputBuffer[0]);
+    _portB.DMA_Stream->NDTR = DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS;
 
 #if defined(BIT_BANGING_V1)
     // Main idea:
@@ -298,26 +226,26 @@ void ESC_DShotBitbang::outputToMotors(uint16_t m1, uint16_t m2, uint16_t m3, uin
     // It uses only 1 CCR on each timer.
     // Idea for reception is the same.
 
-    //    TIM1 setup:
-    TIM1->CR1 &= ~TIM_CR1_CEN;
-    TIM1->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
-    TIM1->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
+    // portA TIM setup:
+    _portA.TIM->CR1 &= ~TIM_CR1_CEN;
+    _portA.TIM->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
+    _portA.TIM->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
 
-    // TIM8 setup:
-    TIM1->CR1 &= ~TIM_CR1_CEN;
-    TIM8->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
-    TIM8->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
+    // porB TIM setup:
+    _portB.TIM->CR1 &= ~TIM_CR1_CEN;
+    _portB.TIM->CCR1 = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS;
+    _portB.TIM->ARR = DSHOT_BB_FRAME_LENGTH / DSHOT_BB_FRAME_SECTIONS - 1;
 
-    //  send:
-    DMA2_Stream6->CR |= DMA_SxCR_EN;
-    DMA2_Stream2->CR |= DMA_SxCR_EN;
+    // send
+    _portA.DMA_Stream->CR |= DMA_SxCR_EN;
+    _portB.DMA_Stream->CR |= DMA_SxCR_EN;
 
     // EGR: event generation register
     // CR: Control Register
-    TIM1->EGR |= TIM_EGR_UG; // Update Generation
-    TIM1->CR1 |= TIM_CR1_CEN; // Counter Enable
-    TIM8->EGR |= TIM_EGR_UG;
-    TIM8->CR1 |= TIM_CR1_CEN;
+    _portA.TIM->EGR |= TIM_EGR_UG; // Update Generation
+    _portA.TIM->CR1 |= TIM_CR1_CEN; // Counter Enable
+    _portB.TIM->EGR |= TIM_EGR_UG;
+    _portB.TIM->CR1 |= TIM_CR1_CEN;
 #elif defined(BIT_BANGING_V2)
     // Main idea:
     // DMA requests generated at beginning, after 0-bit time and after 1-bit time
@@ -326,25 +254,25 @@ void ESC_DShotBitbang::outputToMotors(uint16_t m1, uint16_t m2, uint16_t m3, uin
     // It works for transferring but for reception it is not useful
 
     //    TIM1 setup:
-    TIM1->CCR1 = 0;
-    TIM1->CCR2 = DSHOT_BB_0_LENGTH;
-    TIM1->CCR3 = DSHOT_BB_1_LENGTH;
-    TIM1->ARR = DSHOT_BB_FRAME_LENGTH - 1;
+    _portA.TIM->CCR1 = 0;
+    _portA.TIM->CCR2 = DSHOT_BB_0_LENGTH;
+    _portA.TIM->CCR3 = DSHOT_BB_1_LENGTH;
+    _portA.TIM->ARR = DSHOT_BB_FRAME_LENGTH - 1;
 
     // TIM8 setup:
-    TIM8->CCR1 = 0;
-    TIM8->CCR2 = DSHOT_BB_0_LENGTH;
-    TIM8->CCR3 = DSHOT_BB_1_LENGTH;
-    TIM8->ARR = DSHOT_BB_FRAME_LENGTH - 1;
+    _portB.TIM->CCR1 = 0;
+    _portB.TIM->CCR2 = DSHOT_BB_0_LENGTH;
+    _portB.TIM->CCR3 = DSHOT_BB_1_LENGTH;
+    _portB.TIM->ARR = DSHOT_BB_FRAME_LENGTH - 1;
 
     //  send:
-    TIM1->EGR |= TIM_EGR_UG;
-    TIM1->CR1 |= TIM_CR1_CEN;
-    TIM8->EGR |= TIM_EGR_UG;
-    TIM8->CR1 |= TIM_CR1_CEN;
+    _portA.TIM->EGR |= TIM_EGR_UG;
+    _portA.TIM->CR1 |= TIM_CR1_CEN;
+    _portB.TIM->EGR |= TIM_EGR_UG;
+    _portB.TIM->CR1 |= TIM_CR1_CEN;
 
-    DMA2_Stream6->CR |= DMA_SxCR_EN;
-    DMA2_Stream2->CR |= DMA_SxCR_EN;
+    _portA.DMA_Stream->CR |= DMA_SxCR_EN;
+    _portB.DMA_Stream->CR |= DMA_SxCR_EN;
 #endif
 #endif // USE_ARDUINO_STM32
 }
@@ -515,7 +443,7 @@ void ESC_DShotBitbang::setDMA_outputBuffersV2(uint16_t m1_frame, uint16_t m2_fra
         if (bitMask & m4_frame) {
             _portA.dmaOutputBuffer[index] |= GPIO_BSRR_BS_0 << MOTOR_4;
         }
-        _portA.dmaOutputBuffer[index] = (bitMask & m2_frame) ? 0x00 : GPIO_BSRR_BS_0 << MOTOR_2;
+        _portB.dmaOutputBuffer[index] = (bitMask & m2_frame) ? 0x00 : GPIO_BSRR_BS_0 << MOTOR_2;
         if (bitMask & m3_frame) {
             _portB.dmaOutputBuffer[index] |= GPIO_BSRR_BS_0 << MOTOR_3;
         }

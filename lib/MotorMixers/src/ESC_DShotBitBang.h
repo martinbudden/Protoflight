@@ -2,6 +2,9 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#if defined(USE_ARDUINO_STM32)
+#include <stm32f4xx.h>
+#endif
 
 /*
 Implementation ported from: https://github.com/symonb/Bidirectional-DSHOT-and-RPM-Filter/blob/main/Src/bdshot.c
@@ -49,10 +52,6 @@ public:
 
     ESC_DShotBitbang();
     void init();
-    void setupGPIO();
-    static void setupDMA();
-    static void setupTimers();
-    static void setupNVIC();
     void presetDMA_outputBuffers();
     void setDMA_outputBuffers(uint16_t m1_frame, uint16_t m2_frame, uint16_t m3_frame, uint16_t m4_frame);
     void presetDMA_outputBuffersV1();
@@ -79,12 +78,19 @@ public:
 #endif
 public:
     static ESC_DShotBitbang* self; // alias of `this` to be used in ISR
-
 private:
     std::array<int32_t, MOTOR_COUNT> _eRPMs {};
     std::array<int32_t, MOTOR_COUNT> _motorErrors {};
 public:
     struct port_t {
+#if defined(USE_ARDUINO_STM32)
+        GPIO_TypeDef* GPIO;
+        uint32_t GPIO_input;
+        uint32_t GPIO_output;
+        uint32_t GPIO_PUPDR;
+        DMA_Stream_TypeDef* DMA_Stream;
+        TIM_TypeDef* TIM;
+#endif
         // flag for reception or transmission:
         bool reception;
         // BDSHOT response is being sampled just after transmission. There is ~33 [us] break before response (additional sampling) and bitrate is increased by 5/4:
@@ -93,4 +99,10 @@ public:
     };
     port_t _portA {};
     port_t _portB {};
+#if defined(USE_ARDUINO_STM32)
+    static void setupGPIO(GPIO_TypeDef*GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn);
+    static void setupDMA(DMA_Stream_TypeDef* TIM, uint32_t DMAxEN);
+    static void setupTimers(TIM_TypeDef* TIM, uint32_t TIMxEN);
+    static void IRQ_Handler(port_t& port);
+#endif
 };
