@@ -54,22 +54,17 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(const commands_t& commands, fl
         _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + speed;
         _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + speed;
         _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + speed;
-
-        // scale motor output to [0.0F, 1000.0F], which is the range required for DShot
-        _motorOutputs[MOTOR_BR] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_BR], _motorOutputMin, 1.0F));
-        _motorOutputs[MOTOR_FR] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_FR], _motorOutputMin, 1.0F));
-        _motorOutputs[MOTOR_BL] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_BL], _motorOutputMin, 1.0F));
-        _motorOutputs[MOTOR_FL] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_FL], _motorOutputMin, 1.0F));
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
     }
 
     // and finally output to the motors, reading the motor RPM to set the RPM filters
+    // convert motor output to DShot range [47, 2047]
     _escBitbang.outputToMotors(
-        static_cast<uint16_t>(_motorOutputs[MOTOR_BR]),
-        static_cast<uint16_t>(_motorOutputs[MOTOR_FR]),
-        static_cast<uint16_t>(_motorOutputs[MOTOR_BL]),
-        static_cast<uint16_t>(_motorOutputs[MOTOR_FL])
+        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_BR], _motorOutputMin, 1.0F)) + 47),
+        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_FR], _motorOutputMin, 1.0F)) + 47),
+        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_BL], _motorOutputMin, 1.0F)) + 47),
+        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_FL], _motorOutputMin, 1.0F)) + 47)
     );
     _motorFrequenciesHz[0] = static_cast<float>(_escBitbang.getMotorERPM(0))*_eRPMtoHz;
     _motorFrequenciesHz[1] = static_cast<float>(_escBitbang.getMotorERPM(1))*_eRPMtoHz;

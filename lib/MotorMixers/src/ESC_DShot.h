@@ -34,7 +34,7 @@ public:
 public:
     enum { DSHOT_BIT_COUNT = 16 };
     void setProtocol(protocol_e protocol);
-    void write(uint16_t value);
+    void write(uint16_t value); // value should be in the DShot range [47,2047]
     bool read();
 
     int32_t getMotorRPM() const { return 2 * _eRPM / _motorPoleCount; } // eRPM = RPM * poles/2, /2 due to pole pairs, not poles

@@ -54,34 +54,15 @@ public:
     void init();
     void presetDMA_outputBuffers();
     void setDMA_outputBuffers(uint16_t m1_frame, uint16_t m2_frame, uint16_t m3_frame, uint16_t m4_frame);
-    void presetDMA_outputBuffersV1();
-    void setDMA_outputBuffersV1(uint16_t m1_frame, uint16_t m2_frame, uint16_t m3_frame, uint16_t m4_frame);
-    void presetDMA_outputBuffersV2();
-    void setDMA_outputBuffersV2(uint16_t m1_frame, uint16_t m2_frame, uint16_t m3_frame, uint16_t m4_frame);
 
-    void outputToMotors(uint16_t m1, uint16_t m2, uint16_t m3, uint16_t m4);
+    void outputToMotors(uint16_t m1_value, uint16_t m2_value, uint16_t m3_value, uint16_t m4_value); // values should be in the DShot range [47,2047]
     void update_motors_rpm();
     int32_t getMotorERPM(size_t motorIndex) { return _eRPMs[motorIndex]; }
 
     static uint32_t samples_to_GCR21(const uint32_t* samples, uint32_t motorMask);
     static void GCR21_to_samples(uint32_t* samples, uint32_t motorMask, uint32_t gcr21); // for test code
-#if false
-    void read_BDshot_response(uint32_t gcr21, uint8_t motor);
-    static uint16_t prepare_BDshot_package(uint16_t value) {
-        // value is in range of 2000-4000 so need to transform it into Dshot range (48-2047)
-        value -= 1953;
-        if (value > 0 && value < 48) {
-            value = 48;
-        }
-        return ((value << 5) | DShotCodec::checksumBidirectional(value<<1));
-    }
-#endif
 public:
     static ESC_DShotBitbang* self; // alias of `this` to be used in ISR
-private:
-    std::array<int32_t, MOTOR_COUNT> _eRPMs {};
-    std::array<int32_t, MOTOR_COUNT> _motorErrors {};
-public:
     struct port_t {
 #if defined(USE_ARDUINO_STM32)
         GPIO_TypeDef* GPIO;
@@ -91,18 +72,22 @@ public:
         DMA_Stream_TypeDef* DMA_Stream;
         TIM_TypeDef* TIM;
 #endif
-        // flag for reception or transmission:
-        bool reception;
+        bool reception; // flag for reception or transmission:
         // BDSHOT response is being sampled just after transmission. There is ~33 [us] break before response (additional sampling) and bitrate is increased by 5/4:
         std::array<uint32_t, (int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * RESPONSE_OVERSAMPLING> dmaInputBuffer;
         std::array<uint32_t, DSHOT_BB_BUFFER_LENGTH * DSHOT_BB_FRAME_SECTIONS> dmaOutputBuffer;
     };
+    port_t& getPortA() { return _portA; }
+    port_t& getPortB() { return _portB; }
+    static void IRQ_Handler(port_t& port);
+private:
+    std::array<int32_t, MOTOR_COUNT> _eRPMs {};
+    std::array<int32_t, MOTOR_COUNT> _motorErrors {};
     port_t _portA {};
     port_t _portB {};
 #if defined(USE_ARDUINO_STM32)
     static void setupGPIO(GPIO_TypeDef*GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn);
     static void setupDMA(DMA_Stream_TypeDef* TIM, uint32_t DMAxEN);
     static void setupTimers(TIM_TypeDef* TIM, uint32_t TIMxEN);
-    static void IRQ_Handler(port_t& port);
 #endif
 };

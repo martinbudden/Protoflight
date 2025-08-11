@@ -57,21 +57,21 @@ void test_dshot_codec()
     TEST_ASSERT_EQUAL(47, DShotCodec::pwmToDShot(1000));
     TEST_ASSERT_EQUAL(2047, DShotCodec::pwmToDShot(2000));
 
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(0));
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(10));
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(999));
+    TEST_ASSERT_EQUAL(0, DShotCodec::pwmToDShotClipped(0));
+    TEST_ASSERT_EQUAL(0, DShotCodec::pwmToDShotClipped(10));
+    TEST_ASSERT_EQUAL(0, DShotCodec::pwmToDShotClipped(999));
 
-    TEST_ASSERT_EQUAL(0, DShotCodec::dShotConvert(1000)); // should this be 0 or 48 ?
-    //TEST_ASSERT_EQUAL(48, DShotCodec::dShotConvert(1000)); // should this be 0 or 48 ?
-    TEST_ASSERT_EQUAL(49, DShotCodec::dShotConvert(1001));
-    TEST_ASSERT_EQUAL(51, DShotCodec::dShotConvert(1002));
-    TEST_ASSERT_EQUAL(53, DShotCodec::dShotConvert(1003));
-    TEST_ASSERT_EQUAL(1047, DShotCodec::dShotConvert(1500));
-    TEST_ASSERT_EQUAL(2045, DShotCodec::dShotConvert(1999));
-    TEST_ASSERT_EQUAL(2047, DShotCodec::dShotConvert(2000));
-    TEST_ASSERT_EQUAL(2047, DShotCodec::dShotConvert(2001));
-    TEST_ASSERT_EQUAL(2047, DShotCodec::dShotConvert(2002));
-    TEST_ASSERT_EQUAL(2047, DShotCodec::dShotConvert(4000));
+    TEST_ASSERT_EQUAL(0, DShotCodec::pwmToDShotClipped(1000)); // should this be 0 or 48 ?
+    //TEST_ASSERT_EQUAL(48, DShotCodec::pwmToDShotClipped(1000)); // should this be 0 or 48 ?
+    TEST_ASSERT_EQUAL(49, DShotCodec::pwmToDShotClipped(1001));
+    TEST_ASSERT_EQUAL(51, DShotCodec::pwmToDShotClipped(1002));
+    TEST_ASSERT_EQUAL(53, DShotCodec::pwmToDShotClipped(1003));
+    TEST_ASSERT_EQUAL(1047, DShotCodec::pwmToDShotClipped(1500));
+    TEST_ASSERT_EQUAL(2045, DShotCodec::pwmToDShotClipped(1999));
+    TEST_ASSERT_EQUAL(2047, DShotCodec::pwmToDShotClipped(2000));
+    TEST_ASSERT_EQUAL(2047, DShotCodec::pwmToDShotClipped(2001));
+    TEST_ASSERT_EQUAL(2047, DShotCodec::pwmToDShotClipped(2002));
+    TEST_ASSERT_EQUAL(2047, DShotCodec::pwmToDShotClipped(4000));
 
 
     TEST_ASSERT_EQUAL(1542, DShotCodec::frameUnidirectional(48)); //0x606

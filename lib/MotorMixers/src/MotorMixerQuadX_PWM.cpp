@@ -92,66 +92,69 @@ void MotorMixerQuadX_PWM::outputToMotors(const commands_t& commands, float delta
         _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + commands.speed;
         _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + commands.speed;
         _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + commands.speed;
-
-        // scale motor output to GPIO range ([0.0F, 65535.0F] for RPI Pico or [0.0F, 255.0F] for Arduino)
-#if defined(FRAMEWORK_RPI_PICO)
-        constexpr float scale = 65535.0F;
-#else
-        constexpr float scale = 255.0F;
-#endif
-        _motorOutputs[MOTOR_BR] =  roundf(scale*clip(_motorOutputs[MOTOR_BR], 0.0F, 1.0F));
-
-        _motorOutputs[MOTOR_FR] =  roundf(scale*clip(_motorOutputs[MOTOR_FR], 0.0F, 1.0F));
-
-        _motorOutputs[MOTOR_BL] =  roundf(scale*clip(_motorOutputs[MOTOR_BL], 0.0F, 1.0F));
-
-        _motorOutputs[MOTOR_FL] =  roundf(scale*clip(_motorOutputs[MOTOR_FL], 0.0F, 1.0F));
-
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
     }
 
 #if defined(FRAMEWORK_RPI_PICO)
+    // scale motor output to GPIO range ([0, 65535]
+    constexpr float scale = 65535.0F;
     if (_pins.br != 0xFF) {
-        pwm_set_gpio_level(_pins.br, static_cast<uint16_t>(_motorOutputs[MOTOR_BR]));
+        const uint16_t motorOutput = static_cast<uint16_t>(roundf(scale*clip(_motorOutputs[MOTOR_BR], 0.0F, 1.0F)));
+        pwm_set_gpio_level(_pins.br, motorOutput);
     }
     if (_pins.fr != 0xFF) {
-        pwm_set_gpio_level(_pins.fr, static_cast<uint16_t>(_motorOutputs[MOTOR_FR]));
+        const uint16_t motorOutput = static_cast<uint16_t>(roundf(scale*clip(_motorOutputs[MOTOR_FR], 0.0F, 1.0F)));
+        pwm_set_gpio_level(_pins.fr, motorOutput);
     }
     if (_pins.bl != 0xFF) {
-        pwm_set_gpio_level(_pins.bl, static_cast<uint16_t>(_motorOutputs[MOTOR_BL]));
+        const uint16_t motorOutput = static_cast<uint16_t>(roundf(scale*clip(_motorOutputs[MOTOR_BL], 0.0F, 1.0F)));
+        pwm_set_gpio_level(_pins.bl, motorOutput);
     }
     if (_pins.fl != 0xFF) {
-        pwm_set_gpio_level(_pins.fl, static_cast<uint16_t>(_motorOutputs[MOTOR_FL]));
+        const uint16_t motorOutput = static_cast<uint16_t>(roundf(scale*clip(_motorOutputs[MOTOR_FL], 0.0F, 1.0F)));
+        pwm_set_gpio_level(_pins.fl, motorOutput);
     }
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_TEST)
 #else // defaults to FRAMEWORK_ARDUINO
 #if defined(USE_ARDUINO_ESP32)
+    // scale motor output to GPIO range [0, 255]
+    constexpr float scale = 255.0F;
     if (_pins.br != 0xFF) {
-        ledcWrite(MOTOR_BR, static_cast<uint32_t>(_motorOutputs[MOTOR_BR]));
+        const uint32_t motorOutput = static_cast<uint32_t>(roundf(scale*clip(_motorOutputs[MOTOR_BR], 0.0F, 1.0F)));
+        ledcWrite(MOTOR_BR, motorOutput);
     }
     if (_pins.fr != 0xFF) {
-        ledcWrite(MOTOR_FR, static_cast<uint32_t>(_motorOutputs[MOTOR_FR]));
+        const uint32_t motorOutput = static_cast<uint32_t>(roundf(scale*clip(_motorOutputs[MOTOR_FR], 0.0F, 1.0F)));
+        ledcWrite(MOTOR_FR, motorOutput);
     }
     if (_pins.bl != 0xFF) {
-        ledcWrite(MOTOR_BL, static_cast<uint32_t>(_motorOutputs[MOTOR_BL]));
+        const uint32_t motorOutput = static_cast<uint32_t>(roundf(scale*clip(_motorOutputs[MOTOR_BL], 0.0F, 1.0F)));
+        ledcWrite(MOTOR_BL, motorOutput);
     }
     if (_pins.fl != 0xFF) {
-        ledcWrite(MOTOR_FL, static_cast<uint32_t>(_motorOutputs[MOTOR_FL]));
+        const uint32_t motorOutput = static_cast<uint32_t>(roundf(scale*clip(_motorOutputs[MOTOR_FL], 0.0F, 1.0F)));
+        ledcWrite(MOTOR_FL, motorOutput);
     }
 #else // defaults to FRAMEWORK_ARDUINO
+    // scale motor output to GPIO range [0, 255]
+    constexpr float scale = 255.0F;
     if (_pins.br != 0xFF) {
-        analogWrite(_pins.br, static_cast<int>(_motorOutputs[MOTOR_BR]));
+        const int motorOutput = static_cast<int>(roundf(scale*clip(_motorOutputs[MOTOR_BR], 0.0F, 1.0F)));
+        analogWrite(_pins.br, motorOutput);
     }
     if (_pins.fr != 0xFF) {
-        analogWrite(_pins.fr, static_cast<int>(_motorOutputs[MOTOR_FR]));
+        const int motorOutput = static_cast<int>(roundf(scale*clip(_motorOutputs[MOTOR_FR], 0.0F, 1.0F)));
+        analogWrite(_pins.fr, motorOutput);
     }
     if (_pins.bl != 0xFF) {
-        analogWrite(_pins.bl, static_cast<int>(_motorOutputs[MOTOR_BL]));
+        const int motorOutput = static_cast<int>(roundf(scale*clip(_motorOutputs[MOTOR_BL], 0.0F, 1.0F)));
+        analogWrite(_pins.bl, motorOutput);
     }
     if (_pins.fl != 0xFF) {
-        analogWrite(_pins.fl, static_cast<int>(_motorOutputs[MOTOR_FL]));
+        const int motorOutput = static_cast<int>(roundf(scale*clip(_motorOutputs[MOTOR_FL], 0.0F, 1.0F)));
+        analogWrite(_pins.fl, motorOutput);
     }
 #endif
 #endif // FRAMEWORK

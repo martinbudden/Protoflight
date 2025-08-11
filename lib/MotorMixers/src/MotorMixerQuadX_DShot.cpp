@@ -55,30 +55,25 @@ void MotorMixerQuadX_DShot::outputToMotors(const commands_t& commands, float del
         _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + speed;
         _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + speed;
         _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + speed;
-
-        // scale motor output to [0.0F, 1000.0F], which is the range required for DShot
-        _motorOutputs[MOTOR_BR] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_BR], _motorOutputMin, 1.0F));
-        _motorOutputs[MOTOR_FR] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_FR], _motorOutputMin, 1.0F));
-        _motorOutputs[MOTOR_BL] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_BL], _motorOutputMin, 1.0F));
-        _motorOutputs[MOTOR_FL] =  roundf(1000.0F*clip(_motorOutputs[MOTOR_FL], _motorOutputMin, 1.0F));
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
     }
 
     // and finally output to the motors, reading the motor RPM to set the RPM filters
-    _motorBR.write(static_cast<uint16_t>(_motorOutputs[MOTOR_BR]));
+    // motor outputs are converted to DShot range [47,2047]
+    _motorBR.write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_BR], _motorOutputMin, 1.0F)) + 47)),
     _motorBR.read();
     _rpmFilters.setFrequencyHz(MOTOR_BR, _motorBR.getMotorHz());
 
-    _motorFR.write(static_cast<uint16_t>(_motorOutputs[MOTOR_FR]));
+    _motorFR.write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_FR], _motorOutputMin, 1.0F)) + 47)),
     _motorFR.read();
     _rpmFilters.setFrequencyHz(MOTOR_FR, _motorBR.getMotorHz());
 
-    _motorBL.write(static_cast<uint16_t>(_motorOutputs[MOTOR_BL]));
+    _motorBL.write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_BL], _motorOutputMin, 1.0F)) + 47)),
     _motorBL.read();
     _rpmFilters.setFrequencyHz(MOTOR_BL, _motorBR.getMotorHz());
 
-    _motorFL.write(static_cast<uint16_t>(_motorOutputs[MOTOR_FL]));
+    _motorFL.write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_FL], _motorOutputMin, 1.0F)) + 47)),
     _motorFL.read();
     _rpmFilters.setFrequencyHz(MOTOR_FL, _motorBR.getMotorHz());
 }

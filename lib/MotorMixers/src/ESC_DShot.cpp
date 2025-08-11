@@ -165,14 +165,14 @@ void ESC_DShot::setProtocol(protocol_e protocol)
 
     _protocol = protocol;
     // DShot 150 specification
-    enum { DSHOT150_T0H = 2500, DSHOT150_T1H = 5000, DSHOT150_T = 7500 };
+    enum { DSHOT150_T0H = 2500, DSHOT150_T1H = 5000, DSHOT150_T = 6680 };
 
     // _dataLowPulseWidth and _dataHighPulseWidth are in processor cycles
     // for RPI_PICO: default CPU frequency is 150MHz, that is 0.15GHz
 
     _dataLowPulseWidth = nanoSecondsToCycles(DSHOT150_T0H);    // =  375 ( 375 = 2500 * 0.15GHz)
     _dataHighPulseWidth = nanoSecondsToCycles(DSHOT150_T1H);   // =  750 ( 750 = 5000 * 0.15GHz)
-    _wrapCycleCount = nanoSecondsToCycles(DSHOT150_T); // = 1125 (1125 = 7500 * 0.15GHz)
+    _wrapCycleCount = nanoSecondsToCycles(DSHOT150_T); // = 1002 (1002 = 6680 * 0.15GHz)
 
     switch (protocol) {
     case ESC_PROTOCOL_DSHOT150:
@@ -214,7 +214,7 @@ uint32_t ESC_DShot::nanoSecondsToCycles(uint32_t nanoSeconds) const
 }
 
 /*!
-value should be in the range [1000,2000]
+value should be in the DShot range [47,2047]
 
 Unidirectional DShot can use the hardware PWM generators and DMA.
 
@@ -228,12 +228,10 @@ void ESC_DShot::write(uint16_t value) // NOLINT(readability-make-member-function
 {
 #if defined(USE_DSHOT_RPI_PICO_PIO)
     // use the value to create a bidirectional DShot frame and send it to the PIO state machin
-    value = DShotCodec::dShotConvert(value); // converts from range [1000,2000] to range [47,2047]
     value = DShotCodec::frameBidirectional(value);
     pio_sm_put(_pio, _pioStateMachine, value);
 #else
     // set up a unidirectional DShot frame for sending via DMA
-    value = DShotCodec::dShotConvert(value); // converts from range [1000,2000] to range [47,2047]
     const uint16_t frame = DShotCodec::frameUnidirectional(value);
 
     uint16_t maskBit = 1U << (DSHOT_BIT_COUNT - 1); // NOLINT(misc-const-correctness,hicpp-signed-bitwise)

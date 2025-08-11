@@ -51,7 +51,7 @@ public:
     };
 public:
     static inline uint16_t pwmToDShot(uint16_t value) { return static_cast<uint16_t>(((value - 1000) * 2) + 47); }
-    static inline uint16_t dShotConvert(uint16_t value) { return value > 2000 ? pwmToDShot(2000) : value > 1000 ? pwmToDShot(value) : 0; }
+    static inline uint16_t pwmToDShotClipped(uint16_t value) { return value > 2000 ? pwmToDShot(2000) : value > 1000 ? pwmToDShot(value) : 0; }
 
     // non-inverted Checksum for unidirectional DShot
     static inline uint16_t checksumUnidirectional(uint16_t value) { return (value ^ (value >> 4) ^ (value >> 8)) & 0x0F; }
