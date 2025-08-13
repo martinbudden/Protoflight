@@ -23,6 +23,7 @@ public:
         ESC_PROTOCOL_DSHOT300,
         ESC_PROTOCOL_DSHOT600,
         ESC_PROTOCOL_PROSHOT,
+        ESC_PROTOCOL_W2818B, // able to drive W2818B (NeoPixel) for debug setups
         ESC_PROTOCOL_COUNT
     };
     enum { DEFAULT_MOTOR_POLE_COUNT = 14 };

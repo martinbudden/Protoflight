@@ -138,6 +138,7 @@ void ESC_DShot::setProtocol(protocol_e protocol)
     T0L = 850ns +/- 150ns
     T1L = 450ns +/- 150ns
     TxH+TxL = 1250ns +/- 600ns (T0H + T0L or T1H + T1L)
+    enum { W2818B_T0H = 400, W2818B_T1H = 800, W2818B_T = 1250 };
 
     DShot150 means 150 kilobytes/second
     DShot 150 specification is
@@ -166,13 +167,14 @@ void ESC_DShot::setProtocol(protocol_e protocol)
     _protocol = protocol;
     // DShot 150 specification
     enum { DSHOT150_T0H = 2500, DSHOT150_T1H = 5000, DSHOT150_T = 6680 };
+    enum { W2818B_T0H = 400, W2818B_T1H = 800, W2818B_T = 1250 };
 
     // _dataLowPulseWidth and _dataHighPulseWidth are in processor cycles
     // for RPI_PICO: default CPU frequency is 150MHz, that is 0.15GHz
 
-    _dataLowPulseWidth = nanoSecondsToCycles(DSHOT150_T0H);    // =  375 ( 375 = 2500 * 0.15GHz)
-    _dataHighPulseWidth = nanoSecondsToCycles(DSHOT150_T1H);   // =  750 ( 750 = 5000 * 0.15GHz)
-    _wrapCycleCount = nanoSecondsToCycles(DSHOT150_T); // = 1002 (1002 = 6680 * 0.15GHz)
+    _dataLowPulseWidth = nanoSecondsToCycles(DSHOT150_T0H);  // =  375 = 2500 * 0.15GHz
+    _dataHighPulseWidth = nanoSecondsToCycles(DSHOT150_T1H); // =  750 = 5000 * 0.15GHz
+    _wrapCycleCount = nanoSecondsToCycles(DSHOT150_T);       // = 1002 = 6680 * 0.15GHz
 
     switch (protocol) {
     case ESC_PROTOCOL_DSHOT150:
@@ -188,6 +190,11 @@ void ESC_DShot::setProtocol(protocol_e protocol)
         _dataLowPulseWidth /= 4;
         _dataHighPulseWidth /= 4;
         _wrapCycleCount /= 4;
+        break;
+    case ESC_PROTOCOL_W2818B:
+        _dataLowPulseWidth = nanoSecondsToCycles(W2818B_T0H);  // =  60 =  400 * 0.15GHz
+        _dataHighPulseWidth = nanoSecondsToCycles(W2818B_T1H); // = 120 =  800 * 0.15GHz
+        _wrapCycleCount = nanoSecondsToCycles(W2818B_T);       // = 188 = 1250 * 0.15GHz
         break;
     default:
         break;
@@ -227,7 +234,7 @@ On Raspberry Pi Pico we can use the Programmable IO (PIO) for this bit-banging.
 void ESC_DShot::write(uint16_t value) // NOLINT(readability-make-member-function-const)
 {
 #if defined(USE_DSHOT_RPI_PICO_PIO)
-    // use the value to create a bidirectional DShot frame and send it to the PIO state machin
+    // use the value to create a bidirectional DShot frame and send it to the PIO state machine
     value = DShotCodec::frameBidirectional(value);
     pio_sm_put(_pio, _pioStateMachine, value);
 #else
@@ -278,10 +285,7 @@ bool ESC_DShot::read()
         return false;
     }
 #else
-    //!! TODO: get samples from bit banging
-    std::array<uint32_t, 106> samples {};
-    const uint32_t count = 10;
-    value = DShotCodec::decodeSamples(&samples[0], count, telemetryType);
+    telemetryType = DShotCodec::TELEMETRY_INVALID;
 #endif
 
     ++_telemetryReadCount;
