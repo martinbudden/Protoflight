@@ -1,55 +1,9 @@
-#include <ESC_DShotBitbang.h>
+
+#include "ESC_DShotBitbangIRQ.h"
 #include <algorithm>
 #include <array>
 
-
-ESC_DShotBitbang* ESC_DShotBitbang::self; // alias of `this` to be used in ISR
-
 #if defined(USE_ARDUINO_STM32)
-void DMA2_Stream6_IRQHandler()
-{
-    // HISR:  DMA high interrupt status register
-    // HIFCR: DMA high interrupt flag clear register
-    if (DMA2->HISR & DMA_HISR_TCIF6) {
-        DMA2->HIFCR |= DMA_HIFCR_CTCIF6;
-        ESC_DShotBitbang::port_t& port = ESC_DShotBitbang::self->getPortA();
-        if (port.reception) {
-            ESC_DShotBitbang::IRQ_Handler(port);
-        }
-    }
-    if (DMA2->HISR & DMA_HISR_HTIF6) {
-        DMA2->HIFCR |= DMA_HIFCR_CHTIF6;
-    }
-    if (DMA2->HISR & DMA_HISR_DMEIF6) {
-        DMA2->HIFCR |= DMA_HIFCR_CDMEIF6;
-    }
-    if (DMA2->HISR & DMA_HISR_TEIF6) {
-        DMA2->HIFCR |= DMA_HIFCR_CTEIF6;
-    }
-}
-
-void DMA2_Stream2_IRQHandler()
-{
-    // LISR:  DMA low interrupt status register
-    // LIFCR: DMA low interrupt flag clear register
-    if (DMA2->LISR & DMA_LISR_TCIF2) {
-        DMA2->LIFCR |= DMA_LIFCR_CTCIF2;
-        ESC_DShotBitbang::port_t& port = ESC_DShotBitbang::self->getPortB();
-        if (port.reception) {
-            ESC_DShotBitbang::IRQ_Handler(port);
-        }
-    }
-    if (DMA2->LISR & DMA_LISR_HTIF2) {
-        DMA2->LIFCR |= DMA_LIFCR_CHTIF2;
-    }
-    if (DMA2->LISR & DMA_LISR_DMEIF2) {
-        DMA2->LIFCR |= DMA_LIFCR_CDMEIF2;
-    }
-    if (DMA2->LISR & DMA_LISR_TEIF2) {
-        DMA2->LIFCR |= DMA_LIFCR_CTEIF2;
-    }
-}
-
 void ESC_DShotBitbang::IRQ_Handler(port_t& port)
 {
     // set GPIOs as inputs:

@@ -11,7 +11,34 @@ Implementation ported from: https://github.com/symonb/Bidirectional-DSHOT-and-RP
 
 Explanation of code at:     https://symonb.github.io/docs/drone/ESC/ESC_prot_impl_2_2
 
-Motor pins etc still hard coded.
+FLLF-KIWIF4 uses same pins
+
+Motor pins etc still hard coded:
+# resources
+resource MOTOR 1 A03
+resource MOTOR 2 B00
+resource MOTOR 3 B01
+resource MOTOR 4 A02
+
+# timer
+timer A03 AFx
+# pin A03: TIM1 CH1 (AFx)
+timer B00 AFx
+# pin B00: TIM8 CH1 (AFx)
+timer B01 AFx
+# pin B01: TIM8 CH1 (AFx)
+timer A02 AFx
+# pin A02: TIM1 CH1 (AFx)
+
+# dma
+dma pin A03 1
+# pin A03: DMA2 Stream 2 Channel 6
+dma pin B00 1
+# pin B00: DMA2 Stream 2 Channel 2
+dma pin B01 1
+# pin B01: DMA2 Stream 2 Channel 2
+dma pin A02 1
+# pin A02: DMA2 Stream 2 Channel 6
 */
 
 #if defined(USE_ARDUINO_STM32)
