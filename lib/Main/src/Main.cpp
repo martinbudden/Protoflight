@@ -93,10 +93,25 @@ void Main::setup()
     static RadioController radioController(receiver, nvs.loadRadioControllerRates());
 #endif // USE_ESPNOW
 
-    uint32_t AHRS_taskIntervalMicroSeconds = AHRS_TASK_INTERVAL_MICROSECONDS;
-    int32_t imuSampleRateHz {};
-    static IMU_Base& imuSensor = createIMU(imuSampleRateHz, AHRS_taskIntervalMicroSeconds);
-    (void)imuSampleRateHz;
+    // create the IMU and get its sample rate
+#if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
+    int32_t imuSampleRateHz = 3200; // set max sample rate for BMI270
+#else
+    int32_t imuSampleRateHz = 1000000 / AHRS_TASK_INTERVAL_MICROSECONDS;
+#endif
+    static IMU_Base& imuSensor = createIMU(imuSampleRateHz); // note, the actual set sampleRate is returned in imuSampleRateHz
+#if defined(USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING)
+    // if the AHRS is interrupt driven, then set its task interval based on the IMU sample rate
+    const uint32_t AHRS_taskIntervalMicroSeconds = 1000000 / imuSampleRateHz;
+#else
+    const uint32_t AHRS_taskIntervalMicroSeconds = AHRS_TASK_INTERVAL_MICROSECONDS;
+#endif
+#if defined(FRAMEWORK_RPI_PICO)
+    printf("\r\n**** AHRS_taskIntervalMicroSeconds:%d, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroSeconds, imuSampleRateHz);
+#else
+    Serial.printf("\r\n**** AHRS_taskIntervalMicroSeconds:%d, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroSeconds, imuSampleRateHz);
+#endif
+
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
@@ -105,7 +120,7 @@ void Main::setup()
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
-    static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(), FC_TASK_INTERVAL_MICROSECONDS, debug);
+    static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(), AHRS_taskIntervalMicroSeconds / FC_TASK_DENOMINATOR, debug);
 #if defined(USE_ARDUINO_STM32)
     static MotorMixerQuadX_DShotBitbang motorMixer(debug, pins, rpmFilters, dynamicIdleController);
 #else
@@ -131,7 +146,7 @@ void Main::setup()
     AHRS& ahrs = createAHRS(AHRS_taskIntervalMicroSeconds, imuSensor, imuFilters);
 
     // Statically allocate the flightController.
-    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
+    static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
 
@@ -214,7 +229,7 @@ void Main::setup()
     static MainTask mainTask(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS);
     _tasks.mainTask = &mainTask;
     reportMainTask();
-    _tasks.ahrsTask = AHRS_Task::createTask(ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_TASK_INTERVAL_MICROSECONDS);
+    _tasks.ahrsTask = AHRS_Task::createTask(ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroSeconds);
     _tasks.flightControllerTask = VehicleControllerTask::createTask(flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
     _tasks.receiverTask = ReceiverTask::createTask(receiver, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
 #if defined(USE_MSP)

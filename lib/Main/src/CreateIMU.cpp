@@ -17,7 +17,7 @@ Set the IMU target output data rate to AHRS_taskIntervalMicroSeconds and then
 AHRS_taskIntervalMicroSeconds to the actual data rate returned by the IMU.
 The actual data rate may be less than the target data rate if the IMU does not support the target data rate.
 */
-IMU_Base& Main::createIMU(int32_t& imuSampleRateHz, uint32_t AHRS_taskIntervalMicroSeconds)
+IMU_Base& Main::createIMU(int32_t& imuSampleRateHz)
 {
     // Statically allocate the IMU according the the build flags
 // NOLINTBEGIN(misc-const-correctness) false positive
@@ -69,10 +69,7 @@ IMU_Base& Main::createIMU(int32_t& imuSampleRateHz, uint32_t AHRS_taskIntervalMi
 #endif
 // NOLINTEND(misc-const-correctness) false positive
 
-    //static_cast<IMU_Base&>(imuSensor).init(1000000 / AHRS_taskIntervalMicroSeconds);
-    //!!TODO: uncomment this when new Library-IMU available
-    //AHRS_taskIntervalMicroSeconds = static_cast<IMU_Base&>(imuSensor).init();
-    imuSampleRateHz = static_cast<IMU_Base&>(imuSensor).init(AHRS_taskIntervalMicroSeconds);
+    imuSampleRateHz = static_cast<IMU_Base&>(imuSensor).init(imuSampleRateHz);
 
     return imuSensor;
 }

@@ -28,11 +28,11 @@ class VehicleControllerTask;
 enum { MAIN_LOOP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
 
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
-enum { AHRS_TASK_INTERVAL_MICROSECONDS = 500 }; // 2000 Hz
+enum { AHRS_TASK_INTERVAL_MICROSECONDS = 1000 }; // 1000 Hz
 #endif
 
-#if !defined(FC_TASK_INTERVAL_MICROSECONDS)
-enum { FC_TASK_INTERVAL_MICROSECONDS = 500 }; // 2000 Hz
+#if !defined(FC_TASK_DENOMINATOR)
+enum { FC_TASK_DENOMINATOR = 2 }; // runs at half rate of AHRS_TASK
 #endif
 
 #if !defined(RECEIVER_TASK_INTERVAL_MICROSECONDS)
@@ -92,7 +92,7 @@ public:
     void loop();
 private:
     void testBlackbox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters);
-    static IMU_Base& createIMU(int32_t& imuSampleRateHz, uint32_t AHRS_taskIntervalMicroSeconds);
+    static IMU_Base& createIMU(int32_t& imuSampleRateHz);
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);
     static void resetNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);

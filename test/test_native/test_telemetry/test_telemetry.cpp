@@ -19,8 +19,8 @@
 
 #include <unity.h>
 
-#if !defined(FC_TASK_INTERVAL_MICROSECONDS)
-enum { FC_TASK_INTERVAL_MICROSECONDS = 5000 };
+#if !defined(FC_TASK_DENOMINATOR)
+enum { FC_TASK_DENOMINATOR = 2 };
 #endif
 
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
@@ -75,7 +75,7 @@ void test_telemetry_msp()
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
-    static FlightController flightController(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
+    static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
 
     // statically allocate an MSP object
     static MSP_ProtoFlight msp(nvs, features, ahrs, flightController, radioController, receiver, debug);

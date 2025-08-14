@@ -17,8 +17,8 @@
 
 #include <unity.h>
 
-#if !defined(FC_TASK_INTERVAL_MICROSECONDS)
-enum { FC_TASK_INTERVAL_MICROSECONDS = 5000 };
+#if !defined(FC_TASK_DENOMINATOR)
+enum { FC_TASK_DENOMINATOR = 1 };
 #endif
 
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
@@ -72,7 +72,7 @@ void test_msp_set_failsafe_config()
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
+    static FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
 
     static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
     static MSP_Stream mspStream(msp);
@@ -143,7 +143,7 @@ void test_msp_pid_in()
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
+    static FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
 
     static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
     static const MSP_Stream mspStream(msp);
@@ -188,7 +188,7 @@ void test_msp_features()
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
+    static FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
 
     static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
     static const MSP_Stream mspStream(msp);
@@ -215,7 +215,7 @@ void test_msp_raw_imu()
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
-    static FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
+    static FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
 
     static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
     static MSP_Stream mspStream(msp);

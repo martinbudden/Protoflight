@@ -1,6 +1,5 @@
 #pragma once
 
-#include "FlightControllerMessageQueue.h"
 #include "FlightControllerTelemetry.h"
 
 #include <Filters.h>
@@ -35,7 +34,7 @@ positive yaw is nose right
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskIntervalMicroSeconds, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController, Debug& debug);
+    FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController, Debug& debug);
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
@@ -177,7 +176,6 @@ public:
     float getMixerThrottle() const { return _mixerThrottle; }
 public:
     [[noreturn]] static void Task(void* arg);
-    void loop();
 public:
     void detectCrashOrSpin(uint32_t tickCount);
     void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _yawSpinThresholdDPS = yawSpinThresholdDPS; }
@@ -185,17 +183,17 @@ public:
     void updateSetpoints(const controls_t& controls);
     void updateOutputsUsingPIDs(float deltaT);
     virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
-    void outputToMotors(float deltaT, uint32_t tickCount);
-    virtual void loop(float deltaT, uint32_t tickCount) override;
+    virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 private:
     MotorMixerBase& motorMixer(uint32_t taskIntervalMicroSeconds);
 private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
-    FlightControllerMessageQueue _messageQueue;
     MotorMixerBase& _mixer;
     RadioControllerBase& _radioController;
     Debug& _debug;
     Blackbox* _blackbox {nullptr};
+    const uint32_t _taskDenominator;
+    uint32_t _taskSignalledCount {0};
     control_mode_e _controlMode {CONTROL_MODE_RATE};
     uint32_t _useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
     uint32_t _useAngleModeOnRollAcroModeOnPitch {false}; // used for "level race mode" aka "NFE race mode"

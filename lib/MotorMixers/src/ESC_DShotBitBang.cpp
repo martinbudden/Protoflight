@@ -19,14 +19,14 @@ void ESC_DShotBitbang::IRQ_Handler(port_t& port)
 
     // Set DMA to copy GPIOA->IDR register value to the _dmaInputBufferA buffer).
     port.DMA_Stream->CR &= ~(DMA_SxCR_DIR);
-    port.DMA_Stream->PAR = reinterpret_cast<uint32_t>(&(GPIOA->IDR));
-    port.DMA_Stream->M0AR = reinterpret_cast<uint32_t>(&ESC_DShotBitbang::self->_portA.dmaInputBuffer[0]);
+    port.DMA_Stream->PAR = reinterpret_cast<uint32_t>(&(GPIOA->IDR)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    port.DMA_Stream->M0AR = reinterpret_cast<uint32_t>(&ESC_DShotBitbang::self->_portA.dmaInputBuffer[0]); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     // Main idea:
     // After sending DShot frame to ESC start receiving GPIO values.
     // Capture data (probing longer than ESC response).
     // There is ~33 [us] gap before the response so it is necessary to add more samples:
     // NDTR: number of data register
-    port.DMA_Stream->NDTR = ((int)(33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * ESC_DShotBitbang::RESPONSE_OVERSAMPLING);
+    port.DMA_Stream->NDTR = (33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * ESC_DShotBitbang::RESPONSE_OVERSAMPLING;
 
     port.DMA_Stream->CR |= DMA_SxCR_EN;
     port.reception = false;
@@ -318,10 +318,10 @@ But we need to decide only about 3 values (begining, 0-bit time, 1-bit time).
 For Rest values we send 0x0 into register so GPIOs stay the same.
 Moreover each output bit is preset (lowering edge at first and rising edge after DSHOT_BB_1_LENGTH
 remaining values are 0x0 so there will be no changes in GPIO output registers).
-Now it is needed to only decide about rising edge after DSHOT_BB_0_LENGTH (if bit is 0) 
+Now it is needed to only decide about rising edge after DSHOT_BB_0_LENGTH (if bit is 0)
 or seting 0 so LOW state will stay until DSHOT_BB_1_LENGTH.
 
-In addition last 2 frame bits are set always high 
+In addition last 2 frame bits are set always high
 (ESC needs time for proper signal detection and those high values define end off the transmission).
 */
 // METHOD1:
@@ -339,7 +339,7 @@ In addition last 2 frame bits are set always high
 //     buffer (set):    r00000000s0000
 //     resultant GPIO:  00000000011111
 //
-// At end of loop we will have 16 frames of form r00s000000s000 
+// At end of loop we will have 16 frames of form r00s000000s000
 // followed by 2 frames of form 00000000000000 (set in preset) - these two frames will keep output high
 
 #if defined(BIT_BANGING_V1)

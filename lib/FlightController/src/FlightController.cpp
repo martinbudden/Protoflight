@@ -466,16 +466,25 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT);
     _outputs[YAW_RATE_DPS] = _outputFilters[YAW_RATE_DPS].filter(_outputs[YAW_RATE_DPS]);
 
-    const FlightControllerMessageQueue::queue_item_t queueItem {
+    const VehicleControllerMessageQueue::queue_item_t queueItem {
         .roll = _outputs[ROLL_RATE_DPS],
         .pitch = _outputs[PITCH_RATE_DPS],
         .yaw = _outputs[YAW_RATE_DPS]
     };
-    _messageQueue.OVERWRITE(queueItem);
+    SIGNAL(queueItem);
 }
 
-void FlightController::outputToMotors(float deltaT, uint32_t tickCount)
+/*!
+Called (signalled) by AHRS.
+*/
+void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {
+    ++_taskSignalledCount;
+    if (_taskSignalledCount < _taskDenominator) {
+        return;
+    }
+    _taskSignalledCount = 0;
+
     if (_radioController.getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
         const MotorMixerBase::commands_t commands {
             .speed  = 0.25F,
@@ -488,9 +497,6 @@ void FlightController::outputToMotors(float deltaT, uint32_t tickCount)
         return;
     }
 
-#if true
-    FlightControllerMessageQueue::queue_item_t queueItem {}; // NOLINT(misc-const-correctness) false positive
-    _messageQueue.RECEIVE(queueItem);
     const MotorMixerBase::commands_t commands {
         .speed  = _thrustOutput,
         // scale roll, pitch, and yaw to range [0.0F, 1.0F]
@@ -498,29 +504,7 @@ void FlightController::outputToMotors(float deltaT, uint32_t tickCount)
         .pitch  = queueItem.pitch / _pitchRateAtMaxPowerDPS,
         .yaw    = queueItem.yaw / _yawRateAtMaxPowerDPS
     };
-#else
-    MotorMixerBase::commands_t commands {
-        .speed  = _thrustOutput,
-        // scale roll, pitch, and yaw to range [0.0F, 1.0F]
-        .roll   = _outputs[ROLL_ANGLE_DEGREES] / _rollRateAtMaxPowerDPS,
-        .pitch  = _outputs[PITCH_ANGLE_DEGREES] / _pitchRateAtMaxPowerDPS,
-        .yaw    = _outputs[YAW_RATE_DPS] / _yawRateAtMaxPowerDPS
-    };
-#endif
+
     _mixerThrottle = commands.speed;
     _mixer.outputToMotors(commands, deltaT, tickCount);
-}
-
-/*!
-Task loop for the FlightController.
-
-Setpoints are provided by the receiver(joystick), and inputs(process variables) come from the AHRS.
-*/
-void FlightController::loop(float deltaT, uint32_t tickCount)
-{
-    // If the AHRS is configured to run updateOutputsUsingPIDs, then we don't need to
-    if (!_ahrs.configuredToUpdateOutputs()) {
-        updateOutputsUsingPIDs(deltaT);
-    }
-    outputToMotors(deltaT, tickCount);
 }

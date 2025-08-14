@@ -271,7 +271,7 @@ void ESC_DShot::write(uint16_t value) // NOLINT(readability-make-member-function
 bool ESC_DShot::read()
 {
     DShotCodec::telemetry_type_e telemetryType {};
-    uint32_t value {};
+    uint32_t value {}; // NOLINT(misc-const-correctness) false positive
 
 #if defined(USE_DSHOT_RPI_PICO_PIO)
     const int32_t fifoCount = pio_sm_get_rx_fifo_level(_pio, _pioStateMachine);

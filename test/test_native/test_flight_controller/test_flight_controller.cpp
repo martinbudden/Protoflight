@@ -14,8 +14,8 @@
 
 #include <unity.h>
 
-#if !defined(FC_TASK_INTERVAL_MICROSECONDS)
-enum { FC_TASK_INTERVAL_MICROSECONDS = 5000 };
+#if !defined(FC_TASK_DENOMINATOR)
+enum { FC_TASK_DENOMINATOR = 1 };
 #endif
 
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
@@ -68,7 +68,7 @@ void test_flight_controller()
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static RadioController radioController(receiver, radioControllerRates);
-    FlightController fc(FC_TASK_INTERVAL_MICROSECONDS, ahrs, motorMixer, radioController, debug);
+    FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
     TEST_ASSERT_FALSE(fc.motorsIsOn());
 
     fc.motorsSwitchOn();

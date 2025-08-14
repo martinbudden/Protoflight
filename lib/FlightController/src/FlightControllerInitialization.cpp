@@ -7,11 +7,12 @@
 /*!
 Constructor. Sets member data.
 */
-FlightController::FlightController(uint32_t taskIntervalMicroSeconds, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController, Debug& debug) :
-    VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroSeconds, ahrs),
+FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController, Debug& debug) :
+    VehicleControllerBase(AIRCRAFT, PID_COUNT, ahrs.getTaskIntervalMicroSeconds() / taskDenominator, ahrs),
     _mixer(motorMixer),
     _radioController(radioController),
     _debug(debug),
+    _taskDenominator(taskDenominator),
     _scaleFactors(gScaleFactors)
 {
     for (size_t ii = 0; ii < PID_COUNT; ++ii) {
@@ -30,7 +31,7 @@ FlightController::FlightController(uint32_t taskIntervalMicroSeconds, const AHRS
     };
     setFiltersConfig(filtersConfig);
 
-    const float deltaT = static_cast<float>(taskIntervalMicroSeconds) * 0.000001F;
+    const float deltaT = (static_cast<float>(ahrs.getTaskIntervalMicroSeconds()) * 0.000001F) / static_cast<float>(taskDenominator);
     _rollRateDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
     _pitchRateDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
     _rollAngleDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
