@@ -19,20 +19,16 @@ void DynamicIdleController::setConfig(const config_t& config, uint32_t taskInter
 
     // use Betaflight multipliers for compatibility with Betaflight Configurator
     _PID.setP(static_cast<float>(config.dyn_idle_p_gain) * 0.00015F);
-    const float deltaT = static_cast<float>(taskIntervalMicroSeconds) * 0.000001F;
-    _PID.setI(static_cast<float>(config.dyn_idle_i_gain) * 0.01F * deltaT);
 
+    const float deltaT = static_cast<float>(taskIntervalMicroSeconds) * 0.000001F;
+
+    _PID.setI(static_cast<float>(config.dyn_idle_i_gain) * 0.01F * deltaT);
     // limit I-term to range [0, _MaxIncrease]
     _PID.setIntegralMax(_maxIncrease);
     _PID.setIntegralMin(0.0F);
 
-#if false
     _PID.setD(static_cast<float>(config.dyn_idle_i_gain) * 0.0000003F / deltaT);
-    _minHzDelayK = 800 * deltaT / 20.0F; //approx 20ms D delay, arbitrarily suits many motors
-#else
-    //_PID.setD(static_cast<float>(config.dyn_idle_i_gain) * (0.0000003F / deltaT) * (800 * deltaT / 20.0F);
-    _PID.setD(static_cast<float>(config.dyn_idle_i_gain) * 0.000012F / (deltaT * deltaT));
-#endif
+    _DTermFilter.init(800.0F * deltaT / 20.0F); //approx 20ms D delay, arbitrarily suits many motors
 }
 
 void DynamicIdleController::setMinimumAllowedMotorHz(float minimumAllowedMotorHz)
@@ -48,7 +44,6 @@ float DynamicIdleController::calculateSpeedIncrease(float slowestMotorHz, float 
     }
 
     const float slowestMotorHzDeltaFiltered = _DTermFilter.filter(slowestMotorHz - _PID.getPreviousMeasurement());
-    //slowestMotorHzDelta = _dynamicIdledelayK * _dynamicIdleDTermFilter.filter(slowestMotorHzDelta);
     float speedIncrease = _PID.updateDelta(slowestMotorHz, slowestMotorHzDeltaFiltered, deltaT);
 
     speedIncrease = clip(speedIncrease, 0.0F, _maxIncrease);
