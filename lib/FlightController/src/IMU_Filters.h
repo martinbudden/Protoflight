@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Filters.h>
+#include <FiltersT.h>
 #include <IMU_FiltersBase.h>
 #include <array>
 #include <cstdint>
@@ -49,14 +49,19 @@ protected:
     config_t _config {};
     uint32_t _filterFromAHRS {false};
     RPM_Filters* _rpmFilters {nullptr};
-    FilterNull _filterNull;
-    std::array<FilterBase*, AXIS_COUNT> _gyroLPF1 {};
-    std::array<FilterBase*, AXIS_COUNT> _gyroLPF2 {};
-    std::array<FilterBase*, AXIS_COUNT> _gyroNotch1 {};
-    std::array<FilterBase*, AXIS_COUNT> _gyroNotch2 {};
+    FilterBaseT<xyz_t>*  _gyroLPF1 {nullptr};
+    FilterBaseT<xyz_t>*  _gyroLPF2 {nullptr};
+    uint32_t  _useGyroNotch1 {false};
+    uint32_t  _useGyroNotch2 {false};
 
-    std::array<PowerTransferFilter1, AXIS_COUNT> _lpf2PT1;
-    std::array<PowerTransferFilter2, AXIS_COUNT> _lpf2PT2;
-    std::array<BiquadFilter, AXIS_COUNT> _lpf2Biquad;
-    std::array<BiquadFilter, AXIS_COUNT> _notch1Biquad;
+    PowerTransferFilter1T<xyz_t> _lpf1PT1;
+    PowerTransferFilter2T<xyz_t> _lpf1PT2;
+    BiquadFilterT<xyz_t> _lpf1Biquad;
+
+    PowerTransferFilter1T<xyz_t> _lpf2PT1;
+    PowerTransferFilter2T<xyz_t> _lpf2PT2;
+    BiquadFilterT<xyz_t> _lpf2Biquad;
+
+    BiquadFilterT<xyz_t> _gyroNotch1;
+    BiquadFilterT<xyz_t> _gyroNotch2;
 };

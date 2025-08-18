@@ -1,5 +1,5 @@
-#include <RPM_Filters.h>
-#include <xyz_type.h>
+#include "RPM_Filters.h"
+
 
 void RPM_Filters::init(uint32_t harmonicToUse, float Q)
 {
@@ -14,18 +14,14 @@ void RPM_Filters::init(uint32_t harmonicToUse, float Q)
 
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     for (size_t motorIndex = 0; motorIndex < _motorCount; ++motorIndex) {
-        _filters[motorIndex][FUNDAMENTAL][X].initNotch(_minFrequencyHz, _looptimeSeconds, _Q);
-        _filters[motorIndex][FUNDAMENTAL][Y].initNotch(_minFrequencyHz, _looptimeSeconds, _Q);
-        _filters[motorIndex][FUNDAMENTAL][Z].initNotch(_minFrequencyHz, _looptimeSeconds, _Q);
+        _filters[motorIndex][FUNDAMENTAL].initNotch(_minFrequencyHz, _looptimeSeconds, _Q);
     }
     if (_harmonicToUse == USE_FUNDAMENTAL_ONLY) {
         return;
     }
     const float minHarmonicFrequency = (_harmonicToUse == USE_FUNDAMENTAL_AND_SECOND_HARMONIC) ? 2.0F * _minFrequencyHz : 3.0F * _minFrequencyHz;
     for (size_t motorIndex = 0; motorIndex < _motorCount; ++motorIndex) {
-        _filters[motorIndex][HARMONIC][Y].initNotch(minHarmonicFrequency, _looptimeSeconds, _Q);
-        _filters[motorIndex][HARMONIC][Y].initNotch(minHarmonicFrequency, _looptimeSeconds, _Q);
-        _filters[motorIndex][HARMONIC][Z].initNotch(minHarmonicFrequency, _looptimeSeconds, _Q);
+        _filters[motorIndex][HARMONIC].initNotch(minHarmonicFrequency, _looptimeSeconds, _Q);
     }
     // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 }
@@ -41,10 +37,9 @@ void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
     const float marginFrequencyHz = frequencyHz - _minFrequencyHz;
     const float weightMultiplier = (marginFrequencyHz < _fadeRangeHz) ? marginFrequencyHz / _fadeRangeHz : 1.0F;
 
-    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
-    BiquadFilter& xFilter = _filters[motorIndex][FUNDAMENTAL][X];
+    BiquadFilterT<xyz_t>& rpmFilter = _filters[motorIndex][FUNDAMENTAL]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 
-    const float omega = xFilter.calculateOmega(frequencyHz);
+    const float omega = rpmFilter.calculateOmega(frequencyHz);
     // omega = frequency * _2PiLoopTimeSeconds
     // maxFrequency < 0.5 / looptimeSeconds
     // maxOmega = (0.5 / looptimeSeconds) * 2PiLooptimeSeconds = 0.5 * 2PI = PI;
@@ -54,10 +49,7 @@ void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
     float weight = _weights[FUNDAMENTAL]*weightMultiplier;
 
     LOCK_FILTERS();
-    xFilter.setNotchFrequencyWeighted(sinOmega, two_cosOmega, weight);
-    // copy the parameters to the Y and Z filters
-    _filters[motorIndex][FUNDAMENTAL][Y].setParameters(xFilter);
-    _filters[motorIndex][FUNDAMENTAL][Z].setParameters(xFilter);
+    rpmFilter.setNotchFrequencyWeighted(sinOmega, two_cosOmega, weight);
     UNLOCK_FILTERS();
 
     if (_harmonicToUse == USE_FUNDAMENTAL_ONLY) {
@@ -65,7 +57,7 @@ void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
         return;
     }
 
-    xFilter = _filters[motorIndex][HARMONIC][X];
+    rpmFilter = _filters[motorIndex][HARMONIC]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 
     if (_harmonicToUse == USE_FUNDAMENTAL_AND_SECOND_HARMONIC) {
         if (frequencyHzUnclipped > _halfOfMaxFrequencyHz) { // ie 2.0F * frequencyHzUnclipped > _maxFrequencyHz
@@ -80,10 +72,7 @@ void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
         const float two_cos_2Omega = two_cosOmega * two_cosOmega - 2.0F;
         weight = _weights[HARMONIC]*weightMultiplier;
         LOCK_FILTERS();
-        xFilter.setNotchFrequencyWeighted(sin_2Omega, two_cos_2Omega, weight);
-        // copy the parameters to the Y and Z filters
-        _filters[motorIndex][HARMONIC][Y].setParameters(xFilter);
-        _filters[motorIndex][HARMONIC][Z].setParameters(xFilter);
+        rpmFilter.setNotchFrequencyWeighted(sin_2Omega, two_cos_2Omega, weight);
         UNLOCK_FILTERS();
         return;
     }
@@ -106,29 +95,18 @@ void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
     const float two_cos_3Omega = two_cosOmega * (four_cosSquaredOmega - 3.0F);
     weight = _weights[HARMONIC]*weightMultiplier;
     LOCK_FILTERS();
-    xFilter.setNotchFrequencyWeighted(sin_3Omega, two_cos_3Omega, weight);
-    // copy the parameters to the Y and Z filters
-    _filters[motorIndex][HARMONIC][Y].setParameters(xFilter);
-    _filters[motorIndex][HARMONIC][Z].setParameters(xFilter);
+    rpmFilter.setNotchFrequencyWeighted(sin_3Omega, two_cos_3Omega, weight);
     UNLOCK_FILTERS();
-
-    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 }
 
 /*!
 This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */
-void RPM_Filters::filter(xyz_t& input, size_t motorIndex)
+void RPM_Filters::filter(xyz_t& input, size_t motorIndex) // NOLINT(readability-make-member-function-const) false positive
 {
-    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
-    input.x = _filters[motorIndex][FUNDAMENTAL][X].filterWeighted(input.x);
-    input.y = _filters[motorIndex][FUNDAMENTAL][Y].filterWeighted(input.y);
-    input.z = _filters[motorIndex][FUNDAMENTAL][Z].filterWeighted(input.z);
+    input = _filters[motorIndex][FUNDAMENTAL].filterWeighted(input); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 
     if (_filterHarmonic & (1U << motorIndex)) {
-        input.x = _filters[motorIndex][HARMONIC][X].filterWeighted(input.x);
-        input.y = _filters[motorIndex][HARMONIC][Y].filterWeighted(input.y);
-        input.z = _filters[motorIndex][HARMONIC][Z].filterWeighted(input.z);
+        input = _filters[motorIndex][HARMONIC].filterWeighted(input); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     };
-    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 }

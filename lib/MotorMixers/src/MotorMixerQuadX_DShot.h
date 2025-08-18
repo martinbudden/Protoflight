@@ -2,6 +2,7 @@
 
 #include <ESC_DShot.h>
 #include <MotorMixerQuadX_Base.h>
+#include <xyz_type.h>
 
 class RPM_Filters;
 

@@ -1,10 +1,6 @@
 #include "DynamicIdleController.h"
 #include "MotorMixerQuadX_DShotBitbang.h"
 
-#include <Debug.h>
-#include <Filters.h>
-#include <RPM_Filters.h>
-#include <algorithm>
 #include <cmath>
 
 
@@ -58,16 +54,17 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(const commands_t& commands, fl
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
     }
 
-    // and finally output to the motors, reading the motor RPM to set the RPM filters
     // convert motor output to DShot range [47, 2047]
-    _escBitbang.outputToMotors(
+    _escDShot.outputToMotors(
         static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_BR], _motorOutputMin, 1.0F)) + 47),
         static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_FR], _motorOutputMin, 1.0F)) + 47),
         static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_BL], _motorOutputMin, 1.0F)) + 47),
         static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_FL], _motorOutputMin, 1.0F)) + 47)
     );
-    _motorFrequenciesHz[0] = static_cast<float>(_escBitbang.getMotorERPM(0))*_eRPMtoHz;
-    _motorFrequenciesHz[1] = static_cast<float>(_escBitbang.getMotorERPM(1))*_eRPMtoHz;
-    _motorFrequenciesHz[2] = static_cast<float>(_escBitbang.getMotorERPM(2))*_eRPMtoHz;
-    _motorFrequenciesHz[3] = static_cast<float>(_escBitbang.getMotorERPM(3))*_eRPMtoHz;
+
+    // read the motor RPM, used to set the RPM filters
+    _motorFrequenciesHz[0] = static_cast<float>(_escDShot.getMotorERPM(0))*_eRPMtoHz;
+    _motorFrequenciesHz[1] = static_cast<float>(_escDShot.getMotorERPM(1))*_eRPMtoHz;
+    _motorFrequenciesHz[2] = static_cast<float>(_escDShot.getMotorERPM(2))*_eRPMtoHz;
+    _motorFrequenciesHz[3] = static_cast<float>(_escDShot.getMotorERPM(3))*_eRPMtoHz;
 }

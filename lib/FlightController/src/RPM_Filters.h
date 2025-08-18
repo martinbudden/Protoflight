@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Filters.h>
+#include <FiltersT.h>
 #include <array>
 
 #if defined(USE_FREERTOS)
@@ -13,7 +13,8 @@
 #include <pico/mutex.h>
 #endif
 
-struct  xyz_t;
+#include <xyz_type.h>
+
 
 /*!
 There are up to 6 RPM filters for each motor.
@@ -32,7 +33,6 @@ class RPM_Filters {
 public:
     enum { FUNDAMENTAL = 0, HARMONIC = 1, MAX_HARMONICS_COUNT = 2 };
     enum { MAX_MOTOR_COUNT = 4 };
-    enum { X = 0, Y = 1, Z = 2, AXIS_COUNT = 3 };
     enum { USE_FUNDAMENTAL_ONLY = 0, USE_FUNDAMENTAL_AND_SECOND_HARMONIC = 1, USE_FUNDAMENTAL_AND_THIRD_HARMONIC = 2 };
 public:
     RPM_Filters(size_t motorCount, float looptimeSeconds) : _motorCount(motorCount), _looptimeSeconds(looptimeSeconds) {}
@@ -96,7 +96,7 @@ private:
     float _thirdOfMaxFrequencyHz {};
     float _fadeRangeHz { 50.0F };
     float _Q { 0.0F };
-    BiquadFilter _filters[MAX_MOTOR_COUNT][MAX_HARMONICS_COUNT][AXIS_COUNT];
+    BiquadFilterT<xyz_t> _filters[MAX_MOTOR_COUNT][MAX_HARMONICS_COUNT];
 #if defined(USE_FREERTOS)
 #if false
     mutable portMUX_TYPE _spinlock = portMUX_INITIALIZER_UNLOCKED;

@@ -24,6 +24,6 @@ protected:
     RPM_Filters& _rpmFilters;
     DynamicIdleController& _dynamicIdleController;
 
-    ESC_DShotBitbang _escBitbang {};
+    ESC_DShotBitbang _escDShot {};
     std::array<float, MOTOR_COUNT> _motorFrequenciesHz {};
 };

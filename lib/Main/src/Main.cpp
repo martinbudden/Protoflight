@@ -107,9 +107,9 @@ void Main::setup()
     const uint32_t AHRS_taskIntervalMicroSeconds = AHRS_TASK_INTERVAL_MICROSECONDS;
 #endif
 #if defined(FRAMEWORK_RPI_PICO)
-    printf("\r\n**** AHRS_taskIntervalMicroSeconds:%d, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroSeconds, imuSampleRateHz);
+    printf("\r\n**** AHRS_taskIntervalMicroSeconds:%u, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroSeconds, imuSampleRateHz);
 #else
-    Serial.printf("\r\n**** AHRS_taskIntervalMicroSeconds:%d, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroSeconds, imuSampleRateHz);
+    Serial.printf("\r\n**** AHRS_taskIntervalMicroSeconds:%u, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroSeconds, imuSampleRateHz);
 #endif
 
     // Statically allocate the MotorMixer object as defined by the build flags.
