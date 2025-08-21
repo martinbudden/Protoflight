@@ -12,8 +12,6 @@ class RPM_Filters;
 
 class IMU_Filters : public IMU_FiltersBase {
 public:
-    enum { X = 0, Y = 1, Z = 2, AXIS_COUNT = 3 };
-
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
     struct config_t {
         enum { PT1 = 0, BIQUAD, PT2, PT3 }; // filter types

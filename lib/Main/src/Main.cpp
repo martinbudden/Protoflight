@@ -34,6 +34,7 @@
 #include <RadioController.h>
 #include <ReceiverAtomJoyStick.h>
 #include <ReceiverNull.h>
+#include <ReceiverSBUS.h>
 #include <ReceiverTask.h>
 #if defined(M5_UNIFIED)
 #include <ScreenM5.h>
@@ -77,19 +78,21 @@ void Main::setup()
     WiFi.macAddress(&myMacAddress[0]);
 
     // Statically allocate and setup the receiver.
-    static ReceiverAtomJoyStick receiver(&myMacAddress[0]);
-    _receiver = &receiver;
-    static RadioController radioController(receiver, nvs.loadRadioControllerRates());
 #if !defined(RECEIVER_CHANNEL)
     enum { RECEIVER_CHANNEL = 3 };
 #endif
-    const esp_err_t espErr = receiver.setup(RECEIVER_CHANNEL);
+    static ReceiverAtomJoyStick receiver(&myMacAddress[0], RECEIVER_CHANNEL);
+    static RadioController radioController(receiver, nvs.loadRadioControllerRates());
+    const esp_err_t espErr = receiver.init();
     Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
     assert(espErr == ESP_OK && "Unable to setup receiver.");
 #else
-    // Statically allocate and setup the receiver.
+#if defined(USE_RECEIVER_SBUS)
+    const ReceiverSerial::pins_t receiverPins = RECEIVER_PINS;
+    static ReceiverSBUS receiver(receiverPins, RECEIVER_UART_INDEX, ReceiverSBUS::SBUS_BAUD_RATE);
+#else
     static ReceiverNull receiver;
-    _receiver = &receiver;
+#endif
     static RadioController radioController(receiver, nvs.loadRadioControllerRates());
 #endif // USE_ESPNOW
 
@@ -114,17 +117,17 @@ void Main::setup()
 
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
-    const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
-    static MotorMixerQuadX_PWM motorMixer(debug, pins);
+    const MotorMixerQuadX_Base::pins_t motorPins = MOTOR_PINS;
+    static MotorMixerQuadX_PWM motorMixer(debug, motorPins);
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
-    const MotorMixerQuadX_Base::pins_t pins = MOTOR_PINS;
+    const MotorMixerQuadX_Base::pins_t motorPins = MOTOR_PINS;
     static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(), AHRS_taskIntervalMicroSeconds / FC_TASK_DENOMINATOR, debug);
 #if defined(USE_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(debug, pins, rpmFilters, dynamicIdleController);
+    static MotorMixerQuadX_DShotBitbang motorMixer(debug, motorPins, rpmFilters, dynamicIdleController);
 #else
-    static MotorMixerQuadX_DShot motorMixer(debug, pins, rpmFilters, dynamicIdleController);
+    static MotorMixerQuadX_DShot motorMixer(debug, motorPins, rpmFilters, dynamicIdleController);
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);

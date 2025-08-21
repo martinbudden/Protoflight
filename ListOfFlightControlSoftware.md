@@ -103,6 +103,10 @@ Main software features:
 
 Includes [Bi directional DShot using RPI Pico PIO](https://github.com/bastian2001/pico-bidir-dshot/)
 
+### [Scout](https://github.com/TimHanewich/scout)
+
+Python-based Quadcopter Flight Controller Software using a Raspberry Pi Pico, MPU-6050, and a FlySky radio transmitter & receiver.
+
 ### [Reefwing](https://github.com/Reefwing-Software)
 
 not a flight controller as such, but a collection of libraries that support flight control software.

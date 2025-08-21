@@ -110,8 +110,6 @@ private:
 private:
     tasks_t _tasks {};
 
-    ReceiverBase* _receiver {nullptr};
-
     ScreenBase* _screen {nullptr};
     uint32_t _screenTickCount {0};
 

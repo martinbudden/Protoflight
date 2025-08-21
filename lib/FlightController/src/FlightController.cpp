@@ -159,13 +159,13 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
         // if the user has selected a filter, then provide a PowerTransfer1 filter.
         // If no filter selected, then set the filter to passthrough
         switch (filtersConfig.dterm_lpf1_type) {
-        case filters_config_t::PT1:
-            [[fallthrough]];
         case filters_config_t::PT2:
             [[fallthrough]];
         case filters_config_t::PT3:
             [[fallthrough]];
         case filters_config_t::BIQUAD:
+            [[fallthrough]];
+        case filters_config_t::PT1:
             _rollRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
             _pitchRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
             break;
