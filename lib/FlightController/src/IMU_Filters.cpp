@@ -30,43 +30,42 @@ void IMU_Filters::setConfig(const config_t& config)
 {
     _config = config;
 
-    // gyro LPF1 currently not used
-    _gyroLPF1 = nullptr;
-
-    // set up gyroLPF2. This is the anti-alias filter and should not be disabled.
-    const uint16_t gyro_lpf2_hz = config.gyro_lpf2_hz == 0 ? 500 : config.gyro_lpf2_hz;
-    switch (config.gyro_lpf2_type) {
+    // set up gyroLPF1.
+    const uint16_t gyro_lpf1_hz = config.gyro_lpf1_hz == 0 ? 500 : config.gyro_lpf1_hz;
+    switch (config.gyro_lpf1_type) {
     case config_t::BIQUAD: {
         static constexpr float Q = 0.7071067811865475F; // 1 / sqrt(2)
-        _lpf2Biquad.initLowPass(gyro_lpf2_hz, _looptimeSeconds, Q);
-        _gyroLPF2 = &_lpf2Biquad;
+        _gyroLPF1Biquad.initLowPass(gyro_lpf1_hz, _looptimeSeconds, Q);
+        _gyroLPF1 = &_gyroLPF1Biquad;
         break;
     }
     case config_t::PT3:
-        // just used PT2 if PT3 specified
+        // just use PT2 if PT3 specified
         [[fallthrough]];
     case config_t::PT2:
-        _lpf2PT2.setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
-        _gyroLPF2 = &_lpf2PT2;
+        _gyroLPF1PT2.setCutoffFrequency(gyro_lpf1_hz, _looptimeSeconds);
+        _gyroLPF1 = &_gyroLPF1PT2;
         break;
     case config_t::PT1:
         [[fallthrough]];
     default:
-        _lpf2PT1.setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
-        _gyroLPF2 = &_lpf2PT1;
+        _gyroLPF1PT1.setCutoffFrequency(gyro_lpf1_hz, _looptimeSeconds);
+        _gyroLPF1 = &_gyroLPF1PT1;
         break;
     }
 
+    // set up gyroLPF2. This is the anti-alias filter can not be disabled.
+    const uint16_t gyro_lpf2_hz = config.gyro_lpf2_hz == 0 ? 500 : config.gyro_lpf2_hz;
+    _gyroLPF2.setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
+
     // setup the notch filters
     const uint32_t frequencyNyquist = static_cast<uint32_t>(std::lroundf((1.0F/_looptimeSeconds)/2.0F));
-
     if (config.gyro_notch1_hz == 0 || config.gyro_notch1_hz > frequencyNyquist || config.gyro_notch1_cutoff == 0) {
         _useGyroNotch1 = false;
     } else {
         _useGyroNotch1 = true;
         _gyroNotch1.setNotchFrequency(config.gyro_notch1_hz, config.gyro_notch1_cutoff);
     }
-
     if (config.gyro_notch2_hz == 0 || config.gyro_notch2_hz > frequencyNyquist || config.gyro_notch2_cutoff == 0) {
         _useGyroNotch2 = false;
     } else {
@@ -83,7 +82,7 @@ Execution time varies, however, and may take up to about 50 microseconds.
 */
 void IMU_Filters::setFilters()
 {
-    if (_filterFromAHRS && _rpmFilters) {
+    if (_rpmFilters && _filterFromAHRS) {
         _rpmFilters->setFrequencyHz(_motorIndex, _motorMixer.getMotorFrequencyHz(_motorIndex));
         ++_motorIndex;
         if (_motorIndex==_motorCount) {
@@ -104,13 +103,12 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
     (void)deltaT;
 
     // apply the lowpass filters
-    // call filterVirtual(), since type of LPF filter is variable
     if (_gyroLPF1) {
+        // call filterVirtual(), since type of filter is variable
         gyroRPS = _gyroLPF1->filterVirtual(gyroRPS);
     }
-    if (_gyroLPF2) {
-        gyroRPS = _gyroLPF2->filterVirtual(gyroRPS);
-    }
+    // gyroLPF2 always applied
+    gyroRPS = _gyroLPF2.filter(gyroRPS);
 
     // apply the notch filters
     if (_useGyroNotch1) {

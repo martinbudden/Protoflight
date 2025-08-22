@@ -47,18 +47,15 @@ protected:
     config_t _config {};
     uint32_t _filterFromAHRS {false};
     RPM_Filters* _rpmFilters {nullptr};
+
     FilterBaseT<xyz_t>*  _gyroLPF1 {nullptr};
-    FilterBaseT<xyz_t>*  _gyroLPF2 {nullptr};
     uint32_t  _useGyroNotch1 {false};
     uint32_t  _useGyroNotch2 {false};
 
-    PowerTransferFilter1T<xyz_t> _lpf1PT1;
-    PowerTransferFilter2T<xyz_t> _lpf1PT2;
-    BiquadFilterT<xyz_t> _lpf1Biquad;
-
-    PowerTransferFilter1T<xyz_t> _lpf2PT1;
-    PowerTransferFilter2T<xyz_t> _lpf2PT2;
-    BiquadFilterT<xyz_t> _lpf2Biquad;
+    PowerTransferFilter1T<xyz_t> _gyroLPF1PT1;
+    PowerTransferFilter2T<xyz_t> _gyroLPF1PT2;
+    BiquadFilterT<xyz_t> _gyroLPF1Biquad;
+    PowerTransferFilter1T<xyz_t>  _gyroLPF2;
 
     BiquadFilterT<xyz_t> _gyroNotch1;
     BiquadFilterT<xyz_t> _gyroNotch2;
