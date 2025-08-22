@@ -73,8 +73,8 @@ private:
     static inline float cosQuadrant(float r, int q) {
         if (q & 1) {
             // odd quadrant: use sin
-            const float s = -sinPoly5R(r);
-            return (q & 2) ? -s : s; // q=3 -sin, q=1 +sin
+            const float s = sinPoly5R(r);
+            return (q & 2) ? s : -s; // q=3 +sin, q=1 -sin
         }
         // even quadrant: use cos
         const float c = cosPoly6R(r);
