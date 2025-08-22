@@ -254,18 +254,17 @@ void ESC_DShot::write(uint16_t value) // NOLINT(readability-make-member-function
         }
     }
     _dmaBuffer[DMA_BUFFER_SIZE - 1] = 0; // zero last value,  array size is DSHOT_BIT_COUNT + 1
-#endif
 
 #if defined(FRAMEWORK_RPI_PICO)
-#if !defined(USE_DSHOT_RPI_PICO_PIO)
     // transfer DMA buffer to PWM
     dma_channel_set_trans_count(_dmaChannel, DMA_BUFFER_SIZE, DONT_START_YET);
     dma_channel_set_read_addr(_dmaChannel, &_dmaBuffer[0], START_IMMEDIATELY);
-#endif
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_TEST)
 #else // defaults to FRAMEWORK_ARDUINO
 #endif // FRAMEWORK
+
+#endif // USE_DSHOT_RPI_PICO_PIO
 }
 
 bool ESC_DShot::read()
