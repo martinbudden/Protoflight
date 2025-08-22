@@ -45,8 +45,11 @@ void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
     // maxFrequency < 0.5 / looptimeSeconds
     // maxOmega = (0.5 / looptimeSeconds) * 2PiLooptimeSeconds = 0.5 * 2PI = PI;
     // so omega is in range [0, PI]
-    const float sinOmega = FastMath::sinOrder5(omega);
-    const float two_cosOmega = 2.0F * FastMath::cosOrder5(omega);
+    float s;
+    float c;
+    FastMath::sincos(omega, s, c);
+    const float sinOmega = s;
+    const float two_cosOmega = 2.0F * c;
     float weight = _weights[FUNDAMENTAL]*weightMultiplier;
 
     LOCK_FILTERS();
