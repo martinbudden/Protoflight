@@ -21,7 +21,7 @@ IMU_Base& Main::createIMU(int32_t& imuSampleRateHz)
 {
     // Statically allocate the IMU according the the build flags
 // NOLINTBEGIN(misc-const-correctness) false positive
-    [[maybe_unused]] static const uint32_t spiFrequency = 20000000;
+    [[maybe_unused]] static constexpr uint32_t spiFrequency = 20000000;
 #if defined(USE_IMU_MPU6886_I2C)
 #if defined(M5_UNIFIED)
     static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, BUS_I2C::pins_t{.sda=static_cast<uint8_t>(M5.In_I2C.getSDA()), .scl=static_cast<uint8_t>(M5.In_I2C.getSCL()), .irq=0xFF, .irqLevel=0});

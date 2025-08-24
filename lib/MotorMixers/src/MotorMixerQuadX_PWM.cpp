@@ -21,6 +21,7 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
 {
 #if defined(FRAMEWORK_RPI_PICO)
 
+    _pwmScale = 65535.0F;
     if (pins.fl != 0xFF) {
         gpio_set_function(pins.fl, GPIO_FUNC_PWM);
     }
@@ -42,10 +43,8 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
 #if defined(USE_ARDUINO_ESP32)
     // Motor PWM Frequency
     constexpr int frequency = 150000;
-
     // PWM Resolution
     constexpr int resolution = 8;
-
     if (pins.br != 0xFF) {
         ledcSetup(MOTOR_BR, frequency, resolution);
         ledcAttachPin(pins.br, MOTOR_BR);
@@ -54,7 +53,6 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
         ledcSetup(MOTOR_FR, frequency, resolution);
         ledcAttachPin(pins.fr, MOTOR_FR);
     }
-
     if (pins.bl != 0xFF) {
         ledcSetup(MOTOR_BL, frequency, resolution);
         ledcAttachPin(pins.bl, MOTOR_BL);
@@ -81,6 +79,37 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
 #endif // FRAMEWORK
 }
 
+void MotorMixerQuadX_PWM::writeMotorPWM(uint8_t pin, uint8_t channel)
+{
+#if defined(FRAMEWORK_RPI_PICO)
+    // scale motor output to GPIO range [0, 65535] and write
+    if (pin != 0xFF) {
+        const uint16_t motorOutput = static_cast<uint16_t>(roundf(_pwmScale*clip(_motorOutputs[channel], 0.0F, 1.0F)));
+        pwm_set_gpio_level(pin, motorOutput);
+    }
+#elif defined(FRAMEWORK_ESPIDF)
+    (void)pin;
+    (void)channel;
+#elif defined(FRAMEWORK_TEST)
+    (void)pin;
+    (void)channel;
+#else // defaults to FRAMEWORK_ARDUINO
+#if defined(USE_ARDUINO_ESP32)
+    // scale motor output to GPIO range [0, 255] and write
+    if (pin != 0xFF) {
+        const uint32_t motorOutput = static_cast<uint32_t>(roundf(_pwmScale*clip(_motorOutputs[channel], 0.0F, 1.0F)));
+        ledcWrite(channel, motorOutput);
+    }
+#else
+    // scale motor output to GPIO range [0, 255] and write
+    if (pin != 0xFF) {
+        const uint32_t motorOutput = static_cast<uint32_t>(roundf(_pwmScale*clip(_motorOutputs[channel], 0.0F, 1.0F)));
+        analogWrite(_pins.br, motorOutput);
+    }
+#endif
+#endif // FRAMEWORK
+}
+
 void MotorMixerQuadX_PWM::outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount)
 {
     (void)deltaT;
@@ -96,67 +125,8 @@ void MotorMixerQuadX_PWM::outputToMotors(const commands_t& commands, float delta
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
     }
 
-#if defined(FRAMEWORK_RPI_PICO)
-    // scale motor output to GPIO range ([0, 65535]
-    constexpr float scale = 65535.0F;
-    if (_pins.br != 0xFF) {
-        const uint16_t motorOutput = static_cast<uint16_t>(roundf(scale*clip(_motorOutputs[MOTOR_BR], 0.0F, 1.0F)));
-        pwm_set_gpio_level(_pins.br, motorOutput);
-    }
-    if (_pins.fr != 0xFF) {
-        const uint16_t motorOutput = static_cast<uint16_t>(roundf(scale*clip(_motorOutputs[MOTOR_FR], 0.0F, 1.0F)));
-        pwm_set_gpio_level(_pins.fr, motorOutput);
-    }
-    if (_pins.bl != 0xFF) {
-        const uint16_t motorOutput = static_cast<uint16_t>(roundf(scale*clip(_motorOutputs[MOTOR_BL], 0.0F, 1.0F)));
-        pwm_set_gpio_level(_pins.bl, motorOutput);
-    }
-    if (_pins.fl != 0xFF) {
-        const uint16_t motorOutput = static_cast<uint16_t>(roundf(scale*clip(_motorOutputs[MOTOR_FL], 0.0F, 1.0F)));
-        pwm_set_gpio_level(_pins.fl, motorOutput);
-    }
-#elif defined(FRAMEWORK_ESPIDF)
-#elif defined(FRAMEWORK_TEST)
-#else // defaults to FRAMEWORK_ARDUINO
-#if defined(USE_ARDUINO_ESP32)
-    // scale motor output to GPIO range [0, 255]
-    constexpr float scale = 255.0F;
-    if (_pins.br != 0xFF) {
-        const uint32_t motorOutput = static_cast<uint32_t>(roundf(scale*clip(_motorOutputs[MOTOR_BR], 0.0F, 1.0F)));
-        ledcWrite(MOTOR_BR, motorOutput);
-    }
-    if (_pins.fr != 0xFF) {
-        const uint32_t motorOutput = static_cast<uint32_t>(roundf(scale*clip(_motorOutputs[MOTOR_FR], 0.0F, 1.0F)));
-        ledcWrite(MOTOR_FR, motorOutput);
-    }
-    if (_pins.bl != 0xFF) {
-        const uint32_t motorOutput = static_cast<uint32_t>(roundf(scale*clip(_motorOutputs[MOTOR_BL], 0.0F, 1.0F)));
-        ledcWrite(MOTOR_BL, motorOutput);
-    }
-    if (_pins.fl != 0xFF) {
-        const uint32_t motorOutput = static_cast<uint32_t>(roundf(scale*clip(_motorOutputs[MOTOR_FL], 0.0F, 1.0F)));
-        ledcWrite(MOTOR_FL, motorOutput);
-    }
-#else // defaults to FRAMEWORK_ARDUINO
-    // scale motor output to GPIO range [0, 255]
-    constexpr float scale = 255.0F;
-    if (_pins.br != 0xFF) {
-        const int motorOutput = static_cast<int>(roundf(scale*clip(_motorOutputs[MOTOR_BR], 0.0F, 1.0F)));
-        analogWrite(_pins.br, motorOutput);
-    }
-    if (_pins.fr != 0xFF) {
-        const int motorOutput = static_cast<int>(roundf(scale*clip(_motorOutputs[MOTOR_FR], 0.0F, 1.0F)));
-        analogWrite(_pins.fr, motorOutput);
-    }
-    if (_pins.bl != 0xFF) {
-        const int motorOutput = static_cast<int>(roundf(scale*clip(_motorOutputs[MOTOR_BL], 0.0F, 1.0F)));
-        analogWrite(_pins.bl, motorOutput);
-    }
-    if (_pins.fl != 0xFF) {
-        const int motorOutput = static_cast<int>(roundf(scale*clip(_motorOutputs[MOTOR_FL], 0.0F, 1.0F)));
-        analogWrite(_pins.fl, motorOutput);
-    }
-#endif
-#endif // FRAMEWORK
-
+    writeMotorPWM(_pins.br, MOTOR_BR);
+    writeMotorPWM(_pins.fr, MOTOR_FR);
+    writeMotorPWM(_pins.bl, MOTOR_BL);
+    writeMotorPWM(_pins.fl, MOTOR_FL);
 }
