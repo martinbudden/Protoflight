@@ -56,22 +56,24 @@ void BlackboxCallbacks::loadSlowState(blackboxSlowState_t& slowState)
 void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t currentTimeUs)
 {
 
-#if true
-    mainState.time = currentTimeUs;
-    const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();
-    const xyz_t gyroRPS = ahrsData.gyroRPS;
-    const xyz_t gyroRPS_unfiltered = ahrsData.gyroRPS_unfiltered;
-    const xyz_t acc = ahrsData.acc;
-#else
-    (void)currentTimeUs;
-    BlackboxMessageQueue::queue_item_t queueItem;
-    _messageQueue.RECEIVE(queueItem);
-
-    mainState.time = queueItem.timeMicroSeconds;
-    const xyz_t gyroRPS = queueItem.gyroRPS;
-    const xyz_t gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered;
-    const xyz_t acc = queueItem.acc;
-#endif
+    xyz_t gyroRPS;
+    xyz_t gyroRPS_unfiltered;
+    xyz_t acc;
+    if (_useMessageQueue) {
+        (void)currentTimeUs;
+        BlackboxMessageQueue::queue_item_t queueItem;
+        _messageQueue.RECEIVE(queueItem);
+        mainState.time = queueItem.timeMicroSeconds;
+        gyroRPS = queueItem.gyroRPS;
+        gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered;
+        acc = queueItem.acc;
+    } else {
+        mainState.time = currentTimeUs;
+        const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();
+        gyroRPS = ahrsData.gyroRPS;
+        gyroRPS_unfiltered = ahrsData.gyroRPS_unfiltered;
+        acc = ahrsData.acc;
+    }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
 

@@ -2,7 +2,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
 #include <stm32f4xx.h>
 #endif
 
@@ -41,7 +41,7 @@ dma pin A02 1
 # pin A02: DMA2 Stream 2 Channel 6
 */
 
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
 #define BIT_BANGING_V1
 #else
 #define GPIO_BSRR_BR_0 (0x1UL << (16U))
@@ -91,7 +91,7 @@ public:
 public:
     static ESC_DShotBitbang* self; // alias of `this` to be used in ISR
     struct port_t {
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
         GPIO_TypeDef* GPIO;
         uint32_t GPIO_input;
         uint32_t GPIO_output;
@@ -112,7 +112,7 @@ private:
     std::array<int32_t, MOTOR_COUNT> _motorErrors {};
     port_t _portA {};
     port_t _portB {};
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
     static void setupGPIO(GPIO_TypeDef*GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn);
     static void setupDMA(DMA_Stream_TypeDef* TIM, uint32_t DMAxEN);
     static void setupTimers(TIM_TypeDef* TIM, uint32_t TIMxEN);

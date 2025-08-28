@@ -3,7 +3,7 @@
 #include <FiltersT.h>
 #include <array>
 
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/semphr.h>
@@ -59,7 +59,7 @@ private:
     float _fadeRangeHz { 50.0F };
     float _Q { 0.0F };
     BiquadFilterT<xyz_t> _filters[MAX_MOTOR_COUNT][MAX_HARMONICS_COUNT];
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
 #if false
     mutable portMUX_TYPE _spinlock = portMUX_INITIALIZER_UNLOCKED;
     // taskENTER_CRITICAL disables interrupts. This also means context switches are prevented.

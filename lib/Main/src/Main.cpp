@@ -121,7 +121,7 @@ void Main::setup()
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(), AHRS_taskIntervalMicroSeconds / FC_TASK_DENOMINATOR, debug);
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
     static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS, rpmFilters, dynamicIdleController);
 #else
     static MotorMixerQuadX_DShot motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS, rpmFilters, dynamicIdleController);
@@ -159,16 +159,15 @@ void Main::setup()
 #endif
 
     // Statically allocate the Blackbox and associated objects
-#if !defined(USE_BLACKBOX) && defined(USE_BLACKBOX_DEBUG)
-    testBlackbox(ahrs, flightController, radioController, receiver, debug, imuFilters);
-#endif
-#if defined(USE_BLACKBOX)
-    static BlackboxMessageQueue blackboxMessageQueue;
-    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
-    static BlackboxSerialDeviceSDCard blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
-    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
-    static BlackboxMessageQueueAHRS blackboxMessageQueueAHRS(blackboxMessageQueue);
+#if defined(USE_BLACKBOX) || defined(USE_BLACKBOX_DEBUG)
+    static BlackboxMessageQueue         blackboxMessageQueue;
+    static BlackboxCallbacks            blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
+    static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
+    static BlackboxProtoFlight          blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
+
+    static BlackboxMessageQueueAHRS     blackboxMessageQueueAHRS(blackboxMessageQueue);
     ahrs.setMessageQueue(&blackboxMessageQueueAHRS);
+
     flightController.setBlackbox(blackbox);
     blackbox.init({
         .sample_rate = Blackbox::RATE_ONE,
@@ -177,6 +176,9 @@ void Main::setup()
         .mode = Blackbox::MODE_NORMAL // logging starts on arming, file is saved when disarmed
         //.mode = Blackbox::MODE_ALWAYS_ON
     });
+#if defined(USE_BLACKBOX_DEBUG)
+    testBlackbox(blackbox, ahrs, receiver, debug);
+#endif
 #endif
 
 #if defined(M5_UNIFIED)
@@ -233,6 +235,7 @@ void Main::setup()
     _tasks.mspTask = MSP_Task::createTask(mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
 #endif
 #if defined(USE_BLACKBOX)
+    blackboxCallbacks.setUseMessageQueue(true);
     TaskBase::task_info_t taskInfo {};
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
     //vTaskResume(taskInfo.taskHandle);
@@ -259,22 +262,8 @@ void Main::setup()
 #endif
 }
 
-void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters)
+void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug)
 {
-    static BlackboxMessageQueue blackboxMessageQueue;
-    static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
-    static BlackboxSerialDeviceSDCard blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
-
-    static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
-    flightController.setBlackbox(blackbox);
-    blackbox.init({
-        .sample_rate = Blackbox::RATE_ONE,
-        .device = Blackbox::DEVICE_SDCARD,
-        //.device = Blackbox::DEVICE_NONE,
-        .mode = Blackbox::MODE_NORMAL // logging starts on arming, file is saved when disarmed
-        //.mode = Blackbox::MODE_ALWAYS_ON
-    });
-
     static uint32_t timeMicroSecondsPrevious = 0;
 
 #if defined(FRAMEWORK_RPI_PICO)
@@ -282,12 +271,7 @@ void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, const Ra
 #else
     Serial.printf("***StartLog\r\n");
 #endif
-    blackbox.start({
-        .debugMode = debug.getMode(),
-        .motorCount = 4,
-        .servoCount = 0
-    });
-
+    blackbox.start(Blackbox::start_t{.debugMode = static_cast<uint16_t>(debug.getMode()), .motorCount = 4, .servoCount = 0});
 
     for (size_t ii = 0; ii < 1500; ++ii) {
         const uint32_t timeMicroSeconds = timeUs();
@@ -295,7 +279,7 @@ void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, const Ra
         static const uint32_t timeMicroSecondsDelta = timeMicroSeconds - timeMicroSecondsPrevious;
         timeMicroSecondsPrevious = timeMicroSeconds;
 
-        const int state = blackbox.update(timeMicroSeconds);
+        const uint32_t state = blackbox.update(timeMicroSeconds);
         (void)state;
         // Serial.printf("ii:%3d, s:%2d\r\n", ii, state);
 
@@ -320,7 +304,7 @@ void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, const Ra
 
 void Main::reportMainTask()
 {
-#if defined(USE_ARDUINO_ESP32)
+#if defined(FRAMEWORK_ARDUINO_ESP32)
     // The main task is set up by the framework, so just print its details.
     // It has name "loopTask" and priority 1.
     const TaskHandle_t taskHandle = xTaskGetCurrentTaskHandle();
@@ -330,7 +314,7 @@ void Main::reportMainTask()
 #endif
 }
 
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
 [[noreturn]] void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
     assert(false && "stack overflow");
@@ -427,7 +411,7 @@ The motors are controlled in the FlightController task.
 */
 void MainTask::loop()
 {
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
     const TickType_t tickCount = xTaskGetTickCount();
     _tickCountDelta = tickCount - _tickCountPrevious;
     _tickCountPrevious = tickCount;
@@ -436,7 +420,7 @@ void MainTask::loop()
 
 void Main::loop() // NOLINT(readability-make-member-function-const)
 {
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
     vTaskDelay(pdMS_TO_TICKS(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS / 1000));
     [[maybe_unused]] const TickType_t tickCount = xTaskGetTickCount();
 #else

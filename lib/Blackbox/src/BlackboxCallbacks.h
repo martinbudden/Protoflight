@@ -30,6 +30,7 @@ public:
     virtual uint32_t getArmingBeepTimeMicroSeconds() const override;
     virtual bool areMotorsRunning() const override;
     virtual uint32_t rcModeActivationMask() const override;
+    void setUseMessageQueue(bool useMessageQueue) { _useMessageQueue = useMessageQueue; }
 private:
     BlackboxMessageQueue& _messageQueue;
     const AHRS& _ahrs;
@@ -37,4 +38,5 @@ private:
     const RadioControllerBase& _radioController;
     const ReceiverBase& _receiver;
     const Debug& _debug;
+    uint32_t _useMessageQueue {false};
 };

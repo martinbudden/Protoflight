@@ -6,7 +6,7 @@ Targets
 
 
 #if defined(TARGET_CODECELL)
-    #define BOARD_IDENTIFIER    "CodeCel_ESP32C3"
+    #define BOARD_IDENTIFIER    "CodeCell_ESP32C3"
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_BNO085
@@ -40,6 +40,7 @@ Targets
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+
     #define USE_SCREEN
     #define USE_BUTTONS
 #endif
@@ -56,14 +57,14 @@ Targets
     #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
 
     #define SDCARD_SPI_PINS     pins_t{.cs=4,.sck=18,.cipo=38,.copi=23,.irq=0xFF}
-    #define USE_SCREEN
-    #define USE_BUTTONS
     //#define USE_BLACKBOX
-    #define USE_BLACKBOX_DEBUG
+    //#define USE_BLACKBOX_DEBUG
     //#define BLACKBOX_IS_EVENT_DRIVEN
     //#define USE_MSP
-#endif
 
+    #define USE_SCREEN
+    #define USE_BUTTONS
+#endif
 
 #if defined(TARGET_PICO)
     #define BOARD_IDENTIFIER "RPI_Pico"
@@ -73,7 +74,7 @@ Targets
 #if defined(LIBRARY_IMU_USE_SPI_BUS)
     #define IMU_SPI_INDEX       BUS_INDEX_0
     #define IMU_SPI_PINS        pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
-    #define IMU_SPI_PINS        pins_t{.cs=13,.sck=14,.cipo=12,.copi=15,.irq=20}
+    //#define IMU_SPI_PINS        pins_t{.cs=13,.sck=14,.cipo=12,.copi=15,.irq=20}
 #else
     #define IMU_I2C_PINS        pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
 #endif
@@ -119,7 +120,6 @@ Targets
 
     #define USE_RECEIVER_SBUS
     #define RECEIVER_UART_INDEX 0
-    //#define RECEIVER_PINS       port_pins_t{.rx={PB,7},.tx={PB,6}}
     #define RECEIVER_PINS       pins_t{.rx=0,.tx=0}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
@@ -137,7 +137,8 @@ Targets
     #define IMU_SPI_INDEX       BUS_INDEX_1
     #define IMU_SPI_PINS        port_pins_t{.cs={PB,11},.sck={PB,14},.cipo={PB,14},.copi={PB,15},.irq={PB,10}}
 #else
-    #define IMU_I2C_PINS        pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
+    //#define IMU_I2C_PINS        port_pins_t{.sda={PB,7},.scl={PB,6},.irq={0,0xFF}}
+    #define IMU_I2C_PINS        pins_t{.sda=14,.scl=15,.irq=0xFF}
 #endif
 
     #define USE_RECEIVER_SBUS
@@ -148,10 +149,8 @@ Targets
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          port_pins_t{.br={PC,7},.fr={PC,6},.bl={PB,8},.fl={PB,9}}
 
-    // NOTE this board uses SDIO for the SD card, so pins below just to test the build
-    #define SDCARD_SPI_PINS     port_pins_t{.cs={PC,8},.sck={PC,9},.cipo={PC,10},.copi={PC,9},.irq={0,0xFF}}
+    // NOTE this board uses SDIO for the SD card, so pins below are just to test the build
+    #define SDCARD_SPI_PINS     port_pins_t{.cs={PC,8},.sck={PC,9},.cipo={PC,10},.copi={PC,11},.irq={0,0xFF}}
     #define USE_BLACKBOX
-    //#define USE_BLACKBOX_DEBUG
-    //#define BLACKBOX_IS_EVENT_DRIVEN
     //#define USE_MSP
 #endif

@@ -341,7 +341,7 @@ void ScreenM5::updateAHRS_Data() const
         //.yaw = _flightController.getYawAngleDegreesRaw(),
         // convert from ENU to NED
         .pitch = -orientationENU.calculatePitchDegrees(),
-        .roll = orientationENU.calculateRollDegrees() - 180.0F,
+        .roll = orientationENU.calculateRollDegrees(),
         .yaw = orientationENU.calculateYawDegrees(),
         .gyroRPS = ahrsData.gyroRPS,
         .acc = ahrsData.acc,

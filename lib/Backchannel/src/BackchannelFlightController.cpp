@@ -163,6 +163,21 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
 
 bool BackchannelFlightController::sendPacket(uint8_t subCommand)
 {
+    if (_requestType == CommandPacketRequestData::REQUEST_AHRS_DATA) {
+        // intercept an AHRS_DATA request to replace roll and pitch values
+        const Quaternion orientationENU = _ahrs.getOrientationForInstrumentationUsingLock();
+
+        const size_t len = packTelemetryData_AHRS(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _ahrs, _vehicleController);
+        TD_AHRS* td = reinterpret_cast<TD_AHRS*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
+        // convert from ENU to NED
+        td->data.pitch = -orientationENU.calculatePitchDegrees(),
+        td->data.roll = orientationENU.calculateRollDegrees(),
+        td->data.yaw = orientationENU.calculateYawDegrees(),
+
+        sendData(_transmitDataBufferPtr, len);
+        return true;
+    }
+
     if (BackchannelStabilizedVehicle::sendPacket(subCommand)) {
         // if the base class has sent the packet then we have nothing to do
         return true;

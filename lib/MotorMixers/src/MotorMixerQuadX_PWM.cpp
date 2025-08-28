@@ -9,7 +9,7 @@
 #elif defined(FRAMEWORK_TEST)
 #else // defaults to FRAMEWORK_ARDUINO
 #include <Arduino.h>
-#if defined(USE_ARDUINO_ESP32)
+#if defined(FRAMEWORK_ARDUINO_ESP32)
 #include <esp32-hal-ledc.h>
 #endif
 #endif // FRAMEWORK
@@ -19,7 +19,7 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const port_pins_t& pins) 
     MotorMixerQuadX_Base(debug),
     _pins(pins)
 {
-#if defined(FRAMEWORK_STM32_CUBE) || defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
 #endif
 }
 
@@ -48,7 +48,7 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
 #elif defined(FRAMEWORK_TEST)
 
 #else // defaults to FRAMEWORK_ARDUINO
-#if defined(USE_ARDUINO_ESP32)
+#if defined(FRAMEWORK_ARDUINO_ESP32)
     // Motor PWM Frequency
     constexpr int frequency = 150000;
     // PWM Resolution
@@ -102,7 +102,7 @@ void MotorMixerQuadX_PWM::writeMotorPWM(const port_pin_t& pin, uint8_t channel)
     (void)pin;
     (void)channel;
 #else // defaults to FRAMEWORK_ARDUINO
-#if defined(USE_ARDUINO_ESP32)
+#if defined(FRAMEWORK_ARDUINO_ESP32)
     // scale motor output to GPIO range [0, 255] and write
     if (pin.pin != 0xFF) {
         const uint32_t motorOutput = static_cast<uint32_t>(roundf(_pwmScale*clip(_motorOutputs[channel], 0.0F, 1.0F)));

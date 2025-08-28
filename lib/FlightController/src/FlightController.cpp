@@ -13,11 +13,11 @@
 #include <ReceiverBase.h>
 #include <TimeMicroSeconds.h>
 
-#if defined(USE_ARDUINO_ESP32) || defined(USE_FREERTOS)
+#if defined(FRAMEWORK_ARDUINO_ESP32)
 #include <esp32-hal.h>
 #endif
 
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 inline void YIELD_TASK() { taskYIELD(); }
@@ -348,6 +348,92 @@ void FlightController::updateOutputsUsingPIDs(float deltaT)
 }
 
 /*!
+In angle mode, the roll and pitch angles are used to set the setpoints for the rollRate and pitchRate PIDs.
+In NFE(Not Fast Enough) Racer mode (aka level race mode) is equivalent to angle mode on roll and acro mode on pitch.
+*/
+void FlightController::updateOutputsUsingPIDsAngleMode(const Quaternion& orientationENU, float deltaT)
+{
+
+    // convert orientationENU from the ENU coordinate frame to the NED coordinate frame
+    //static const Quaternion qENUtoNED(0.0F, sqrtf(0.5F), sqrtf(0.5F), 0.0F);
+    //const Quaternion orientationNED = qENUtoNED * orientationENU;
+    //_rollAngleDegreesRaw = orientationNED.calculateRollDegrees();
+    //_pitchAngleDegreesRaw = orientationNED.calculatePitchDegrees();
+
+    const float yawRateSetpointDPS = _PIDS[YAW_RATE_DPS].getSetpoint();
+
+    if (_angleModeUseQuaternionSpace) {
+        // Runs the angle PIDs in "quaternion space" rather than "angle space",
+        // avoiding the computationally expensive Quaternion::calculateRoll and Quaternion::calculatePitch
+        if (_angleModeCalculate == CALCULATE_ROLL) {
+            if (!_useAngleModeOnRollAcroModeOnPitch) {
+                // don't advance calculation to pitch axis when in level race mode
+                _angleModeCalculate = CALCULATE_PITCH;
+            }
+            _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
+            const float rollSinAngleDelta = _rollAngleDTermFilter.filter(_rollSinAngle - _PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
+            _outputs[ROLL_SIN_ANGLE] = _PIDS[ROLL_SIN_ANGLE].update(_rollSinAngle, rollSinAngleDelta, deltaT);
+            _rollRateSetpointDPS = _outputs[ROLL_SIN_ANGLE];
+            // a component of YAW changes roll, so update accordingly !!TODO:check sign
+            _rollRateSetpointDPS -= yawRateSetpointDPS * _rollSinAngle;
+        } else {
+            _angleModeCalculate = CALCULATE_ROLL;
+            _pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
+            const float pitchSinAngleDelta = _rollAngleDTermFilter.filter(_pitchSinAngle - _PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
+            _outputs[PITCH_SIN_ANGLE] = _PIDS[PITCH_SIN_ANGLE].update(_pitchSinAngle, pitchSinAngleDelta, deltaT);
+            _pitchRateSetpointDPS = _outputs[PITCH_SIN_ANGLE];
+            // a component of YAW changes roll, so update accordingly !!TODO:check sign
+            _pitchRateSetpointDPS += yawRateSetpointDPS * _pitchSinAngle;
+        }
+    } else {
+        // calculate roll and pitch in the NED coordinate frame
+        // this is a computationally expensive calculation, so alternate between roll and pitch each time this function is called
+        //!!TODO: this all needs checking, especially for scale
+        //!!TODO: PID constants need to be scaled so these outputs are in the range [-1, 1]
+        if (_angleModeCalculate == CALCULATE_ROLL) {
+            if (!_useAngleModeOnRollAcroModeOnPitch) {
+                // don't advance calculation to pitch axis when in level race mode
+                _angleModeCalculate = CALCULATE_PITCH;
+            }
+            _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
+            _rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
+            const float rollAngleDelta = _rollAngleDTermFilter.filter(_rollAngleDegreesRaw - _PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
+            _outputs[ROLL_ANGLE_DEGREES] = _PIDS[ROLL_ANGLE_DEGREES].update(_rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
+            _rollRateSetpointDPS = _outputs[ROLL_ANGLE_DEGREES];
+            _rollRateSetpointDPS -= yawRateSetpointDPS * _rollSinAngle;
+        } else {
+            _angleModeCalculate = CALCULATE_ROLL;
+            _pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
+            _pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
+            const float pitchAngleDelta = _pitchAngleDTermFilter.filter(_pitchAngleDegreesRaw - _PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
+            _outputs[PITCH_ANGLE_DEGREES] = _PIDS[PITCH_ANGLE_DEGREES].update(_pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
+            _pitchRateSetpointDPS = _outputs[PITCH_ANGLE_DEGREES];
+            _pitchRateSetpointDPS += yawRateSetpointDPS * _pitchSinAngle;
+        }
+    }
+
+    // use the outputs from the "ANGLE" PIDS as the setpoints for the "RATE" PIDs.
+    //!!TODO: need to mix in YAW to roll and pitch changes to coordinate turn
+    _PIDS[ROLL_RATE_DPS].setSetpoint(_rollRateSetpointDPS);
+    _PIDS[PITCH_RATE_DPS].setSetpoint(_pitchRateSetpointDPS);
+
+    // the cosRoll and cosPitch functions are reasonably cheap, they both involve taking a square root
+    // both are positive in ANGLE mode, since absolute values of both roll and pitch angles are less than 90 degrees
+#if false
+    const float rollCosAngle = orientationENU.cosRoll();
+    const float pitchCosAngle = orientationENU.cosPitch();
+    const float yawRateSetpointAttenuation = fmaxf(rollCosAngle, pitchCosAngle);
+#else
+    const float rollSinAngle2 = _rollSinAngle*_rollSinAngle;
+    const float pitchSinAngle2 = _pitchSinAngle*_pitchSinAngle;
+    const float minSinAngle2 = fminf(rollSinAngle2, pitchSinAngle2);
+    const float yawRateSetpointAttenuation = sqrtf(1.0F - minSinAngle2); // this is equal to fmaxf(rollCosAngle, pitchCosAngle)
+#endif
+    // attenuate yaw rate setpoint
+    _PIDS[YAW_RATE_DPS].setSetpoint(_PIDS[YAW_RATE_DPS].getSetpoint()*yawRateSetpointAttenuation);
+}
+
+/*!
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyroRPS, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
 
@@ -357,94 +443,15 @@ In the latter case it is typically called at frequency of between 1000Hz and 800
 */
 void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT)
 {
+    (void)accENU; // not using acc, since we use the orientation quaternion instead
+
     if (_yawSpinRecovery) {
         recoverFromYawSpin(gyroENU_RPS, deltaT);
         return;
     }
 
     if (_useAngleMode) {
-        // In angle mode, the roll and pitch angles are used to set the setpoints for the rollRate and pitchRate PIDs
-        // In NFE(Not Fast Enough) Racer mode (aka level race mode) is equivalent to angle mode on roll and acro mode on pitch
-
-        (void)accENU; // not using acc, since we use the orientation quaternion instead
-
-        // convert orientationENU from the ENU coordinate frame to the NED coordinate frame
-        //static const Quaternion qENUtoNED(0.0F, sqrtf(0.5F), sqrtf(0.5F), 0.0F);
-        //const Quaternion orientationNED = qENUtoNED * orientationENU;
-        //_rollAngleDegreesRaw = orientationNED.calculateRollDegrees();
-        //_pitchAngleDegreesRaw = orientationNED.calculatePitchDegrees();
-
-        const float yawRateSetpointDPS = _PIDS[YAW_RATE_DPS].getSetpoint();
-
-        if (_angleModeUseQuaternionSpace) {
-            // Runs the angle PIDs in "quaternion space" rather than "angle space",
-            // avoiding the computationally expensive Quaternion::calculateRoll and Quaternion::calculatePitch
-            if (_angleModeCalculate == CALCULATE_ROLL) {
-                if (!_useAngleModeOnRollAcroModeOnPitch) {
-                    // don't advance calculation to pitch axis when in level race mode
-                    _angleModeCalculate = CALCULATE_PITCH;
-                }
-                _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
-                const float rollSinAngleDelta = _rollAngleDTermFilter.filter(_rollSinAngle - _PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
-                _outputs[ROLL_SIN_ANGLE] = _PIDS[ROLL_SIN_ANGLE].update(_rollSinAngle, rollSinAngleDelta, deltaT);
-                _rollRateSetpointDPS = _outputs[ROLL_SIN_ANGLE];
-                // a component of YAW changes roll, so update accordingly !!TODO:check sign
-                _rollRateSetpointDPS -= yawRateSetpointDPS * _rollSinAngle;
-            } else {
-                _angleModeCalculate = CALCULATE_ROLL;
-                _pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
-                const float pitchSinAngleDelta = _rollAngleDTermFilter.filter(_pitchSinAngle - _PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
-                _outputs[PITCH_SIN_ANGLE] = _PIDS[PITCH_SIN_ANGLE].update(_pitchSinAngle, pitchSinAngleDelta, deltaT);
-                _pitchRateSetpointDPS = _outputs[PITCH_SIN_ANGLE];
-                // a component of YAW changes roll, so update accordingly !!TODO:check sign
-                _pitchRateSetpointDPS += yawRateSetpointDPS * _pitchSinAngle;
-            }
-        } else {
-            // calculate roll and pitch in the NED coordinate frame
-            // this is a computationally expensive calculation, so alternate between roll and pitch each time this function is called
-            //!!TODO: this all needs checking, especially for scale
-            //!!TODO: PID constants need to be scaled so these outputs are in the range [-1, 1]
-            if (_angleModeCalculate == CALCULATE_ROLL) {
-                if (!_useAngleModeOnRollAcroModeOnPitch) {
-                    // don't advance calculation to pitch axis when in level race mode
-                    _angleModeCalculate = CALCULATE_PITCH;
-                }
-                _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
-                _rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
-                const float rollAngleDelta = _rollAngleDTermFilter.filter(_rollAngleDegreesRaw - _PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
-                _outputs[ROLL_ANGLE_DEGREES] = _PIDS[ROLL_ANGLE_DEGREES].update(_rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
-                _rollRateSetpointDPS = _outputs[ROLL_ANGLE_DEGREES];
-                _rollRateSetpointDPS -= yawRateSetpointDPS * _rollSinAngle;
-            } else {
-                _angleModeCalculate = CALCULATE_ROLL;
-                _pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
-                _pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
-                const float pitchAngleDelta = _pitchAngleDTermFilter.filter(_pitchAngleDegreesRaw - _PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
-                _outputs[PITCH_ANGLE_DEGREES] = _PIDS[PITCH_ANGLE_DEGREES].update(_pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
-                _pitchRateSetpointDPS = _outputs[PITCH_ANGLE_DEGREES];
-                _pitchRateSetpointDPS += yawRateSetpointDPS * _pitchSinAngle;
-            }
-        }
-
-        // use the outputs from the "ANGLE" PIDS as the setpoints for the "RATE" PIDs.
-        //!!TODO: need to mix in YAW to roll and pitch changes to coordinate turn
-        _PIDS[ROLL_RATE_DPS].setSetpoint(_rollRateSetpointDPS);
-        _PIDS[PITCH_RATE_DPS].setSetpoint(_pitchRateSetpointDPS);
-
-        // the cosRoll and cosPitch functions are reasonably cheap, they both involve taking a square root
-        // both are positive in ANGLE mode, since absolute values of both roll and pitch angles are less than 90 degrees
-#if false
-        const float rollCosAngle = orientationENU.cosRoll();
-        const float pitchCosAngle = orientationENU.cosPitch();
-        const float yawRateSetpointAttenuation = fmaxf(rollCosAngle, pitchCosAngle);
-#else
-        const float rollSinAngle2 = _rollSinAngle*_rollSinAngle;
-        const float pitchSinAngle2 = _pitchSinAngle*_pitchSinAngle;
-        const float minSinAngle2 = fminf(rollSinAngle2, pitchSinAngle2);
-        const float yawRateSetpointAttenuation = sqrtf(1.0F - minSinAngle2); // this is equal to fmaxf(rollCosAngle, pitchCosAngle)
-#endif
-        // attenuate yaw rate setpoint
-        _PIDS[YAW_RATE_DPS].setSetpoint(_PIDS[YAW_RATE_DPS].getSetpoint()*yawRateSetpointAttenuation);
+        updateOutputsUsingPIDsAngleMode(orientationENU, deltaT);
     }
 
     // Use the PIDs to calculate the outputs for each axis.
@@ -454,18 +461,23 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
     const float rollRateDeltaDPS = _rollRateDTermFilter.filter(rollRateDPS - _PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
     _outputs[ROLL_RATE_DPS] = _PIDS[ROLL_RATE_DPS].updateDelta(rollRateDPS, rollRateDeltaDPS*_TPA, deltaT);
+    // filter the output
     _outputs[ROLL_RATE_DPS] = _outputFilters[ROLL_RATE_DPS].filter(_outputs[ROLL_RATE_DPS]);
 
     const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
     const float pitchRateDeltaDPS = _pitchRateDTermFilter.filter(pitchRateDPS - _PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
     _outputs[PITCH_RATE_DPS] = _PIDS[PITCH_RATE_DPS].updateDelta(pitchRateDPS, pitchRateDeltaDPS*_TPA, deltaT);
+    // filter the output
     _outputs[PITCH_RATE_DPS] = _outputFilters[PITCH_RATE_DPS].filter(_outputs[PITCH_RATE_DPS]);
 
     // DTerm is zero for yawRate, so no DTerm filtering required
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
     _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT);
+    // filter the output
     _outputs[YAW_RATE_DPS] = _outputFilters[YAW_RATE_DPS].filter(_outputs[YAW_RATE_DPS]);
 
+    // The VehicleControllerTask is waiting on the message queue, so signal it tha there is output data available.
+    // This will result in outputToMixer being called
     const VehicleControllerMessageQueue::queue_item_t queueItem {
         .roll = _outputs[ROLL_RATE_DPS],
         .pitch = _outputs[PITCH_RATE_DPS],
@@ -475,7 +487,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
 }
 
 /*!
-Called (signalled) by AHRS.
+Called from within the VehicleControllerTask when signalled that output data is available.
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {

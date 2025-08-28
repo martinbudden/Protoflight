@@ -5,7 +5,7 @@
 #include <array>
 #include <xyz_type.h>
 
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #endif
@@ -19,7 +19,7 @@ public:
         xyz_t acc;
     };
 public:
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
     BlackboxMessageQueue()
         : _queue(xQueueCreateStatic(QUEUE_LENGTH, sizeof(_queueItem), &_queueStorageArea[0], &_queueStatic))
     {}
@@ -50,7 +50,7 @@ private:
     mutable queue_item_t _queueItem {}; // this is just a dummy item whose value is not used
     enum { QUEUE_LENGTH = 8 };
     std::array<uint8_t, QUEUE_LENGTH * sizeof(_queueItem)> _queueStorageArea {};
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
     StaticQueue_t _queueStatic {};
     QueueHandle_t _queue {};
 #endif

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <array>
 
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
 void ESC_DShotBitbang::IRQ_Handler(port_t& port)
 {
     // set GPIOs as inputs:
@@ -41,7 +41,7 @@ ESC_DShotBitbang::ESC_DShotBitbang()
 void ESC_DShotBitbang::init()
 {
     presetDMA_outputBuffers();
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
 
     _portA.GPIO = GPIOA;
     _portB.GPIO_input = ~(GPIO_MODER_MODER2   | GPIO_MODER_MODER3);
@@ -79,7 +79,7 @@ APB2 max frequency is 84 [MHz], 168 [MHz] only for timers
 APB1 max frequency is 42 [MHz], 84 [MHz] only for timers
 */
 
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
 void ESC_DShotBitbang::setupGPIO(GPIO_TypeDef* GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn)
 {
     // enable GPIOA clock:
@@ -138,7 +138,7 @@ void ESC_DShotBitbang::setupTimers(TIM_TypeDef* TIM, uint32_t TIMxEN)
     TIM->EGR |= TIM_EGR_UG;  // UG: Update Generation
     TIM->CR1 |= TIM_CR1_CEN; //CEN: counter enable
 }
-#endif //USE_ARDUINO_STM32
+#endif //FRAMEWORK_ARDUINO_STM32
 
 // values should be in the DShot range [47,2047]
 void ESC_DShotBitbang::outputToMotors(uint16_t m1_value, uint16_t m2_value, uint16_t m3_value, uint16_t m4_value)
@@ -155,7 +155,7 @@ void ESC_DShotBitbang::outputToMotors(uint16_t m1_value, uint16_t m2_value, uint
     _portA.reception = true;
     _portB.reception = true;
 
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
     // set GPIOs as output:
     // MODER: GPIO port mode register
     _portA.GPIO->MODER |= _portA.GPIO_output;
@@ -231,7 +231,7 @@ void ESC_DShotBitbang::outputToMotors(uint16_t m1_value, uint16_t m2_value, uint
     _portA.DMA_Stream->CR |= DMA_SxCR_EN;
     _portB.DMA_Stream->CR |= DMA_SxCR_EN;
 #endif
-#endif // USE_ARDUINO_STM32
+#endif // FRAMEWORK_ARDUINO_STM32
 }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)

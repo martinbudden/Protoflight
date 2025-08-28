@@ -4,13 +4,14 @@
 
 #include <TaskBase.h>
 
-#if defined(USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS)
 #include <freertos/FreeRTOS.h>
 #endif
 
 class AHRS;
 class AHRS_Task;
 class BackchannelTask;
+class Blackbox;
 class BlackboxTask;
 class ButtonsBase;
 class Debug;
@@ -96,7 +97,7 @@ public:
     void setup();
     void loop();
 private:
-    void testBlackbox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, ReceiverBase& receiver, const Debug& debug, const IMU_Filters& imuFilters);
+    void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
     static IMU_Base& createIMU(int32_t& imuSampleRateHz);
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);

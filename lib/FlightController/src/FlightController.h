@@ -182,6 +182,7 @@ public:
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
     void updateSetpoints(const controls_t& controls);
     void updateOutputsUsingPIDs(float deltaT);
+    void updateOutputsUsingPIDsAngleMode(const Quaternion& orientationENU, float deltaT);
     virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 private:

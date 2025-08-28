@@ -3,7 +3,7 @@
 
 ESC_DShotBitbang* ESC_DShotBitbang::self; // alias of `this` to be used in ISR
 
-#if defined(USE_ARDUINO_STM32)
+#if defined(FRAMEWORK_ARDUINO_STM32)
 
 #define CONCAT(a, b) a##b
 
