@@ -15,9 +15,17 @@
 #endif // FRAMEWORK
 
 
-MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
+MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const port_pins_t& pins) :
     MotorMixerQuadX_Base(debug),
     _pins(pins)
+{
+#if defined(FRAMEWORK_STM32_CUBE) || defined(USE_ARDUINO_STM32)
+#endif
+}
+
+MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
+    MotorMixerQuadX_Base(debug),
+    _pins({{0,pins.br},{0,pins.fr},{0,pins.bl},{0,pins.fl}})
 {
 #if defined(FRAMEWORK_RPI_PICO)
 
@@ -79,13 +87,13 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
 #endif // FRAMEWORK
 }
 
-void MotorMixerQuadX_PWM::writeMotorPWM(uint8_t pin, uint8_t channel)
+void MotorMixerQuadX_PWM::writeMotorPWM(const port_pin_t& pin, uint8_t channel)
 {
 #if defined(FRAMEWORK_RPI_PICO)
     // scale motor output to GPIO range [0, 65535] and write
-    if (pin != 0xFF) {
+    if (pin.pin != 0xFF) {
         const uint16_t motorOutput = static_cast<uint16_t>(roundf(_pwmScale*clip(_motorOutputs[channel], 0.0F, 1.0F)));
-        pwm_set_gpio_level(pin, motorOutput);
+        pwm_set_gpio_level(pin.pin, motorOutput);
     }
 #elif defined(FRAMEWORK_ESPIDF)
     (void)pin;
@@ -96,15 +104,15 @@ void MotorMixerQuadX_PWM::writeMotorPWM(uint8_t pin, uint8_t channel)
 #else // defaults to FRAMEWORK_ARDUINO
 #if defined(USE_ARDUINO_ESP32)
     // scale motor output to GPIO range [0, 255] and write
-    if (pin != 0xFF) {
+    if (pin.pin != 0xFF) {
         const uint32_t motorOutput = static_cast<uint32_t>(roundf(_pwmScale*clip(_motorOutputs[channel], 0.0F, 1.0F)));
         ledcWrite(channel, motorOutput);
     }
 #else
     // scale motor output to GPIO range [0, 255] and write
-    if (pin != 0xFF) {
+    if (pin.pin != 0xFF) {
         const uint32_t motorOutput = static_cast<uint32_t>(roundf(_pwmScale*clip(_motorOutputs[channel], 0.0F, 1.0F)));
-        analogWrite(_pins.br, motorOutput);
+        analogWrite(pin.pin, motorOutput);
     }
 #endif
 #endif // FRAMEWORK

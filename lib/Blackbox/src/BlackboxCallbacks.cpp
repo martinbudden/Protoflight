@@ -56,7 +56,7 @@ void BlackboxCallbacks::loadSlowState(blackboxSlowState_t& slowState)
 void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t currentTimeUs)
 {
 
-#if false
+#if true
     mainState.time = currentTimeUs;
     const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();
     const xyz_t gyroRPS = ahrsData.gyroRPS;

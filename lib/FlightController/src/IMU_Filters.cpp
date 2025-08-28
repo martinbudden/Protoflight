@@ -55,7 +55,7 @@ void IMU_Filters::setConfig(const config_t& config)
     }
 
     // set up gyroLPF2. This is the anti-alias filter can not be disabled.
-    const uint16_t gyro_lpf2_hz = config.gyro_lpf2_hz == 0 ? 500 : config.gyro_lpf2_hz;
+    const uint16_t gyro_lpf2_hz = config.gyro_lpf2_hz == 0 ? 250 : config.gyro_lpf2_hz;
     _gyroLPF2.setCutoffFrequency(gyro_lpf2_hz, _looptimeSeconds);
 
     // setup the notch filters
@@ -127,7 +127,7 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
             _rpmFilters->filter(gyroRPS, 2);
             _rpmFilters->filter(gyroRPS, 3);
         } else {
-            for (size_t motorIndex = 0; motorIndex < _rpmFilters->getMotorCount(); ++motorIndex) {
+            for (size_t motorIndex = 0; motorIndex < _motorCount; ++motorIndex) {
                 _rpmFilters->filter(gyroRPS, motorIndex);
             }
         }

@@ -1,0 +1,157 @@
+#pragma once
+
+/*!
+Targets
+*/
+
+
+#if defined(TARGET_CODECELL)
+    #define BOARD_IDENTIFIER    "CodeCel_ESP32C3"
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define USE_IMU_BNO085
+    #define IMU_I2C_PINS        pins_t{.sda=8,.scl=9,.irq=BUS_I2C::IRQ_NOT_SET}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+#endif
+
+#if defined(TARGET_M5STACK_STAMPS3)
+    #define BOARD_IDENTIFIER    "M5Stack_StampS3"
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define USE_IMU_MPU6886
+    #define IMU_I2C_PINS        pins_t{.sda=38,.scl=39,.irq=16}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+#endif
+
+#if defined(TARGET_M5STACK_ATOMS3R)
+    #define BOARD_IDENTIFIER    "M5Stack_AtomS3"
+
+    //#define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
+    //#define AHRS_TASK_INTERVAL_MICROSECONDS 312  // 3200Hz, exact value is 312.5
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define USE_IMU_BMI270
+    #define IMU_I2C_PINS        pins_t{.sda=45,.scl=0,.irq=16}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+    #define USE_SCREEN
+    #define USE_BUTTONS
+#endif
+
+#if defined(TARGET_M5STACK_CORE2)
+    #define BOARD_IDENTIFIER    "M5Stack_Core2"
+
+    #define IMU_AXIS_ORDER      IMU_Base::YNEG_XPOS_ZPOS
+    //#define USE_IMU_MPU6886
+    #define USE_IMU_M5_UNIFIED
+    #define IMU_I2C_PINS        pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+
+    #define SDCARD_SPI_PINS     pins_t{.cs=4,.sck=18,.cipo=38,.copi=23,.irq=0xFF}
+    #define USE_SCREEN
+    #define USE_BUTTONS
+    //#define USE_BLACKBOX
+    #define USE_BLACKBOX_DEBUG
+    //#define BLACKBOX_IS_EVENT_DRIVEN
+    //#define USE_MSP
+#endif
+
+
+#if defined(TARGET_PICO)
+    #define BOARD_IDENTIFIER "RPI_Pico"
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define USE_IMU_LSM6DS3TR_C
+#if defined(LIBRARY_IMU_USE_SPI_BUS)
+    #define IMU_SPI_INDEX       BUS_INDEX_0
+    #define IMU_SPI_PINS        pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
+    #define IMU_SPI_PINS        pins_t{.cs=13,.sck=14,.cipo=12,.copi=15,.irq=20}
+#else
+    #define IMU_I2C_PINS        pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
+#endif
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+#endif
+
+#if defined(TARGET_PICO2)
+    #define BOARD_IDENTIFIER    "RPI_Pico2"
+
+    #define FC_TASK_DENOMINATOR 1
+    //#define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define USE_IMU_LSM6DS3TR_C
+#if defined(LIBRARY_IMU_USE_SPI_BUS)
+    #define IMU_SPI_INDEX       BUS_INDEX_0
+    #define IMU_SPI_PINS        pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
+    //#define IMU_SPI_PINS        pins_t{.cs=13,.sck=14,.cipo=12,.copi=15,.irq=20}
+#else
+    #define IMU_I2C_PINS        pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
+#endif
+
+    #define USE_RECEIVER_SBUS
+    #define RECEIVER_UART_INDEX 0
+    #define RECEIVER_PINS       pins_t{.rx=0,.tx=0}
+
+    //#define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define USE_MOTOR_MIXER_QUAD_X_DSHOT
+    #define USE_DSHOT_RPI_PICO_PIO
+    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+    //#define MOTOR_PINS          pins_t{.br=2,.fr=3,.bl=4,.fl=5}
+#endif
+
+#if defined(TARGET_SEED_XIAO_NRF52840_SENSE)
+    #define BOARD_IDENTIFIER    "NRF52840_Sense"
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define USE_IMU_LSM6DS3TR_C
+    #define IMU_I2C_PINS        pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
+
+    #define USE_RECEIVER_SBUS
+    #define RECEIVER_UART_INDEX 0
+    //#define RECEIVER_PINS       port_pins_t{.rx={PB,7},.tx={PB,6}}
+    #define RECEIVER_PINS       pins_t{.rx=0,.tx=0}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+#endif
+
+#if defined(TARGET_ADAFRUIT_FEATHER_F405)
+    #define BOARD_IDENTIFIER    "Feather_F405"
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define USE_IMU_LSM6DS3TR_C
+    //#define USE_IMU_ICM426XX
+    //#define USE_IMU_MPU6000
+#if defined(LIBRARY_IMU_USE_SPI_BUS)
+    #define IMU_SPI_INDEX       BUS_INDEX_1
+    #define IMU_SPI_PINS        port_pins_t{.cs={PB,11},.sck={PB,14},.cipo={PB,14},.copi={PB,15},.irq={PB,10}}
+#else
+    #define IMU_I2C_PINS        pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
+#endif
+
+    #define USE_RECEIVER_SBUS
+    #define RECEIVER_UART_INDEX 0
+    //#define RECEIVER_PINS     port_pins_t{.rx={PB,7},.tx={PB,6}}
+    #define RECEIVER_PINS       pins_t{.rx=0,.tx=0}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          port_pins_t{.br={PC,7},.fr={PC,6},.bl={PB,8},.fl={PB,9}}
+
+    // NOTE this board uses SDIO for the SD card, so pins below just to test the build
+    #define SDCARD_SPI_PINS     port_pins_t{.cs={PC,8},.sck={PC,9},.cipo={PC,10},.copi={PC,9},.irq={0,0xFF}}
+    #define USE_BLACKBOX
+    //#define USE_BLACKBOX_DEBUG
+    //#define BLACKBOX_IS_EVENT_DRIVEN
+    //#define USE_MSP
+#endif

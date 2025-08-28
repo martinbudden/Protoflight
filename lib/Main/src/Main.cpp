@@ -5,7 +5,7 @@
 #include <AHRS_Task.h>
 #include <BackchannelFlightController.h>
 #include <BackchannelTask.h>
-#if defined(USE_ESPNOW)
+#if defined(LIBRARY_RECEIVER_USE_ESPNOW)
 #include <BackchannelTransceiverESPNOW.h>
 #endif
 #include <BlackboxCallbacks.h>
@@ -41,7 +41,7 @@
 #endif
 #include <TimeMicroSeconds.h>
 #include <VehicleControllerTask.h>
-#if defined(USE_ESPNOW)
+#if defined(LIBRARY_RECEIVER_USE_ESPNOW)
 #include <WiFi.h>
 #endif
 
@@ -68,7 +68,7 @@ void Main::setup()
     static Debug debug;
     static NonVolatileStorage nvs;
 
-#if defined(USE_ESPNOW)
+#if defined(LIBRARY_RECEIVER_USE_ESPNOW)
     // Set WiFi to station mode
     WiFi.mode(WIFI_STA);
     // Disconnect from Access Point if it was previously connected
@@ -88,13 +88,12 @@ void Main::setup()
     assert(espErr == ESP_OK && "Unable to setup receiver.");
 #else
 #if defined(USE_RECEIVER_SBUS)
-    const ReceiverSerial::pins_t receiverPins = RECEIVER_PINS;
-    static ReceiverSBUS receiver(receiverPins, RECEIVER_UART_INDEX, ReceiverSBUS::SBUS_BAUD_RATE);
+    static ReceiverSBUS receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::SBUS_BAUD_RATE);
 #else
     static ReceiverNull receiver;
 #endif
     static RadioController radioController(receiver, nvs.loadRadioControllerRates());
-#endif // USE_ESPNOW
+#endif // LIBRARY_RECEIVER_USE_ESPNOW
 
     // create the IMU and get its sample rate
 #if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
@@ -117,17 +116,15 @@ void Main::setup()
 
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
-    const MotorMixerQuadX_Base::pins_t motorPins = MOTOR_PINS;
-    static MotorMixerQuadX_PWM motorMixer(debug, motorPins);
+    static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS);
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
-    const MotorMixerQuadX_Base::pins_t motorPins = MOTOR_PINS;
     static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(), AHRS_taskIntervalMicroSeconds / FC_TASK_DENOMINATOR, debug);
 #if defined(USE_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(debug, motorPins, rpmFilters, dynamicIdleController);
+    static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS, rpmFilters, dynamicIdleController);
 #else
-    static MotorMixerQuadX_DShot motorMixer(debug, motorPins, rpmFilters, dynamicIdleController);
+    static MotorMixerQuadX_DShot motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS, rpmFilters, dynamicIdleController);
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
@@ -154,7 +151,6 @@ void Main::setup()
     radioController.setFlightController(&flightController);
 
     // Statically allocate the MSP and associated objects
-#define USE_MSP
 #if defined(USE_MSP)
     static Features features;
     static MSP_ProtoFlight mspProtoFlight(nvs, features, ahrs, flightController, radioController, receiver, debug);
@@ -163,15 +159,13 @@ void Main::setup()
 #endif
 
     // Statically allocate the Blackbox and associated objects
-//#define USE_BLACKBOX
 #if !defined(USE_BLACKBOX) && defined(USE_BLACKBOX_DEBUG)
-    testBlackbox(ahrs, flightController, radioController, receiver);
+    testBlackbox(ahrs, flightController, radioController, receiver, debug, imuFilters);
 #endif
 #if defined(USE_BLACKBOX)
     static BlackboxMessageQueue blackboxMessageQueue;
     static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
-    static BlackboxSerialDeviceSDCard blackboxSerialDevice;
-    blackboxSerialDevice.init();
+    static BlackboxSerialDeviceSDCard blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
     static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
     static BlackboxMessageQueueAHRS blackboxMessageQueueAHRS(blackboxMessageQueue);
     ahrs.setMessageQueue(&blackboxMessageQueueAHRS);
@@ -241,10 +235,10 @@ void Main::setup()
 #if defined(USE_BLACKBOX)
     TaskBase::task_info_t taskInfo {};
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
-    vTaskResume(taskInfo.taskHandle);
+    //vTaskResume(taskInfo.taskHandle);
 #endif
 
-#if defined(BACKCHANNEL_MAC_ADDRESS) && defined(USE_ESPNOW)
+#if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
     // statically allocate an MSP object
     // static MSP_ProtoFlight mspProtoFlightBackchannel(features, ahrs, flightController, radioController, receiver);
     // Statically allocate the backchannel.
@@ -269,8 +263,7 @@ void Main::testBlackbox(AHRS& ahrs, FlightController& flightController, const Ra
 {
     static BlackboxMessageQueue blackboxMessageQueue;
     static BlackboxCallbacks blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
-    static BlackboxSerialDeviceSDCard blackboxSerialDevice;
-    blackboxSerialDevice.init();
+    static BlackboxSerialDeviceSDCard blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
     static BlackboxProtoFlight blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
     flightController.setBlackbox(blackbox);

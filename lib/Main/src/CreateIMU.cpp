@@ -21,52 +21,49 @@ IMU_Base& Main::createIMU(int32_t& imuSampleRateHz)
 {
     // Statically allocate the IMU according the the build flags
 // NOLINTBEGIN(misc-const-correctness) false positive
-    [[maybe_unused]] static constexpr uint32_t spiFrequency = 20000000;
-#if defined(USE_IMU_MPU6886_I2C)
-#if defined(M5_UNIFIED)
-    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, BUS_I2C::pins_t{.sda=static_cast<uint8_t>(M5.In_I2C.getSDA()), .scl=static_cast<uint8_t>(M5.In_I2C.getSCL()), .irq=0xFF, .irqLevel=0});
-#else
-    const BUS_I2C::pins_t pins = IMU_I2C_PINS;
-    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, pins);
-#endif
-#elif defined(USE_IMU_MPU6886_SPI)
-    const BUS_SPI::pins_t pins = IMU_SPI_PINS;
-    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
-#elif defined(USE_IMU_MPU6000_I2C)
-    const BUS_I2C::pins_t pins = IMU_I2C_PINS;
-    static IMU_MPU6000 imuSensor(IMU_AXIS_ORDER, pins);
-#elif defined(USE_IMU_MPU6000_SPI)
-    const BUS_SPI::pins_t pins = IMU_SPI_PINS;
-    static IMU_MPU6000 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
-#elif defined(USE_IMU_BMI270_I2C)
-    const BUS_I2C::pins_t pins = IMU_I2C_PINS;
-    static IMU_BMI270 imuSensor(IMU_AXIS_ORDER, pins);
-#elif defined(USE_IMU_BMI270_SPI)
-    const BUS_SPI::pins_t pins = IMU_SPI_PINS;
-    static IMU_BMI270 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
-#elif defined(USE_IMU_BNO085_I2C)
-    const BUS_I2C::pins_t pins = IMU_I2C_PINS;
-    static IMU_BNO085 imuSensor(IMU_AXIS_ORDER, pins);
-#elif defined(USE_IMU_BNO085_SPI)
-    const BUS_SPI::pins_t pins = IMU_SPI_PINS;
-    static IMU_BNO085 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
-#elif defined(USE_IMU_ICM426XX_I2C)
-    const BUS_I2C::pins_t pins = IMU_I2C_PINS;
-    static IMU_ICM426xx imuSensor(IMU_AXIS_ORDER, pins);
-#elif defined(USE_IMU_ICM426XX_SPI)
-    const BUS_SPI::pins_t pins = IMU_SPI_PINS;
+#if defined(LIBRARY_IMU_USE_SPI_BUS)
+    static constexpr uint32_t spiFrequency = 20000000;
+#if defined(USE_IMU_MPU6886)
+    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+#elif defined(USE_IMU_MPU6000)
+    static IMU_MPU6000 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, BUS_SPI::IMU_SPI_PINS);
+#elif defined(USE_IMU_BMI270)
+    static IMU_BMI270 imuSensor(IMU_AXIS_ORDER, spiFrequency,  BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+#elif defined(USE_IMU_BNO085)
+    static IMU_BNO085 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+#elif defined(USE_IMU_ICM426XX)
     static IMU_ICM426xx imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
-#elif defined(USE_IMU_LSM6DS3TR_C_I2C) || defined(USE_IMU_ISM330DHCX_I2C) || defined(USE_LSM6DSOX_I2C)
-    const BUS_I2C::pins_t pins = IMU_I2C_PINS;
-    static IMU_LSM6DS3TR_C imuSensor(IMU_AXIS_ORDER, pins);
-#elif defined(USE_IMU_LSM6DS3TR_C_SPI) || defined(USE_IMU_ISM330DHCX_SPI) || defined(USE_LSM6DSOX_SPI)
-    const BUS_SPI::pins_t pins = IMU_SPI_PINS;
-    static IMU_LSM6DS3TR_C imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
+#elif defined(USE_IMU_LSM6DS3TR_C) || defined(USE_IMU_ISM330DHCX) || defined(USE_LSM6DSOX)
+    static IMU_LSM6DS3TR_C imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+#else
+    static_assert(false);
+#endif
+
+#else
+
+#if defined(USE_IMU_MPU6886)
+#if defined(M5_UNIFIED)
+    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, BUS_I2C::pins_t{.sda=static_cast<uint8_t>(M5.In_I2C.getSDA()), .scl=static_cast<uint8_t>(M5.In_I2C.getSCL()), .irq=0xFF});
+#else
+    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, BUS_I2C::IMU_I2C_PINS);
+#endif
+#elif defined(USE_IMU_MPU6000)
+    static IMU_MPU6000 imuSensor(IMU_AXIS_ORDER, BUS_I2C::IMU_I2C_PINS);
+#elif defined(USE_IMU_BMI270)
+    static IMU_BMI270 imuSensor(IMU_AXIS_ORDER, BUS_I2C::IMU_I2C_PINS);
+#elif defined(USE_IMU_BNO085)
+    static IMU_BNO085 imuSensor(IMU_AXIS_ORDER, BUS_I2C::IMU_I2C_PINS);
+#elif defined(USE_IMU_ICM426XX)
+    static IMU_ICM426xx imuSensor(IMU_AXIS_ORDER, BUS_I2C::IMU_I2C_PINS);
+#elif defined(USE_IMU_LSM6DS3TR_C) || defined(USE_IMU_ISM330DHCX) || defined(USE_LSM6DSOX)
+    static IMU_LSM6DS3TR_C imuSensor(IMU_AXIS_ORDER, BUS_I2C::IMU_I2C_PINS);
 #elif defined(USE_IMU_M5_UNIFIED)
     static IMU_M5_UNIFIED imuSensor(IMU_AXIS_ORDER);
 #else
     static_assert(false);
 #endif
+
+#endif // LIBRARY_IMU_USE_SPI_BUS
 // NOLINTEND(misc-const-correctness) false positive
 
     imuSampleRateHz = static_cast<IMU_Base&>(imuSensor).init(imuSampleRateHz);

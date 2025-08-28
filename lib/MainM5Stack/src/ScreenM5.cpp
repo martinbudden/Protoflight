@@ -332,11 +332,17 @@ void ScreenM5::updateReceivedData()
 void ScreenM5::updateAHRS_Data() const
 {
     const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();
+    // need to get orientation from AHRS since flight controller does not update Euler angles when in rate mode
+    const Quaternion orientationENU = _ahrs.getOrientationForInstrumentationUsingLock();
 
     const TD_AHRS::data_t tdAhrsData {
-        .pitch = _flightController.getPitchAngleDegreesRaw(),
-        .roll = _flightController.getRollAngleDegreesRaw(),
-        .yaw = _flightController.getYawAngleDegreesRaw(),
+        //.pitch = _flightController.getPitchAngleDegreesRaw(),
+        //.roll = _flightController.getRollAngleDegreesRaw(),
+        //.yaw = _flightController.getYawAngleDegreesRaw(),
+        // convert from ENU to NED
+        .pitch = -orientationENU.calculatePitchDegrees(),
+        .roll = orientationENU.calculateRollDegrees() - 180.0F,
+        .yaw = orientationENU.calculateYawDegrees(),
         .gyroRPS = ahrsData.gyroRPS,
         .acc = ahrsData.acc,
         .gyroOffset = {},

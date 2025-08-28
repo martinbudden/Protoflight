@@ -74,8 +74,8 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
 //H I interval:6
 //H P interval:1
 //H P ratio:6
-        BLACKBOX_PRINT_HEADER_LINE("I interval", "%d",                      blackboxIInterval); // definitely needed
-        BLACKBOX_PRINT_HEADER_LINE("P interval", "%d",                      blackboxPInterval); // definitely needed
+        BLACKBOX_PRINT_HEADER_LINE("I interval", "%d",                      _IInterval); // definitely needed
+        BLACKBOX_PRINT_HEADER_LINE("P interval", "%d",                      _PInterval); // definitely needed
 // "P denom" ignored by blackbox-log-view
 //        BLACKBOX_PRINT_HEADER_LINE("P denom", "%d",                         static_cast<uint16_t>(blackboxIInterval / blackboxPInterval));
 
