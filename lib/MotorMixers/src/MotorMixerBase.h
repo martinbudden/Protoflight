@@ -9,7 +9,7 @@ class DynamicIdleController;
 class MotorMixerBase {
 public:
     struct commands_t {
-        float speed;
+        float throttle;
         float roll;
         float pitch;
         float yaw;
@@ -22,8 +22,9 @@ public:
     inline void motorsSwitchOff() { _motorsIsOn = false; }
     inline bool motorsIsDisabled() const { return _motorsIsDisabled; }
 
-    void setMotorOutputMin(float motorOutputMin) { _motorOutputMin = motorOutputMin; }
-    float getMotorOutputMin() const { return _motorOutputMin; }
+    inline float getThrottleCommand() const { return _throttleCommand; }
+    inline void setMotorOutputMin(float motorOutputMin) { _motorOutputMin = motorOutputMin; }
+    inline float getMotorOutputMin() const { return _motorOutputMin; }
 
     virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) { (void)commands; (void)deltaT; (void)tickCount; }
     virtual float getMotorOutput(size_t motorIndex) const { (void)motorIndex; return 0.0F; }
@@ -39,5 +40,6 @@ protected:
     Debug& _debug;
     int32_t _motorsIsOn {false};
     int32_t _motorsIsDisabled {false};
+    float _throttleCommand {0.0F}; //!< used solely for instrumentation
     float _motorOutputMin {0.0F}; // minimum motor output, typically set to 5.5% to avoid ESC desynchronization
 };

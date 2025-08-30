@@ -170,8 +170,8 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
         const size_t len = packTelemetryData_AHRS(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _ahrs, _vehicleController);
         TD_AHRS* td = reinterpret_cast<TD_AHRS*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
         // convert from ENU to NED
-        td->data.pitch = -orientationENU.calculatePitchDegrees(),
-        td->data.roll = orientationENU.calculateRollDegrees(),
+        td->data.roll = -orientationENU.calculatePitchDegrees(),
+        td->data.pitch = orientationENU.calculateRollDegrees(),
         td->data.yaw = orientationENU.calculateYawDegrees(),
 
         sendData(_transmitDataBufferPtr, len);

@@ -239,7 +239,7 @@ void FlightController::updateSetpoints(const controls_t& controls) // NOLINT(rea
     const uint32_t tickCount = controls.tickCount;
 
     _throttleStick = controls.throttleStick;
-    _thrustOutput = _throttleStick;
+    _outputThrottle = _throttleStick;
     // adjust the Throttle PID Attenuation (TPA)
     // _TPA is 1.0F (ie no attenuation) if _throttleStick <= _TPA_Breakpoint;
     _TPA = 1.0F - _TPA_multiplier * std::fminf(0.0F, _throttleStick - _TPA_breakpoint);
@@ -308,7 +308,7 @@ void FlightController::detectCrashOrSpin(uint32_t tickCount)
 void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT)
 {
     if (fabsf(gyroENU_RPS.z) > _yawSpinRecoveredRPS) {
-        _thrustOutput = 0.5F; // half throttle gives maximum yaw authority, since outputs will have maximum range before being clipped
+        _outputThrottle = 0.5F; // half throttle gives maximum yaw authority, since outputs will have maximum range before being clipped
         // use the YAW_RATE_DPS PID to bring the spin down to zero
         _PIDS[YAW_RATE_DPS].setSetpoint(0.0F);
         const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
@@ -447,6 +447,13 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
 
     if (_yawSpinRecovery) {
         recoverFromYawSpin(gyroENU_RPS, deltaT);
+        const VehicleControllerMessageQueue::queue_item_t queueItem {
+            .throttle = _outputThrottle,
+            .roll = _outputs[ROLL_RATE_DPS],
+            .pitch = _outputs[PITCH_RATE_DPS],
+            .yaw = _outputs[YAW_RATE_DPS]
+        };
+        SIGNAL(queueItem);
         return;
     }
 
@@ -479,6 +486,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     // The VehicleControllerTask is waiting on the message queue, so signal it tha there is output data available.
     // This will result in outputToMixer being called
     const VehicleControllerMessageQueue::queue_item_t queueItem {
+        .throttle = _outputThrottle,
         .roll = _outputs[ROLL_RATE_DPS],
         .pitch = _outputs[PITCH_RATE_DPS],
         .yaw = _outputs[YAW_RATE_DPS]
@@ -499,24 +507,22 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
 
     if (_radioController.getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
         const MotorMixerBase::commands_t commands {
-            .speed  = 0.25F,
+            .throttle  = 0.25F,
             .roll   = 0.0F,
             .pitch  = 0.0F,
             .yaw    = 0.0F
         };
-        _mixerThrottle = commands.speed;
         _mixer.outputToMotors(commands, deltaT, tickCount);
         return;
     }
 
     const MotorMixerBase::commands_t commands {
-        .speed  = _thrustOutput,
+        .throttle  = queueItem.throttle,
         // scale roll, pitch, and yaw to range [0.0F, 1.0F]
         .roll   = queueItem.roll / _rollRateAtMaxPowerDPS,
         .pitch  = queueItem.pitch / _pitchRateAtMaxPowerDPS,
         .yaw    = queueItem.yaw / _yawRateAtMaxPowerDPS
     };
 
-    _mixerThrottle = commands.speed;
     _mixer.outputToMotors(commands, deltaT, tickCount);
 }

@@ -143,8 +143,8 @@ Targets
 
     #define USE_RECEIVER_SBUS
     #define RECEIVER_UART_INDEX 0
-    //#define RECEIVER_PINS     port_pins_t{.rx={PB,7},.tx={PB,6}}
-    #define RECEIVER_PINS       pins_t{.rx=0,.tx=0}
+    #define RECEIVER_PINS     port_pins_t{.rx={PB,7},.tx={PB,6}}
+    //#define RECEIVER_PINS       pins_t{.rx=0,.tx=0}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          port_pins_t{.br={PC,7},.fr={PC,6},.bl={PB,8},.fl={PB,9}}

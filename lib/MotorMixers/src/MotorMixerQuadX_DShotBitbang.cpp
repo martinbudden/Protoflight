@@ -42,16 +42,18 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(const commands_t& commands, fl
     (void)tickCount;
 
     if (motorsIsOn()) {
-        const float speedIncrease = _dynamicIdleController.calculateSpeedIncrease(calculateSlowestMotorHz(), deltaT);
-        const float speed = commands.speed + speedIncrease;
+        const float throttleIncrease = _dynamicIdleController.calculateSpeedIncrease(calculateSlowestMotorHz(), deltaT);
+        const float throttle = commands.throttle + throttleIncrease;
+        _throttleCommand = throttle;
 
         // calculate the "mix" for the QuadX motor configuration
-        _motorOutputs[MOTOR_BR] = -commands.roll - commands.pitch - commands.yaw + speed;
-        _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + speed;
-        _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + speed;
-        _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + speed;
+        _motorOutputs[MOTOR_BR] = -commands.roll - commands.pitch - commands.yaw + throttle;
+        _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + throttle;
+        _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + throttle;
+        _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + throttle;
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
+        _throttleCommand = commands.throttle;
     }
 
     // convert motor output to DShot range [47, 2047]

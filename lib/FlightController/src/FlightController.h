@@ -172,8 +172,6 @@ public:
     const MotorMixerBase& getMixer() const { return _mixer; }
     const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
     void setFiltersConfig(const filters_config_t& filtersConfig);
-    uint32_t getTaskIntervalMicroSeconds() const { return _taskIntervalMicroSeconds; }
-    float getMixerThrottle() const { return _mixerThrottle; }
 public:
     [[noreturn]] static void Task(void* arg);
 public:
@@ -240,7 +238,7 @@ private:
     float _rollRateAtMaxPowerDPS {1000.0};
     float _pitchRateAtMaxPowerDPS {1000.0};
     float _yawRateAtMaxPowerDPS {1000.0};
-    float _thrustOutput {0.0F};
+    float _outputThrottle {0.0F};
     float _yawSpinThresholdDPS {0.0F};
     uint32_t _yawSpinRecovery { false };
     float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };

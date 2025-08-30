@@ -123,12 +123,14 @@ void MotorMixerQuadX_PWM::outputToMotors(const commands_t& commands, float delta
     (void)deltaT;
     (void)tickCount;
 
+    _throttleCommand = commands.throttle;
+
     if (motorsIsOn()) {
         // calculate the "mix" for the QuadX motor configuration
-        _motorOutputs[MOTOR_BR] = -commands.roll - commands.pitch - commands.yaw + commands.speed;
-        _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + commands.speed;
-        _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + commands.speed;
-        _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + commands.speed;
+        _motorOutputs[MOTOR_BR] = -commands.roll - commands.pitch - commands.yaw + commands.throttle;
+        _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + commands.throttle;
+        _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + commands.throttle;
+        _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + commands.throttle;
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
     }
