@@ -31,7 +31,9 @@ static const std::array<std::string, FlightController::PID_COUNT> PID_NAMES = {
     "PITCH_RATE",
     "YAW_RATE",
     "ROLL_ANGLE",
-    "PITCH_ANGLE"
+    "PITCH_ANGLE",
+    "ROLL_SIN_ANGLE",
+    "PITCH_SIN_ANGLE"
 };
 
 const std::string& FlightController::getPID_Name(pid_index_e pidIndex) const

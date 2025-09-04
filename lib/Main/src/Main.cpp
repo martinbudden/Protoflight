@@ -67,6 +67,7 @@ void Main::setup()
     // Statically allocate the debug object
     static Debug debug;
     static NonVolatileStorage nvs;
+    nvs.init();
 
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
     // Set WiFi to station mode
@@ -148,6 +149,7 @@ void Main::setup()
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
     flightController.setFiltersConfig(nvs.FlightControllerFiltersConfigLoad());
+    setPIDsFromNonVolatileStorage(nvs, flightController);
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
 
@@ -193,10 +195,9 @@ void Main::setup()
 #if defined(M5_UNIFIED)
     // Holding BtnC down while switching on resets the nvs.
     if (M5.BtnC.isPressed()) {
-        resetNonVolatileStorage(nvs, flightController);
+        nvs.clear();
     }
 #endif
-    //!!loadNonVolatileStorage(nvs, flightController);
 
 #if defined(M5_UNIFIED)
     // Statically allocate the screen.
@@ -229,16 +230,21 @@ void Main::setup()
     static MainTask mainTask(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS);
     _tasks.mainTask = &mainTask;
     reportMainTask();
-    _tasks.ahrsTask = AHRS_Task::createTask(ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroSeconds);
-    _tasks.flightControllerTask = VehicleControllerTask::createTask(flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
-    _tasks.receiverTask = ReceiverTask::createTask(receiver, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
+    TaskBase::task_info_t taskInfo {};
+    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroSeconds);
+    printTaskInfo(taskInfo, AHRS_taskIntervalMicroSeconds);
+    _tasks.flightControllerTask = VehicleControllerTask::createTask(taskInfo, flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
+    printTaskInfo(taskInfo, 0);
+    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, receiver, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(taskInfo, RECEIVER_TASK_INTERVAL_MICROSECONDS);
 #if defined(USE_MSP)
-    _tasks.mspTask = MSP_Task::createTask(mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
+    _tasks.mspTask = MSP_Task::createTask(taskInfo, mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(taskInfo, MSP_TASK_INTERVAL_MICROSECONDS);
 #endif
 #if defined(USE_BLACKBOX)
     blackboxCallbacks.setUseMessageQueue(true);
-    TaskBase::task_info_t taskInfo {};
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(taskInfo, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
     //vTaskResume(taskInfo.taskHandle);
 #endif
 
@@ -259,7 +265,8 @@ void Main::setup()
         nvs
     );
 
-    _tasks.backchannelTask = BackchannelTask::createTask(backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
+    _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(taskInfo, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
 #endif
 }
 
@@ -315,6 +322,17 @@ void Main::reportMainTask()
 #endif
 }
 
+void Main::printTaskInfo(TaskBase::task_info_t& taskInfo, uint32_t taskIntervalMicroSeconds)
+{
+#if defined(FRAMEWORK_ARDUINO_ESP32)
+    if (taskIntervalMicroSeconds == 0) {
+        Serial.printf("**** %s, %.*s core:%u, priority:%u, interrupt driven\r\n",   taskInfo.name, 18 - strlen(taskInfo.name), "                ", taskInfo.coreID, taskInfo.priority);
+    } else {
+        Serial.printf("**** %s, %.*s core:%u, priority:%u, task interval:%ums\r\n", taskInfo.name, 18 - strlen(taskInfo.name), "                ", taskInfo.coreID, taskInfo.priority, taskIntervalMicroSeconds / 1000);
+    }
+#endif
+}
+
 #if defined(FRAMEWORK_USE_FREERTOS)
 [[noreturn]] void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
@@ -329,7 +347,7 @@ void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs)
 {
     // Set the gyro offsets from non-volatile storage.
     IMU_Base::xyz_int32_t offset {};
-    if (nvs.getGyroOffset(offset.x, offset.y, offset.z)) {
+    if (nvs.GyroOffsetLoad(offset.x, offset.y, offset.z)) {
         ahrs.setGyroOffset(offset);
         std::array<char, 128> buf;
         sprintf(&buf[0], "**** AHRS gyroOffsets loaded from NVS: gx:%5d, gy:%5d, gz:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
@@ -338,7 +356,7 @@ void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs)
 #else
         Serial.print(&buf[0]);
 #endif
-        if (nvs.getAccOffset(offset.x, offset.y, offset.z)) {
+        if (nvs.AccOffsetLoad(offset.x, offset.y, offset.z)) {
             ahrs.setAccOffset(offset);
             sprintf(&buf[0], "**** AHRS accOffsets loaded from NVS: ax:%5d, ay:%5d, az:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
 #if defined(FRAMEWORK_RPI_PICO)
@@ -354,48 +372,22 @@ void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs)
 }
 
 /*!
-Resets the PID non volatile storage to NonVolatileStorage::NOT_SET (which represents unset).
-*/
-void Main::resetNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController)
-{
-    //nvs.clear();
-    //nvs.removeGyroOffset();
-    //nvs.removeAccOffset();
-    for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
-        const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
-        constexpr PIDF::PIDF_t pidNOT_SET { NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET };
-        nvs.putPID(pidName, pidNOT_SET);
-    }
-#if defined(FRAMEWORK_RPI_PICO)
-        printf("**** NVS reset\r\n");
-#else
-        Serial.println("**** NVS reset");
-#endif
-}
-
-/*!
 Loads the PID settings for the FlightController. Must be called *after* the FlightController is created.
 */
-void Main::loadNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController)
+void Main::setPIDsFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController)
 {
-    // Set all the non volatile storage to zero if they have not been set
-    if (!nvs.isSetPID()) {
-        resetNonVolatileStorage(nvs, flightController);
-    }
-    // Load the PID constants from non volatile storage, and if they are non-zero then use them to set the FlightController PIDs.
+    // Load the PID constants from non volatile storage
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
-        std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
-        const PIDF::PIDF_t pid = nvs.getPID(pidName);
-        if (pid.kp != NonVolatileStorage::NOT_SET) {
-            flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
-            std::array<char, 128> buf;
-            sprintf(&buf[0], "**** %s PID loaded from NVS: P:%f, I:%f, D:%f, F:%f\r\n", pidName.c_str(), static_cast<double>(pid.kp), static_cast<double>(pid.ki), static_cast<double>(pid.kd), static_cast<double>(pid.kf));
+        const PIDF::PIDF_t pid = nvs.PID_load(ii);
+        flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
+        const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
+        std::array<char, 128> buf;
+        sprintf(&buf[0], "**** %15s PID loaded from NVS: p:%6.4f, i:%6.4f, d:%6.4f, f:%6.4f, s:%6.4f\r\n", pidName.c_str(), static_cast<double>(pid.kp), static_cast<double>(pid.ki), static_cast<double>(pid.kd), static_cast<double>(pid.kf), static_cast<double>(pid.ks));
 #if defined(FRAMEWORK_RPI_PICO)
-            printf(&buf[0]);
+        printf(&buf[0]);
 #else
-            Serial.print(&buf[0]);
+        Serial.print(&buf[0]);
 #endif
-        }
     }
 }
 

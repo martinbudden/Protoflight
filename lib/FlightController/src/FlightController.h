@@ -237,7 +237,7 @@ private:
     std::array<PIDF, PID_COUNT> _PIDS {};
     std::array<float, PID_COUNT> _outputs {}; //<! PID outputs. These are stored since the output from one PID may be used as the input to another
     std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> _outputFilters;
-    const std::array<PIDF::PIDF_t, PID_COUNT> _scaleFactors;
+    static const std::array<PIDF::PIDF_t, PID_COUNT> _scaleFactors;
 
     // DTerm filters
     filters_config_t _filtersConfig {};

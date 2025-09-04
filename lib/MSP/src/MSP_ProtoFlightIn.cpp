@@ -283,7 +283,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             // can't save to non volatile storage if the motors are on
             return RESULT_ERROR;
         }
-        _nonVolatileStorage.storeAll();
+        _nonVolatileStorage.storeAll(_ahrs, _flightController, _radioController, _receiver);
         break;
     case MSP_SET_BOARD_ALIGNMENT_CONFIG:
         //rollDegrees = src.readU16();

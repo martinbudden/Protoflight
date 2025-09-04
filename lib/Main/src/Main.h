@@ -101,9 +101,9 @@ private:
     static IMU_Base& createIMU(int32_t& imuSampleRateHz);
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);
-    static void resetNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);
-    static void loadNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);
+    static void setPIDsFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);
     static void reportMainTask();
+    static void printTaskInfo(TaskBase::task_info_t& taskInfo, uint32_t taskIntervalMicroSeconds);
     struct tasks_t {
         MainTask* mainTask;
         AHRS_Task* ahrsTask;

@@ -13,6 +13,7 @@
 #include <Preferences.h>
 #endif
 
+#include <array>
 #include <cfloat>
 #include <cstdint>
 #include <string>
@@ -26,28 +27,34 @@ public:
     enum { READ_WRITE=false, READ_ONLY=true };
     enum { MAC_ADDRESS_LEN = 6 };
     static constexpr float NOT_SET = FLT_MAX;
+    struct xyz_int32_t {
+        int32_t x;
+        int32_t y;
+        int32_t z;
+    };
 public:
     // NOTE: "get" functions are declared const, since they are logically const, although not physically const
 
+    void init();
     void clear();
-    bool isSetPID() const;
+    void remove(const std::string& name);
+    void storeAll(const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver);
 
-    PIDF::PIDF_t getPID(const std::string& name) const;
-    void putPID(const std::string& name, const PIDF::PIDF_t& pid);
+    static const char* AccOffsetKey;
+    bool AccOffsetLoad(int32_t& x, int32_t& y, int32_t& z) const;
+    void AccOffsetStore(int32_t x, int32_t y, int32_t z);
 
-    float getFloat(const std::string& name) const;
-    void putFloat(const std::string& name, float value);
+    static const char* GyroOffsetKey;
+    bool GyroOffsetLoad(int32_t& x, int32_t& y, int32_t& z) const;
+    void GyroOffsetStore(int32_t x, int32_t y, int32_t z);
 
-    void removeAccOffset();
-    bool getAccOffset(int32_t& x, int32_t& y, int32_t& z) const;
-    void putAccOffset(int32_t x, int32_t y, int32_t z);
+    static const char* MacAddressKey;
+    void MacAddressLoad(uint8_t* macAddress) const;
+    void MacAddressStore(const uint8_t* macAddress);
 
-    void removeGyroOffset();
-    bool getGyroOffset(int32_t& x, int32_t& y, int32_t& z) const;
-    void putGyroOffset(int32_t x, int32_t y, int32_t z);
-
-    void getMacAddress(uint8_t* macAddress, const std::string& name) const;
-    void putMacAddress(const std::string& name, const uint8_t* macAddress);
+    static const std::array<std::string, FlightController::PID_COUNT> PID_Keys;
+    PIDF::PIDF_t PID_load(uint8_t index) const;
+    void PID_store(uint8_t index, const PIDF::PIDF_t& pid);
 
     static const char* DynamicIdleControllerConfigKey;
     DynamicIdleController::config_t DynamicIdleControllerConfigLoad() const;
@@ -63,9 +70,7 @@ public:
 
     static const char* RadioControllerRatesKey;
     RadioController::rates_t RadioControllerRatesLoad() const;
-    void RadioControllerRatesStore(const RadioController::rates_t& config);
-
-    void storeAll() {} // placeholder
+    void RadioControllerRatesStore(const RadioController::rates_t& rates);
 private:
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
     mutable Preferences _preferences;

@@ -49,7 +49,8 @@ Targets
     #define BOARD_IDENTIFIER    "M5Stack_Core2"
 
     #define IMU_AXIS_ORDER      IMU_Base::YNEG_XPOS_ZPOS
-    #define AHRS_TASK_INTERVAL_MICROSECONDS 5000
+    #define AHRS_TASK_INTERVAL_MICROSECONDS     5000
+    #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
     //#define USE_IMU_MPU6886
     #define USE_IMU_M5_UNIFIED
     #define IMU_I2C_PINS        pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
