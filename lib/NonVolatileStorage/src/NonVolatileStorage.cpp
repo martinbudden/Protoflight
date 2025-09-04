@@ -5,6 +5,11 @@
 static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
 #endif
 
+const char* NonVolatileStorage::FlightControllerFiltersConfigKey = "FCF";
+const char* NonVolatileStorage::ImuFiltersConfigKey = "IF";
+const char* NonVolatileStorage::DynamicIdleControllerConfigKey = "DIC";
+const char* NonVolatileStorage::RadioControllerRatesKey = "RCR";
+
 void NonVolatileStorage::clear()
 {
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
@@ -16,41 +21,14 @@ void NonVolatileStorage::clear()
 #endif
 }
 
-IMU_Filters::config_t NonVolatileStorage::loadImuFiltersConfig() const
+DynamicIdleController::config_t NonVolatileStorage::DynamicIdleControllerConfigLoad() const
 {
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
     _preferences.begin(nonVolatileStorageNamespace, READ_ONLY);
-    if (_preferences.isKey("IF")) {
-        IMU_Filters::config_t config {};
-        //const size_t len = _preferences.getBytesLength("DIC");
-        _preferences.getBytes("IF", &config, sizeof(config));
-        _preferences.end();
-        return config;
-    }
-    _preferences.end();
-#endif
-    return DEFAULTS::imuFiltersConfig;
-}
-
-void NonVolatileStorage::storeImuFiltersConfig(const IMU_Filters::config_t& config)
-{
-#if defined(USE_ARDUINO_ESP32_PREFERENCES)
-    _preferences.begin(nonVolatileStorageNamespace, READ_WRITE);
-    _preferences.putBytes("IF", &config, sizeof(config));
-    _preferences.end();
-#else
-    (void)config;
-#endif
-}
-
-DynamicIdleController::config_t NonVolatileStorage::loadDynamicIdleControllerConfig() const
-{
-#if defined(USE_ARDUINO_ESP32_PREFERENCES)
-    _preferences.begin(nonVolatileStorageNamespace, READ_ONLY);
-    if (_preferences.isKey("DIC")) {
+    if (_preferences.isKey(DynamicIdleControllerConfigKey)) {
         DynamicIdleController::config_t config {};
         //const size_t len = _preferences.getBytesLength("DIC");
-        _preferences.getBytes("DIC", &config, sizeof(config));
+        _preferences.getBytes(DynamicIdleControllerConfigKey, &config, sizeof(config));
         _preferences.end();
         return config;
     }
@@ -59,24 +37,78 @@ DynamicIdleController::config_t NonVolatileStorage::loadDynamicIdleControllerCon
     return DEFAULTS::dynamicIdleControllerConfig;
 }
 
-void  NonVolatileStorage::storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config)
+void  NonVolatileStorage::DynamicIdleControllerConfigStore(const DynamicIdleController::config_t& config)
 {
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
     _preferences.begin(nonVolatileStorageNamespace, READ_WRITE);
-    _preferences.putBytes("DIC", &config, sizeof(config));
+    _preferences.putBytes(DynamicIdleControllerConfigKey, &config, sizeof(config));
     _preferences.end();
 #else
     (void)config;
 #endif
 }
 
-RadioController::rates_t NonVolatileStorage::loadRadioControllerRates() const
+FlightController::filters_config_t NonVolatileStorage::FlightControllerFiltersConfigLoad() const
 {
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
     _preferences.begin(nonVolatileStorageNamespace, READ_ONLY);
-    if (_preferences.isKey("RCR")) {
+    if (_preferences.isKey(ImuFiltersConfigKey)) {
+        FlightController::filters_config_t config {};
+        //const size_t len = _preferences.getBytesLength("DIC");
+        _preferences.getBytes(FlightControllerFiltersConfigKey, &config, sizeof(config));
+        _preferences.end();
+        return config;
+    }
+    _preferences.end();
+#endif
+    return DEFAULTS::flightControllerFiltersConfig;
+}
+
+void NonVolatileStorage::FlightControllerFiltersConfigStore(const FlightController::filters_config_t& config)
+{
+#if defined(USE_ARDUINO_ESP32_PREFERENCES)
+    _preferences.begin(nonVolatileStorageNamespace, READ_WRITE);
+    _preferences.putBytes(FlightControllerFiltersConfigKey, &config, sizeof(config));
+    _preferences.end();
+#else
+    (void)config;
+#endif
+}
+
+IMU_Filters::config_t NonVolatileStorage::ImuFiltersConfigLoad() const
+{
+#if defined(USE_ARDUINO_ESP32_PREFERENCES)
+    _preferences.begin(nonVolatileStorageNamespace, READ_ONLY);
+    if (_preferences.isKey(ImuFiltersConfigKey)) {
+        IMU_Filters::config_t config {};
+        //const size_t len = _preferences.getBytesLength("DIC");
+        _preferences.getBytes(ImuFiltersConfigKey, &config, sizeof(config));
+        _preferences.end();
+        return config;
+    }
+    _preferences.end();
+#endif
+    return DEFAULTS::imuFiltersConfig;
+}
+
+void NonVolatileStorage::ImuFiltersConfigStore(const IMU_Filters::config_t& config)
+{
+#if defined(USE_ARDUINO_ESP32_PREFERENCES)
+    _preferences.begin(nonVolatileStorageNamespace, READ_WRITE);
+    _preferences.putBytes(ImuFiltersConfigKey, &config, sizeof(config));
+    _preferences.end();
+#else
+    (void)config;
+#endif
+}
+
+RadioController::rates_t NonVolatileStorage::RadioControllerRatesLoad() const
+{
+#if defined(USE_ARDUINO_ESP32_PREFERENCES)
+    _preferences.begin(nonVolatileStorageNamespace, READ_ONLY);
+    if (_preferences.isKey(RadioControllerRatesKey)) {
         RadioController::rates_t config {};
-        _preferences.getBytes("RCR", &config, sizeof(config));
+        _preferences.getBytes(RadioControllerRatesKey, &config, sizeof(config));
         _preferences.end();
         return config;
     }
@@ -85,11 +117,11 @@ RadioController::rates_t NonVolatileStorage::loadRadioControllerRates() const
     return DEFAULTS::radioControllerRates;
 }
 
-void NonVolatileStorage::storeRadioControllerRates(const RadioController::rates_t& config)
+void NonVolatileStorage::RadioControllerRatesStore(const RadioController::rates_t& config)
 {
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
     _preferences.begin(nonVolatileStorageNamespace, READ_WRITE);
-    _preferences.putBytes("RCR", &config, sizeof(config));
+    _preferences.putBytes(RadioControllerRatesKey, &config, sizeof(config));
     _preferences.end();
 #else
     (void)config;

@@ -207,13 +207,13 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
 
     case MSP_RC: {
-        const ReceiverBase::controls_t controls = _receiver.getControls();
-        dst.writeU16(static_cast<uint16_t>(controls.throttleStickQ12dot4) >> 4U);
-        dst.writeU16(static_cast<uint16_t>(controls.rollStickQ12dot4) >> 4U);
-        dst.writeU16(static_cast<uint16_t>(controls.pitchStickQ12dot4) >> 4U);
-        dst.writeU16(static_cast<uint16_t>(controls.yawStickQ12dot4) >> 4U);
+        const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+        dst.writeU16(controls.throttle);
+        dst.writeU16(controls.roll);
+        dst.writeU16(controls.pitch);
+        dst.writeU16(controls.yaw);
         for (size_t ii = 0; ii < _receiver.getAuxiliaryChannelCount(); ++ii) {
-            dst.writeU16(static_cast<uint16_t>(_receiver.getAuxiliaryChannel(ii)));
+            dst.writeU16(_receiver.getAuxiliaryChannel(ii));
         }
         break;
     }

@@ -57,6 +57,9 @@ float RadioController::mapThrottle(float throttle) const
     return throttle * static_cast<float>(_rates.throttleLimitPercent) / 100.0F;
 }
 
+/*!
+Called from Receiver Task.
+*/
 void RadioController::updateControls(const controls_t& controls)
 {
     // failsafe handling
@@ -103,7 +106,7 @@ void RadioController::setFailsafe(const failsafe_t& failsafe)
 
 void RadioController::checkFailsafe(uint32_t tickCount)
 {
-    _flightController->detectCrashOrSpin(tickCount);
+    _flightController->detectCrashOrSpin();
 
     if ((tickCount - _failsafeTickCount > _failsafeTickCountThreshold) && _receiverInUse) {
         // _receiverInUse is initialized to false, so the motors won't turn off it the transmitter hasn't been turned on yet.

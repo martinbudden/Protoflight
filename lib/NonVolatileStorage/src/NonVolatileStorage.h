@@ -49,14 +49,21 @@ public:
     void getMacAddress(uint8_t* macAddress, const std::string& name) const;
     void putMacAddress(const std::string& name, const uint8_t* macAddress);
 
-    IMU_Filters::config_t loadImuFiltersConfig() const;
-    void storeImuFiltersConfig(const IMU_Filters::config_t& config);
+    static const char* DynamicIdleControllerConfigKey;
+    DynamicIdleController::config_t DynamicIdleControllerConfigLoad() const;
+    void  DynamicIdleControllerConfigStore(const DynamicIdleController::config_t& config);
 
-    DynamicIdleController::config_t loadDynamicIdleControllerConfig() const;
-    void  storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config);
+    static const char* FlightControllerFiltersConfigKey;
+    FlightController::filters_config_t FlightControllerFiltersConfigLoad() const;
+    void FlightControllerFiltersConfigStore(const FlightController::filters_config_t& config);
 
-    RadioController::rates_t loadRadioControllerRates() const;
-    void storeRadioControllerRates(const RadioController::rates_t& config);
+    static const char* ImuFiltersConfigKey;
+    IMU_Filters::config_t ImuFiltersConfigLoad() const;
+    void ImuFiltersConfigStore(const IMU_Filters::config_t& config);
+
+    static const char* RadioControllerRatesKey;
+    RadioController::rates_t RadioControllerRatesLoad() const;
+    void RadioControllerRatesStore(const RadioController::rates_t& config);
 
     void storeAll() {} // placeholder
 private:

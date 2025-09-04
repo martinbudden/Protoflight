@@ -55,13 +55,59 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
         break;
 
     case MSP_SET_PID:
-        for (size_t ii = 0; ii < FlightController::PID_COUNT; ++ii) {
+        for (size_t ii = 0; ii <= FlightController::YAW_RATE_DPS; ++ii) {
             const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
             _flightController.setPID_P_MSP(pidIndex, src.readU8());
             _flightController.setPID_I_MSP(pidIndex, src.readU8());
             _flightController.setPID_D_MSP(pidIndex, src.readU8());
         }
-        //pidInitConfig(currentPidProfile);
+        // skip over PID_LEVEL and PID_MAG
+        for (size_t ii = 0; ii < 2; ++ii) {
+            src.readU8();
+            src.readU8();
+            src.readU8();
+        }
+        break;
+
+    case MSP_SET_PID_ADVANCED:
+        src.readU16();
+        src.readU16();
+        src.readU16(); // was yaw_p_limit
+        src.readU8(); // reserved
+        src.readU8(); // was vbatPidCompensation
+        src.readU8(); // !!TODO::feedforward_transition
+        src.readU8(); // was low byte of dtermSetpointWeight
+        src.readU8(); // reserved
+        src.readU8(); // reserved
+        src.readU8(); // reserved
+        src.readU16(); // !!TODO: rateAccelLimit
+        src.readU16(); // !!TODO: yawRateAccelLimit
+        if (src.bytesRemaining() >= 2) {
+            src.readU8(); // !!TODO: angle_limit
+            src.readU8(); // was levelSensitivity
+        }
+        if (src.bytesRemaining() >= 4) {
+            src.readU16(); // was currentPidProfile->itermThrottleThreshold
+            src.readU16(); // !!TODO: anti_gravity_gain
+        }
+        if (src.bytesRemaining() >= 2) {
+            src.readU16(); // was currentPidProfile->dtermSetpointWeight
+        }
+        if (src.bytesRemaining() >= 14) {
+            // Added in MSP API 1.40
+            src.readU8(); // !!TODO: iterm_rotation
+            src.readU8(); // was currentPidProfile->smart_feedforward
+            src.readU8(); // !!TODO: iterm_relax
+            src.readU8(); // !!TODO: iterm_relax_type
+            src.readU8(); // !!TODO: abs_control_gain
+            src.readU8(); // !!TODO: throttle_boost
+            src.readU8(); // !!TODO: acro_trainer_angle_limit
+            // PID controller feedforward terms
+            _flightController.setPID_F_MSP(FlightController::ROLL_RATE_DPS, src.readU16());
+            _flightController.setPID_F_MSP(FlightController::PITCH_RATE_DPS, src.readU16());
+            _flightController.setPID_F_MSP(FlightController::YAW_RATE_DPS, src.readU16());
+            src.readU8(); // was currentPidProfile->antiGravityMode
+        }
         break;
 
     case MSP_SET_MODE_RANGE:

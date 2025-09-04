@@ -150,7 +150,9 @@ void FlightController::setControlMode(control_mode_e controlMode)
 void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 {
     _filtersConfig = filtersConfig;
+    //!!TODO: check dT value for filters config
     const float dT = static_cast<float>(_taskIntervalMicroSeconds) / 1000000.0F;
+    //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroSeconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
 
     if (filtersConfig.dterm_lpf1_hz == 0) {
         _rollRateDTermFilter.setToPassthrough();
@@ -167,13 +169,27 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
             [[fallthrough]];
         case filters_config_t::PT1:
             _rollRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _rollAngleDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
             _pitchRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _pitchAngleDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
             break;
         default:
             _rollRateDTermFilter.setToPassthrough();
+            _rollAngleDTermFilter.setToPassthrough();
             _pitchRateDTermFilter.setToPassthrough();
+            _pitchAngleDTermFilter.setToPassthrough();
             break;
         }
+    }
+    if (filtersConfig.output_lpf_hz == 0) {
+        _outputFilters[ROLL_RATE_DPS].setToPassthrough();
+        _outputFilters[PITCH_RATE_DPS].setToPassthrough();
+        _outputFilters[YAW_RATE_DPS].setToPassthrough();
+    } else {
+        const float ahrsDeltaT = static_cast<float>(_ahrs.getTaskIntervalMicroSeconds()) * 0.000001F;
+        _outputFilters[ROLL_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
+        _outputFilters[PITCH_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
+        _outputFilters[YAW_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
     }
 }
 
@@ -230,52 +246,45 @@ How often it is called depends on the type of transmitter and receiver the user 
 but is typically at intervals of between 40 milliseconds and 5 milliseconds (ie 25Hz to 200Hz).
 In particular it runs much less frequently than `updateOutputsUsingPIDs()` which typically runs at 1000Hz to 8000Hz.
 */
-void FlightController::updateSetpoints(const controls_t& controls) // NOLINT(readability-function-cognitive-complexity)
+void FlightController::updateSetpoints(const controls_t& controls)
 {
-    detectCrashOrSpin(controls.tickCount);
+    detectCrashOrSpin();
 
     setControlMode(controls.controlMode);
+
     //!!TODO: put a critical section around this
-    const uint32_t tickCount = controls.tickCount;
-
-    _throttleStick = controls.throttleStick;
-    _outputThrottle = _throttleStick;
+    _outputThrottle = controls.throttleStick;
     // adjust the Throttle PID Attenuation (TPA)
-    // _TPA is 1.0F (ie no attenuation) if _throttleStick <= _TPA_Breakpoint;
-    _TPA = 1.0F - _TPA_multiplier * std::fminf(0.0F, _throttleStick - _TPA_breakpoint);
+    // _TPA is 1.0F (ie no attenuation) if throttleStick <= _TPA_Breakpoint;
+    _TPA = 1.0F - _TPA_multiplier * std::fminf(0.0F, controls.throttleStick - _TPA_breakpoint);
 
+    //!!TODO: filter the roll and stick angles
     // Pushing the ROLL stick to the right gives a positive value of rollStick and we want this to be left side up.
     // For NED left side up is positive roll, so sign of setpoint is same sign as rollStick.
     // So sign of _rollStick is left unchanged.
-    _rollStickDPS = controls.rollStickDPS;
-    _rollStickDegrees = controls.rollStickDegrees;
-    _rollStickSinAngle = sinf(_rollStickDegrees * degreesToRadians);
+    _PIDS[ROLL_RATE_DPS].setSetpoint(controls.rollStickDPS);
+    _rollStickSinAngle = sinf(controls.rollStickDegrees * degreesToRadians);
+    _PIDS[ROLL_ANGLE_DEGREES].setSetpoint(controls.rollStickDegrees);
 
     // Pushing the  PITCH stick forward gives a positive value of _pitchStick and we want this to be nose up.
     // For NED nose up is positive pitch, so sign of setpoint is opposite sign as _pitchStick.
     // So sign of _pitchStick is negated.
-    _pitchStickDPS = -controls.pitchStickDPS;
-    _pitchStickDegrees = -controls.pitchStickDegrees;
-    _pitchStickSinAngle = sinf(_pitchStickDegrees * degreesToRadians);
+    _PIDS[PITCH_RATE_DPS].setSetpoint(-controls.pitchStickDPS);
+    _pitchStickSinAngle = sinf(-controls.pitchStickDegrees * degreesToRadians);
+    _PIDS[PITCH_ANGLE_DEGREES].setSetpoint(-controls.pitchStickDegrees);
 
     // Pushing the YAW stick to the right gives a positive value of _yawStick and we want this to be nose right.
     // For NED nose left is positive yaw, so sign of setpoint is same as sign of _yawStick.
     // So sign of _yawStick is left unchanged.
-    _yawStickDPS = controls.yawStickDPS;
-
-    _PIDS[ROLL_RATE_DPS].setSetpoint(_rollStickDPS);
-    _PIDS[PITCH_RATE_DPS].setSetpoint(_pitchStickDPS);
-    _PIDS[YAW_RATE_DPS].setSetpoint(_yawStickDPS);
-    //!!TODO: filter the roll and stick angles
-    _PIDS[ROLL_ANGLE_DEGREES].setSetpoint(_rollStickDegrees);
-    _PIDS[PITCH_ANGLE_DEGREES].setSetpoint(_pitchStickDegrees);
+    _PIDS[YAW_RATE_DPS].setSetpoint(controls.yawStickDPS);
 
     // When in ground mode, the PID I-terms are set to zero to avoid integral windup on the ground
     if (_groundMode) {
         // exit ground mode if the throttle has been above _takeOffThrottleThreshold for _takeOffTickThreshold ticks
-        if (_throttleStick < _takeOffThrottleThreshold) {
+        if (_outputThrottle < _takeOffThrottleThreshold) {
             _takeOffCountStart = 0;
         } else {
+            const uint32_t tickCount = controls.tickCount;
             if (_takeOffCountStart == 0) {
                 _takeOffCountStart = tickCount;
             }
@@ -295,9 +304,8 @@ void FlightController::updateSetpoints(const controls_t& controls) // NOLINT(rea
 /*!
 Detect crash or yaw spin. Runs in context of Receiver Task.
 */
-void FlightController::detectCrashOrSpin(uint32_t tickCount)
+void FlightController::detectCrashOrSpin()
 {
-    (void)tickCount;
     if (_yawSpinThresholdDPS !=0.0F && fabsf(_PIDS[YAW_RATE_DPS].getPreviousMeasurement()) > _yawSpinThresholdDPS) {
         // yaw spin detected
         _yawSpinRecovery = true;
@@ -351,7 +359,7 @@ void FlightController::updateOutputsUsingPIDs(float deltaT)
 In angle mode, the roll and pitch angles are used to set the setpoints for the rollRate and pitchRate PIDs.
 In NFE(Not Fast Enough) Racer mode (aka level race mode) is equivalent to angle mode on roll and acro mode on pitch.
 */
-void FlightController::updateOutputsUsingPIDsAngleMode(const Quaternion& orientationENU, float deltaT)
+void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT)
 {
 
     // convert orientationENU from the ENU coordinate frame to the NED coordinate frame
@@ -365,10 +373,10 @@ void FlightController::updateOutputsUsingPIDsAngleMode(const Quaternion& orienta
     if (_angleModeUseQuaternionSpace) {
         // Runs the angle PIDs in "quaternion space" rather than "angle space",
         // avoiding the computationally expensive Quaternion::calculateRoll and Quaternion::calculatePitch
-        if (_angleModeCalculate == CALCULATE_ROLL) {
+        if (_angleModeCalculationState == STATE_CALCULATE_ROLL) {
             if (!_useAngleModeOnRollAcroModeOnPitch) {
                 // don't advance calculation to pitch axis when in level race mode
-                _angleModeCalculate = CALCULATE_PITCH;
+                _angleModeCalculationState = STATE_CALCULATE_PITCH;
             }
             _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
             const float rollSinAngleDelta = _rollAngleDTermFilter.filter(_rollSinAngle - _PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
@@ -377,7 +385,7 @@ void FlightController::updateOutputsUsingPIDsAngleMode(const Quaternion& orienta
             // a component of YAW changes roll, so update accordingly !!TODO:check sign
             _rollRateSetpointDPS -= yawRateSetpointDPS * _rollSinAngle;
         } else {
-            _angleModeCalculate = CALCULATE_ROLL;
+            _angleModeCalculationState = STATE_CALCULATE_ROLL;
             _pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
             const float pitchSinAngleDelta = _rollAngleDTermFilter.filter(_pitchSinAngle - _PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
             _outputs[PITCH_SIN_ANGLE] = _PIDS[PITCH_SIN_ANGLE].update(_pitchSinAngle, pitchSinAngleDelta, deltaT);
@@ -386,14 +394,14 @@ void FlightController::updateOutputsUsingPIDsAngleMode(const Quaternion& orienta
             _pitchRateSetpointDPS += yawRateSetpointDPS * _pitchSinAngle;
         }
     } else {
-        // calculate roll and pitch in the NED coordinate frame
-        // this is a computationally expensive calculation, so alternate between roll and pitch each time this function is called
         //!!TODO: this all needs checking, especially for scale
         //!!TODO: PID constants need to be scaled so these outputs are in the range [-1, 1]
-        if (_angleModeCalculate == CALCULATE_ROLL) {
+        // calculate roll rate and pitch rate setpoints in the NED coordinate frame
+        // this is a computationally expensive calculation, so alternate between roll and pitch each time this function is called
+        if (_angleModeCalculationState == STATE_CALCULATE_ROLL) {
             if (!_useAngleModeOnRollAcroModeOnPitch) {
                 // don't advance calculation to pitch axis when in level race mode
-                _angleModeCalculate = CALCULATE_PITCH;
+                _angleModeCalculationState = STATE_CALCULATE_PITCH;
             }
             _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
             _rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
@@ -402,7 +410,7 @@ void FlightController::updateOutputsUsingPIDsAngleMode(const Quaternion& orienta
             _rollRateSetpointDPS = _outputs[ROLL_ANGLE_DEGREES];
             _rollRateSetpointDPS -= yawRateSetpointDPS * _rollSinAngle;
         } else {
-            _angleModeCalculate = CALCULATE_ROLL;
+            _angleModeCalculationState = STATE_CALCULATE_ROLL;
             _pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
             _pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
             const float pitchAngleDelta = _pitchAngleDTermFilter.filter(_pitchAngleDegreesRaw - _PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
@@ -458,7 +466,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     }
 
     if (_useAngleMode) {
-        updateOutputsUsingPIDsAngleMode(orientationENU, deltaT);
+        updateRateSetpointsForAngleMode(orientationENU, deltaT);
     }
 
     // Use the PIDs to calculate the outputs for each axis.
@@ -467,19 +475,19 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
 
     const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
     const float rollRateDeltaDPS = _rollRateDTermFilter.filter(rollRateDPS - _PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
-    _outputs[ROLL_RATE_DPS] = _PIDS[ROLL_RATE_DPS].updateDelta(rollRateDPS, rollRateDeltaDPS*_TPA, deltaT);
+    _outputs[ROLL_RATE_DPS] = _PIDS[ROLL_RATE_DPS].updateDelta(rollRateDPS, _TPA*rollRateDeltaDPS, deltaT);
     // filter the output
     _outputs[ROLL_RATE_DPS] = _outputFilters[ROLL_RATE_DPS].filter(_outputs[ROLL_RATE_DPS]);
 
     const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
     const float pitchRateDeltaDPS = _pitchRateDTermFilter.filter(pitchRateDPS - _PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
-    _outputs[PITCH_RATE_DPS] = _PIDS[PITCH_RATE_DPS].updateDelta(pitchRateDPS, pitchRateDeltaDPS*_TPA, deltaT);
+    _outputs[PITCH_RATE_DPS] = _PIDS[PITCH_RATE_DPS].updateDelta(pitchRateDPS, _TPA*pitchRateDeltaDPS, deltaT);
     // filter the output
     _outputs[PITCH_RATE_DPS] = _outputFilters[PITCH_RATE_DPS].filter(_outputs[PITCH_RATE_DPS]);
 
-    // DTerm is zero for yawRate, so no DTerm filtering required
+    // DTerm is zero for yawRate, so use updatePI with no DTerm filtering _TPA
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
-    _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT);
+    _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].updatePI(yawRateDPS, deltaT);
     // filter the output
     _outputs[YAW_RATE_DPS] = _outputFilters[YAW_RATE_DPS].filter(_outputs[YAW_RATE_DPS]);
 

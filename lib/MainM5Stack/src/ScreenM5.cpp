@@ -120,7 +120,7 @@ Utility function to display a MAC address.
 */
 void ScreenM5::displayEUI(const char* prompt, const ReceiverBase::EUI_48_t& eui)
 {
-    M5.Lcd.printf("%s%02X:%02X:%02X:%02X:%02X:%02X", prompt, eui.octet[0], eui.octet[1], eui.octet[2], eui.octet[3], eui.octet[4], eui.octet[5]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    M5.Lcd.printf("%s%02X:%02X:%02X:%02X:%02X:%02X", prompt, eui.octets[0], eui.octets[1], eui.octets[2], eui.octets[3], eui.octets[4], eui.octets[5]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
 /*!
@@ -128,7 +128,7 @@ Utility function to display a MAC address in a compact format, for devices with 
 */
 void ScreenM5::displayEUI_Compact(const char* prompt, const ReceiverBase::EUI_48_t& eui)
 {
-    M5.Lcd.printf("%s%02x%02x%02x:%02x%02x%02x", prompt, eui.octet[0], eui.octet[1], eui.octet[2], eui.octet[3], eui.octet[4], eui.octet[5]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    M5.Lcd.printf("%s%02x%02x%02x:%02x%02x%02x", prompt, eui.octets[0], eui.octets[1], eui.octets[2], eui.octets[3], eui.octets[4], eui.octets[5]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
 void ScreenM5::updateTemplate128x128() const
@@ -178,15 +178,15 @@ void ScreenM5::updateReceivedData128x128() const
     const ReceiverBase::controls_t controls = _receiver.getControls();
 
     M5.Lcd.setCursor(12, yPos);
-    M5.Lcd.printf("%6d", controls.throttleStickQ12dot4);
+    M5.Lcd.printf("%7.3f", controls.throttle);
     M5.Lcd.setCursor(72, yPos);
-    M5.Lcd.printf("%6d", controls.rollStickQ12dot4);
+    M5.Lcd.printf("%7.3f", controls.roll);
 
     yPos += 10;
     M5.Lcd.setCursor(12, yPos);
-    M5.Lcd.printf("%6d", controls.pitchStickQ12dot4);
+    M5.Lcd.printf("%7.3f", controls.yaw);
     M5.Lcd.setCursor(72, yPos);
-    M5.Lcd.printf("%6d", controls.yawStickQ12dot4);
+    M5.Lcd.printf("%7.3f", controls.pitch);
 }
 
 void ScreenM5::update128x128(const TD_AHRS::data_t& ahrsData) const
@@ -246,15 +246,15 @@ void ScreenM5::updateReceivedData320x240() const
 
     M5.Lcd.setCursor(20, yPos);
     const ReceiverBase::controls_t controls = _receiver.getControls();
-    M5.Lcd.printf("%6d", controls.throttleStickQ12dot4);
+    M5.Lcd.printf("%8.4f", controls.throttle);
     M5.Lcd.setCursor(180, yPos);
-    M5.Lcd.printf("%6d", controls.rollStickQ12dot4);
+    M5.Lcd.printf("%8.4f", controls.roll);
 
     yPos += 20;
     M5.Lcd.setCursor(20, yPos);
-    M5.Lcd.printf("%6d", controls.yawStickQ12dot4);
+    M5.Lcd.printf("%8.4f", controls.yaw);
     M5.Lcd.setCursor(180, yPos);
-    M5.Lcd.printf("%6d", controls.pitchStickQ12dot4);
+    M5.Lcd.printf("%8.4f", controls.pitch);
 
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);

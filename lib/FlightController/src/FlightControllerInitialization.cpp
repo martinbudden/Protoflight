@@ -1,8 +1,31 @@
 #include "FlightController.h"
-#include "FlightControllerDefaults.h"
 
 #include <AHRS.h>
+#include <PIDF.h>
 
+
+constexpr FlightController::pidf_array_t flightControllerDefaultPIDs = {
+    {
+        { 0.65F,    0.0F,   0.010F, 0.00F, 0.00F }, // roll rate
+        { 0.95F,    0.0F,   0.025F, 0.00F, 0.00F }, // pitch rate
+        { 0.50F,    0.0F,   0.010F, 0.00F, 0.00F }, // yaw rate
+        { 5.00F,    0.0F,   0.040F, 0.00F, 0.00F }, // roll angle
+        { 5.00F,    0.0F,   0.040F, 0.00F, 0.00F }, // pitch angle
+        { 1.00F,    0.0F,   0.010F, 0.00F, 0.00F }, // roll sin angle
+        { 1.00F,    0.0F,   0.010F, 0.00F, 0.00F }  // pitch sin angle
+    }
+};
+constexpr FlightController::pidf_array_t flightControllerScaleFactors = {
+    {
+        { 0.01F,    0.01F,   0.001F, 0.1F, 0.1F }, // roll rate
+        { 0.01F,    0.01F,   0.001F, 0.1F, 0.1F }, // pitch rate
+        { 0.01F,    0.01F,   0.001F, 0.1F, 0.1F }, // yaw rate
+        { 0.01F,    0.01F,   0.001F, 0.1F, 0.1F }, // roll angle
+        { 0.01F,    0.01F,   0.001F, 0.1F, 0.1F }, // pitch angle
+        { 0.01F,    0.01F,   0.001F, 0.1F, 0.1F }, // roll sin angle
+        { 0.01F,    0.01F,   0.001F, 0.1F, 0.1F }  // pitch sin angle
+    }
+};
 
 /*!
 Constructor. Sets member data.
@@ -13,40 +36,9 @@ FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, M
     _radioController(radioController),
     _debug(debug),
     _taskDenominator(taskDenominator),
-    _scaleFactors(gScaleFactors)
+    _scaleFactors(flightControllerScaleFactors)
 {
     for (size_t ii = 0; ii < PID_COUNT; ++ii) {
-        _PIDS[ii].setPID(gDefaultPIDs[ii]);
+        _PIDS[ii].setPID(flightControllerDefaultPIDs[ii]);
     };
-    const filters_config_t filtersConfig = {
-        .dterm_lpf1_hz = 100,
-        .dterm_lpf2_hz = 0,
-        .dterm_notch_hz = 0,
-        .dterm_notch_cutoff =160,
-        .dterm_dynamic_lpf1_min_hz = 0,
-        .dterm_dynamic_lpf1_max_hz = 0,
-        .yaw_lpf_hz = 0,
-        .dterm_lpf1_type = filters_config_t::PT1,
-        .dterm_lpf2_type = filters_config_t::PT1
-    };
-    setFiltersConfig(filtersConfig);
-
-    const float deltaT = (static_cast<float>(ahrs.getTaskIntervalMicroSeconds()) * 0.000001F) / static_cast<float>(taskDenominator);
-    _rollRateDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
-    _pitchRateDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
-    _rollAngleDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
-    _pitchAngleDTermFilter.setCutoffFrequency(filtersConfig.dterm_lpf1_hz, deltaT);
-
-#if false
-    // set the motor output filters to passthrough, by default
-    _outputFilters[ROLL_RATE_DPS].setToPassthrough();
-    _outputFilters[PITCH_RATE_DPS].setToPassthrough();
-    _outputFilters[YAW_RATE_DPS].setToPassthrough();
-#else
-    enum { DEFAULT_OUTPUT_FILTER_CUTOFF_FREQUENCY_HZ = 500 };
-    const float ahrsDeltaT = static_cast<float>(ahrs.getTaskIntervalMicroSeconds()) * 0.000001F;
-    _outputFilters[ROLL_RATE_DPS].setCutoffFrequency(DEFAULT_OUTPUT_FILTER_CUTOFF_FREQUENCY_HZ, ahrsDeltaT);
-    _outputFilters[PITCH_RATE_DPS].setCutoffFrequency(DEFAULT_OUTPUT_FILTER_CUTOFF_FREQUENCY_HZ, ahrsDeltaT);
-    _outputFilters[YAW_RATE_DPS].setCutoffFrequency(DEFAULT_OUTPUT_FILTER_CUTOFF_FREQUENCY_HZ, ahrsDeltaT);
-#endif
 }

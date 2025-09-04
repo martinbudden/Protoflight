@@ -82,17 +82,17 @@ void Main::setup()
     enum { RECEIVER_CHANNEL = 3 };
 #endif
     static ReceiverAtomJoyStick receiver(&myMacAddress[0], RECEIVER_CHANNEL);
-    static RadioController radioController(receiver, nvs.loadRadioControllerRates());
+    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad());
     const esp_err_t espErr = receiver.init();
     Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
     assert(espErr == ESP_OK && "Unable to setup receiver.");
 #else
 #if defined(USE_RECEIVER_SBUS)
-    static ReceiverSBUS receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::SBUS_BAUD_RATE);
+    static ReceiverSBUS receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
 #else
     static ReceiverNull receiver;
 #endif
-    static RadioController radioController(receiver, nvs.loadRadioControllerRates());
+    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad());
 #endif // LIBRARY_RECEIVER_USE_ESPNOW
 
     // create the IMU and get its sample rate
@@ -120,7 +120,7 @@ void Main::setup()
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
-    static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(), AHRS_taskIntervalMicroSeconds / FC_TASK_DENOMINATOR, debug);
+    static DynamicIdleController dynamicIdleController(nvs.DynamicIdleControllerConfigLoad(), AHRS_taskIntervalMicroSeconds / FC_TASK_DENOMINATOR, debug);
 #if defined(FRAMEWORK_ARDUINO_STM32)
     static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS, rpmFilters, dynamicIdleController);
 #else
@@ -137,7 +137,7 @@ void Main::setup()
 
     // statically allocate the IMU_Filters
     static IMU_Filters imuFilters(motorMixer, AHRS_taskIntervalMicroSeconds);
-    imuFilters.setConfig(nvs.loadImuFiltersConfig());
+    imuFilters.setConfig(nvs.ImuFiltersConfigLoad());
 #if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     imuFilters.setRPM_Filters(&rpmFilters);
 #endif
@@ -147,6 +147,7 @@ void Main::setup()
 
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
+    flightController.setFiltersConfig(nvs.FlightControllerFiltersConfigLoad());
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
 

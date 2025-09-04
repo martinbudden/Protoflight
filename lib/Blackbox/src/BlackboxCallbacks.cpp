@@ -111,10 +111,10 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
 
     // interval [1000,2000] for THROTTLE and [-500,+500] for ROLL/PITCH/YAW
     const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM(); // returns controls in range [1000, 2000]
-    mainState.rcCommand[0] = static_cast<int16_t>(controls.rollStick - ReceiverBase::CHANNEL_MIDDLE);
-    mainState.rcCommand[1] = static_cast<int16_t>(controls.pitchStick - ReceiverBase::CHANNEL_MIDDLE);
-    mainState.rcCommand[2] = static_cast<int16_t>(controls.yawStick - ReceiverBase::CHANNEL_MIDDLE);
-    mainState.rcCommand[3] = controls.throttleStick;
+    mainState.rcCommand[0] = static_cast<int16_t>(controls.roll - ReceiverBase::CHANNEL_MIDDLE);
+    mainState.rcCommand[1] = static_cast<int16_t>(controls.pitch - ReceiverBase::CHANNEL_MIDDLE);
+    mainState.rcCommand[2] = static_cast<int16_t>(controls.yaw - ReceiverBase::CHANNEL_MIDDLE);
+    mainState.rcCommand[3] = controls.throttle;
 
     static_assert(static_cast<int>(blackboxMainState_t::DEBUG_VALUE_COUNT) == static_cast<int>(Debug::VALUE_COUNT));
     for (int ii = 0; ii < blackboxMainState_t::DEBUG_VALUE_COUNT; ++ii) {

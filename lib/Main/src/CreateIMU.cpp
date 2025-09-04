@@ -22,19 +22,23 @@ IMU_Base& Main::createIMU(int32_t& imuSampleRateHz)
     // Statically allocate the IMU according the the build flags
 // NOLINTBEGIN(misc-const-correctness) false positive
 #if defined(LIBRARY_IMU_USE_SPI_BUS)
-    static constexpr uint32_t spiFrequency = 20000000;
+    enum { SPI_8_MEGAHERTZ = 8000000, SPI_10_MEGAHERTZ = 10000000, SPI_20_MEGAHERTZ = 20000000 };
 #if defined(USE_IMU_MPU6886)
-    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, SPI_10_MEGAHERTZ, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
 #elif defined(USE_IMU_MPU6000)
-    static IMU_MPU6000 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, BUS_SPI::IMU_SPI_PINS);
+    static IMU_MPU6000 imuSensor(IMU_AXIS_ORDER, SPI_20_MEGAHERTZ, BUS_SPI::SPI_INDEX_0, BUS_SPI::IMU_SPI_PINS);
 #elif defined(USE_IMU_BMI270)
-    static IMU_BMI270 imuSensor(IMU_AXIS_ORDER, spiFrequency,  BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+    static IMU_BMI270 imuSensor(IMU_AXIS_ORDER, SPI_20_MEGAHERTZ,  BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
 #elif defined(USE_IMU_BNO085)
-    static IMU_BNO085 imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+    static IMU_BNO085 imuSensor(IMU_AXIS_ORDER, SPI_20_MEGAHERTZ, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+#elif defined(USE_IMU_ICM20602)
+    static IMU_ICM20602 imuSensor(IMU_AXIS_ORDER, SPI_10_MEGAHERTZ, BUS_SPI::SPI_INDEX_0, BUS_SPI::IMU_SPI_PINS);
+#elif defined(USE_IMU_ICM20608)
+    static IMU_ICM20608 imuSensor(IMU_AXIS_ORDER, SPI_8_MEGAHERTZ, BUS_SPI::SPI_INDEX_0, BUS_SPI::IMU_SPI_PINS);
 #elif defined(USE_IMU_ICM426XX)
-    static IMU_ICM426xx imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::SPI_INDEX_0, pins);
+    static IMU_ICM426xx imuSensor(IMU_AXIS_ORDER, SPI_20_MEGAHERTZ, BUS_SPI::SPI_INDEX_0, BUS_SPI::IMU_SPI_PINS);
 #elif defined(USE_IMU_LSM6DS3TR_C) || defined(USE_IMU_ISM330DHCX) || defined(USE_LSM6DSOX)
-    static IMU_LSM6DS3TR_C imuSensor(IMU_AXIS_ORDER, spiFrequency, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+    static IMU_LSM6DS3TR_C imuSensor(IMU_AXIS_ORDER, SPI_20_MEGAHERTZ, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
 #else
     static_assert(false);
 #endif

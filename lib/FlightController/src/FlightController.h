@@ -106,6 +106,7 @@ public:
         uint16_t yaw_lpf_hz;
         uint8_t dterm_lpf1_type;
         uint8_t dterm_lpf2_type;
+        uint16_t output_lpf_hz;
     };
     struct controls_t {
         uint32_t tickCount;
@@ -175,13 +176,13 @@ public:
 public:
     [[noreturn]] static void Task(void* arg);
 public:
-    void detectCrashOrSpin(uint32_t tickCount);
+    void detectCrashOrSpin();
     void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _yawSpinThresholdDPS = yawSpinThresholdDPS; }
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
     void updateSetpoints(const controls_t& controls);
-    void updateOutputsUsingPIDs(float deltaT);
-    void updateOutputsUsingPIDsAngleMode(const Quaternion& orientationENU, float deltaT);
+    void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
     virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
+    void updateOutputsUsingPIDs(float deltaT);
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 private:
     MotorMixerBase& motorMixer(uint32_t taskIntervalMicroSeconds);
@@ -197,8 +198,6 @@ private:
     uint32_t _useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
     uint32_t _useAngleModeOnRollAcroModeOnPitch {false}; // used for "level race mode" aka "NFE race mode"
 
-    float _mixerThrottle {0.0F};
-
     // ground mode handling
     int _groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
     float _takeOffThrottleThreshold {0.2F};
@@ -206,45 +205,41 @@ private:
     uint32_t _takeOffCountStart {0};
     uint32_t _takeOffTickThreshold {1000};
 
-    // throttleStick value scaled to the range [-1,0, 1.0]
-    float _throttleStick {0};
+    // throttle value is scaled to the range [-1,0, 1.0]
     float _TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
     float _TPA_multiplier {0.0F};
     float _TPA_breakpoint {0.6F};
 
-    // by the time these are set, stick values have been converted to DPS
-    float _rollStickDPS {0.0F};
-    float _pitchStickDPS {0.0F};
-    float _yawStickDPS {0.0F};
-    float _maxRollRateDPS {500.0F};
-    float _maxPitchRateDPS {500.0F};
     // angle mode data
-    enum { CALCULATE_ROLL, CALCULATE_PITCH };
-    uint32_t _angleModeCalculate { CALCULATE_ROLL };
+    enum { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
+    uint32_t _angleModeCalculationState { STATE_CALCULATE_ROLL };
     uint32_t _angleModeUseQuaternionSpace {false};
-    float _rollStickDegrees {0.0F}; // roll stick in degrees
+    float _maxRollRateDPS {500.0F};
     float _rollStickSinAngle {0.0F};
     float _rollRateSetpointDPS {0.0F};
     float _rollSinAngle {0.0F};
-    float _pitchStickDegrees {0.0F}; // pitch stick in degrees
+    float _maxPitchRateDPS {500.0F};
     float _pitchStickSinAngle {0.0F};
     float _pitchRateSetpointDPS {0.0F};
     float _pitchSinAngle {0.0F};
+
+    float _outputThrottle {0.0F};
+    float _rollRateAtMaxPowerDPS {1000.0};
+    float _pitchRateAtMaxPowerDPS {1000.0};
+    float _yawRateAtMaxPowerDPS {1000.0};
+
+    // yaw spin recovery
+    uint32_t _yawSpinRecovery { false };
+    float _yawSpinThresholdDPS {0.0F};
+    float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };
+    float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };
 
     std::array<PIDF, PID_COUNT> _PIDS {};
     std::array<float, PID_COUNT> _outputs {}; //<! PID outputs. These are stored since the output from one PID may be used as the input to another
     std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> _outputFilters;
     const std::array<PIDF::PIDF_t, PID_COUNT> _scaleFactors;
-    float _rollRateAtMaxPowerDPS {1000.0};
-    float _pitchRateAtMaxPowerDPS {1000.0};
-    float _yawRateAtMaxPowerDPS {1000.0};
-    float _outputThrottle {0.0F};
-    float _yawSpinThresholdDPS {0.0F};
-    uint32_t _yawSpinRecovery { false };
-    float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };
-    float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };
-    uint32_t _crashRecovery { false };
 
+    // DTerm filters
     filters_config_t _filtersConfig {};
     PowerTransferFilter1 _rollRateDTermFilter {};
     PowerTransferFilter1 _pitchRateDTermFilter {};
