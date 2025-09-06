@@ -103,7 +103,7 @@ private:
     static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);
     static void setPIDsFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);
     static void reportMainTask();
-    static void printTaskInfo(TaskBase::task_info_t& taskInfo, uint32_t taskIntervalMicroSeconds);
+    static void printTaskInfo(TaskBase::task_info_t& taskInfo);
     struct tasks_t {
         MainTask* mainTask;
         AHRS_Task* ahrsTask;

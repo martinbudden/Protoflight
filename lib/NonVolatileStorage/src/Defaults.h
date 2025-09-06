@@ -59,7 +59,16 @@ static const IMU_Filters::config_t imuFiltersConfig = {
     .rpm_filter_min_hz = 100
 };
 
-static const RadioController::rates_t radioControllerRates {
+static const RadioController::failsafe_t radioControllerFailsafe = {
+    .delay = 15,
+    .landing_time = 60,
+    .switch_mode = 0,
+    .procedure = 0,
+    .throttle = 1000,
+    .throttle_low_delay = 100
+};
+
+static const RadioController::rates_t radioControllerRates = {
     .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },

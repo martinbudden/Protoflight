@@ -49,8 +49,7 @@ int MSP_Serial::sendFrame(const uint8_t* hdr, int hdrLen, const uint8_t* data, i
     // buffer empty if Serial.availableForWrite() >= SERIAL_TX_BUFFER_SIZE - 1
     // if (totalFrameLength <= Serial.availableForWrite())
 
-    static std::array<uint8_t, 256> buf;
-    StreamBuf sbuf(&buf[0], sizeof(buf));
+    StreamBuf sbuf(&_buffer[0], sizeof(_buffer));
 
     // copy the frame into a StreamBuf
     sbuf.writeData(hdr, hdrLen);
@@ -59,7 +58,8 @@ int MSP_Serial::sendFrame(const uint8_t* hdr, int hdrLen, const uint8_t* data, i
     sbuf.switchToReader();
 
     while (sbuf.bytesRemaining() > 0) {
-        const int writeLen = Serial.availableForWrite();
+        const size_t available = Serial.availableForWrite();
+        const size_t writeLen = std::min(available, sbuf.bytesRemaining());
         Serial.write(sbuf.ptr(), writeLen);
         sbuf.advance(writeLen);
         delay(1);

@@ -22,11 +22,13 @@
 
 //NOLINTBEGIN(modernize-macro-to-enum)
 
-#define FC_FIRMWARE_NAME            "ProtoFlight"
-#define FC_FIRMWARE_IDENTIFIER      "PTFL"
-#define FC_VERSION_MAJOR            0  // increment when a major release is made (big new feature, etc)
-#define FC_VERSION_MINOR            0  // increment when a minor release is made (small new feature, change etc)
-#define FC_VERSION_PATCH_LEVEL      1  // increment when a bug is fixed
+//#define FC_FIRMWARE_NAME            "ProtoFlight"
+//#define FC_FIRMWARE_IDENTIFIER      "PTFL"
+#define FC_FIRMWARE_NAME            "Betaflight"
+#define FC_FIRMWARE_IDENTIFIER      "BTFL"
+#define FC_VERSION_MAJOR            4  // increment when a major release is made (big new feature, etc)
+#define FC_VERSION_MINOR            5  // increment when a minor release is made (small new feature, change etc)
+#define FC_VERSION_PATCH_LEVEL      0  // increment when a bug is fixed
 
 #define FC_VERSION_STRING STR(FC_VERSION_MAJOR) "." STR(FC_VERSION_MINOR) "." STR(FC_VERSION_PATCH_LEVEL)
 

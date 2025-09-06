@@ -231,20 +231,28 @@ void Main::setup()
     _tasks.mainTask = &mainTask;
     reportMainTask();
     TaskBase::task_info_t taskInfo {};
+
     _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroSeconds);
-    printTaskInfo(taskInfo, AHRS_taskIntervalMicroSeconds);
+    taskInfo.taskIntervalMicroSeconds = AHRS_taskIntervalMicroSeconds;
+    printTaskInfo(taskInfo);
+
     _tasks.flightControllerTask = VehicleControllerTask::createTask(taskInfo, flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
-    printTaskInfo(taskInfo, 0);
+    taskInfo.taskIntervalMicroSeconds = 0;
+    printTaskInfo(taskInfo);
+
     _tasks.receiverTask = ReceiverTask::createTask(taskInfo, receiver, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo, RECEIVER_TASK_INTERVAL_MICROSECONDS);
+    taskInfo.taskIntervalMicroSeconds = RECEIVER_TASK_INTERVAL_MICROSECONDS;
+    printTaskInfo(taskInfo);
 #if defined(USE_MSP)
     _tasks.mspTask = MSP_Task::createTask(taskInfo, mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo, MSP_TASK_INTERVAL_MICROSECONDS);
+    taskInfo.taskIntervalMicroSeconds = MSP_TASK_INTERVAL_MICROSECONDS;
+    printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BLACKBOX)
     blackboxCallbacks.setUseMessageQueue(true);
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
+    taskInfo.taskIntervalMicroSeconds = BLACKBOX_TASK_INTERVAL_MICROSECONDS;
+    printTaskInfo(taskInfo);
     //vTaskResume(taskInfo.taskHandle);
 #endif
 
@@ -266,7 +274,8 @@ void Main::setup()
     );
 
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
+    taskInfo.taskIntervalMicroSeconds = BACKCHANNEL_TASK_INTERVAL_MICROSECONDS;
+    printTaskInfo(taskInfo);
 #endif
 }
 
@@ -322,13 +331,14 @@ void Main::reportMainTask()
 #endif
 }
 
-void Main::printTaskInfo(TaskBase::task_info_t& taskInfo, uint32_t taskIntervalMicroSeconds)
+void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
 {
 #if defined(FRAMEWORK_ARDUINO_ESP32)
-    if (taskIntervalMicroSeconds == 0) {
-        Serial.printf("**** %s, %.*s core:%u, priority:%u, interrupt driven\r\n",   taskInfo.name, 18 - strlen(taskInfo.name), "                ", taskInfo.coreID, taskInfo.priority);
+    Serial.printf("**** %s, %.*s core:%u, priority:%u, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", taskInfo.coreID, taskInfo.priority);
+    if (taskInfo.taskIntervalMicroSeconds == 0) {
+        Serial.printf("interrupt driven\r\n");
     } else {
-        Serial.printf("**** %s, %.*s core:%u, priority:%u, task interval:%ums\r\n", taskInfo.name, 18 - strlen(taskInfo.name), "                ", taskInfo.coreID, taskInfo.priority, taskIntervalMicroSeconds / 1000);
+        Serial.printf("task interval:%ums\r\n", taskInfo.taskIntervalMicroSeconds / 1000);
     }
 #endif
 }
@@ -393,14 +403,8 @@ void Main::setPIDsFromNonVolatileStorage(NonVolatileStorage& nvs, FlightControll
 
 /*!
 The main loop handles:
-1. Input from the receiver(joystick)
-2. Input from the backchannel(PID tuning).
-3. Input from the buttons
-4. Output to the backchannel(telemetry).
-5. Output to the screen
-
-The IMU(Inertial Measurement Unit) is read in the AHRS(Attitude and Heading Reference System) task.
-The motors are controlled in the FlightController task.
+1. Output to the screen
+2. Input from the buttons
 */
 void MainTask::loop()
 {

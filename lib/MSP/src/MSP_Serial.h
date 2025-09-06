@@ -3,6 +3,9 @@
 #include "MSP_SerialBase.h"
 #include "MSP_Stream.h"
 
+#include <array>
+
+
 class MSP_Serial : public MSP_SerialBase {
 public:
     explicit MSP_Serial(MSP_Stream& mspStream) : _mspStream(mspStream) {}
@@ -13,4 +16,5 @@ public:
 
 private:
     MSP_Stream& _mspStream;
+    std::array<uint8_t, 256> _buffer;
 };

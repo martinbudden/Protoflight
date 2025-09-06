@@ -16,9 +16,10 @@ const std::array<std::string, FlightController::PID_COUNT> NonVolatileStorage::P
     "PITCH_SIN_ANGLE"
 };
 
+const char* NonVolatileStorage::DynamicIdleControllerConfigKey = "DIC";
 const char* NonVolatileStorage::FlightControllerFiltersConfigKey = "FCF";
 const char* NonVolatileStorage::ImuFiltersConfigKey = "IF";
-const char* NonVolatileStorage::DynamicIdleControllerConfigKey = "DIC";
+const char* NonVolatileStorage::RadioControllerFailsafeKey = "RCF";
 const char* NonVolatileStorage::RadioControllerRatesKey = "RCR";
 const char* NonVolatileStorage::AccOffsetKey = "ACC";
 const char* NonVolatileStorage::GyroOffsetKey = "GYR";
@@ -161,6 +162,34 @@ void NonVolatileStorage::ImuFiltersConfigStore(const IMU_Filters::config_t& conf
     }
 #else
     (void)config;
+#endif
+}
+
+RadioController::failsafe_t NonVolatileStorage::RadioControllerFailsafeLoad()
+{
+#if defined(USE_ARDUINO_ESP32_PREFERENCES)
+    if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
+        if (_preferences.isKey(RadioControllerFailsafeKey)) {
+            RadioController::failsafe_t failsafe {};
+            _preferences.getBytes(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe));
+            _preferences.end();
+            return failsafe;
+        }
+        _preferences.end();
+    }
+#endif
+    return DEFAULTS::radioControllerFailsafe;
+}
+
+void NonVolatileStorage::RadioControllerFailsafeStore(const RadioController::failsafe_t& failsafe)
+{
+#if defined(USE_ARDUINO_ESP32_PREFERENCES)
+    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
+        _preferences.putBytes(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe));
+        _preferences.end();
+    }
+#else
+    (void)rates;
 #endif
 }
 

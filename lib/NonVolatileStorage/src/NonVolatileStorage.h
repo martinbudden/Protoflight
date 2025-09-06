@@ -68,6 +68,10 @@ public:
     IMU_Filters::config_t ImuFiltersConfigLoad() const;
     void ImuFiltersConfigStore(const IMU_Filters::config_t& config);
 
+    static const char* RadioControllerFailsafeKey;
+    RadioController::failsafe_t RadioControllerFailsafeLoad();
+    void RadioControllerFailsafeStore(const RadioController::failsafe_t& failsafe);
+
     static const char* RadioControllerRatesKey;
     RadioController::rates_t RadioControllerRatesLoad() const;
     void RadioControllerRatesStore(const RadioController::rates_t& rates);
