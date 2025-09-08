@@ -16,5 +16,5 @@ public:
 
 private:
     MSP_Stream& _mspStream;
-    std::array<uint8_t, 256> _buffer;
+    std::array<uint8_t, 256> _buffer {};
 };

@@ -50,7 +50,7 @@ public:
     // NOTE: "get" functions are declared const, since they are logically const, although not physically const
 
     NonVolatileStorage();
-    NonVolatileStorage(uint32_t flashMemorySize);
+    explicit NonVolatileStorage(uint32_t flashMemorySize);
     void init();
     static size_t min(size_t a, uint16_t b) { return a > b ? b : a; }
     int32_t clear();

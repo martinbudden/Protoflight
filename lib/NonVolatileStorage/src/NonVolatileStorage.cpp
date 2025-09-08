@@ -49,7 +49,7 @@ NonVolatileStorage::NonVolatileStorage(uint32_t flashMemorySize)
 }
 
 NonVolatileStorage::NonVolatileStorage() :
-    NonVolatileStorage(0)
+    NonVolatileStorage(4096)
 {
 }
 
@@ -154,9 +154,8 @@ int32_t NonVolatileStorage::DynamicIdleControllerConfigStore(const DynamicIdleCo
         // value is the same as default, so no need to store it
         _flashKLV.remove(DynamicIdleControllerConfigKey);
         return OK_IS_DEFAULT;
-    } else {
-        return _flashKLV.write(DynamicIdleControllerConfigKey, sizeof(config), &config);
     }
+    return _flashKLV.write(DynamicIdleControllerConfigKey, sizeof(config), &config);
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
         _preferences.putBytes(DynamicIdleControllerConfigKey, &config, sizeof(config));
@@ -199,9 +198,8 @@ int32_t NonVolatileStorage::FlightControllerFiltersConfigStore(const FlightContr
         // value is the same as default, so no need to store it
         _flashKLV.remove(FlightControllerFiltersConfigKey);
         return OK_IS_DEFAULT;
-    } else {
-        return _flashKLV.write(FlightControllerFiltersConfigKey, sizeof(config), &config);
     }
+    return _flashKLV.write(FlightControllerFiltersConfigKey, sizeof(config), &config);
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
         _preferences.putBytes(FlightControllerFiltersConfigKey, &config, sizeof(config));
@@ -243,9 +241,8 @@ int32_t NonVolatileStorage::ImuFiltersConfigStore(const IMU_Filters::config_t& c
         // value is the same as default, so no need to store it
         _flashKLV.remove(ImuFiltersConfigKey);
         return OK_IS_DEFAULT;
-    } else {
-        return _flashKLV.write(ImuFiltersConfigKey, sizeof(config), &config);
     }
+    return _flashKLV.write(ImuFiltersConfigKey, sizeof(config), &config);
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
         _preferences.putBytes(ImuFiltersConfigKey, &config, sizeof(config));
@@ -287,9 +284,8 @@ int32_t NonVolatileStorage::RadioControllerFailsafeStore(const RadioController::
         // value is the same as default, so no need to store it
         _flashKLV.remove(RadioControllerFailsafeKey);
         return OK_IS_DEFAULT;
-    } else {
-        return _flashKLV.write(RadioControllerFailsafeKey, sizeof(failsafe), &failsafe);
     }
+    return _flashKLV.write(RadioControllerFailsafeKey, sizeof(failsafe), &failsafe);
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
         _preferences.putBytes(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe));
@@ -331,9 +327,8 @@ int32_t NonVolatileStorage::RadioControllerRatesStore(const RadioController::rat
         // value is the same as default, so no need to store it
         _flashKLV.remove(RadioControllerRatesKey);
         return OK_IS_DEFAULT;
-    } else {
-        return _flashKLV.write(RadioControllerRatesKey, sizeof(rates), &rates);
     }
+    return _flashKLV.write(RadioControllerRatesKey, sizeof(rates), &rates);
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
         _preferences.putBytes(RadioControllerRatesKey, &rates, sizeof(rates));
@@ -371,14 +366,13 @@ PIDF::PIDF_t NonVolatileStorage::PID_load(uint8_t index) const
 int32_t NonVolatileStorage::PID_store(uint8_t index, const PIDF::PIDF_t& pid)
 {
 #if defined(USE_FLASH_KLV)
-    const uint32_t key = PID_Keys[index];
+    const uint16_t key = PID_Keys[index];
     if (!memcmp(&DEFAULTS::flightControllerDefaultPIDs[index], &pid, sizeof(pid))) {
         // value is the same as default, so no need to store it
         _flashKLV.remove(key);
         return OK_IS_DEFAULT;
-    } else {
-        return _flashKLV.write(key, sizeof(pid), &pid);
     }
+    return _flashKLV.write(key, sizeof(pid), &pid);
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
         _preferences.putBytes(PID_Keys[index].c_str(), &pid, sizeof(pid));
@@ -396,7 +390,7 @@ int32_t NonVolatileStorage::PID_store(uint8_t index, const PIDF::PIDF_t& pid)
 bool NonVolatileStorage::AccOffsetLoad(int32_t& x, int32_t& y, int32_t& z) const
 {
 #if defined(USE_FLASH_KLV)
-    xyz_int32_t xyz {};
+    xyz_int32_t xyz {}; // NOLINT(misc-const-correctness)
     if (FlashKLV::OK == _flashKLV.read(&xyz, sizeof(xyz), AccOffsetKey)) {
         x = xyz.x;
         y = xyz.y;
@@ -446,7 +440,7 @@ int32_t NonVolatileStorage::AccOffsetStore(int32_t x, int32_t y, int32_t z)
 bool NonVolatileStorage::GyroOffsetLoad(int32_t& x, int32_t& y, int32_t& z) const
 {
 #if defined(USE_FLASH_KLV)
-    xyz_int32_t xyz {};
+    xyz_int32_t xyz {}; // NOLINT(misc-const-correctness)
     if (FlashKLV::OK == _flashKLV.read(&xyz, sizeof(xyz), GyroOffsetKey)) {
         x = xyz.x;
         y = xyz.y;

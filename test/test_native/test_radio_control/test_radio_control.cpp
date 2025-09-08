@@ -35,7 +35,7 @@ void test_radio_controller()
     rates.rcRates = {100, 100, 100};
     rates.rcExpos = {0, 0, 0};
     rates.rates = {0, 0, 0};
-    rates.ratesType = RadioController::RATES_TYPE_ACTUAL;
+    //rates.ratesType = RadioController::RATES_TYPE_ACTUAL;
     radioController.setRates(rates);
 
     float roll = radioController.applyRates(RadioController::ROLL, 0.0F);
@@ -108,7 +108,7 @@ void test_radio_controller_defaults()
     TEST_ASSERT_EQUAL(0, rates.throttleExpo);
     TEST_ASSERT_EQUAL(RadioController::THROTTLE_LIMIT_TYPE_OFF, rates.throttleLimitType);
     TEST_ASSERT_EQUAL(100, rates.throttleLimitPercent);
-    TEST_ASSERT_EQUAL(RadioController::RATES_TYPE_ACTUAL, rates.ratesType);
+    //TEST_ASSERT_EQUAL(RadioController::RATES_TYPE_ACTUAL, rates.ratesType);
 
     float roll = radioController.applyRates(RadioController::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);

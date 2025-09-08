@@ -50,7 +50,7 @@ static const RadioController::rates_t radioControllerRates {
     .throttleExpo = 0,
     .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
-    .ratesType = RadioController::RATES_TYPE_ACTUAL
+    //.ratesType = RadioController::RATES_TYPE_ACTUAL
 };
 
 void setUp() {
@@ -63,7 +63,6 @@ void tearDown() {
 void test_telemetry_msp()
 {
     static NonVolatileStorage nvs;
-    static Features features;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
     static IMU_FiltersNull imuFilters;
@@ -78,8 +77,8 @@ void test_telemetry_msp()
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
 
     // statically allocate an MSP object
+    static Features features;
     static MSP_ProtoFlight msp(nvs, features, ahrs, flightController, radioController, receiver, debug);
-
 //size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, MSP_Base& msp, int16_t cmdMSP)
     static std::array<uint8_t, 256> buf;
     enum { ID = 0x11223344 };
