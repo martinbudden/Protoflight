@@ -14,7 +14,7 @@ class IMU_Filters : public IMU_FiltersBase {
 public:
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
     struct config_t {
-        enum { PT1 = 0, BIQUAD, PT2, PT3 }; // filter types
+        enum { PT1 = 0, BIQUAD, PT2, PT3, NOT_SET = 0xFF }; // filter types
         uint16_t gyro_notch1_hz;
         uint16_t gyro_notch1_cutoff;
         uint16_t gyro_notch2_hz;
@@ -25,7 +25,7 @@ public:
         uint16_t gyro_dynamic_lpf1_max_hz;
         uint8_t gyro_lpf1_type;
         uint8_t gyro_lpf2_type;
-        uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
+        // uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
         uint8_t rpm_filter_harmonics;
         uint8_t rpm_filter_min_hz;
     };

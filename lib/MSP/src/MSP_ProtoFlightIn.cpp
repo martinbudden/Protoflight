@@ -166,7 +166,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
         }
         // version 1.43
         if (src.bytesRemaining() >= 1) {
-            rates.ratesType = src.readU8();
+            src.readU8(); // hardcoded to RATES_TYPE_ACTUAL
         }
         _radioController.setRates(rates);
         break;
@@ -218,7 +218,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             fcFilters.dterm_lpf1_type = src.readU8();
         }
         if (src.bytesRemaining() >= 10) {
-            imuFiltersConfig.gyro_hardware_lpf = src.readU8();
+            src.readU8(); // ignored gyro_hardware_lpf set in driver
             src.readU8(); // was gyro_32khz_hardware_lpf
             imuFiltersConfig.gyro_lpf1_hz = src.readU16();
             imuFiltersConfig.gyro_lpf2_hz = src.readU16();

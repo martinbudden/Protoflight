@@ -39,6 +39,10 @@ void IMU_Filters::setConfig(const config_t& config)
         _gyroLPF1 = &_gyroLPF1Biquad;
         break;
     }
+    case config_t::NOT_SET:
+        _gyroLPF1PT1.setToPassthrough();
+        _gyroLPF1 = &_gyroLPF1PT1;
+        break;
     case config_t::PT3:
         // just use PT2 if PT3 specified
         [[fallthrough]];

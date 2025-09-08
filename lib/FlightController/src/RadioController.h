@@ -23,7 +23,7 @@ public:
         uint8_t throttleExpo;
         uint8_t throttleLimitType; // not used
         uint8_t throttleLimitPercent; // Sets the maximum pilot commanded throttle limit
-        uint8_t ratesType; // not used
+        //uint8_t ratesType; // not used
     };
     enum failsafe_phase_e {
         FAILSAFE_IDLE = 0,

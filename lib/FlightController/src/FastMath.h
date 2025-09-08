@@ -99,7 +99,7 @@ private:
 public:
     static inline float sin(float x) {
         const float t = x * TWO_OVER_PI;
-        const float q = roundf(t);       
+        const float q = roundf(t);
         const float r = t - q;
         return sinQuadrant(r, static_cast<int>(q));
     }

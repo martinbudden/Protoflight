@@ -54,7 +54,6 @@ static const IMU_Filters::config_t imuFiltersConfig = {
     .gyro_dynamic_lpf1_max_hz = 0,
     .gyro_lpf1_type = 0,
     .gyro_lpf2_type = IMU_Filters::config_t::PT1,
-    .gyro_hardware_lpf = 0,
     .rpm_filter_harmonics = RPM_Filters::USE_FUNDAMENTAL_ONLY,
     .rpm_filter_min_hz = 100
 };
@@ -77,7 +76,7 @@ static const RadioController::rates_t radioControllerRates = {
     .throttleExpo = 0,
     .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
-    .ratesType = RadioController::RATES_TYPE_ACTUAL
+    //.ratesType = RadioController::RATES_TYPE_ACTUAL
 };
 
 

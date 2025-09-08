@@ -45,7 +45,7 @@ static const RadioController::rates_t radioControllerRates {
     .throttleExpo = 0,
     .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
-    .ratesType = RadioController::RATES_TYPE_ACTUAL
+    //.ratesType = RadioController::RATES_TYPE_ACTUAL
 };
 
 void setUp() {

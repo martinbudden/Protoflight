@@ -20,7 +20,7 @@ void RadioController::setRatesToPassThrough()
     _rates.rcRates = { 100, 100, 100 }; // center sensitivity
     _rates.rcExpos = { 0, 0, 0}; // movement sensitivity, nonlinear
     _rates.rates   = { 0, 0, 0 }; // movement sensitivity, linear
-    _rates.ratesType = RATES_TYPE_ACTUAL;
+    //_rates.ratesType = RATES_TYPE_ACTUAL;
 }
 
 inline float constrain(float value, int16_t limit)

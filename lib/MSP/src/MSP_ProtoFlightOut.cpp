@@ -243,7 +243,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(static_cast<uint8_t>(rates.rateLimits[RadioController::YAW]));
 
         // added in 1.43
-        dst.writeU8(rates.ratesType);
+        dst.writeU8(RadioController::RATES_TYPE_ACTUAL); // hardcoded, since we only support RATES_TYPE_ACTUAL rates.ratesType);
         break;
     }
     case MSP_ATTITUDE: {
@@ -332,7 +332,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU16(imuFiltersConfig.gyro_notch2_hz);
         dst.writeU16(imuFiltersConfig.gyro_notch2_cutoff);
         dst.writeU8(fcFilters.dterm_lpf1_type);
-        dst.writeU8(imuFiltersConfig.gyro_hardware_lpf);
+        dst.writeU8(0); // gyro_hardware_lpf set in driver
         dst.writeU8(0); // was gyro_32khz_hardware_lpf
         dst.writeU16(imuFiltersConfig.gyro_lpf1_hz);
         dst.writeU16(imuFiltersConfig.gyro_lpf2_hz);
