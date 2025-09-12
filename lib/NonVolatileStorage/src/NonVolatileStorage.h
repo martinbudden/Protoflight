@@ -2,7 +2,6 @@
 
 #include "Defaults.h"
 
-#define USE_FLASH_KLV
 
 #if defined(USE_FLASH_KLV)
 
@@ -85,12 +84,12 @@ public:
     RadioController::failsafe_t RadioControllerFailsafeLoad();
     int32_t RadioControllerFailsafeStore(const RadioController::failsafe_t& failsafe);
 
-    RadioController::rates_t RadioControllerRatesLoad() const;
-    int32_t RadioControllerRatesStore(const RadioController::rates_t& rates);
+    RadioController::rates_t RadioControllerRatesLoad(uint8_t rateProfileIndex) const;
+    int32_t RadioControllerRatesStore(uint8_t rateProfileIndex, const RadioController::rates_t& rates);
 private:
 #if defined(USE_FLASH_KLV)
     FlashKLV _flashKLV;
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    mutable Preferences _preferences;
+    mutable Preferences _preferences {};
 #endif
 };

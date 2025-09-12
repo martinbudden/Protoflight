@@ -14,6 +14,7 @@ public:
     enum { RATE_LIMIT_MAX = 1998 };
     enum throttleLimitType_e { THROTTLE_LIMIT_TYPE_OFF = 0, THROTTLE_LIMIT_TYPE_SCALE, THROTTLE_LIMIT_TYPE_CLIP, THROTTLE_LIMIT_TYPE_COUNT };
     enum ratesType_e { RATES_TYPE_BETAFLIGHT = 0, RATES_TYPE_RACEFLIGHT, RATES_TYPE_KISS, RATES_TYPE_ACTUAL, RATES_TYPE_QUICK, RATES_TYPE_COUNT } ;
+    enum ratesIndex_e { RATES_INDEX_0 = 0, RATES_INDEX_1 = 1, RATES_INDEX_2 = 2, RATES_INDEX_3 = 3, RATES_INDEX_COUNT = 4 };
     struct rates_t {
         std::array<uint16_t, AXIS_COUNT> rateLimits;
         std::array<uint8_t, AXIS_COUNT> rcRates; // center sensitivity

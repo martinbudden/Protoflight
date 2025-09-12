@@ -227,6 +227,7 @@
         "Werror",
         "Wextra",
         "Wfloat",
+        "Wignored",
         "Wimplicit",
         "Winline",
         "Wmissing",

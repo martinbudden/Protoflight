@@ -83,6 +83,8 @@ Targets
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+
+    #define USE_FLASH_KLV
 #endif
 
 #if defined(TARGET_PICO2)
@@ -111,6 +113,8 @@ Targets
     #define USE_DSHOT_RPI_PICO_PIO
     #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
     //#define MOTOR_PINS          pins_t{.br=2,.fr=3,.bl=4,.fl=5}
+
+    #define USE_FLASH_KLV
 #endif
 
 #if defined(TARGET_SEED_XIAO_NRF52840_SENSE)

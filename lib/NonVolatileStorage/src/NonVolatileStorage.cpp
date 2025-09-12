@@ -3,19 +3,23 @@
 #include <cstring>
 
 
+enum { RATE_PROFILE_COUNT = 4 };
 #if defined(USE_FLASH_KLV)
 // for FlashKLV, keys must be in range [0x0100, 0x3FFF]
-    static const std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
-        0x0100, 0x0101, 0x0102, 0x0103, 0x0104, 0x0105, 0x0106
-    };
-    static constexpr uint16_t AccOffsetKey = 0x0200;
-    static constexpr uint16_t GyroOffsetKey = 0x0201;
-    static constexpr uint16_t MacAddressKey = 0x0202;
-    static constexpr uint16_t DynamicIdleControllerConfigKey = 0x0203;
-    static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0204;
-    static constexpr uint16_t ImuFiltersConfigKey = 0x0205;
-    static constexpr uint16_t RadioControllerFailsafeKey = 0x0206;
-    static constexpr uint16_t RadioControllerRatesKey = 0x0207;
+static const std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
+    0x0100, 0x0101, 0x0102, 0x0103, 0x0104, 0x0105, 0x0106
+};
+static constexpr uint16_t AccOffsetKey = 0x0200;
+static constexpr uint16_t GyroOffsetKey = 0x0201;
+static constexpr uint16_t MacAddressKey = 0x0202;
+static constexpr uint16_t DynamicIdleControllerConfigKey = 0x0203;
+static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0204;
+static constexpr uint16_t ImuFiltersConfigKey = 0x0205;
+static constexpr uint16_t RadioControllerFailsafeKey = 0x0206;
+
+static const std::array<uint16_t, RATE_PROFILE_COUNT> RadioControllerRatesKeys= {
+    0x0210, 0x0211, 0x0212, 0x0213
+};
 
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
 
@@ -34,7 +38,7 @@ static const char* DynamicIdleControllerConfigKey = "DIC";
 static const char* FlightControllerFiltersConfigKey = "FCF";
 static const char* ImuFiltersConfigKey = "IF";
 static const char* RadioControllerFailsafeKey = "RCF";
-static const char* RadioControllerRatesKey = "RCR";
+static std::array<const char*, RATE_PROFILE_COUNT> RadioControllerRatesKeys = { "RCR0", "RCR1", "RCR2", "RCR3" };
 static const char* AccOffsetKey = "ACC";
 static const char* GyroOffsetKey = "GYR";
 static const char* MacAddressKey = "MAC";
@@ -120,7 +124,7 @@ int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& f
     ImuFiltersConfigStore(imuFiltersConfig);
 
     const RadioController::rates_t& radioControllerRates = radioController.getRates();
-    RadioControllerRatesStore(radioControllerRates);
+    RadioControllerRatesStore(RadioController::RATES_INDEX_0, radioControllerRates);
 
     return OK;
 }
@@ -299,44 +303,47 @@ int32_t NonVolatileStorage::RadioControllerFailsafeStore(const RadioController::
 #endif
 }
 
-RadioController::rates_t NonVolatileStorage::RadioControllerRatesLoad() const
+RadioController::rates_t NonVolatileStorage::RadioControllerRatesLoad(uint8_t rateProfileIndex) const
 {
 #if defined(USE_FLASH_KLV)
     RadioController::rates_t rates {};
-    if (FlashKLV::OK == _flashKLV.read(&rates, sizeof(rates), RadioControllerRatesKey)) {
+    if (FlashKLV::OK == _flashKLV.read(&rates, sizeof(rates), RadioControllerRatesKeys[rateProfileIndex])) {
         return rates;
     }
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        if (_preferences.isKey(RadioControllerRatesKey)) {
+        if (_preferences.isKey(RadioControllerRatesKeys[rateProfileIndex])) {
             RadioController::rates_t rates {};
-            _preferences.getBytes(RadioControllerRatesKey, &rates, sizeof(rates));
+            _preferences.getBytes(RadioControllerRatesKeys[rateProfileIndex], &rates, sizeof(rates));
             _preferences.end();
             return rates;
         }
         _preferences.end();
     }
+#else
+    (void)rateProfileIndex;
 #endif
     return DEFAULTS::radioControllerRates;
 }
 
-int32_t NonVolatileStorage::RadioControllerRatesStore(const RadioController::rates_t& rates)
+int32_t NonVolatileStorage::RadioControllerRatesStore(uint8_t rateProfileIndex, const RadioController::rates_t& rates)
 {
 #if defined(USE_FLASH_KLV)
     if (!memcmp(&DEFAULTS::radioControllerRates, &rates, sizeof(rates))) {
         // value is the same as default, so no need to store it
-        _flashKLV.remove(RadioControllerRatesKey);
+        _flashKLV.remove(RadioControllerRatesKeys[rateProfileIndex]);
         return OK_IS_DEFAULT;
     }
-    return _flashKLV.write(RadioControllerRatesKey, sizeof(rates), &rates);
+    return _flashKLV.write(RadioControllerRatesKeys[rateProfileIndex], sizeof(rates), &rates);
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        _preferences.putBytes(RadioControllerRatesKey, &rates, sizeof(rates));
+        _preferences.putBytes(RadioControllerRatesKeys[rateProfileIndex], &rates, sizeof(rates));
         _preferences.end();
         return OK;
     }
     return ERROR_NOT_WRITTEN;
 #else
+    (void)rateProfileIndex;
     (void)rates;
     return OK;
 #endif

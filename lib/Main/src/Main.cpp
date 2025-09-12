@@ -83,7 +83,7 @@ void Main::setup()
     enum { RECEIVER_CHANNEL = 3 };
 #endif
     static ReceiverAtomJoyStick receiver(&myMacAddress[0], RECEIVER_CHANNEL);
-    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad());
+    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad(RadioController::RATES_INDEX_0));
     const esp_err_t espErr = receiver.init();
     Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
     assert(espErr == ESP_OK && "Unable to setup receiver.");
@@ -93,7 +93,7 @@ void Main::setup()
 #else
     static ReceiverNull receiver;
 #endif
-    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad());
+    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad(RadioController::RATES_INDEX_0));
 #endif // LIBRARY_RECEIVER_USE_ESPNOW
 
     // create the IMU and get its sample rate
@@ -340,6 +340,8 @@ void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
     } else {
         Serial.printf("task interval:%ums\r\n", taskInfo.taskIntervalMicroSeconds / 1000);
     }
+#else
+    (void)taskInfo;
 #endif
 }
 
