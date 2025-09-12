@@ -1,6 +1,6 @@
-# ProtoFlight
+# Protoflight
 
-ProtoFlight is flight control software.
+Protoflight is flight control software.
 
 It has the following design goals (in no particular order)
 
@@ -16,16 +16,16 @@ It has the following design goals (in no particular order)
 10. Be useful to someone who wants to understand how flight control software works.
 11. Be Betaflight "Tool compatible". This is be able to use Betaflight Configurator and Betaflight Blackbox Explorer.
 
-## ProtoFlight name
+## Protoflight name
 
-I've called it ProtoFlight because:
+I've called it Protoflight because:
 
 1. It can be used to prototype new ideas.
 2. One of the meanings of "proto" is "primitive". This software is nowhere near as sophisticated as BetaFlight or ArduPilot.
 3. It is related to "protean", meaning "able to change frequently or easily" or "versatile".
 4. It pays homage to [Protea](https://en.wikipedia.org/wiki/Protea), which was the codename for the [Psion Series 5](https://en.wikipedia.org/wiki/Psion_Series_5)
 
-## Libraries used to build ProtoFlight
+## Libraries used to build Protoflight
 
 1. [VectorQuaternionMatrix](https://github.com/martinbudden/Library-VectorQuaternionMatrix.git) - 3D Vectors, Quaternions, and 3x3 Matrices.
 2. [TaskBase](https://github.com/martinbudden/Library-TaskBase.git) - base class for all tasks.
@@ -58,9 +58,9 @@ is still somewhat in flux and I expect there will continue to be changes. In par
 3. The `SV_Preferences` class was sufficient for storing settings for a Self Balancing Robot, however it's not really adequate for an Aircraft.
   I will need to look at alternative ways of storing settings.
 
-## ProtoFlight Project
+## Protoflight Project
 
-The ProtoFlight project is a "spare time" project: updates will be made when I have the time and inclination. The following are areas
+The Protoflight project is a "spare time" project: updates will be made when I have the time and inclination. The following are areas
 that I, at some point, would like to tackle. In no particular order:
 
 1. Implement DMA on ESP32 (DMA currently only working on RPI Pico).
@@ -124,11 +124,11 @@ for developing the FlightController, but it was not sufficient. Rather than spen
 I decided it would be better (and less effort) to port MultiWiiSerialProtocol and Blackbox from Betaflight. That way I could (in principle)
 use the Betaflight configurator and Betaflight blackbox viewer. These ports are still in progress.
 
-While porting the Blackbox and MSP I renamed and rearranged some of the ProtoFlight parameters -  this is ongoing.
+While porting the Blackbox and MSP I renamed and rearranged some of the Protoflight parameters -  this is ongoing.
 
-While doing this port I also realized that the FeedForward in Betaflight was not the same as FeedForward in ProtoFlight.
-Betaflight's FeedForward is proportional to the rate of change of the setpoint, whereas ProtoFlight's FeedForward was proportional
-to the setpoint. So I changed the meaning of ProtoFlight's FeedForward, and added a new PID component (called 'S' for setpoint) which
+While doing this port I also realized that the FeedForward in Betaflight was not the same as FeedForward in Protoflight.
+Betaflight's FeedForward is proportional to the rate of change of the setpoint, whereas Protoflight's FeedForward was proportional
+to the setpoint. So I changed the meaning of Protoflight's FeedForward, and added a new PID component (called 'S' for setpoint) which
 is proportional to the setpoint. (Betaflight also has an 'S' component for PIDs, as far as I can tell this is only used for fixed wing
 aircraft and is proportional to the setpoint.)
 
@@ -140,7 +140,7 @@ I currently have ports of the software to ESP32 and Raspberry Pi Pico, but not y
 One of the reasons for concentrating on ESP32 and RPI Pico was that they both have dual-core versions available, and one of my
 primary interests is that of having the `Gyro/PID` loop
 (what I snappily call the `readIMUandUpdateOrientation/updateOutputsUsingPIDs` loop) having a whole core entirely to itself.
-ProtoFlight will run on a single core, but I find the dual core setup more interesting.
+Protoflight will run on a single core, but I find the dual core setup more interesting.
 
 ### Running the PIDs in *Quaternion Space*
 
@@ -226,7 +226,7 @@ This avoids both the ISR and the shared message queue.
 
 UML Diagrams have become somewhat unfashionable. But I like them.
 I agree that they have limited use in the design phase of a project, but I find they are very useful to document a design.
-The process of documenting a design can reveal subtleties that were overlooked, and indeed I found that when documenting ProtoFlight.
+The process of documenting a design can reveal subtleties that were overlooked, and indeed I found that when documenting Protoflight.
 
 ## Simplified Class Structure
 

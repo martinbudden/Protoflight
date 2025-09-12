@@ -58,8 +58,8 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
 
     switch (_xmitState.headerIndex) {
 // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        BLACKBOX_PRINT_HEADER_LINE("Firmware type", "%s",                   "ProtoFlight");
-        BLACKBOX_PRINT_HEADER_LINE("Firmware revision", "%s %s (%s) %s",    "ProtoFlight", firmware.version, "7", "alpha");
+        BLACKBOX_PRINT_HEADER_LINE("Firmware type", "%s",                   "Protoflight");
+        BLACKBOX_PRINT_HEADER_LINE("Firmware revision", "%s %s (%s) %s",    "Protoflight", firmware.version, "7", "alpha");
         BLACKBOX_PRINT_HEADER_LINE("Firmware date", "%s %s",                firmware.date, firmware.time);
         //BLACKBOX_PRINT_HEADER_LINE("DeviceUID", "%08x%08x%08x",             U_ID_0, U_ID_1, U_ID_2);
         //BLACKBOX_PRINT_HEADER_LINE("Board information", "%s %s",            getManufacturerId(), getBoardName());

@@ -94,7 +94,7 @@ void ScreenM5::setScreenMode(ScreenM5::mode_e screenMode)
     if (_screenMode == MODE_QRCODE) {
         M5.Lcd.setRotation(MODE_NORMAL + _screenRotationOffset);
         M5.Lcd.fillScreen(TFT_BLACK);
-        M5.Lcd.qrcode("https://github.com/martinbudden/ProtoFlight", 0, 0, 128, 6);
+        M5.Lcd.qrcode("https://github.com/martinbudden/protoflight", 0, 0, 128, 6);
     } else {
         M5.Lcd.setRotation(_screenMode + _screenRotationOffset);
         updateScreenAndTemplate();
