@@ -60,7 +60,7 @@ enum  armingDisableFlags_e {
 
 enum { ARMING_DISABLE_FLAGS_COUNT = 27 };
 
-armingDisableFlags_e getArmingDisableFlags()
+static armingDisableFlags_e getArmingDisableFlags()
 {
     return ARMING_DISABLED_ARM_SWITCH;
 }
