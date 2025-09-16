@@ -346,7 +346,7 @@ void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
 }
 
 #if defined(FRAMEWORK_USE_FREERTOS)
-void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) // NOLINT(readability-non-const-parameter)
 {
     assert(false && "stack overflow");
 #if defined(FRAMEWORK_ARDUINO_ESP32)
@@ -354,6 +354,7 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
     Serial.printf("********Task '%s' stack overflow ********\r\n", pcTaskName);
     Serial.printf("*********\r\n\r\n");
 #else
+    (void)xTask;
     (void)pcTaskName;
 #endif
 }
