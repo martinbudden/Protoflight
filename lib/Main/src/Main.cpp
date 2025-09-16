@@ -110,7 +110,7 @@ void Main::setup()
     const uint32_t AHRS_taskIntervalMicroSeconds = AHRS_TASK_INTERVAL_MICROSECONDS;
 #endif
 #if defined(FRAMEWORK_RPI_PICO)
-    printf("\r\n**** AHRS_taskIntervalMicroSeconds:%u, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroSeconds, imuSampleRateHz);
+    printf("\r\n**** AHRS_taskIntervalMicroSeconds:%u, IMU sample rate:%dHz\r\n\r\n", static_cast<unsigned int>(AHRS_taskIntervalMicroSeconds), static_cast<int>(imuSampleRateHz));
 #else
     Serial.printf("\r\n**** AHRS_taskIntervalMicroSeconds:%u, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroSeconds, imuSampleRateHz);
 #endif
@@ -334,7 +334,7 @@ void Main::reportMainTask()
 void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
 {
 #if defined(FRAMEWORK_ARDUINO_ESP32)
-    Serial.printf("**** %s, %.*s core:%u, priority:%u, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", taskInfo.coreID, taskInfo.priority);
+    Serial.printf("**** %s, %.*s core:%u, priority:%u, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", taskInfo.core, taskInfo.priority);
     if (taskInfo.taskIntervalMicroSeconds == 0) {
         Serial.printf("interrupt driven\r\n");
     } else {
@@ -346,12 +346,16 @@ void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
 }
 
 #if defined(FRAMEWORK_USE_FREERTOS)
-[[noreturn]] void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
     assert(false && "stack overflow");
+#if defined(FRAMEWORK_ARDUINO_ESP32)
     Serial.printf("\r\n\r\n*********\r\n");
     Serial.printf("********Task '%s' stack overflow ********\r\n", pcTaskName);
     Serial.printf("*********\r\n\r\n");
+#else
+    (void)pcTaskName;
+#endif
 }
 #endif
 

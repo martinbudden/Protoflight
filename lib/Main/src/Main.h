@@ -5,8 +5,13 @@
 #include <TaskBase.h>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS_SUBDIRECTORY)
 #include <freertos/FreeRTOS.h>
+#else
+#include <FreeRTOS.h>
 #endif
+#endif
+
 
 class AHRS;
 class AHRS_Task;

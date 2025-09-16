@@ -1,12 +1,18 @@
 #pragma once
 
-#include <FiltersT.h>
+#include <FilterTemplates.h>
 #include <array>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
+#if defined(FRAMEWORK_USE_FREERTOS_SUBDIRECTORY)
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/semphr.h>
+#else
+#include <FreeRTOS.h>
+#include <queue.h>
+#include <semphr.h>
+#endif
 #endif
 #if defined(FRAMEWORK_RPI_PICO)
 #include <pico/critical_section.h>

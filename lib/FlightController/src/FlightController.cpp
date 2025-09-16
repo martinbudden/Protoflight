@@ -17,14 +17,6 @@
 #include <esp32-hal.h>
 #endif
 
-#if defined(FRAMEWORK_USE_FREERTOS)
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-inline void YIELD_TASK() { taskYIELD(); }
-#else
-inline void YIELD_TASK() {}
-#endif
-
 
 static const std::array<std::string, FlightController::PID_COUNT> PID_NAMES = {
     "ROLL_RATE",
