@@ -2,9 +2,21 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#if defined(FRAMEWORK_ARDUINO_STM32)
-#include <stm32f4xx.h>
+#if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
+
+#if defined(FRAMEWORK_STM32_CUBE_F1)
+#include <stm32f1xx_hal.h>
+#elif defined(FRAMEWORK_STM32_CUBE_F3)
+#include <stm32f3xx_hal.h>
+#elif defined(FRAMEWORK_STM32_CUBE_F4)
+#include <stm32f4xx_hal.h>
+#elif defined(FRAMEWORK_STM32_CUBE_F7)
+#include <stm32f7xx_hal.h>
 #endif
+
+#endif
+
+#define BIT_BANGING_V1
 
 /*
 Implementation ported from: https://github.com/symonb/Bidirectional-DSHOT-and-RPM-Filter/blob/main/Src/bdshot.c
@@ -41,12 +53,6 @@ dma pin A02 1
 # pin A02: DMA2 Stream 2 Channel 6
 */
 
-#if defined(FRAMEWORK_ARDUINO_STM32)
-#define BIT_BANGING_V1
-#else
-#define GPIO_BSRR_BR_0 (0x1UL << (16U))
-#define GPIO_BSRR_BS_0 (0x1UL << (0U))
-#endif
 
 enum { DSHOT_MODE = 300 };              // 150/300/600/1200
 enum { DSHOT_FRAME_LENGTH = 16 };   // 16 bits of Dshot and 2 for clearing - used when bit-banging dshot used
@@ -91,12 +97,14 @@ public:
 public:
     static ESC_DShotBitbang* self; // alias of `this` to be used in ISR
     struct port_t {
-#if defined(FRAMEWORK_ARDUINO_STM32)
+#if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
         GPIO_TypeDef* GPIO;
         uint32_t GPIO_input;
         uint32_t GPIO_output;
         uint32_t GPIO_PUPDR;
+#if !defined(FRAMEWORK_STM32_CUBE_F1)
         DMA_Stream_TypeDef* DMA_Stream;
+#endif
         TIM_TypeDef* TIM;
 #endif
         bool reception; // flag for reception or transmission:
@@ -112,9 +120,11 @@ private:
     std::array<int32_t, MOTOR_COUNT> _motorErrors {};
     port_t _portA {};
     port_t _portB {};
-#if defined(FRAMEWORK_ARDUINO_STM32)
+#if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
     static void setupGPIO(GPIO_TypeDef*GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn);
+#if !defined(FRAMEWORK_STM32_CUBE_F1)
     static void setupDMA(DMA_Stream_TypeDef* TIM, uint32_t DMAxEN);
+#endif
     static void setupTimers(TIM_TypeDef* TIM, uint32_t TIMxEN);
 #endif
 };

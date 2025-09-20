@@ -2,10 +2,10 @@
 #include <BlackboxMessageQueue.h>
 
 
-uint32_t BlackboxMessageQueueAHRS::append(uint32_t timeMicroSeconds, const xyz_t& gyroRPS, const xyz_t& gyroRPS_unfiltered, const xyz_t& acc)
+uint32_t BlackboxMessageQueueAHRS::append(uint32_t timeMicroseconds, const xyz_t& gyroRPS, const xyz_t& gyroRPS_unfiltered, const xyz_t& acc)
 {
     struct BlackboxMessageQueue::queue_item_t queueItem {
-        timeMicroSeconds,
+        timeMicroseconds,
         gyroRPS,
         gyroRPS_unfiltered,
         acc

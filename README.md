@@ -457,7 +457,7 @@ In the case where `AHRS_Task` and `ReceiverTask` are interrupt driven, we have:
 
 classDiagram
     class TaskBase:::taskClass {
-        uint32_t _taskIntervalMicroSeconds
+        uint32_t _taskIntervalMicroseconds
     }
     link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
 

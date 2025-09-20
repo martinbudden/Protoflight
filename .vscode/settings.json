@@ -2,6 +2,7 @@
     "cSpell.words": [
         "ACRO",
         "ADXL",
+        "AFROFLIGHT",
         "afruitnrf",
         "AHRS",
         "AIRMODE",
@@ -217,6 +218,7 @@
         "Unclipped",
         "Unfilt",
         "unflags",
+        "USART",
         "vbat",
         "vbatcellvoltage",
         "vbatref",

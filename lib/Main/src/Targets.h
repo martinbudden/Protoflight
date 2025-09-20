@@ -83,8 +83,6 @@ Targets
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
-
-    #define USE_FLASH_KLV
 #endif
 
 #if defined(TARGET_PICO2)
@@ -113,8 +111,6 @@ Targets
     #define USE_DSHOT_RPI_PICO_PIO
     #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
     //#define MOTOR_PINS          pins_t{.br=2,.fr=3,.bl=4,.fl=5}
-
-    #define USE_FLASH_KLV
 #endif
 
 #if defined(TARGET_SEED_XIAO_NRF52840_SENSE)
@@ -159,4 +155,31 @@ Targets
     #define SDCARD_SPI_PINS     port_pins_t{.cs={PC,8},.sck={PC,9},.cipo={PC,10},.copi={PC,11},.irq={0,0xFF}}
     #define USE_BLACKBOX
     //#define USE_MSP
+#endif
+
+#if defined(TARGET_AFROFLIGHT_F301CB)
+    #define BOARD_IDENTIFIER    "AfroFlight_F301CB"
+
+    #define USART_1_PINS        port_pins_t{.rx={PA,10},.tx={PA,9}} // TX output is always inverted (for FrSky). Internally connected to USB port via CP2102 IC
+    #define USART_2_PINS        port_pins_t{.rx={PA,3},.tx={PA,2}}
+    #define SOFT_SERIAL_1_PINS  port_pins_t{.rx={PA,6},.tx={PA,7}}
+    #define SOFT_SERIAL_2_PINS  port_pins_t{.rx={PB,0},.tx={PB,1}}
+    #define I2C_1_PINS          port_pins_t{.sda={PB,7},.scl={PB,6}}
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    // On afroflight Rev 5 MPU6050 is connected to IC2 index 2
+    #define USE_IMU_MPU6000
+    //#define IMU_I2C_PINS        port_pins_t{.sda={PB,7},.scl={PB,6},.irq={PB,13}}
+    //!!TODO: add port_pins to IMU_MPU6000
+    #define IMU_I2C_PINS        pins_t{.sda=7,.scl=6,.irq=13}
+
+    #define USE_RECEIVER_SBUS
+    #define RECEIVER_UART_INDEX 0
+    #define RECEIVER_PINS       port_pins_t{.rx={PB,10},.tx={PB,9}}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          port_pins_t{.br={PC,7},.fr={PC,6},.bl={PB,8},.fl={PB,9}}
+
+    #define USE_MSP
+    // LED0 PB4, LED1 PB3
 #endif

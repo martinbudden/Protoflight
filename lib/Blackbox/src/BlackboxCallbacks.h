@@ -27,7 +27,7 @@ public:
     virtual bool isArmed() const override;
     virtual bool isBlackboxRcModeActive() const override;
     virtual bool isBlackboxModeActivationConditionPresent() const override;
-    virtual uint32_t getArmingBeepTimeMicroSeconds() const override;
+    virtual uint32_t getArmingBeepTimeMicroseconds() const override;
     virtual bool areMotorsRunning() const override;
     virtual uint32_t rcModeActivationMask() const override;
     void setUseMessageQueue(bool useMessageQueue) { _useMessageQueue = useMessageQueue; }

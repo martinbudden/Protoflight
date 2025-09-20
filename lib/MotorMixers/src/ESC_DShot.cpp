@@ -13,6 +13,7 @@
 #include <hardware/pwm.h>
 
 #elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
 #elif defined(FRAMEWORK_TEST)
 
 #else // defaults to FRAMEWORK_ARDUINO
@@ -108,6 +109,7 @@ void ESC_DShot::init(uint16_t pin)
     );
 #endif // USE_DSHOT_RPI_PICO_PIO
 #elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
 #elif defined(FRAMEWORK_TEST)
 
 #else // defaults to FRAMEWORK_ARDUINO
@@ -332,6 +334,7 @@ void ESC_DShot::end()
 #endif
 #elif defined(FRAMEWORK_ESPIDF)
     ESP_ERROR_CHECK(rmt_disable(_txChannel));
+#elif defined(FRAMEWORK_STM32_CUBE)
 #elif defined(FRAMEWORK_TEST)
 #else // defaults to FRAMEWORK_ARDUINO
 #if !defined(UNIT_TEST)

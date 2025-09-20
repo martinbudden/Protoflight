@@ -2,6 +2,7 @@
 
 #if defined(FRAMEWORK_RPI_PICO)
 #elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
 #elif defined(FRAMEWORK_TEST)
 #else // defaults to FRAMEWORK_ARDUINO
 #include <Arduino.h>
@@ -15,6 +16,7 @@ void MSP_Serial::processInput()
 {
 #if defined(FRAMEWORK_RPI_PICO)
 #elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
 #elif defined(FRAMEWORK_TEST)
 #else // defaults to FRAMEWORK_ARDUINO
     while (Serial.available() > 0) {
@@ -30,13 +32,6 @@ Called from  MSP_Stream::serialEncode() which is called from MSP_Stream::process
 int MSP_Serial::sendFrame(const uint8_t* hdr, int hdrLen, const uint8_t* data, int dataLen, const uint8_t* crc, int crcLen)
 {
     const int totalFrameLength = hdrLen + dataLen + crcLen;
-#if defined(FRAMEWORK_RPI_PICO)
-    (void)hdr; (void)data; (void)crc;
-#elif defined(FRAMEWORK_ESPIDF)
-    (void)hdr; (void)data; (void)crc;
-#elif defined(FRAMEWORK_TEST)
-    (void)hdr; (void)data; (void)crc;
-#else // defaults to FRAMEWORK_ARDUINO
 
     // We are allowed to send out the response if
     //  a) TX buffer is completely empty (we are talking to well-behaving party that follows request-response scheduling;
@@ -57,6 +52,15 @@ int MSP_Serial::sendFrame(const uint8_t* hdr, int hdrLen, const uint8_t* data, i
     sbuf.writeData(crc, crcLen);
     sbuf.switchToReader();
 
+#if defined(FRAMEWORK_RPI_PICO)
+    (void)sbuf;
+#elif defined(FRAMEWORK_ESPIDF)
+    (void)sbuf;
+#elif defined(FRAMEWORK_STM32_CUBE)
+    (void)sbuf;
+#elif defined(FRAMEWORK_TEST)
+    (void)sbuf;
+#else // defaults to FRAMEWORK_ARDUINO
     while (sbuf.bytesRemaining() > 0) {
         const size_t available = Serial.availableForWrite();
         const size_t writeLen = std::min(available, sbuf.bytesRemaining());
@@ -64,7 +68,7 @@ int MSP_Serial::sendFrame(const uint8_t* hdr, int hdrLen, const uint8_t* data, i
         sbuf.advance(writeLen);
         delay(1);
     }
-
 #endif
+
     return totalFrameLength;
 }

@@ -4,11 +4,14 @@
 #include <array>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
-#if defined(FRAMEWORK_USE_FREERTOS_SUBDIRECTORY)
+#if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/semphr.h>
 #else
+#if defined(FRAMEWORK_ARDUINO_STM32)
+#include <STM32FreeRTOS.h>
+#endif
 #include <FreeRTOS.h>
 #include <queue.h>
 #include <semphr.h>

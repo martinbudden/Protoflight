@@ -6,6 +6,7 @@
 #include <hardware/pwm.h>
 #elif defined(FRAMEWORK_ESPIDF)
 #include <driver/ledc.h>
+#elif defined(FRAMEWORK_STM32_CUBE)
 #elif defined(FRAMEWORK_TEST)
 #else // defaults to FRAMEWORK_ARDUINO
 #include <Arduino.h>
@@ -44,6 +45,8 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
     }
 
 #elif defined(FRAMEWORK_ESPIDF)
+
+#elif defined(FRAMEWORK_STM32_CUBE)
 
 #elif defined(FRAMEWORK_TEST)
 
@@ -96,6 +99,9 @@ void MotorMixerQuadX_PWM::writeMotorPWM(const port_pin_t& pin, uint8_t channel)
         pwm_set_gpio_level(pin.pin, motorOutput);
     }
 #elif defined(FRAMEWORK_ESPIDF)
+    (void)pin;
+    (void)channel;
+#elif defined(FRAMEWORK_STM32_CUBE)
     (void)pin;
     (void)channel;
 #elif defined(FRAMEWORK_TEST)

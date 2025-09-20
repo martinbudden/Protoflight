@@ -12,7 +12,7 @@ Class to write out the Blackbox header, written in blackboxWriteSysinfo()
 class BlackboxProtoFlight : public Blackbox {
 public:
     BlackboxProtoFlight(BlackboxCallbacksBase& callbacks, BlackboxMessageQueueBase& messageQueue, BlackboxSerialDevice& serialDevice, const FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters) :
-        Blackbox(flightController.getTaskIntervalMicroSeconds(), callbacks, messageQueue, serialDevice),
+        Blackbox(flightController.getTaskIntervalMicroseconds(), callbacks, messageQueue, serialDevice),
         _flightController(flightController),
         _radioController(radioController),
         _imuFilters(imuFilters)

@@ -29,7 +29,7 @@ public:
         uint8_t dyn_idle_max_increase;
     };
 public:
-    DynamicIdleController(const config_t& config, uint32_t taskIntervalMicroSeconds, Debug& debug);
+    DynamicIdleController(const config_t& config, uint32_t taskIntervalMicroseconds, Debug& debug);
     void setConfig(const config_t& config, uint32_t taskIntervalMicroseconds);
     const config_t& getConfig() const { return _config; }
     void setMinimumAllowedMotorHz(float minimumAllowedMotorHz);

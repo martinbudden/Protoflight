@@ -106,7 +106,7 @@ H thr_expo:0
         BLACKBOX_PRINT_HEADER_LINE("vbatref", "%u",                         112);
 
         BLACKBOX_PRINT_HEADER_LINE("currentSensor", "%d,%d",                0, 235); // current meter offset, current meter scale
-        BLACKBOX_PRINT_HEADER_LINE("looptime", "%d",                        _flightController.getTaskIntervalMicroSeconds());
+        BLACKBOX_PRINT_HEADER_LINE("looptime", "%d",                        _flightController.getTaskIntervalMicroseconds());
         BLACKBOX_PRINT_HEADER_LINE("gyro_sync_denom", "%d",                 1); // not sure if this is used
         BLACKBOX_PRINT_HEADER_LINE("pid_process_denom", "%d",               1); // nots sure if this is used
 

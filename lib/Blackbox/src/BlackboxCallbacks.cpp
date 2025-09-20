@@ -32,7 +32,7 @@ bool BlackboxCallbacks::isBlackboxModeActivationConditionPresent() const
     return true;
 }
 
-uint32_t BlackboxCallbacks::getArmingBeepTimeMicroSeconds() const
+uint32_t BlackboxCallbacks::getArmingBeepTimeMicroseconds() const
 {
     return 0;
 }
@@ -63,7 +63,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
         (void)currentTimeUs;
         BlackboxMessageQueue::queue_item_t queueItem;
         _messageQueue.RECEIVE(queueItem);
-        mainState.time = queueItem.timeMicroSeconds;
+        mainState.time = queueItem.timeMicroseconds;
         gyroRPS = queueItem.gyroRPS;
         gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered;
         acc = queueItem.acc;

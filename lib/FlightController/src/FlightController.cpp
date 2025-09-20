@@ -11,7 +11,7 @@
 #endif
 #include <RadioController.h>
 #include <ReceiverBase.h>
-#include <TimeMicroSeconds.h>
+#include <TimeMicroseconds.h>
 
 #if defined(FRAMEWORK_ARDUINO_ESP32)
 #include <esp32-hal.h>
@@ -43,9 +43,9 @@ void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF::PIDF_t
     _PIDS[pidIndex].switchIntegrationOff();
 }
 
-uint32_t FlightController::getOutputPowerTimeMicroSeconds() const
+uint32_t FlightController::getOutputPowerTimeMicroseconds() const
 {
-    //return _mixer.getOutputPowerTimeMicroSeconds();
+    //return _mixer.getOutputPowerTimeMicroseconds();
     return 0;
 }
 
@@ -145,8 +145,8 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 {
     _filtersConfig = filtersConfig;
     //!!TODO: check dT value for filters config
-    const float dT = static_cast<float>(_taskIntervalMicroSeconds) / 1000000.0F;
-    //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroSeconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
+    const float dT = static_cast<float>(_taskIntervalMicroseconds) / 1000000.0F;
+    //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
 
     if (filtersConfig.dterm_lpf1_hz == 0) {
         _rollRateDTermFilter.setToPassthrough();
@@ -180,7 +180,7 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
         _outputFilters[PITCH_RATE_DPS].setToPassthrough();
         _outputFilters[YAW_RATE_DPS].setToPassthrough();
     } else {
-        const float ahrsDeltaT = static_cast<float>(_ahrs.getTaskIntervalMicroSeconds()) * 0.000001F;
+        const float ahrsDeltaT = static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F;
         _outputFilters[ROLL_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
         _outputFilters[PITCH_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
         _outputFilters[YAW_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);

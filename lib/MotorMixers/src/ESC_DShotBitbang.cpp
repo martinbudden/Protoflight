@@ -3,9 +3,10 @@
 #include <algorithm>
 #include <array>
 
-#if defined(FRAMEWORK_ARDUINO_STM32)
+#if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
 void ESC_DShotBitbang::IRQ_Handler(port_t& port)
 {
+#if !defined(FRAMEWORK_STM32_CUBE_F1)
     // set GPIOs as inputs:
     //port.GPIO->MODER &= ~GPIO_MODER_MODER2;
     //port.GPIO->MODER &= ~GPIO_MODER_MODER3;
@@ -29,6 +30,7 @@ void ESC_DShotBitbang::IRQ_Handler(port_t& port)
     port.DMA_Stream->NDTR = (33 * BDSHOT_RESPONSE_BITRATE / 1000 + BDSHOT_RESPONSE_LENGTH + 1) * ESC_DShotBitbang::RESPONSE_OVERSAMPLING;
 
     port.DMA_Stream->CR |= DMA_SxCR_EN;
+#endif
     port.reception = false;
 }
 #endif
@@ -41,16 +43,17 @@ ESC_DShotBitbang::ESC_DShotBitbang()
 void ESC_DShotBitbang::init()
 {
     presetDMA_outputBuffers();
-#if defined(FRAMEWORK_ARDUINO_STM32)
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32))
 
     _portA.GPIO = GPIOA;
+    _portB.GPIO = GPIOB;
+ #if !defined(FRAMEWORK_STM32_CUBE_F1)
     _portB.GPIO_input = ~(GPIO_MODER_MODER2   | GPIO_MODER_MODER3);
     _portA.GPIO_output =  GPIO_MODER_MODER2_0 | GPIO_MODER_MODER3_0;
     _portA.GPIO_PUPDR =   GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0;
     setupGPIO(_portA.GPIO, RCC_AHB1ENR_GPIOAEN, GPIO_OSPEEDER_OSPEEDR2 | GPIO_OSPEEDER_OSPEEDR3);
 
-    _portB.GPIO = GPIOB;
-    _portB.GPIO_input = ~(GPIO_MODER_MODER0   | GPIO_MODER_MODER1);
+     _portB.GPIO_input = ~(GPIO_MODER_MODER0   | GPIO_MODER_MODER1);
     _portB.GPIO_output =  GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0;
     _portB.GPIO_PUPDR =   GPIO_PUPDR_PUPDR0_0 | GPIO_PUPDR_PUPDR1_0;
     setupGPIO(_portB.GPIO, RCC_AHB1ENR_GPIOBEN, GPIO_OSPEEDER_OSPEEDR0 | GPIO_OSPEEDER_OSPEEDR1);
@@ -59,18 +62,23 @@ void ESC_DShotBitbang::init()
     setupDMA(_portA.DMA_Stream, RCC_AHB1ENR_DMA1EN);
     _portB.DMA_Stream = DMA2_Stream2;
     setupDMA(_portB.DMA_Stream, RCC_AHB1ENR_DMA2EN);
+#endif
 
     _portA.TIM = TIM1;
     setupTimers(_portA.TIM, RCC_APB2ENR_TIM1EN);
+#if defined(FRAMEWORK_STM32_CUBE_F1)
+    _portB.TIM = TIM4;
+    setupTimers(_portB.TIM, RCC_APB1ENR_TIM4EN);
+#else
     _portB.TIM = TIM8;
     setupTimers(_portB.TIM, RCC_APB2ENR_TIM8EN);
-
     // Nested Vectored Interrupt Controller
     // enable DMA interrupts
     NVIC_EnableIRQ(DMA2_Stream6_IRQn);
     NVIC_SetPriority(DMA2_Stream6_IRQn, 13);
     NVIC_EnableIRQ(DMA2_Stream2_IRQn);
     NVIC_SetPriority(DMA2_Stream2_IRQn, 14);
+#endif
 #endif
 }
 
@@ -79,16 +87,20 @@ APB2 max frequency is 84 [MHz], 168 [MHz] only for timers
 APB1 max frequency is 42 [MHz], 84 [MHz] only for timers
 */
 
-#if defined(FRAMEWORK_ARDUINO_STM32)
+#if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
 void ESC_DShotBitbang::setupGPIO(GPIO_TypeDef* GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn)
 {
+#if defined(FRAMEWORK_STM32_CUBE_F1)
+#else
     // enable GPIOA clock:
     RCC->AHB1ENR |= GPIOxEN;
     // mode (00-input; 01-output; 10-alternate) will be set later
     // set speed (max speed):
     GPIO->OSPEEDR |= GPIO_OSPEEDER_OSPEEDRn;
+#endif
 }
 
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && !defined(FRAMEWORK_STM32_CUBE_F1)
 void ESC_DShotBitbang::setupDMA(DMA_Stream_TypeDef* DMA_Stream, uint32_t DMAxEN)
 {
     RCC->AHB1ENR |= DMAxEN;
@@ -100,6 +112,7 @@ void ESC_DShotBitbang::setupDMA(DMA_Stream_TypeDef* DMA_Stream, uint32_t DMAxEN)
     DMA_Stream->CR |= DMA_SxCR_MSIZE_1 | DMA_SxCR_PSIZE_1 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_TCIE | DMA_SxCR_PL_0;
     // all the other parameters will be set later
 }
+#endif
 
 void ESC_DShotBitbang::setupTimers(TIM_TypeDef* TIM, uint32_t TIMxEN)
 {
@@ -138,7 +151,7 @@ void ESC_DShotBitbang::setupTimers(TIM_TypeDef* TIM, uint32_t TIMxEN)
     TIM->EGR |= TIM_EGR_UG;  // UG: Update Generation
     TIM->CR1 |= TIM_CR1_CEN; //CEN: counter enable
 }
-#endif //FRAMEWORK_ARDUINO_STM32
+#endif //FRAMEWORK_STM32
 
 // values should be in the DShot range [47,2047]
 void ESC_DShotBitbang::outputToMotors(uint16_t m1_value, uint16_t m2_value, uint16_t m3_value, uint16_t m4_value)
@@ -155,7 +168,7 @@ void ESC_DShotBitbang::outputToMotors(uint16_t m1_value, uint16_t m2_value, uint
     _portA.reception = true;
     _portB.reception = true;
 
-#if defined(FRAMEWORK_ARDUINO_STM32)
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && !defined(FRAMEWORK_STM32_CUBE_F1)
     // set GPIOs as output:
     // MODER: GPIO port mode register
     _portA.GPIO->MODER |= _portA.GPIO_output;
@@ -231,7 +244,7 @@ void ESC_DShotBitbang::outputToMotors(uint16_t m1_value, uint16_t m2_value, uint
     _portA.DMA_Stream->CR |= DMA_SxCR_EN;
     _portB.DMA_Stream->CR |= DMA_SxCR_EN;
 #endif
-#endif // FRAMEWORK_ARDUINO_STM32
+#endif // FRAMEWORK_STM32
 }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
@@ -276,7 +289,7 @@ This requires smaller buffers, has lower DMA load, has more precise timing, but 
 
 void ESC_DShotBitbang::presetDMA_outputBuffers()
 {
-
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && !defined(FRAMEWORK_STM32_CUBE_F1)
     // this values are constant so they can be set once here
 #if defined(BIT_BANGING_V1)
     _portA.dmaOutputBuffer.fill(0);
@@ -308,6 +321,7 @@ void ESC_DShotBitbang::presetDMA_outputBuffers()
         _portA.dmaOutputBuffer[index + highOffset] = (GPIO_BSRR_BS_0 << MOTOR_1) | (GPIO_BSRR_BS_0 << MOTOR_4);
         _portB.dmaOutputBuffer[index + highOffset] = (GPIO_BSRR_BS_0 << MOTOR_2) | (GPIO_BSRR_BS_0 << MOTOR_3);
     }
+#endif
 }
 
 void ESC_DShotBitbang::setDMA_outputBuffers(uint16_t m1_frame, uint16_t m2_frame, uint16_t m3_frame, uint16_t m4_frame)
@@ -342,6 +356,8 @@ In addition last 2 frame bits are set always high
 // At end of loop we will have 16 frames of form r00s000000s000
 // followed by 2 frames of form 00000000000000 (set in preset) - these two frames will keep output high
 
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && !defined(FRAMEWORK_STM32_CUBE_F1)
+
 #if defined(BIT_BANGING_V1)
     size_t index = DSHOT_BB_0_LENGTH - 1;
 #else
@@ -358,6 +374,12 @@ In addition last 2 frame bits are set always high
         }
         index += DSHOT_BB_FRAME_SECTIONS;
     }
+#else
+    (void)m1_frame;
+    (void)m2_frame;
+    (void)m3_frame;
+    (void)m4_frame;
+#endif
 }
 
 /*!
@@ -445,10 +467,10 @@ void ESC_DShotBitbang::update_motors_rpm()
         const uint16_t eRPM = DShotCodec::GCR20_to_eRPM(motorGCR20);
         if (DShotCodec::checksumBidirectionalIsOK(eRPM)) {
             DShotCodec::telemetry_type_e telemetryType {};
-            const auto eRPM_periodMicroSeconds = DShotCodec::decodeTelemetryFrame(eRPM >> 4, telemetryType);
+            const auto eRPM_periodMicroseconds = DShotCodec::decodeTelemetryFrame(eRPM >> 4, telemetryType);
             enum { ONE_MINUTE_IN_MICROSECONDS = 60000000 };
             // value is eRPM period in microseconds
-            _eRPMs[ii] = static_cast<int32_t>(ONE_MINUTE_IN_MICROSECONDS / eRPM_periodMicroSeconds);
+            _eRPMs[ii] = static_cast<int32_t>(ONE_MINUTE_IN_MICROSECONDS / eRPM_periodMicroseconds);
         }
     }
 

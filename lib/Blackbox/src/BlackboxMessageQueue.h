@@ -6,10 +6,13 @@
 #include <xyz_type.h>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
-#if defined(FRAMEWORK_USE_FREERTOS_SUBDIRECTORY)
+#if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #else
+#if defined(FRAMEWORK_ARDUINO_STM32)
+#include <STM32FreeRTOS.h>
+#endif
 #include <FreeRTOS.h>
 #include <queue.h>
 #endif
@@ -19,7 +22,7 @@
 class BlackboxMessageQueue : public BlackboxMessageQueueBase {
 public:
     struct queue_item_t {
-        uint32_t timeMicroSeconds;
+        uint32_t timeMicroseconds;
         xyz_t gyroRPS;
         xyz_t gyroRPS_unfiltered;
         xyz_t acc;
@@ -29,10 +32,10 @@ public:
     BlackboxMessageQueue()
         : _queue(xQueueCreateStatic(QUEUE_LENGTH, sizeof(_queueItem), &_queueStorageArea[0], &_queueStatic))
     {}
-    virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroSeconds) const override {
+    virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroseconds) const override {
         const int32_t ret = xQueuePeek(_queue, &_queueItem, portMAX_DELAY);
         if (ret) {
-            timeMicroSeconds = _queueItem.timeMicroSeconds;
+            timeMicroseconds = _queueItem.timeMicroseconds;
         }
         return ret;
     }
@@ -47,7 +50,7 @@ public:
     }
 #else
     BlackboxMessageQueue() = default;
-    virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroSeconds) const override { timeMicroSeconds = 0; return 0; }
+    virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroseconds) const override { timeMicroseconds = 0; return 0; }
     inline int32_t RECEIVE(queue_item_t& queueItem) const { queueItem = {}; return 0; }
     inline void SEND(const queue_item_t& queueItem) const { (void)queueItem; }
     inline bool SEND_IF_NOT_FULL(const queue_item_t& queueItem) const { (void)queueItem; return false; } // cppcheck-suppress knownConditionTrueFalse

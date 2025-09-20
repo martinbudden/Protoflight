@@ -39,7 +39,7 @@
 #if defined(M5_UNIFIED)
 #include <ScreenM5.h>
 #endif
-#include <TimeMicroSeconds.h>
+#include <TimeMicroseconds.h>
 #include <VehicleControllerTask.h>
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
 #include <WiFi.h>
@@ -60,12 +60,13 @@ void Main::setup()
     M5.Power.begin();
 #endif
 
-#if !defined(FRAMEWORK_RPI_PICO)
+#if !defined(FRAMEWORK_RPI_PICO) && !defined(FRAMEWORK_ESPIDF) && !defined(FRAMEWORK_STM32_CUBE)
     Serial.begin(115200);
 #endif
 
     // Statically allocate the debug object
     static Debug debug;
+    // Statically allocate and initialize nonvolatile storage
     static NonVolatileStorage nvs;
     nvs.init();
 
@@ -77,24 +78,20 @@ void Main::setup()
     // get my MAC address
     uint8_t myMacAddress[ESP_NOW_ETH_ALEN];
     WiFi.macAddress(&myMacAddress[0]);
-
-    // Statically allocate and setup the receiver.
 #if !defined(RECEIVER_CHANNEL)
     enum { RECEIVER_CHANNEL = 3 };
 #endif
     static ReceiverAtomJoyStick receiver(&myMacAddress[0], RECEIVER_CHANNEL);
-    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad(RadioController::RATES_INDEX_0));
     const esp_err_t espErr = receiver.init();
     Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
     assert(espErr == ESP_OK && "Unable to setup receiver.");
-#else
-#if defined(USE_RECEIVER_SBUS)
+#elif defined(USE_RECEIVER_SBUS)
     static ReceiverSBUS receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
 #else
     static ReceiverNull receiver;
 #endif
+
     static RadioController radioController(receiver, nvs.RadioControllerRatesLoad(RadioController::RATES_INDEX_0));
-#endif // LIBRARY_RECEIVER_USE_ESPNOW
 
     // create the IMU and get its sample rate
 #if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
@@ -105,14 +102,16 @@ void Main::setup()
     static IMU_Base& imuSensor = createIMU(imuSampleRateHz); // note, the actual set sampleRate is returned in imuSampleRateHz
 #if defined(USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING)
     // if the AHRS is interrupt driven, then set its task interval based on the IMU sample rate
-    const uint32_t AHRS_taskIntervalMicroSeconds = 1000000 / imuSampleRateHz;
+    const uint32_t AHRS_taskIntervalMicroseconds = 1000000 / imuSampleRateHz;
 #else
-    const uint32_t AHRS_taskIntervalMicroSeconds = AHRS_TASK_INTERVAL_MICROSECONDS;
+    const uint32_t AHRS_taskIntervalMicroseconds = AHRS_TASK_INTERVAL_MICROSECONDS;
 #endif
 #if defined(FRAMEWORK_RPI_PICO)
-    printf("\r\n**** AHRS_taskIntervalMicroSeconds:%u, IMU sample rate:%dHz\r\n\r\n", static_cast<unsigned int>(AHRS_taskIntervalMicroSeconds), static_cast<int>(imuSampleRateHz));
+    printf("\r\n**** AHRS_taskIntervalMicroseconds:%u, IMU sample rate:%dHz\r\n\r\n", static_cast<unsigned int>(AHRS_taskIntervalMicroseconds), static_cast<int>(imuSampleRateHz));
+#elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
 #else
-    Serial.printf("\r\n**** AHRS_taskIntervalMicroSeconds:%u, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroSeconds, imuSampleRateHz);
+    Serial.printf("\r\n**** AHRS_taskIntervalMicroseconds:%u, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroseconds, imuSampleRateHz);
 #endif
 
     // Statically allocate the MotorMixer object as defined by the build flags.
@@ -121,8 +120,8 @@ void Main::setup()
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
-    static DynamicIdleController dynamicIdleController(nvs.DynamicIdleControllerConfigLoad(), AHRS_taskIntervalMicroSeconds / FC_TASK_DENOMINATOR, debug);
-#if defined(FRAMEWORK_ARDUINO_STM32)
+    static DynamicIdleController dynamicIdleController(nvs.DynamicIdleControllerConfigLoad(), AHRS_taskIntervalMicroseconds / FC_TASK_DENOMINATOR, debug);
+#if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
     static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS, rpmFilters, dynamicIdleController);
 #else
     static MotorMixerQuadX_DShot motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS, rpmFilters, dynamicIdleController);
@@ -137,14 +136,14 @@ void Main::setup()
 #endif
 
     // statically allocate the IMU_Filters
-    static IMU_Filters imuFilters(motorMixer, AHRS_taskIntervalMicroSeconds);
+    static IMU_Filters imuFilters(motorMixer, AHRS_taskIntervalMicroseconds);
     imuFilters.setConfig(nvs.ImuFiltersConfigLoad());
 #if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     imuFilters.setRPM_Filters(&rpmFilters);
 #endif
 
     // Statically allocate the AHRS
-    AHRS& ahrs = createAHRS(AHRS_taskIntervalMicroSeconds, imuSensor, imuFilters);
+    AHRS& ahrs = createAHRS(AHRS_taskIntervalMicroseconds, imuSensor, imuFilters);
 
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
@@ -152,14 +151,6 @@ void Main::setup()
     setPIDsFromNonVolatileStorage(nvs, flightController);
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
-
-    // Statically allocate the MSP and associated objects
-#if defined(USE_MSP)
-    static Features features;
-    static MSP_ProtoFlight mspProtoFlight(nvs, features, ahrs, flightController, radioController, receiver, debug);
-    static MSP_Stream mspStream(mspProtoFlight);
-    static MSP_Serial mspSerial(mspStream);
-#endif
 
     // Statically allocate the Blackbox and associated objects
 #if defined(USE_BLACKBOX) || defined(USE_BLACKBOX_DEBUG)
@@ -189,24 +180,17 @@ void Main::setup()
     //if (M5.BtnA.isPressed()) {
     //    calibrateGyro(*ahrs, nvs, CALIBRATE_ACC_AND_GYRO);
     //}
-#endif
     //!!checkGyroCalibration(nvs, ahrs);
-
-#if defined(M5_UNIFIED)
     // Holding BtnC down while switching on resets the nvs.
     if (M5.BtnC.isPressed()) {
         nvs.clear();
     }
-#endif
-
-#if defined(M5_UNIFIED)
     // Statically allocate the screen.
     static ScreenM5 screen(ahrs, flightController, receiver);
     ReceiverWatcher* receiverWatcher = &screen;
     _screen = &screen;
     _screen->updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
 
-    static ReceiverTask receiverTask(RECEIVER_TASK_INTERVAL_MICROSECONDS, receiver, radioController, &screen);
     // Statically allocate the buttons.
     static ButtonsM5 buttons(flightController, receiver, _screen);
     _buttons = &buttons;
@@ -226,32 +210,39 @@ void Main::setup()
     receiver.broadcastMyEUI();
     ReceiverWatcher* receiverWatcher = nullptr;
 #endif // M5_UNIFIED
+
     // And finally create the AHRS, FlightController, Receiver, and MSP tasks.
     static MainTask mainTask(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS);
     _tasks.mainTask = &mainTask;
     reportMainTask();
+
     TaskBase::task_info_t taskInfo {};
 
-    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroSeconds);
-    taskInfo.taskIntervalMicroSeconds = AHRS_taskIntervalMicroSeconds;
+    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroseconds);
+    taskInfo.taskIntervalMicroseconds = AHRS_taskIntervalMicroseconds;
     printTaskInfo(taskInfo);
 
     _tasks.flightControllerTask = VehicleControllerTask::createTask(taskInfo, flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
-    taskInfo.taskIntervalMicroSeconds = 0;
+    taskInfo.taskIntervalMicroseconds = 0;
     printTaskInfo(taskInfo);
 
     _tasks.receiverTask = ReceiverTask::createTask(taskInfo, receiver, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
-    taskInfo.taskIntervalMicroSeconds = RECEIVER_TASK_INTERVAL_MICROSECONDS;
+    taskInfo.taskIntervalMicroseconds = RECEIVER_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
 #if defined(USE_MSP)
+    // Statically allocate the MSP and associated objects
+    static Features features;
+    static MSP_ProtoFlight mspProtoFlight(nvs, features, ahrs, flightController, radioController, receiver, debug);
+    static MSP_Stream mspStream(mspProtoFlight);
+    static MSP_Serial mspSerial(mspStream);
     _tasks.mspTask = MSP_Task::createTask(taskInfo, mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
-    taskInfo.taskIntervalMicroSeconds = MSP_TASK_INTERVAL_MICROSECONDS;
+    taskInfo.taskIntervalMicroseconds = MSP_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BLACKBOX)
     blackboxCallbacks.setUseMessageQueue(true);
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
-    taskInfo.taskIntervalMicroSeconds = BLACKBOX_TASK_INTERVAL_MICROSECONDS;
+    taskInfo.taskIntervalMicroseconds = BLACKBOX_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
     //vTaskResume(taskInfo.taskHandle);
 #endif
@@ -274,35 +265,33 @@ void Main::setup()
     );
 
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
-    taskInfo.taskIntervalMicroSeconds = BACKCHANNEL_TASK_INTERVAL_MICROSECONDS;
+    taskInfo.taskIntervalMicroseconds = BACKCHANNEL_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
 #endif
 }
 
 void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug)
 {
-    static uint32_t timeMicroSecondsPrevious = 0;
+    static uint32_t timeMicrosecondsPrevious = 0;
 
-#if defined(FRAMEWORK_RPI_PICO)
-    printf("***StartLog\r\n");
-#else
-    Serial.printf("***StartLog\r\n");
-#endif
+    print("***StartLog\r\n");
     blackbox.start(Blackbox::start_t{.debugMode = static_cast<uint16_t>(debug.getMode()), .motorCount = 4, .servoCount = 0});
 
     for (size_t ii = 0; ii < 1500; ++ii) {
-        const uint32_t timeMicroSeconds = timeUs();
+        const uint32_t timeMicroseconds = timeUs();
 
-        static const uint32_t timeMicroSecondsDelta = timeMicroSeconds - timeMicroSecondsPrevious;
-        timeMicroSecondsPrevious = timeMicroSeconds;
+        static const uint32_t timeMicrosecondsDelta = timeMicroseconds - timeMicrosecondsPrevious;
+        timeMicrosecondsPrevious = timeMicroseconds;
 
-        const uint32_t state = blackbox.update(timeMicroSeconds);
+        const uint32_t state = blackbox.update(timeMicroseconds);
         (void)state;
         // Serial.printf("ii:%3d, s:%2d\r\n", ii, state);
 
-        ahrs.readIMUandUpdateOrientation(timeMicroSeconds, timeMicroSecondsDelta);
-        receiver.update(timeMicroSecondsDelta / 1000);
+        ahrs.readIMUandUpdateOrientation(timeMicroseconds, timeMicrosecondsDelta);
+        receiver.update(timeMicrosecondsDelta / 1000);
 #if defined(FRAMEWORK_RPI_PICO)
+#elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
 #else
         delay(1);
 #endif
@@ -310,10 +299,11 @@ void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, 
 
     //blackboxSerialDevice.endLog(true);
     blackbox.finish();
+    print("***EndLog\r\n");
 #if defined(FRAMEWORK_RPI_PICO)
-    printf("***EndLog\r\n");
+#elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
 #else
-    Serial.printf("***EndLog\r\n");
     delay(5000);
 #endif
 }
@@ -335,10 +325,10 @@ void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
 {
 #if defined(FRAMEWORK_ARDUINO_ESP32)
     Serial.printf("**** %s, %.*s core:%u, priority:%u, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", taskInfo.core, taskInfo.priority);
-    if (taskInfo.taskIntervalMicroSeconds == 0) {
+    if (taskInfo.taskIntervalMicroseconds == 0) {
         Serial.printf("interrupt driven\r\n");
     } else {
-        Serial.printf("task interval:%ums\r\n", taskInfo.taskIntervalMicroSeconds / 1000);
+        Serial.printf("task interval:%ums\r\n", taskInfo.taskIntervalMicroseconds / 1000);
     }
 #else
     (void)taskInfo;
@@ -360,26 +350,33 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) // NOLI
 }
 #endif
 
-void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs)
+void Main::print(const char* buf)
+{
+#if defined(FRAMEWORK_RPI_PICO)
+        printf(&buf[0]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+#elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
+#else
+        Serial.print(&buf[0]);
+#endif
+}
+
+void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs) // cppcheck-suppress constParameterReference
 {
     // Set the gyro offsets from non-volatile storage.
     IMU_Base::xyz_int32_t offset {};
     if (nvs.GyroOffsetLoad(offset.x, offset.y, offset.z)) {
         ahrs.setGyroOffset(offset);
+#if !defined(FRAMEWORK_STM32_CUBE)
         std::array<char, 128> buf;
         sprintf(&buf[0], "**** AHRS gyroOffsets loaded from NVS: gx:%5d, gy:%5d, gz:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
-#if defined(FRAMEWORK_RPI_PICO)
-        printf(&buf[0]);
-#else
-        Serial.print(&buf[0]);
+        print(&buf[0]);
 #endif
         if (nvs.AccOffsetLoad(offset.x, offset.y, offset.z)) {
             ahrs.setAccOffset(offset);
+#if !defined(FRAMEWORK_STM32_CUBE)
             sprintf(&buf[0], "**** AHRS accOffsets loaded from NVS: ax:%5d, ay:%5d, az:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
-#if defined(FRAMEWORK_RPI_PICO)
-            printf(&buf[0]);
-#else
-            Serial.print(&buf[0]);
+            print(&buf[0]);
 #endif
         }
     } else {
@@ -398,12 +395,12 @@ void Main::setPIDsFromNonVolatileStorage(NonVolatileStorage& nvs, FlightControll
         const PIDF::PIDF_t pid = nvs.PID_load(ii);
         flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
         const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
+#if !defined(FRAMEWORK_STM32_CUBE)
         std::array<char, 128> buf;
         sprintf(&buf[0], "**** %15s PID loaded from NVS: p:%6.4f, i:%6.4f, d:%6.4f, f:%6.4f, s:%6.4f\r\n", pidName.c_str(), static_cast<double>(pid.kp), static_cast<double>(pid.ki), static_cast<double>(pid.kd), static_cast<double>(pid.kf), static_cast<double>(pid.ks));
-#if defined(FRAMEWORK_RPI_PICO)
-        printf(&buf[0]);
+        print(&buf[0]);
 #else
-        Serial.print(&buf[0]);
+        (void)pidName;
 #endif
     }
 }

@@ -20,7 +20,7 @@ const std::array<PIDF::PIDF_t, FlightController::PID_COUNT> FlightController::_s
 Constructor. Sets member data.
 */
 FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController, Debug& debug) :
-    VehicleControllerBase(AIRCRAFT, PID_COUNT, ahrs.getTaskIntervalMicroSeconds() / taskDenominator, ahrs),
+    VehicleControllerBase(AIRCRAFT, PID_COUNT, ahrs.getTaskIntervalMicroseconds() / taskDenominator, ahrs),
     _mixer(motorMixer),
     _radioController(radioController),
     _debug(debug),

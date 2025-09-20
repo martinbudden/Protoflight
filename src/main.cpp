@@ -23,6 +23,17 @@ extern "C" void app_main()
     }
 }
 
+#elif defined(FRAMEWORK_STM32_CUBE)
+
+int main()
+{
+    static Main mainTask;
+    mainTask.setup();
+    while (true) {
+        mainTask.loop();
+    }
+}
+
 #elif defined(FRAMEWORK_TEST)
 
 #else // defaults to FRAMEWORK_ARDUINO

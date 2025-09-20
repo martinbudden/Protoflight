@@ -5,9 +5,12 @@
 #include <TaskBase.h>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
-#if defined(FRAMEWORK_USE_FREERTOS_SUBDIRECTORY)
+#if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
 #include <freertos/FreeRTOS.h>
 #else
+#if defined(FRAMEWORK_ARDUINO_STM32)
+#include <STM32FreeRTOS.h>
+#endif
 #include <FreeRTOS.h>
 #endif
 #endif
@@ -70,27 +73,38 @@ enum {
     BLACKBOX_TASK_PRIORITY = 3
 };
 
-#if !defined(PRO_CPU_NUM)
-#define PRO_CPU_NUM (0)
-#endif
-#if !defined(APP_CPU_NUM)
-// the processor has only one core
-#define APP_CPU_NUM PRO_CPU_NUM
+#if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
+
+enum  { CPU_CORE_0 = PRO_CPU_NUM };
+#if defined(APP_CPU_NUM)
+enum  { CPU_CORE_1 = APP_CPU_NUM };
+#else
+enum  { CPU_CORE_1 = CPU_CORE_0 }; // the processor has only one core
 #endif
 
+#elif defined(FRAMEWORK_RPI_PICO) || defined(FRAMEWORK_ARDUINO_RPI_PICO)
+
+enum  { CPU_CORE_0 = 0x01, CPU_CORE_1 = 0x02 }; // bitmask is used for core affinity for RPI_PICO
+
+#else
+
+enum  { CPU_CORE_0 = 0, CPU_CORE_1 = 0 };
+
+#endif // FRAMEWORK
+
 enum {
-    AHRS_TASK_CORE = APP_CPU_NUM, // AHRS should be the only task running on the second core
-    FC_TASK_CORE = PRO_CPU_NUM,
-    RECEIVER_TASK_CORE = PRO_CPU_NUM,
-    BACKCHANNEL_TASK_CORE = PRO_CPU_NUM,
-    MOTORS_TASK_CORE = PRO_CPU_NUM,
-    MSP_TASK_CORE = PRO_CPU_NUM,
-    BLACKBOX_TASK_CORE = PRO_CPU_NUM,
+    AHRS_TASK_CORE = CPU_CORE_1, // AHRS should be the only task running on core 1
+    FC_TASK_CORE = CPU_CORE_0,
+    RECEIVER_TASK_CORE = CPU_CORE_0,
+    BACKCHANNEL_TASK_CORE = CPU_CORE_0,
+    MOTORS_TASK_CORE = CPU_CORE_0,
+    MSP_TASK_CORE = CPU_CORE_0,
+    BLACKBOX_TASK_CORE = CPU_CORE_0,
 };
 
 class MainTask : public TaskBase {
 public:
-    explicit MainTask(uint32_t taskIntervalMicroSeconds) : TaskBase(taskIntervalMicroSeconds) {}
+    explicit MainTask(uint32_t taskIntervalMicroseconds) : TaskBase(taskIntervalMicroseconds) {}
     void loop();
 };
 
@@ -104,9 +118,10 @@ public:
 private:
     void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
     static IMU_Base& createIMU(int32_t& imuSampleRateHz);
-    static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
+    static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);
     static void setPIDsFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);
+    static void print(const char* buf);
     static void reportMainTask();
     static void printTaskInfo(TaskBase::task_info_t& taskInfo);
     struct tasks_t {

@@ -66,7 +66,7 @@ classDiagram
 
 
     class TaskBase {
-        uint32_t _taskIntervalMicroSeconds
+        uint32_t _taskIntervalMicroseconds
     }
     TaskBase <|-- BackchannelTask
     class BackchannelTask {

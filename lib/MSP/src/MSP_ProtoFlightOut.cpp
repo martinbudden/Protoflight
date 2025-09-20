@@ -114,7 +114,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
     case MSP_STATUS_EX:
         [[fallthrough]];
     case MSP_STATUS: {
-        dst.writeU16(static_cast<uint16_t>(_ahrs.getTaskIntervalMicroSeconds()));
+        dst.writeU16(static_cast<uint16_t>(_ahrs.getTaskIntervalMicroseconds()));
         dst.writeU16(0); // I2C error counter
         // NOLINTBEGIN(hicpp-signed-bitwise)
         dst.writeU16(_ahrs.isSensorAvailable(AHRS::SENSOR_ACCELEROMETER)
@@ -249,8 +249,8 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
     case MSP_ATTITUDE: {
         const Quaternion quaternion = _ahrs.getOrientationForInstrumentationUsingLock();
 
-        dst.writeU16(static_cast<uint16_t>(quaternion.calculateRollDegrees()));
-        dst.writeU16(static_cast<uint16_t>(quaternion.calculatePitchDegrees()));
+        dst.writeU16(static_cast<uint16_t>(quaternion.calculateRollDegrees()*10.0F));
+        dst.writeU16(static_cast<uint16_t>(quaternion.calculatePitchDegrees()*10.0F));
         dst.writeU16(static_cast<uint16_t>(quaternion.calculateYawDegrees()));
         break;
     }

@@ -144,7 +144,7 @@ public:
     uint8_t getPidProfileCount() const { return 1; }
     uint8_t getCurrentControlRateProfileIndex() const { return 0; }
 
-    virtual uint32_t getOutputPowerTimeMicroSeconds() const override;
+    virtual uint32_t getOutputPowerTimeMicroseconds() const override;
 
     const std::string& getPID_Name(pid_index_e pidIndex) const;
 
@@ -185,7 +185,7 @@ public:
     void updateOutputsUsingPIDs(float deltaT);
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 private:
-    MotorMixerBase& motorMixer(uint32_t taskIntervalMicroSeconds);
+    MotorMixerBase& motorMixer(uint32_t taskIntervalMicroseconds);
 private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
     MotorMixerBase& _mixer;

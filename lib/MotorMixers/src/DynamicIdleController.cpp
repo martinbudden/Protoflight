@@ -2,13 +2,13 @@
 #include <Debug.h>
 
 
-DynamicIdleController::DynamicIdleController(const config_t& config, uint32_t taskIntervalMicroSeconds, Debug& debug) :
+DynamicIdleController::DynamicIdleController(const config_t& config, uint32_t taskIntervalMicroseconds, Debug& debug) :
     _debug(debug)
 {
-    setConfig(config, taskIntervalMicroSeconds);
+    setConfig(config, taskIntervalMicroseconds);
 }
 
-void DynamicIdleController::setConfig(const config_t& config, uint32_t taskIntervalMicroSeconds)
+void DynamicIdleController::setConfig(const config_t& config, uint32_t taskIntervalMicroseconds)
 {
     _config = config;
 
@@ -20,7 +20,7 @@ void DynamicIdleController::setConfig(const config_t& config, uint32_t taskInter
     // use Betaflight multipliers for compatibility with Betaflight Configurator
     _PID.setP(static_cast<float>(config.dyn_idle_p_gain) * 0.00015F);
 
-    const float deltaT = static_cast<float>(taskIntervalMicroSeconds) * 0.000001F;
+    const float deltaT = static_cast<float>(taskIntervalMicroseconds) * 0.000001F;
 
     _PID.setI(static_cast<float>(config.dyn_idle_i_gain) * 0.01F * deltaT);
     // limit I-term to range [0, _MaxIncrease]
