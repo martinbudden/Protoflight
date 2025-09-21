@@ -21,9 +21,5 @@ public:
 protected:
     RPM_Filters& _rpmFilters;
     DynamicIdleController& _dynamicIdleController;
-
-    ESC_DShot _motorBR {ESC_DShot::ESC_PROTOCOL_DSHOT300};
-    ESC_DShot _motorFR {ESC_DShot::ESC_PROTOCOL_DSHOT300};
-    ESC_DShot _motorBL {ESC_DShot::ESC_PROTOCOL_DSHOT300};
-    ESC_DShot _motorFL {ESC_DShot::ESC_PROTOCOL_DSHOT300};
+    std::array<ESC_DShot, MOTOR_COUNT> _motors;
 };

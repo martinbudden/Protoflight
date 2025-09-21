@@ -32,6 +32,7 @@ public:
     inline void setMotorOutputMin(float motorOutputMin) { _motorOutputMin = motorOutputMin; }
     inline float getMotorOutputMin() const { return _motorOutputMin; }
 
+    virtual void writeMotor(uint8_t motorIndex) { (void)motorIndex; }
     virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) { (void)commands; (void)deltaT; (void)tickCount; }
     virtual float getMotorOutput(size_t motorIndex) const { (void)motorIndex; return 0.0F; }
 

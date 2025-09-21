@@ -47,10 +47,10 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(const commands_t& commands, fl
         _throttleCommand = throttle;
 
         // calculate the "mix" for the QuadX motor configuration
-        _motorOutputs[M0] = -commands.roll - commands.pitch - commands.yaw + throttle;
-        _motorOutputs[M1] = -commands.roll + commands.pitch + commands.yaw + throttle;
-        _motorOutputs[M2] =  commands.roll - commands.pitch + commands.yaw + throttle;
-        _motorOutputs[M3] =  commands.roll + commands.pitch - commands.yaw + throttle;
+        _motorOutputs[M0] = throttle - commands.roll + commands.pitch + commands.yaw; // back right
+        _motorOutputs[M1] = throttle - commands.roll - commands.pitch - commands.yaw; // front right
+        _motorOutputs[M2] = throttle + commands.roll + commands.pitch - commands.yaw; // back left
+        _motorOutputs[M3] = throttle + commands.roll - commands.pitch + commands.yaw; // front left 
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
         _throttleCommand = commands.throttle;

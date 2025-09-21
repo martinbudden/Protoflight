@@ -73,6 +73,8 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
 
 #elif defined(FRAMEWORK_STM32_CUBE)
 
+    (void)pins;
+
 #elif defined(FRAMEWORK_TEST)
 
 #else // defaults to FRAMEWORK_ARDUINO
@@ -115,61 +117,34 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins) :
 #endif // FRAMEWORK
 }
 
-void MotorMixerQuadX_PWM::writeMotorPWM(const pwm_pin_t& pin, uint8_t motorIndex)
+void MotorMixerQuadX_PWM::writeMotor(uint8_t motorIndex)
 {
+    const pwm_pin_t& pin = _pins[motorIndex];
+    // scale motor output to GPIO range (normally [0,255] or [0, 65535])
+    const uint16_t motorOutput = static_cast<uint16_t>(roundf(_pwmScale*clip(_motorOutputs[motorIndex], 0.0F, 1.0F)));
 #if defined(FRAMEWORK_RPI_PICO)
-    // scale motor output to GPIO range [0, 65535] and write
     if (pin.pin != 0xFF) {
-        const uint16_t motorOutput = static_cast<uint16_t>(roundf(_pwmScale*clip(_motorOutputs[motorIndex], 0.0F, 1.0F)));
         pwm_set_gpio_level(pin.pin, motorOutput);
     }
 #elif defined(FRAMEWORK_ESPIDF)
     (void)pin;
-    (void)motorIndex;
+    (void)motorOutput;
 #elif defined(FRAMEWORK_STM32_CUBE)
     if (pin.pin != 0xFF) {
-        const uint32_t motorOutput = static_cast<uint32_t>(roundf(_pwmScale*clip(_motorOutputs[motorIndex], 0.0F, 1.0F)));
         __HAL_TIM_SET_COMPARE(pin.htim, pin.channel, motorOutput);
     }
 #elif defined(FRAMEWORK_TEST)
     (void)pin;
-    (void)motorIndex;
+    (void)motorOutput;
 #else // defaults to FRAMEWORK_ARDUINO
 #if defined(FRAMEWORK_ARDUINO_ESP32)
-    // scale motor output to GPIO range [0, 255] and write
     if (pin.pin != 0xFF) {
-        const uint32_t motorOutput = static_cast<uint32_t>(roundf(_pwmScale*clip(_motorOutputs[motorIndex], 0.0F, 1.0F)));
         ledcWrite(motorIndex, motorOutput);
     }
 #else
-    // scale motor output to GPIO range [0, 255] and write
     if (pin.pin != 0xFF) {
-        const uint32_t motorOutput = static_cast<uint32_t>(roundf(_pwmScale*clip(_motorOutputs[motorIndex], 0.0F, 1.0F)));
         analogWrite(pin.pin, motorOutput);
     }
 #endif
 #endif // FRAMEWORK
-}
-
-void MotorMixerQuadX_PWM::outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount)
-{
-    (void)deltaT;
-    (void)tickCount;
-
-    _throttleCommand = commands.throttle;
-
-    if (motorsIsOn()) {
-        // calculate the "mix" for the QuadX motor configuration
-        _motorOutputs[M0] = -commands.roll - commands.pitch - commands.yaw + commands.throttle;
-        _motorOutputs[M1] = -commands.roll + commands.pitch + commands.yaw + commands.throttle;
-        _motorOutputs[M2] =  commands.roll - commands.pitch + commands.yaw + commands.throttle;
-        _motorOutputs[M3] =  commands.roll + commands.pitch - commands.yaw + commands.throttle;
-    } else {
-        _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
-    }
-
-    writeMotorPWM(_pins[M0], M0);
-    writeMotorPWM(_pins[M1], M1);
-    writeMotorPWM(_pins[M2], M2);
-    writeMotorPWM(_pins[M3], M3);
 }
