@@ -106,6 +106,8 @@
         "HIFCR",
         "HISR",
         "HTIF",
+        "htim",
+        "htims",
         "INAV",
         "IRAM",
         "Isrc",

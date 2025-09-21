@@ -47,10 +47,10 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(const commands_t& commands, fl
         _throttleCommand = throttle;
 
         // calculate the "mix" for the QuadX motor configuration
-        _motorOutputs[MOTOR_BR] = -commands.roll - commands.pitch - commands.yaw + throttle;
-        _motorOutputs[MOTOR_FR] = -commands.roll + commands.pitch + commands.yaw + throttle;
-        _motorOutputs[MOTOR_BL] =  commands.roll - commands.pitch + commands.yaw + throttle;
-        _motorOutputs[MOTOR_FL] =  commands.roll + commands.pitch - commands.yaw + throttle;
+        _motorOutputs[M0] = -commands.roll - commands.pitch - commands.yaw + throttle;
+        _motorOutputs[M1] = -commands.roll + commands.pitch + commands.yaw + throttle;
+        _motorOutputs[M2] =  commands.roll - commands.pitch + commands.yaw + throttle;
+        _motorOutputs[M3] =  commands.roll + commands.pitch - commands.yaw + throttle;
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
         _throttleCommand = commands.throttle;
@@ -58,10 +58,10 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(const commands_t& commands, fl
 
     // convert motor output to DShot range [47, 2047]
     _escDShot.outputToMotors(
-        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_BR], _motorOutputMin, 1.0F)) + 47),
-        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_FR], _motorOutputMin, 1.0F)) + 47),
-        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_BL], _motorOutputMin, 1.0F)) + 47),
-        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[MOTOR_FL], _motorOutputMin, 1.0F)) + 47)
+        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M0], _motorOutputMin, 1.0F)) + 47),
+        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M1], _motorOutputMin, 1.0F)) + 47),
+        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M2], _motorOutputMin, 1.0F)) + 47),
+        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M3], _motorOutputMin, 1.0F)) + 47)
     );
 
     // read the motor RPM, used to set the RPM filters

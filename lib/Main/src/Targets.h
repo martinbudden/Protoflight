@@ -13,7 +13,7 @@ Targets
     #define IMU_I2C_PINS        pins_t{.sda=8,.scl=9,.irq=BUS_I2C::IRQ_NOT_SET}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+    #define MOTOR_PINS          pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 #endif
 
 #if defined(TARGET_M5STACK_STAMPS3)
@@ -24,7 +24,7 @@ Targets
     #define IMU_I2C_PINS        pins_t{.sda=38,.scl=39,.irq=16}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+    #define MOTOR_PINS          pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 #endif
 
 #if defined(TARGET_M5STACK_ATOMS3R)
@@ -39,7 +39,7 @@ Targets
     #define IMU_I2C_PINS        pins_t{.sda=45,.scl=0,.irq=16}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+    #define MOTOR_PINS          pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 
     #define USE_SCREEN
     #define USE_BUTTONS
@@ -56,7 +56,7 @@ Targets
     #define IMU_I2C_PINS        pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+    #define MOTOR_PINS          pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 
     #define SDCARD_SPI_PINS     pins_t{.cs=4,.sck=18,.cipo=38,.copi=23,.irq=0xFF}
     //#define USE_BLACKBOX
@@ -82,7 +82,7 @@ Targets
 #endif
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+    #define MOTOR_PINS          pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 #endif
 
 #if defined(TARGET_PICO2)
@@ -109,8 +109,8 @@ Targets
     //#define USE_MOTOR_MIXER_QUAD_X_PWM
     #define USE_MOTOR_MIXER_QUAD_X_DSHOT
     #define USE_DSHOT_RPI_PICO_PIO
-    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
-    //#define MOTOR_PINS          pins_t{.br=2,.fr=3,.bl=4,.fl=5}
+    #define MOTOR_PINS          pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
+    //#define MOTOR_PINS          pins_t{.m0=2,.m1=3,.m2=4,.m3=5}
 #endif
 
 #if defined(TARGET_SEED_XIAO_NRF52840_SENSE)
@@ -125,7 +125,7 @@ Targets
     #define RECEIVER_PINS       pins_t{.rx=0,.tx=0}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          pins_t{.br=0xFF,.fr=0xFF,.bl=0xFF,.fl=0xFF}
+    #define MOTOR_PINS          pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 #endif
 
 #if defined(TARGET_ADAFRUIT_FEATHER_F405)
@@ -149,7 +149,7 @@ Targets
     //#define RECEIVER_PINS       pins_t{.rx=0,.tx=0}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          port_pins_t{.br={PC,7},.fr={PC,6},.bl={PB,8},.fl={PB,9}}
+    #define MOTOR_PINS          stm32_motor_pins4_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}}
 
     // NOTE this board uses SDIO for the SD card, so pins below are just to test the build
     #define SDCARD_SPI_PINS     port_pins_t{.cs={PC,8},.sck={PC,9},.cipo={PC,10},.copi={PC,11},.irq={0,0xFF}}
@@ -178,7 +178,7 @@ Targets
     #define RECEIVER_PINS       port_pins_t{.rx={PB,10},.tx={PB,9}}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          port_pins_t{.br={PC,7},.fr={PC,6},.bl={PB,8},.fl={PB,9}}
+    #define MOTOR_PINS          stm32_motor_pins4_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}}
 
     #define USE_MSP
     // LED0 PB4, LED1 PB3

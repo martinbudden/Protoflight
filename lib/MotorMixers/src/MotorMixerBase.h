@@ -14,6 +14,12 @@ public:
         float pitch;
         float yaw;
     };
+    struct stm32_motor_pin_t {
+        uint8_t port;
+        uint8_t pin;
+        uint8_t timer;
+        uint8_t channel;
+    };
 public:
     MotorMixerBase(uint32_t motorCount, Debug& debug) : _motorCount(motorCount), _debug(debug) {}
     inline size_t getMotorCount() const { return _motorCount; }

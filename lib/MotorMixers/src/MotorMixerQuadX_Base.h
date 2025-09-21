@@ -6,27 +6,23 @@
 
 class MotorMixerQuadX_Base : public MotorMixerBase {
 public:
-    enum { MOTOR_BR=0, MOTOR_FR=1, MOTOR_BL=2, MOTOR_FL=3, MOTOR_COUNT=4, MOTOR_BEGIN=0 };
+    enum { M0=0, M1=1, M2=2, M3=3, MOTOR_COUNT=4, MOTOR_BEGIN=0 };
     explicit MotorMixerQuadX_Base(Debug& debug) : MotorMixerBase(MOTOR_COUNT, debug) {}
     virtual float getMotorOutput(size_t motorIndex) const override { return _motorOutputs[motorIndex]; } // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 public:
-    struct port_pin_t {
-        uint8_t port;
-        uint8_t pin;
-    };
     // 4 2
     // 3 1
     struct pins_t {
-        uint8_t br;
-        uint8_t fr;
-        uint8_t bl;
-        uint8_t fl;
+        uint8_t m0;
+        uint8_t m1;
+        uint8_t m2;
+        uint8_t m3;
     };
-    struct port_pins_t {
-        port_pin_t br;
-        port_pin_t fr;
-        port_pin_t bl;
-        port_pin_t fl;
+    struct stm32_motor_pins4_t {
+        stm32_motor_pin_t m0;
+        stm32_motor_pin_t m1;
+        stm32_motor_pin_t m2;
+        stm32_motor_pin_t m3;
     };
 protected:
     std::array<float, MOTOR_COUNT> _motorOutputs {};
