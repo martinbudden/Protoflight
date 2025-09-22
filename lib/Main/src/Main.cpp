@@ -116,15 +116,15 @@ void Main::setup()
 
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
-    static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS);
+    static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
     static DynamicIdleController dynamicIdleController(nvs.DynamicIdleControllerConfigLoad(), AHRS_taskIntervalMicroseconds / FC_TASK_DENOMINATOR, debug);
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS, rpmFilters, dynamicIdleController);
+    static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS, rpmFilters, dynamicIdleController);
 #else
-    static MotorMixerQuadX_DShot motorMixer(debug, MotorMixerQuadX_Base::MOTOR_PINS, rpmFilters, dynamicIdleController);
+    static MotorMixerQuadX_DShot motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS, rpmFilters, dynamicIdleController);
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);

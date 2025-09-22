@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ESC_DShotBitbang.h>
-#include <MotorMixerQuadX_Base.h>
+#include <MotorMixerQuadBase.h>
 
 class RPM_Filters;
 
@@ -10,7 +10,7 @@ DShot Motor Mixer.
 
 Hz is used for motor revolutions per second rather than RPS, since RPS is generally used for Radians Per Second.
 */
-class MotorMixerQuadX_DShotBitbang : public MotorMixerQuadX_Base {
+class MotorMixerQuadX_DShotBitbang : public MotorMixerQuadBase {
 public:
     MotorMixerQuadX_DShotBitbang(Debug& debug, const pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController);
 public:

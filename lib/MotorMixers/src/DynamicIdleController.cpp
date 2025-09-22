@@ -40,6 +40,7 @@ void DynamicIdleController::setMinimumAllowedMotorHz(float minimumAllowedMotorHz
 float DynamicIdleController::calculateSpeedIncrease(float slowestMotorHz, float deltaT)
 {
     if (_minimumAllowedMotorHz == 0.0F) {
+        // if motors are allowed to stop, then no speed increase is needed
         return  0.0F;
     }
 

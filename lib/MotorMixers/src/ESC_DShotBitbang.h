@@ -121,7 +121,7 @@ private:
     port_t _portA {};
     port_t _portB {};
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-    static void setupGPIO(GPIO_TypeDef*GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn);
+    static void setupGPIO(GPIO_TypeDef*GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn); // cppcheck-suppress unusedPrivateFunction
 #if !defined(FRAMEWORK_STM32_CUBE_F1)
     static void setupDMA(DMA_Stream_TypeDef* TIM, uint32_t DMAxEN);
 #endif

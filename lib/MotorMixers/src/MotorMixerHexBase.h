@@ -4,12 +4,11 @@
 #include <array>
 
 
-class MotorMixerOctoX_Base : public MotorMixerBase {
+class MotorMixerHexBase : public MotorMixerBase {
 public:
-    enum { M0=0, M1=1, M2=2, M3=3, M4=4, M5=5, M6=6, M7=8, MOTOR_COUNT=8, MOTOR_BEGIN=0 };
-    explicit MotorMixerOctoX_Base(Debug& debug) : MotorMixerBase(MOTOR_COUNT, debug) {}
+    enum { M0=0, M1=1, M2=2, M3=3, M4=4, M5=5, MOTOR_COUNT=6, MOTOR_BEGIN=0 };
+    explicit MotorMixerHexBase(Debug& debug) : MotorMixerBase(MOTOR_COUNT, debug) {}
     virtual float getMotorOutput(size_t motorIndex) const override { return _motorOutputs[motorIndex]; } // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) override;
 public:
     struct pins_t {
         uint8_t m0;
@@ -18,8 +17,6 @@ public:
         uint8_t m3;
         uint8_t m4;
         uint8_t m5;
-        uint8_t m6;
-        uint8_t m7;
     };
     struct stm32_motor_pins4_t {
         stm32_motor_pin_t m0;
@@ -28,8 +25,6 @@ public:
         stm32_motor_pin_t m3;
         stm32_motor_pin_t m4;
         stm32_motor_pin_t m5;
-        stm32_motor_pin_t m6;
-        stm32_motor_pin_t m7;
     };
 protected:
     std::array<float, MOTOR_COUNT> _motorOutputs {};

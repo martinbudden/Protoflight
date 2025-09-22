@@ -1,6 +1,6 @@
 #pragma once
 
-#include <MotorMixerQuadX_Base.h>
+#include <MotorMixerQuadBase.h>
 
 #if defined(FRAMEWORK_STM32_CUBE)
 
@@ -21,7 +21,7 @@
 #endif
 
 
-class MotorMixerQuadX_PWM : public MotorMixerQuadX_Base {
+class MotorMixerQuadX_PWM : public MotorMixerQuadBase {
 public:
 #if defined(FRAMEWORK_STM32_CUBE)
     struct pwm_pin_t {
@@ -38,7 +38,8 @@ public:
     MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins);
     MotorMixerQuadX_PWM(Debug& debug, const stm32_motor_pins4_t& pins);
 public:
-    virtual void writeMotor(uint8_t motorIndex) override;
+    virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) override;
+    void writeMotor(uint8_t motorIndex, float motorOutput);
 protected:
     float _pwmScale {255.0F};
     std::array<pwm_pin_t, MOTOR_COUNT> _pins {};

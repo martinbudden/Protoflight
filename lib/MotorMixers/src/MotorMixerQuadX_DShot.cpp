@@ -1,18 +1,19 @@
 #include "DynamicIdleController.h"
+#include "Mixers.h"
 #include "MotorMixerQuadX_DShot.h"
 
 #include <RPM_Filters.h>
 
 
 MotorMixerQuadX_DShot::MotorMixerQuadX_DShot(Debug& debug, const pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController) :
-    MotorMixerQuadX_Base(debug),
+    MotorMixerQuadBase(debug),
     _rpmFilters(rpmFilters),
     _dynamicIdleController(dynamicIdleController)
 {
     _motors[M0].init(pins.m0);
-    _motors[M0].init(pins.m1);
-    _motors[M0].init(pins.m2);
-    _motors[M0].init(pins.m3);
+    _motors[M1].init(pins.m1);
+    _motors[M2].init(pins.m2);
+    _motors[M3].init(pins.m3);
 }
 
 float MotorMixerQuadX_DShot::calculateSlowestMotorHz() const
@@ -43,18 +44,11 @@ void MotorMixerQuadX_DShot::outputToMotors(const commands_t& commands, float del
     (void)tickCount;
 
     if (motorsIsOn()) {
-        const float throttleIncrease = _dynamicIdleController.calculateSpeedIncrease(calculateSlowestMotorHz(), deltaT);
-        const float throttle = commands.throttle + throttleIncrease;
-        _throttleCommand = throttle;
-
-        // calculate the "mix" for the QuadX motor configuration
-        _motorOutputs[M0] = throttle - commands.roll + commands.pitch + commands.yaw; // back right
-        _motorOutputs[M1] = throttle - commands.roll - commands.pitch - commands.yaw; // front right
-        _motorOutputs[M2] = throttle + commands.roll + commands.pitch - commands.yaw; // back left
-        _motorOutputs[M3] = throttle + commands.roll - commands.pitch + commands.yaw; // front left 
+        const float throttleIncrease = _dynamicIdleController.getMinimumAllowedMotorHz() == 0.0F ? 0.0F : _dynamicIdleController.calculateSpeedIncrease(calculateSlowestMotorHz(), deltaT);
+        _blackboxThrottle = mixQuadX(_motorOutputs, commands, throttleIncrease);
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
-        _throttleCommand = commands.throttle;
+        _blackboxThrottle = commands.throttle;
     }
 
     // and finally output to the motors, reading the motor RPM to set the RPM filters

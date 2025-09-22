@@ -107,7 +107,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
 #endif
     }
     // log the final throttle value used in the mixer
-    mainState.setpoint[3] = static_cast<int16_t>(std::lroundf(_flightController.getMixer().getThrottleCommand() * 1000.0F));
+    mainState.setpoint[3] = static_cast<int16_t>(std::lroundf(_flightController.getMixer().getBlackboxThrottle() * 1000.0F));
 
     // interval [1000,2000] for THROTTLE and [-500,+500] for ROLL/PITCH/YAW
     const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM(); // returns controls in range [1000, 2000]

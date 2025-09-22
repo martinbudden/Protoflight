@@ -1,11 +1,14 @@
 #include "DynamicIdleController.h"
+#include "Mixers.h"
 #include "MotorMixerQuadX_DShotBitbang.h"
+
+#include <RPM_Filters.h>
 
 #include <cmath>
 
 
 MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(Debug& debug, const pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController) :
-    MotorMixerQuadX_Base(debug),
+    MotorMixerQuadBase(debug),
     _rpmFilters(rpmFilters),
     _dynamicIdleController(dynamicIdleController)
 {
@@ -16,16 +19,16 @@ MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(Debug& debug, const p
 
 float MotorMixerQuadX_DShotBitbang::calculateSlowestMotorHz() const
 {
-    float slowestMotorHz = _motorFrequenciesHz[0];
-    float motorHz = _motorFrequenciesHz[1];
+    float slowestMotorHz = _motorFrequenciesHz[M0];
+    float motorHz = _motorFrequenciesHz[M1];
     if (motorHz < slowestMotorHz) {
         slowestMotorHz = motorHz;
     }
-    motorHz = _motorFrequenciesHz[2];
+    motorHz = _motorFrequenciesHz[M2];
     if (motorHz < slowestMotorHz) {
         slowestMotorHz = motorHz;
     }
-    motorHz = _motorFrequenciesHz[3];
+    motorHz = _motorFrequenciesHz[M3];
     if (motorHz < slowestMotorHz) {
         slowestMotorHz = motorHz;
     }
@@ -42,18 +45,11 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(const commands_t& commands, fl
     (void)tickCount;
 
     if (motorsIsOn()) {
-        const float throttleIncrease = _dynamicIdleController.calculateSpeedIncrease(calculateSlowestMotorHz(), deltaT);
-        const float throttle = commands.throttle + throttleIncrease;
-        _throttleCommand = throttle;
-
-        // calculate the "mix" for the QuadX motor configuration
-        _motorOutputs[M0] = throttle - commands.roll + commands.pitch + commands.yaw; // back right
-        _motorOutputs[M1] = throttle - commands.roll - commands.pitch - commands.yaw; // front right
-        _motorOutputs[M2] = throttle + commands.roll + commands.pitch - commands.yaw; // back left
-        _motorOutputs[M3] = throttle + commands.roll - commands.pitch + commands.yaw; // front left 
+        const float throttleIncrease = _dynamicIdleController.getMinimumAllowedMotorHz() == 0.0F ? 0.0F : _dynamicIdleController.calculateSpeedIncrease(calculateSlowestMotorHz(), deltaT);
+        _blackboxThrottle = mixQuadX(_motorOutputs, commands, throttleIncrease);
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
-        _throttleCommand = commands.throttle;
+        _blackboxThrottle = commands.throttle;
     }
 
     // convert motor output to DShot range [47, 2047]
@@ -64,9 +60,14 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(const commands_t& commands, fl
         static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M3], _motorOutputMin, 1.0F)) + 47)
     );
 
-    // read the motor RPM, used to set the RPM filters
-    _motorFrequenciesHz[0] = static_cast<float>(_escDShot.getMotorERPM(0))*_eRPMtoHz;
-    _motorFrequenciesHz[1] = static_cast<float>(_escDShot.getMotorERPM(1))*_eRPMtoHz;
-    _motorFrequenciesHz[2] = static_cast<float>(_escDShot.getMotorERPM(2))*_eRPMtoHz;
-    _motorFrequenciesHz[3] = static_cast<float>(_escDShot.getMotorERPM(3))*_eRPMtoHz;
+    // read the motor RPMs, and set the RPM filters
+    _motorFrequenciesHz[M0] = static_cast<float>(_escDShot.getMotorERPM(M0))*_eRPMtoHz;
+    _motorFrequenciesHz[M1] = static_cast<float>(_escDShot.getMotorERPM(M1))*_eRPMtoHz;
+    _motorFrequenciesHz[M2] = static_cast<float>(_escDShot.getMotorERPM(M2))*_eRPMtoHz;
+    _motorFrequenciesHz[M3] = static_cast<float>(_escDShot.getMotorERPM(M3))*_eRPMtoHz;
+
+    _rpmFilters.setFrequencyHz(M0, _motorFrequenciesHz[M0]);
+    _rpmFilters.setFrequencyHz(M1, _motorFrequenciesHz[M1]);
+    _rpmFilters.setFrequencyHz(M2, _motorFrequenciesHz[M2]);
+    _rpmFilters.setFrequencyHz(M3, _motorFrequenciesHz[M3]);
 }

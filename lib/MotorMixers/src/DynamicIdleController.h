@@ -33,7 +33,9 @@ public:
     void setConfig(const config_t& config, uint32_t taskIntervalMicroseconds);
     const config_t& getConfig() const { return _config; }
     void setMinimumAllowedMotorHz(float minimumAllowedMotorHz);
-    float getMinimumAllowedMotorHz() { return _minimumAllowedMotorHz; }
+    float getMinimumAllowedMotorHz() const { return _minimumAllowedMotorHz; }
+    void setMaxIncrease(float maxIncrease) { _maxIncrease = maxIncrease; }
+    float getMaxIncrease()const { return _maxIncrease; }
     float calculateSpeedIncrease(float slowestMotorHz, float deltaT);
     void resetPID(); //!< for test code
 public:
