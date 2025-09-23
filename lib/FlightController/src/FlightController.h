@@ -108,6 +108,11 @@ public:
         uint8_t dterm_lpf2_type;
         uint16_t output_lpf_hz;
     };
+    struct anti_gravity_config_t {
+        uint8_t anti_gravity_cutoff_hz;
+        uint8_t anti_gravity_p_gain;
+        uint8_t anti_gravity_i_gain;
+    };
     struct controls_t {
         uint32_t tickCount;
         float throttleStick;
@@ -149,14 +154,15 @@ public:
     const std::string& getPID_Name(pid_index_e pidIndex) const;
 
     inline const PIDF& getPID(pid_index_e pidIndex) const { return _PIDS[pidIndex]; }
-    inline const PIDF::PIDF_t getPID_Constants(pid_index_e pidIndex) const { return _PIDS[pidIndex].getPID(); }
-    void setPID_Constants(pid_index_e pidIndex, const PIDF::PIDF_t& pid);
+    PIDF_uint16_t getPID_Constants(pid_index_e pidIndex) const;
+    void setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16);
 
     virtual PIDF_uint16_t getPID_MSP(size_t index) const override;
-    void setPID_P_MSP(pid_index_e pidIndex, uint16_t kp) { _PIDS[pidIndex].setP(kp * _scaleFactors[pidIndex].kp); }
-    void setPID_I_MSP(pid_index_e pidIndex, uint16_t ki) { _PIDS[pidIndex].setI(ki * _scaleFactors[pidIndex].ki); }
-    void setPID_D_MSP(pid_index_e pidIndex, uint16_t kd) { _PIDS[pidIndex].setD(kd * _scaleFactors[pidIndex].kd); }
-    void setPID_F_MSP(pid_index_e pidIndex, uint16_t kf) { _PIDS[pidIndex].setF(kf * _scaleFactors[pidIndex].kf); }
+    void setPID_P_MSP(pid_index_e pidIndex, uint16_t kp);
+    void setPID_I_MSP(pid_index_e pidIndex, uint16_t ki);
+    void setPID_D_MSP(pid_index_e pidIndex, uint16_t kd);
+    void setPID_F_MSP(pid_index_e pidIndex, uint16_t kf);
+    void setPID_S_MSP(pid_index_e pidIndex, uint16_t ks);
 
     inline float getPID_Setpoint(pid_index_e pidIndex) const { return _PIDS[pidIndex].getSetpoint(); }
     void setPID_Setpoint(pid_index_e pidIndex, float setpoint) { _PIDS[pidIndex].setSetpoint(setpoint); }
@@ -172,14 +178,18 @@ public:
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
     const MotorMixerBase& getMixer() const { return _mixer; }
     float getMixerAdjustedThrottle() const { return _mixerAdjustedThrottle; }
+
     const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
     void setFiltersConfig(const filters_config_t& filtersConfig);
+    const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }
+    void setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig);
 public:
     [[noreturn]] static void Task(void* arg);
 public:
     void detectCrashOrSpin();
     void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _yawSpinThresholdDPS = yawSpinThresholdDPS; }
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
+    void applyAntiGravity(float throttle, uint32_t tickCount);
     void updateSetpoints(const controls_t& controls);
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
     virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
@@ -211,6 +221,18 @@ private:
     float _TPA_multiplier {0.0F};
     float _TPA_breakpoint {0.6F};
 
+    // anti-gravity
+    anti_gravity_config_t _antiGravityConfig {};
+    float _antiGravityIGain {};
+    float _antiGravityPGain {};
+    float _rollRateIterm {0.0F};
+    float _pitchRateIterm {0.0F};
+    float _rollRatePterm {0.0F};
+    float _pitchRatePterm {0.0F};
+    float _throttlePrevious {0.0F};
+    uint32_t _tickCountPrevious {0};
+    FilterMovingAverage<4> _antiGravityThrottleFilter {};
+
     // angle mode data
     enum { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
     uint32_t _angleModeCalculationState { STATE_CALCULATE_ROLL };
@@ -239,7 +261,15 @@ private:
     std::array<PIDF, PID_COUNT> _PIDS {};
     std::array<float, PID_COUNT> _outputs {}; //<! PID outputs. These are stored since the output from one PID may be used as the input to another
     std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> _outputFilters;
-    static const std::array<PIDF::PIDF_t, PID_COUNT> _scaleFactors;
+    // Betaflight-compatible scale factors.
+    static constexpr PIDF::PIDF_t _scaleFactors = {
+        0.032029F,
+        0.244381F,
+        0.000529F,
+        0.013754F,
+        0.01F // !!TODO: provisional value
+    };
+
 
     // DTerm filters
     filters_config_t _filtersConfig {};

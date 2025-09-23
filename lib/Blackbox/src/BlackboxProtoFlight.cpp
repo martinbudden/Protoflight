@@ -36,6 +36,7 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
     }
 // See https://github.com/betaflight/blackbox-log-viewer/blob/master/src/flightlog_parser.js for parsing of fields
     const FlightController::filters_config_t fcFiltersConfig = _flightController.getFiltersConfig();
+    const FlightController::anti_gravity_config_t antiGravityConfig = _flightController.getAntiGravityConfig();
 
     const RadioController::rates_t rates = _radioController.getRates();
 
@@ -181,9 +182,9 @@ H anti_gravity_gain:1000
         //BLACKBOX_PRINT_HEADER_LINE("pid_at_min_throttle", "%d",             currentPidProfile.pidAtMinThrottle);
 
         // Betaflight PID controller parameters
-        //BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",             1000);
-        //BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",        currentPidProfile.anti_gravity_cutoff_hz);
-        //BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",           currentPidProfile.anti_gravity_p_gain);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",               antiGravityConfig.anti_gravity_i_gain);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",          antiGravityConfig.anti_gravity_cutoff_hz);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",             antiGravityConfig.anti_gravity_p_gain);
 #ifdef USE_INTEGRATED_YAW_CONTROL
         BLACKBOX_PRINT_HEADER_LINE("use_integrated_yaw", "%d",              currentPidProfile.use_integrated_yaw);
 #endif

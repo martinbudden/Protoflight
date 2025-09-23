@@ -17,7 +17,7 @@ float mixQuadX(std::array<float, 4>& motorOutputs, const MotorMixerBase::command
     motorOutputs[0] = throttle - commands.roll + commands.pitch + commands.yaw; // back right
     motorOutputs[1] = throttle - commands.roll - commands.pitch - commands.yaw; // front right
     motorOutputs[2] = throttle + commands.roll + commands.pitch - commands.yaw; // back left
-    motorOutputs[3] = throttle + commands.roll - commands.pitch + commands.yaw; // front left 
+    motorOutputs[3] = throttle + commands.roll - commands.pitch + commands.yaw; // front left
 
     float maxOutput = motorOutputs[0];
     float minOutput = motorOutputs[0];
@@ -53,9 +53,9 @@ float mixHexX(std::array<float, 6>& motorOutputs, const MotorMixerBase::commands
     motorOutputs[0] = throttle - sin30*commands.roll + sin60*commands.pitch + commands.yaw; // back right
     motorOutputs[1] = throttle - sin30*commands.roll - sin60*commands.pitch - commands.yaw; // front right
     motorOutputs[2] = throttle + sin30*commands.roll + sin60*commands.pitch - commands.yaw; // back left
-    motorOutputs[3] = throttle + sin30*commands.roll - sin60*commands.pitch + commands.yaw; // front left 
+    motorOutputs[3] = throttle + sin30*commands.roll - sin60*commands.pitch + commands.yaw; // front left
     motorOutputs[4] = throttle -       commands.roll                        + commands.yaw; // center right
-    motorOutputs[5] = throttle +       commands.roll                        - commands.yaw; // center left 
+    motorOutputs[5] = throttle +       commands.roll                        - commands.yaw; // center left
 
     float maxOutput = motorOutputs[0];
     float minOutput = motorOutputs[0];
@@ -94,12 +94,12 @@ float mixOctoX(std::array<float, 8>& motorOutputs, const MotorMixerBase::command
     motorOutputs[0] = throttle - commands.roll + commands.pitch + commands.yaw; // back right
     motorOutputs[1] = throttle - commands.roll - commands.pitch - commands.yaw; // front right
     motorOutputs[2] = throttle + commands.roll + commands.pitch - commands.yaw; // back left
-    motorOutputs[3] = throttle + commands.roll - commands.pitch + commands.yaw; // front left 
+    motorOutputs[3] = throttle + commands.roll - commands.pitch + commands.yaw; // front left
 
     motorOutputs[4] = throttle - commands.roll + commands.pitch - commands.yaw; // under back right
     motorOutputs[5] = throttle - commands.roll - commands.pitch + commands.yaw; // under front right
     motorOutputs[6] = throttle + commands.roll + commands.pitch + commands.yaw; // under back left
-    motorOutputs[7] = throttle + commands.roll - commands.pitch - commands.yaw; // under front left 
+    motorOutputs[7] = throttle + commands.roll - commands.pitch - commands.yaw; // under front left
 
     float maxOutput = motorOutputs[0];
     float minOutput = motorOutputs[0];

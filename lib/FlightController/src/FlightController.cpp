@@ -1,3 +1,4 @@
+#include "Debug.h"
 #include "FlightController.h"
 
 #include <AHRS.h>
@@ -18,6 +19,18 @@
 #endif
 
 
+/*!
+Constructor. Sets member data.
+*/
+FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController, Debug& debug) :
+    VehicleControllerBase(AIRCRAFT, PID_COUNT, ahrs.getTaskIntervalMicroseconds() / taskDenominator, ahrs),
+    _mixer(motorMixer),
+    _radioController(radioController),
+    _debug(debug),
+    _taskDenominator(taskDenominator)
+{
+}
+
 static const std::array<std::string, FlightController::PID_COUNT> PID_NAMES = {
     "ROLL_RATE",
     "PITCH_RATE",
@@ -33,35 +46,96 @@ const std::string& FlightController::getPID_Name(pid_index_e pidIndex) const
     return PID_NAMES[pidIndex];
 }
 
-/*!
-Set the P, I, D, and F values for the PID with index pidIndex.
-Integration is switched off, so that there is no integral windup before takeoff.
-*/
-void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF::PIDF_t& pid)
-{
-    _PIDS[pidIndex].setPID(pid);
-    _PIDS[pidIndex].switchIntegrationOff();
-}
 
-uint32_t FlightController::getOutputPowerTimeMicroseconds() const
-{
-    //return _mixer.getOutputPowerTimeMicroseconds();
-    return 0;
-}
-
+//!!TODO: reconcile FlightController::getPID_MSP, FlightController::getPID_Constants and set variants
 VehicleControllerBase::PIDF_uint16_t FlightController::getPID_MSP(size_t index) const
 {
     assert(index < PID_COUNT);
 
     const auto pidIndex = static_cast<pid_index_e>(index);
     const PIDF_uint16_t ret = {
-        .kp = static_cast<uint16_t>(_PIDS[pidIndex].getP() / _scaleFactors[pidIndex].kp),
-        .ki = static_cast<uint16_t>(_PIDS[pidIndex].getI() / _scaleFactors[pidIndex].ki),
-        .kd = static_cast<uint16_t>(_PIDS[pidIndex].getD() / _scaleFactors[pidIndex].kd),
-        .kf = static_cast<uint16_t>(_PIDS[pidIndex].getF() / _scaleFactors[pidIndex].kf),
-        .ks = static_cast<uint16_t>(_PIDS[pidIndex].getS() / _scaleFactors[pidIndex].ks),
+        .kp = static_cast<uint16_t>(_PIDS[pidIndex].getP() / _scaleFactors.kp),
+        .ki = static_cast<uint16_t>(_PIDS[pidIndex].getI() / _scaleFactors.ki),
+        .kd = static_cast<uint16_t>(_PIDS[pidIndex].getD() / _scaleFactors.kd),
+        .kf = static_cast<uint16_t>(_PIDS[pidIndex].getF() / _scaleFactors.kf),
+        .ks = static_cast<uint16_t>(_PIDS[pidIndex].getS() / _scaleFactors.ks),
     };
     return ret;
+}
+
+VehicleControllerBase::PIDF_uint16_t FlightController::getPID_Constants(pid_index_e pidIndex) const
+{
+    const PIDF::PIDF_t pid = _PIDS[pidIndex].getPID();
+    const VehicleControllerBase::PIDF_uint16_t pid16 = {
+        static_cast<uint16_t>(std::lroundf(pid.kp / _scaleFactors.kp)),
+        static_cast<uint16_t>(std::lroundf(pid.ki / _scaleFactors.ki)),
+        static_cast<uint16_t>(std::lroundf(pid.kd / _scaleFactors.kd)),
+        static_cast<uint16_t>(std::lroundf(pid.kf / _scaleFactors.kf)),
+        static_cast<uint16_t>(std::lroundf(pid.ks / _scaleFactors.ks))
+    };
+
+    return pid16;
+}
+/*!
+Set the P, I, D, and F values for the PID with index pidIndex.
+Integration is switched off, so that there is no integral windup before takeoff.
+*/
+void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16)
+{
+
+    const PIDF::PIDF_t pid = {
+        static_cast<float>(pid16.kp) * _scaleFactors.kp,
+        static_cast<float>(pid16.ki) * _scaleFactors.ki,
+        static_cast<float>(pid16.kd) * _scaleFactors.kd,
+        static_cast<float>(pid16.kf) * _scaleFactors.kf,
+        static_cast<float>(pid16.ks) * _scaleFactors.ks
+    };
+
+    _PIDS[pidIndex].setPID(pid);
+    _PIDS[pidIndex].switchIntegrationOff();
+    // keep copies of P and I terms so they can be adjusted by anti-gravity
+    _rollRatePterm = _PIDS[ROLL_RATE_DPS].getP();
+    _pitchRatePterm = _PIDS[PITCH_RATE_DPS].getP();
+    _rollRateIterm = _PIDS[ROLL_RATE_DPS].getI();
+    _pitchRateIterm = _PIDS[PITCH_RATE_DPS].getI();
+}
+
+void FlightController::setPID_P_MSP(pid_index_e pidIndex, uint16_t kp)
+{
+    _PIDS[pidIndex].setP(kp * _scaleFactors.kp);
+    if (pidIndex == ROLL_RATE_DPS) {
+        _rollRatePterm = _PIDS[ROLL_RATE_DPS].getP();
+    }
+    if (pidIndex == PITCH_RATE_DPS) {
+        _pitchRatePterm = _PIDS[PITCH_RATE_DPS].getP();
+    }
+}
+
+void FlightController::setPID_I_MSP(pid_index_e pidIndex, uint16_t ki)
+{
+    _PIDS[pidIndex].setI(ki * _scaleFactors.ki);
+    if (pidIndex == ROLL_RATE_DPS) {
+        _rollRateIterm = _PIDS[ROLL_RATE_DPS].getI();
+    }
+    if (pidIndex == PITCH_RATE_DPS) {
+        _pitchRateIterm = _PIDS[PITCH_RATE_DPS].getI();
+    }
+}
+
+void FlightController::setPID_D_MSP(pid_index_e pidIndex, uint16_t kd)
+{
+    _PIDS[pidIndex].setD(kd * _scaleFactors.kd);
+}
+
+void FlightController::setPID_F_MSP(pid_index_e pidIndex, uint16_t kf)
+{
+    _PIDS[pidIndex].setF(kf * _scaleFactors.kf);
+}
+
+uint32_t FlightController::getOutputPowerTimeMicroseconds() const
+{
+    //return _mixer.getOutputPowerTimeMicroseconds();
+    return 0;
 }
 
 bool FlightController::isArmingFlagSet(arming_flag_e armingFlag) const
@@ -187,6 +261,13 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
     }
 }
 
+void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig)
+{
+    _antiGravityConfig = antiGravityConfig;
+    _antiGravityPGain = static_cast<float>(antiGravityConfig.anti_gravity_p_gain) * _scaleFactors.kp;
+    _antiGravityIGain = static_cast<float>(antiGravityConfig.anti_gravity_i_gain) * _scaleFactors.ki;
+}
+
 /*!
 Return he FC telemetry data.
 
@@ -230,6 +311,38 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
     return telemetry;
 }
 
+void FlightController::applyAntiGravity(float throttle, uint32_t tickCount)
+{
+    // anti-gravity
+    // if the throttle is moving quickly then adjust the  P and I terms for the roll rate and pitch rate PIDs
+    //!!TODO: calculate the throttle derivative and if it exceeds the threshold then update the Iterm accelerator.
+    const float throttleDelta = fabsf(throttle - _throttlePrevious);
+    _throttlePrevious = throttle;
+    const float deltaT = static_cast<float>((tickCount - _tickCountPrevious)) * 0.001F;
+    _tickCountPrevious = tickCount;
+    float throttleDerivative = throttleDelta/deltaT;
+    _debug.set(DEBUG_ANTI_GRAVITY, 0, static_cast<int16_t>(lrintf(throttleDerivative * 100)));
+
+    const float throttleInv = 1.0F - throttle;
+    // generally focus on the low throttle period
+    if (throttle > _throttlePrevious) {
+        throttleDerivative *= throttleInv * 0.5F;
+        // when increasing throttle, focus even more on the low throttle range
+    }
+    // filtering suppresses peaks relative to troughs and prolongs the effects
+    throttleDerivative = _antiGravityThrottleFilter.filter(throttleDerivative);
+    _debug.set(DEBUG_ANTI_GRAVITY, 1, static_cast<int16_t>(lrintf(throttleDerivative * 100)));
+
+    // set P and I term accelerators
+    const float ptermAccelerator =  0.0F;
+    const float itermAccelerator =  0.0F;
+
+    _PIDS[ROLL_RATE_DPS].setI(_rollRateIterm + itermAccelerator);
+    _PIDS[PITCH_RATE_DPS].setI(_pitchRateIterm + itermAccelerator);
+    _PIDS[ROLL_RATE_DPS].setI(_rollRatePterm + ptermAccelerator);
+    _PIDS[PITCH_RATE_DPS].setI(_pitchRatePterm + ptermAccelerator);
+
+}
 /*!
 Use the new joystick values from the receiver to update the PID setpoints
 using the NED (North-East-Down) coordinate convention.
@@ -251,6 +364,8 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // adjust the Throttle PID Attenuation (TPA)
     // _TPA is 1.0F (ie no attenuation) if throttleStick <= _TPA_Breakpoint;
     _TPA = 1.0F - _TPA_multiplier * std::fminf(0.0F, controls.throttleStick - _TPA_breakpoint);
+
+    applyAntiGravity(controls.throttleStick, controls.tickCount);
 
     //!!TODO: filter the roll and stick angles
     // Pushing the ROLL stick to the right gives a positive value of rollStick and we want this to be left side up.

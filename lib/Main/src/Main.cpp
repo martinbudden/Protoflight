@@ -148,6 +148,7 @@ void Main::setup()
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
     flightController.setFiltersConfig(nvs.FlightControllerFiltersConfigLoad());
+    flightController.setAntiGravityConfig(nvs.FlightControllerAntiGravityConfigLoad());
     setPIDsFromNonVolatileStorage(nvs, flightController);
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
@@ -392,12 +393,12 @@ void Main::setPIDsFromNonVolatileStorage(NonVolatileStorage& nvs, FlightControll
 {
     // Load the PID constants from non volatile storage
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
-        const PIDF::PIDF_t pid = nvs.PID_load(ii);
+        const VehicleControllerBase::PIDF_uint16_t pid = nvs.PID_load(ii);
         flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
         const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
 #if !defined(FRAMEWORK_STM32_CUBE)
         std::array<char, 128> buf;
-        sprintf(&buf[0], "**** %15s PID loaded from NVS: p:%6.4f, i:%6.4f, d:%6.4f, f:%6.4f, s:%6.4f\r\n", pidName.c_str(), static_cast<double>(pid.kp), static_cast<double>(pid.ki), static_cast<double>(pid.kd), static_cast<double>(pid.kf), static_cast<double>(pid.ks));
+        sprintf(&buf[0], "**** %15s PID loaded from NVS: p:%d, i:%d, d:%d, f:%d, s:%d\r\n", pidName.c_str(), pid.kp, pid.ki, pid.kd, pid.kf, pid.ks);
         print(&buf[0]);
 #else
         (void)pidName;

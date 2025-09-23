@@ -22,8 +22,6 @@
 
 #endif
 
-#include <array>
-#include <cfloat>
 #include <cstdint>
 #include <string>
 
@@ -39,7 +37,6 @@ public:
 
     enum { READ_WRITE=false, READ_ONLY=true };
     enum { MAC_ADDRESS_LEN = 6 };
-    static constexpr float NOT_SET = FLT_MAX;
     struct xyz_int32_t {
         int32_t x;
         int32_t y;
@@ -69,14 +66,18 @@ public:
     void MacAddressLoad(uint8_t* macAddress) const;
     int32_t MacAddressStore(const uint8_t* macAddress);
 
-    PIDF::PIDF_t PID_load(uint8_t index) const;
-    int32_t PID_store(uint8_t index, const PIDF::PIDF_t& pid);
+    VehicleControllerBase::PIDF_uint16_t PID_load(uint8_t index) const;
+    int32_t PID_store(uint8_t index, const VehicleControllerBase::PIDF_uint16_t& pid);
+    void PID_reset(uint8_t index);
 
     DynamicIdleController::config_t DynamicIdleControllerConfigLoad() const;
     int32_t DynamicIdleControllerConfigStore(const DynamicIdleController::config_t& config);
 
     FlightController::filters_config_t FlightControllerFiltersConfigLoad() const;
     int32_t FlightControllerFiltersConfigStore(const FlightController::filters_config_t& config);
+
+    FlightController::anti_gravity_config_t FlightControllerAntiGravityConfigLoad() const;
+    int32_t FlightControllerAntiGravityConfigStore(const FlightController::anti_gravity_config_t& config);
 
     IMU_Filters::config_t ImuFiltersConfigLoad() const;
     int32_t ImuFiltersConfigStore(const IMU_Filters::config_t& config);

@@ -59,20 +59,23 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     xyz_t gyroRPS;
     xyz_t gyroRPS_unfiltered;
     xyz_t acc;
+    Quaternion orientation;
     if (_useMessageQueue) {
-        (void)currentTimeUs;
         BlackboxMessageQueue::queue_item_t queueItem;
         _messageQueue.RECEIVE(queueItem);
         mainState.time = queueItem.timeMicroseconds;
         gyroRPS = queueItem.gyroRPS;
         gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered;
         acc = queueItem.acc;
+        //!!TODO: add orientation to BlackboxMessageQueue::queue_item_t in AHRS in StabilizedVehicle library
+        orientation = _ahrs.getOrientationForInstrumentationUsingLock();
     } else {
         mainState.time = currentTimeUs;
         const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();
         gyroRPS = ahrsData.gyroRPS;
         gyroRPS_unfiltered = ahrsData.gyroRPS_unfiltered;
         acc = ahrsData.acc;
+        orientation = _ahrs.getOrientationForInstrumentationUsingLock();
     }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -86,10 +89,19 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     mainState.gyroUnfiltered[0] = static_cast<int16_t>(std::lroundf(gyroRPS_unfiltered.x * gyroScale));
     mainState.gyroUnfiltered[1] = static_cast<int16_t>(std::lroundf(gyroRPS_unfiltered.y * gyroScale));
     mainState.gyroUnfiltered[2] = static_cast<int16_t>(std::lroundf(gyroRPS_unfiltered.z * gyroScale));
-    // just truncate for gyro
+    // just truncate for acc
     mainState.accADC[0] = static_cast<int16_t>(acc.x * 4096);
     mainState.accADC[1] = static_cast<int16_t>(acc.y * 4096);
     mainState.accADC[2] = static_cast<int16_t>(acc.z * 4096);
+
+    if (orientation.getW() < 0.0F) {
+        // negate orientation if W is negative
+        orientation = -orientation;
+    }
+    (void)orientation;
+    //mainState.orientation[0] = static_cast<int16_t>(orientation.getX() * 0x7FFF);
+    //mainState.orientation[1] = static_cast<int16_t>(orientation.getY() * 0x7FFF);
+    //mainState.orientation[2] = static_cast<int16_t>(orientation.getZ() * 0x7FFF);
 
     // iterate through roll, pitch, and yaw PIDs
     for (int ii = 0; ii < blackboxMainState_t::XYZ_AXIS_COUNT; ++ii) {
@@ -102,7 +114,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
         mainState.axisPID_F[ii] = std::lroundf(pidError.F);
         //mainState.axisPID_S[ii] = std::lroundf(pidError.S);
         mainState.setpoint[ii] = static_cast<int16_t>(std::lroundf(pid.getSetpoint()));
-#if defined(USE_MAG)
+#if defined(USE_MAGNETOMETER)
         mainState.magADC[ii] = static_cast<int16_t>(mag.magADC.v[ii]);
 #endif
     }
@@ -131,7 +143,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     mainState.vbatLatest = static_cast<uint16_t>(_flightController.getBatteryVoltage()*10.0F);
     mainState.amperageLatest = static_cast<uint16_t>(_flightController.getAmperage()*10.0F);
 
-#if defined(USE_BARO)
+#if defined(USE_BAROMETER)
     mainState.baroAlt = baro.altitude;
 #endif
 

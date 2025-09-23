@@ -137,7 +137,7 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
         _nonVolatileStorage.PID_store(pidIndex, _flightController.getPID_Constants(pidIndex));
         return true;
     case CommandPacketSetPID::RESET_PID:
-        _nonVolatileStorage.PID_store(pidIndex, PIDF::PIDF_t { NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET, NonVolatileStorage::NOT_SET });
+        _nonVolatileStorage.PID_reset(pidIndex);
         return true;
     default:
         //Serial.printf("Backchannel::packetSetPID invalid setType:%d\r\n", packet.pidIndex);

@@ -255,8 +255,5 @@
         "xtensa",
         "YNEG",
         "ZNEG"
-    ],
-    "files.associations": {
-        "array": "cpp"
-    }
+    ]
 }

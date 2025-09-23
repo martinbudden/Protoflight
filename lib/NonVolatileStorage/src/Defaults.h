@@ -10,17 +10,19 @@
 namespace DEFAULTS {
 
 
-static constexpr FlightController::pidf_array_t flightControllerDefaultPIDs = {
-    {
-        { 0.65F,    0.0F,   0.010F, 0.00F, 0.00F }, // roll rate
-        { 0.95F,    0.0F,   0.025F, 0.00F, 0.00F }, // pitch rate
-        { 0.50F,    0.0F,   0.010F, 0.00F, 0.00F }, // yaw rate
-        { 5.00F,    0.0F,   0.040F, 0.00F, 0.00F }, // roll angle
-        { 5.00F,    0.0F,   0.040F, 0.00F, 0.00F }, // pitch angle
-        { 1.00F,    0.0F,   0.010F, 0.00F, 0.00F }, // roll sin angle
-        { 1.00F,    0.0F,   0.010F, 0.00F, 0.00F }  // pitch sin angle
-    }
-};
+/*!
+Default PIDs.
+Same values as used by Betaflight.
+*/
+static constexpr FlightController::pidf_uint16_array_t flightControllerDefaultPIDs = {{
+    { 45, 80, 30, 120, 0 }, // roll rate
+    { 47, 84, 34, 125, 0 }, // pitch rate
+    { 45, 80,  0, 120, 0 }, // yaw rate
+    { 50, 75, 75,  50, 0 }, // roll angle
+    { 50, 75, 75,  50, 0 }, // pitch angle
+    {  0,  0,  0,   0, 0 }, // roll sin angle
+    {  0,  0,  0,   0, 0 }, // pitch sin angle
+}};
 
 static const DynamicIdleController::config_t dynamicIdleControllerConfig = {
     .dyn_idle_min_rpm_100 = 0,
@@ -41,6 +43,12 @@ static const FlightController::filters_config_t flightControllerFiltersConfig = 
     .dterm_lpf1_type = FlightController::filters_config_t::PT1,
     .dterm_lpf2_type = FlightController::filters_config_t::PT1,
     .output_lpf_hz = 500
+};
+
+static const FlightController::anti_gravity_config_t flightControllerAntiGravityConfig = {
+    .anti_gravity_cutoff_hz = 5,
+    .anti_gravity_p_gain = 100,
+    .anti_gravity_i_gain = 80
 };
 
 static const IMU_Filters::config_t imuFiltersConfig = {

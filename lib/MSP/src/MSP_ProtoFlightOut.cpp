@@ -279,7 +279,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(0); //armingConfig()->gyro_cal_on_first_arm);
         break;
 
-    case MSP_PID:
+    case MSP_PID: {
         for (size_t ii = 0; ii < FlightController::PID_COUNT; ++ii) {
             const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
             const FlightController::PIDF_uint16_t pid =  _flightController.getPID_MSP(pidIndex);
@@ -287,8 +287,12 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
             dst.writeU8(static_cast<uint8_t>(pid.ki));
             dst.writeU8(static_cast<uint8_t>(pid.kd));
         }
+        const FlightController::PIDF_uint16_t pid =  _flightController.getPID_MSP(FlightController::ROLL_ANGLE_DEGREES);
+        dst.writeU8(static_cast<uint8_t>(pid.kp));
+        dst.writeU8(static_cast<uint8_t>(pid.ki));
+        dst.writeU8(static_cast<uint8_t>(pid.kd));
         break;
-
+    }
     case MSP_PIDNAMES:
         for (size_t ii = 0; ii < FlightController::PID_COUNT; ++ii) {
             const std::string& pidName =  _flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));

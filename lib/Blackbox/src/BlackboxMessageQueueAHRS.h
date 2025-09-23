@@ -3,7 +3,7 @@
 #include <AHRS_MessageQueueBase.h>
 #include <BlackboxMessageQueue.h>
 
-
+//!!TODO: add Quaternion orientation to AHRS_MessageQueueBase
 class BlackboxMessageQueueAHRS : public AHRS_MessageQueueBase {
 public:
     explicit BlackboxMessageQueueAHRS(BlackboxMessageQueue& blackboxMessageQueue) :

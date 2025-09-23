@@ -54,20 +54,28 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
     case MSP_SET_PID_CONTROLLER:
         break;
 
-    case MSP_SET_PID:
+    case MSP_SET_PID: {
         for (size_t ii = 0; ii <= FlightController::YAW_RATE_DPS; ++ii) {
             const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
             _flightController.setPID_P_MSP(pidIndex, src.readU8());
             _flightController.setPID_I_MSP(pidIndex, src.readU8());
             _flightController.setPID_D_MSP(pidIndex, src.readU8());
         }
-        // skip over PID_LEVEL and PID_MAG
-        for (size_t ii = 0; ii < 2; ++ii) {
-            src.readU8();
-            src.readU8();
-            src.readU8();
-        }
+        const uint8_t kp = src.readU8();
+        const uint8_t ki = src.readU8();
+        const uint8_t kd = src.readU8();
+        _flightController.setPID_P_MSP(FlightController::ROLL_ANGLE_DEGREES, kp);
+        _flightController.setPID_I_MSP(FlightController::ROLL_ANGLE_DEGREES, ki);
+        _flightController.setPID_D_MSP(FlightController::ROLL_ANGLE_DEGREES, kd);
+        _flightController.setPID_P_MSP(FlightController::PITCH_ANGLE_DEGREES, kp);
+        _flightController.setPID_I_MSP(FlightController::PITCH_ANGLE_DEGREES, ki);
+        _flightController.setPID_D_MSP(FlightController::PITCH_ANGLE_DEGREES, kd);
+        // skip over PID_MAG
+        src.readU8();
+        src.readU8();
+        src.readU8();
         break;
+    }
 
     case MSP_SET_PID_ADVANCED:
         src.readU16();
@@ -274,7 +282,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
     case MSP_ACC_CALIBRATION:
         break;
 
-#if defined(USE_MAG)
+#if defined(USE_MAGNETOMETER)
     case MSP_MAG_CALIBRATION:
         break;
 #endif

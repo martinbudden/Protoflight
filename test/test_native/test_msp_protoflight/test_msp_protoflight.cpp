@@ -160,19 +160,19 @@ void test_msp_pid_in()
     TEST_ASSERT_EQUAL(0, pid16.kp);
     TEST_ASSERT_EQUAL(1, pid16.ki);
     TEST_ASSERT_EQUAL(2, pid16.kd);
-    PIDF::PIDF_t pid = fc.getPID_Constants(FlightController::ROLL_RATE_DPS);
-    TEST_ASSERT_EQUAL_FLOAT(0.00F, pid.kp);
-    TEST_ASSERT_EQUAL_FLOAT(0.01F, pid.ki);
-    TEST_ASSERT_EQUAL_FLOAT(0.002F, pid.kd);
+    VehicleControllerBase::PIDF_uint16_t pid = fc.getPID_Constants(FlightController::ROLL_RATE_DPS);
+    TEST_ASSERT_EQUAL(0, pid.kp);
+    TEST_ASSERT_EQUAL(1, pid.ki);
+    TEST_ASSERT_EQUAL(2, pid.kd);
 
     pid16 = fc.getPID_MSP(FlightController::PITCH_RATE_DPS);
     TEST_ASSERT_EQUAL(3, pid16.kp);
     TEST_ASSERT_EQUAL(4, pid16.ki);
     TEST_ASSERT_EQUAL(5, pid16.kd);
     pid = fc.getPID_Constants(FlightController::PITCH_RATE_DPS);
-    TEST_ASSERT_EQUAL_FLOAT(0.03F, pid.kp);
-    TEST_ASSERT_EQUAL_FLOAT(0.04F, pid.ki);
-    TEST_ASSERT_EQUAL_FLOAT(0.005F, pid.kd);
+    TEST_ASSERT_EQUAL(3, pid.kp);
+    TEST_ASSERT_EQUAL(4, pid.ki);
+    TEST_ASSERT_EQUAL(5, pid.kd);
 }
 
 void test_msp_features()
