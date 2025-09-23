@@ -155,17 +155,16 @@ void MotorMixerQuadX_PWM::writeMotor(uint8_t motorIndex, float motorOutput)
 /*!
 Calculate and output motor mix.
 */
-void MotorMixerQuadX_PWM::outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount)
+void MotorMixerQuadX_PWM::outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount)
 {
     (void)deltaT;
     (void)tickCount;
 
     if (motorsIsOn()) {
-        static constexpr float throttleIncrease = 0.0F;
-        _blackboxThrottle = mixQuadX(_motorOutputs, commands, throttleIncrease);
+        // set the throttle to value returned by the mixer
+        commands.throttle = mixQuadX(_motorOutputs, commands);
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
-        _blackboxThrottle = commands.throttle;
     }
 
     writeMotor(M0, _motorOutputs[M0]);

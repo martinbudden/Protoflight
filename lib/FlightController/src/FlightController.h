@@ -171,6 +171,7 @@ public:
 
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
     const MotorMixerBase& getMixer() const { return _mixer; }
+    float getMixerAdjustedThrottle() const { return _mixerAdjustedThrottle; }
     const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
     void setFiltersConfig(const filters_config_t& filtersConfig);
 public:
@@ -227,6 +228,7 @@ private:
     float _rollRateAtMaxPowerDPS {1000.0};
     float _pitchRateAtMaxPowerDPS {1000.0};
     float _yawRateAtMaxPowerDPS {1000.0};
+    float _mixerAdjustedThrottle {0.0F};
 
     // yaw spin recovery
     uint32_t _yawSpinRecovery { false };

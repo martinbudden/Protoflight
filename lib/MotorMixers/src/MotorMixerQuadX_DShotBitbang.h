@@ -14,7 +14,7 @@ class MotorMixerQuadX_DShotBitbang : public MotorMixerQuadBase {
 public:
     MotorMixerQuadX_DShotBitbang(Debug& debug, const pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController);
 public:
-    virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) override;
+    virtual void outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount) override;
     virtual DynamicIdleController* getDynamicIdleController() const override;
     float calculateSlowestMotorHz() const;
 protected:

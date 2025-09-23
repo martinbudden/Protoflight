@@ -40,16 +40,17 @@ DynamicIdleController* MotorMixerQuadX_DShotBitbang::getDynamicIdleController() 
     return &_dynamicIdleController;
 }
 
-void MotorMixerQuadX_DShotBitbang::outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount)
+void MotorMixerQuadX_DShotBitbang::outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount)
 {
     (void)tickCount;
 
     if (motorsIsOn()) {
         const float throttleIncrease = _dynamicIdleController.getMinimumAllowedMotorHz() == 0.0F ? 0.0F : _dynamicIdleController.calculateSpeedIncrease(calculateSlowestMotorHz(), deltaT);
-        _blackboxThrottle = mixQuadX(_motorOutputs, commands, throttleIncrease);
+        commands.throttle += throttleIncrease;
+        // set the throttle to value returned by the mixer
+        commands.throttle = mixQuadX(_motorOutputs, commands);
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
-        _blackboxThrottle = commands.throttle;
     }
 
     // convert motor output to DShot range [47, 2047]

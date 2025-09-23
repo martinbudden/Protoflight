@@ -29,11 +29,10 @@ public:
     inline void motorsSwitchOff() { _motorsIsOn = false; }
     inline bool motorsIsDisabled() const { return _motorsIsDisabled; }
 
-    inline float getBlackboxThrottle() const { return _blackboxThrottle; }
     inline void setMotorOutputMin(float motorOutputMin) { _motorOutputMin = motorOutputMin; }
     inline float getMotorOutputMin() const { return _motorOutputMin; }
 
-    virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) { (void)commands; (void)deltaT; (void)tickCount; }
+    virtual void outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount) { (void)commands; (void)deltaT; (void)tickCount; }
     virtual float getMotorOutput(size_t motorIndex) const { (void)motorIndex; return 0.0F; }
 
     virtual int32_t getMotorRPM(size_t motorIndex) const { (void)motorIndex; return 0; }
@@ -47,6 +46,5 @@ protected:
     Debug& _debug;
     int32_t _motorsIsOn {false};
     int32_t _motorsIsDisabled {false};
-    float _blackboxThrottle {0.0F}; //!< throttle value for blackbox recording
     float _motorOutputMin {0.0F}; //!< minimum motor output, typically set to 5.5% to avoid ESC desynchronization, may be set to zero if using dynamic idle control
 };

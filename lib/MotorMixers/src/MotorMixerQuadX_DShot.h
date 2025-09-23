@@ -15,7 +15,7 @@ class MotorMixerQuadX_DShot : public MotorMixerQuadBase {
 public:
     MotorMixerQuadX_DShot(Debug& debug, const pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController);
 public:
-    virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) override;
+    virtual void outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount) override;
     virtual DynamicIdleController* getDynamicIdleController() const override;
     float calculateSlowestMotorHz() const;
 protected:

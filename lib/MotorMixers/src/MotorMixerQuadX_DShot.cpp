@@ -39,16 +39,17 @@ DynamicIdleController* MotorMixerQuadX_DShot::getDynamicIdleController() const
     return &_dynamicIdleController;
 }
 
-void MotorMixerQuadX_DShot::outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount)
+void MotorMixerQuadX_DShot::outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount)
 {
     (void)tickCount;
 
     if (motorsIsOn()) {
         const float throttleIncrease = _dynamicIdleController.getMinimumAllowedMotorHz() == 0.0F ? 0.0F : _dynamicIdleController.calculateSpeedIncrease(calculateSlowestMotorHz(), deltaT);
-        _blackboxThrottle = mixQuadX(_motorOutputs, commands, throttleIncrease);
+        commands.throttle += throttleIncrease;
+        // set the throttle to value returned by the mixer
+        commands.throttle = mixQuadX(_motorOutputs, commands);
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
-        _blackboxThrottle = commands.throttle;
     }
 
     // and finally output to the motors, reading the motor RPM to set the RPM filters

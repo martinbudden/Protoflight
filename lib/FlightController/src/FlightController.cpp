@@ -508,17 +508,19 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
     _taskSignalledCount = 0;
 
     if (_radioController.getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
-        const MotorMixerBase::commands_t commands {
+        MotorMixerBase::commands_t commands {
             .throttle  = 0.25F,
             .roll   = 0.0F,
             .pitch  = 0.0F,
             .yaw    = 0.0F
         };
         _mixer.outputToMotors(commands, deltaT, tickCount);
+        // the mixer may adjust the throttle value, so save this value for the blackbox record
+        _mixerAdjustedThrottle= commands.throttle;
         return;
     }
 
-    const MotorMixerBase::commands_t commands {
+    MotorMixerBase::commands_t commands {
         .throttle  = queueItem.throttle,
         // scale roll, pitch, and yaw to range [0.0F, 1.0F]
         .roll   = queueItem.roll / _rollRateAtMaxPowerDPS,
@@ -526,5 +528,7 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
         .yaw    = queueItem.yaw / _yawRateAtMaxPowerDPS
     };
 
+    // the mixer may adjust the throttle value, so save this value for the blackbox record
+    _mixerAdjustedThrottle= commands.throttle;
     _mixer.outputToMotors(commands, deltaT, tickCount);
 }

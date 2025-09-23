@@ -367,7 +367,7 @@ classDiagram
     link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
 
     class RPM_Filters {
-        array~NotchFilter~ _filters[MOTOR][HARMONIC][AXIS]
+        array~BiquadFilterT~xyz_t~~ _filters[MOTORS][HARMONICS]
         setFrequency()
         filter()
     }
@@ -375,8 +375,8 @@ classDiagram
 
     IMU_FiltersBase <|-- IMU_Filters : overrides filter
     class IMU_Filters {
-        array~LowPassFilter~ _gyroLPFs[AXIS]
-        array~NotchFilter~ _gyroNotchFilters[AXIS]
+        FilterT~xyz_t~  _gyroLPF;
+        BiquadFilterT~xyz_t~ _gyroNotch;
         setFilters() override
         filter() override
     }

@@ -38,7 +38,7 @@ public:
     MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins);
     MotorMixerQuadX_PWM(Debug& debug, const stm32_motor_pins4_t& pins);
 public:
-    virtual void outputToMotors(const commands_t& commands, float deltaT, uint32_t tickCount) override;
+    virtual void outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount) override;
     void writeMotor(uint8_t motorIndex, float motorOutput);
 protected:
     float _pwmScale {255.0F};
