@@ -109,9 +109,9 @@ public:
         uint16_t output_lpf_hz;
     };
     struct anti_gravity_config_t {
-        uint8_t anti_gravity_cutoff_hz;
-        uint8_t anti_gravity_p_gain;
-        uint8_t anti_gravity_i_gain;
+        uint8_t cutoff_hz;
+        uint8_t p_gain;
+        uint8_t i_gain;
     };
     struct controls_t {
         uint32_t tickCount;
@@ -221,17 +221,20 @@ private:
     float _TPA_multiplier {0.0F};
     float _TPA_breakpoint {0.6F};
 
-    // anti-gravity
+    // anti-gravity, increase P and I terms when rapid throttle movements occur
     anti_gravity_config_t _antiGravityConfig {};
     float _antiGravityIGain {};
     float _antiGravityPGain {};
-    float _rollRateIterm {0.0F};
-    float _pitchRateIterm {0.0F};
-    float _rollRatePterm {0.0F};
-    float _pitchRatePterm {0.0F};
+    float _rollRateITerm {0.0F};
+    float _pitchRateITerm {0.0F};
+    float _rollRatePTerm {0.0F};
+    float _pitchRatePTerm {0.0F};
     float _throttlePrevious {0.0F};
     uint32_t _tickCountPrevious {0};
-    FilterMovingAverage<4> _antiGravityThrottleFilter {};
+    uint32_t _antiGravityTickCountSum {0};
+    enum { ANTI_GRAVITY_TICKCOUNT_COUNTER_START = 100};
+    uint32_t _antiGravityTickCountCounter {ANTI_GRAVITY_TICKCOUNT_COUNTER_START};
+    PowerTransferFilter2 _antiGravityThrottleFilter {};
 
     // angle mode data
     enum { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };

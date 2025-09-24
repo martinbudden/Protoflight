@@ -182,9 +182,9 @@ H anti_gravity_gain:1000
         //BLACKBOX_PRINT_HEADER_LINE("pid_at_min_throttle", "%d",             currentPidProfile.pidAtMinThrottle);
 
         // Betaflight PID controller parameters
-        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",               antiGravityConfig.anti_gravity_i_gain);
-        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",          antiGravityConfig.anti_gravity_cutoff_hz);
-        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",             antiGravityConfig.anti_gravity_p_gain);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",               antiGravityConfig.i_gain);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",          antiGravityConfig.cutoff_hz);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",             antiGravityConfig.p_gain);
 #ifdef USE_INTEGRATED_YAW_CONTROL
         BLACKBOX_PRINT_HEADER_LINE("use_integrated_yaw", "%d",              currentPidProfile.use_integrated_yaw);
 #endif

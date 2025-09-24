@@ -29,6 +29,7 @@ FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, M
     _debug(debug),
     _taskDenominator(taskDenominator)
 {
+    _antiGravityThrottleFilter.setToPassthrough();
 }
 
 static const std::array<std::string, FlightController::PID_COUNT> PID_NAMES = {
@@ -94,20 +95,20 @@ void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_
     _PIDS[pidIndex].setPID(pid);
     _PIDS[pidIndex].switchIntegrationOff();
     // keep copies of P and I terms so they can be adjusted by anti-gravity
-    _rollRatePterm = _PIDS[ROLL_RATE_DPS].getP();
-    _pitchRatePterm = _PIDS[PITCH_RATE_DPS].getP();
-    _rollRateIterm = _PIDS[ROLL_RATE_DPS].getI();
-    _pitchRateIterm = _PIDS[PITCH_RATE_DPS].getI();
+    _rollRatePTerm = _PIDS[ROLL_RATE_DPS].getP();
+    _pitchRatePTerm = _PIDS[PITCH_RATE_DPS].getP();
+    _rollRateITerm = _PIDS[ROLL_RATE_DPS].getI();
+    _pitchRateITerm = _PIDS[PITCH_RATE_DPS].getI();
 }
 
 void FlightController::setPID_P_MSP(pid_index_e pidIndex, uint16_t kp)
 {
     _PIDS[pidIndex].setP(kp * _scaleFactors.kp);
     if (pidIndex == ROLL_RATE_DPS) {
-        _rollRatePterm = _PIDS[ROLL_RATE_DPS].getP();
+        _rollRatePTerm = _PIDS[ROLL_RATE_DPS].getP();
     }
     if (pidIndex == PITCH_RATE_DPS) {
-        _pitchRatePterm = _PIDS[PITCH_RATE_DPS].getP();
+        _pitchRatePTerm = _PIDS[PITCH_RATE_DPS].getP();
     }
 }
 
@@ -115,10 +116,10 @@ void FlightController::setPID_I_MSP(pid_index_e pidIndex, uint16_t ki)
 {
     _PIDS[pidIndex].setI(ki * _scaleFactors.ki);
     if (pidIndex == ROLL_RATE_DPS) {
-        _rollRateIterm = _PIDS[ROLL_RATE_DPS].getI();
+        _rollRateITerm = _PIDS[ROLL_RATE_DPS].getI();
     }
     if (pidIndex == PITCH_RATE_DPS) {
-        _pitchRateIterm = _PIDS[PITCH_RATE_DPS].getI();
+        _pitchRateITerm = _PIDS[PITCH_RATE_DPS].getI();
     }
 }
 
@@ -264,8 +265,8 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig)
 {
     _antiGravityConfig = antiGravityConfig;
-    _antiGravityPGain = static_cast<float>(antiGravityConfig.anti_gravity_p_gain) * _scaleFactors.kp;
-    _antiGravityIGain = static_cast<float>(antiGravityConfig.anti_gravity_i_gain) * _scaleFactors.ki;
+    _antiGravityPGain = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp;
+    _antiGravityIGain = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki;
 }
 
 /*!
@@ -311,11 +312,20 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
     return telemetry;
 }
 
+/*!
+If the throttle is moving quickly then adjust the P and I terms for the roll rate and pitch rate PIDs
+*/
 void FlightController::applyAntiGravity(float throttle, uint32_t tickCount)
 {
-    // anti-gravity
-    // if the throttle is moving quickly then adjust the  P and I terms for the roll rate and pitch rate PIDs
-    //!!TODO: calculate the throttle derivative and if it exceeds the threshold then update the Iterm accelerator.
+    if (_antiGravityTickCountCounter != 0) {
+        _antiGravityTickCountSum += tickCount;
+        --_antiGravityTickCountCounter;
+        if (_antiGravityTickCountCounter == 0) {
+            const float deltaT = 0.001F * static_cast<float>(_antiGravityTickCountSum) / ANTI_GRAVITY_TICKCOUNT_COUNTER_START;
+            _antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, deltaT);
+        }
+    }
+
     const float throttleDelta = fabsf(throttle - _throttlePrevious);
     _throttlePrevious = throttle;
     const float deltaT = static_cast<float>((tickCount - _tickCountPrevious)) * 0.001F;
@@ -323,33 +333,44 @@ void FlightController::applyAntiGravity(float throttle, uint32_t tickCount)
     float throttleDerivative = throttleDelta/deltaT;
     _debug.set(DEBUG_ANTI_GRAVITY, 0, static_cast<int16_t>(lrintf(throttleDerivative * 100)));
 
-    const float throttleInv = 1.0F - throttle;
+    const float throttleReversed = 1.0F - throttle;
+    throttleDerivative *= throttleReversed * throttleReversed;
     // generally focus on the low throttle period
     if (throttle > _throttlePrevious) {
-        throttleDerivative *= throttleInv * 0.5F;
+        throttleDerivative *= throttleReversed * 0.5F;
         // when increasing throttle, focus even more on the low throttle range
     }
     // filtering suppresses peaks relative to troughs and prolongs the effects
     throttleDerivative = _antiGravityThrottleFilter.filter(throttleDerivative);
     _debug.set(DEBUG_ANTI_GRAVITY, 1, static_cast<int16_t>(lrintf(throttleDerivative * 100)));
 
-    // set P and I term accelerators
-    const float ptermAccelerator =  0.0F;
-    const float itermAccelerator =  0.0F;
+    // set I term accelerators
+    static constexpr float ANTIGRAVITY_KI = 0.34F;
+    const float ITermAccelerator =  throttleDerivative * _antiGravityIGain * ANTIGRAVITY_KI;
+    _PIDS[ROLL_RATE_DPS].setI(_rollRateITerm + ITermAccelerator);
+    _PIDS[PITCH_RATE_DPS].setI(_pitchRateITerm + ITermAccelerator);
+    _debug.set(DEBUG_ANTI_GRAVITY, 2, static_cast<int16_t>(lrintf(1.0F + ITermAccelerator/_PIDS[PITCH_RATE_DPS].getI()*1000.0F)));
 
-    _PIDS[ROLL_RATE_DPS].setI(_rollRateIterm + itermAccelerator);
-    _PIDS[PITCH_RATE_DPS].setI(_pitchRateIterm + itermAccelerator);
-    _PIDS[ROLL_RATE_DPS].setI(_rollRatePterm + ptermAccelerator);
-    _PIDS[PITCH_RATE_DPS].setI(_pitchRatePterm + ptermAccelerator);
+    // set P term boosts
+    const float setpointAttenuatorRoll = std::fmaxf(fabsf(_PIDS[ROLL_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
+    // attenuate effect if turning more than 50 deg/s, half at 100 deg/s
+    const float PTermBoostRoll = 1.0F + (throttleDerivative *_antiGravityPGain / setpointAttenuatorRoll);
+    _PIDS[ROLL_RATE_DPS].setP(_rollRatePTerm * PTermBoostRoll);
 
+    const float setpointAttenuatorPitch = std::fmaxf(fabsf(_PIDS[PITCH_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
+    // attenuate effect if turning more than 50 deg/s, half at 100 deg/s
+    const float PTermBoostPitch = 1.0F + (throttleDerivative *_antiGravityPGain / setpointAttenuatorPitch);
+    _PIDS[PITCH_RATE_DPS].setP(_pitchRatePTerm * PTermBoostPitch);
+    _debug.set(DEBUG_ANTI_GRAVITY, 3, static_cast<int16_t>(lrintf(PTermBoostPitch * 1000.0F)));
 }
+
 /*!
 Use the new joystick values from the receiver to update the PID setpoints
 using the NED (North-East-Down) coordinate convention.
 
-NOTE: this function is called form `updateControls()` in the ReceiverTask loop() function,
+NOTE: this function is called from `updateControls()` in the ReceiverTask,
 as a result of receiving new values from the receiver.
-How often it is called depends on the type of transmitter and receiver the user has,
+How often it is called depends on the type of transmitter and receiver,
 but is typically at intervals of between 40 milliseconds and 5 milliseconds (ie 25Hz to 200Hz).
 In particular it runs much less frequently than `updateOutputsUsingPIDs()` which typically runs at 1000Hz to 8000Hz.
 */
@@ -594,7 +615,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     // filter the output
     _outputs[PITCH_RATE_DPS] = _outputFilters[PITCH_RATE_DPS].filter(_outputs[PITCH_RATE_DPS]);
 
-    // DTerm is zero for yawRate, so use updatePI with no DTerm filtering _TPA
+    // DTerm is zero for yawRate, so call updatePI() with no DTerm filtering or TPA
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
     _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].updatePI(yawRateDPS, deltaT);
     // filter the output

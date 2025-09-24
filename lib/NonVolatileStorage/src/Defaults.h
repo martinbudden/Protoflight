@@ -46,9 +46,9 @@ static const FlightController::filters_config_t flightControllerFiltersConfig = 
 };
 
 static const FlightController::anti_gravity_config_t flightControllerAntiGravityConfig = {
-    .anti_gravity_cutoff_hz = 5,
-    .anti_gravity_p_gain = 100,
-    .anti_gravity_i_gain = 80
+    .cutoff_hz = 5,
+    .p_gain = 100,
+    .i_gain = 80
 };
 
 static const IMU_Filters::config_t imuFiltersConfig = {
