@@ -243,7 +243,7 @@ H features:541130760
         BLACKBOX_PRINT_HEADER_LINE("debug_mode", "%d",                      getDebugMode());
         BLACKBOX_PRINT_HEADER_LINE("features", "%d",                        541130760); //0x2041'0008
 
-        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_min_rpm_100", "%d",                dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_min_rpm_100 : 0);
+        BLACKBOX_PRINT_HEADER_LINE("dyn_idle_min_rpm_100", "%d",            dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_min_rpm_100 : 0);
         BLACKBOX_PRINT_HEADER_LINE("dyn_idle_p_gain", "%d",                 dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_p_gain : 0);
         BLACKBOX_PRINT_HEADER_LINE("dyn_idle_i_gain", "%d",                 dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_i_gain : 0);
         BLACKBOX_PRINT_HEADER_LINE("dyn_idle_d_gain", "%d",                 dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_d_gain : 0);

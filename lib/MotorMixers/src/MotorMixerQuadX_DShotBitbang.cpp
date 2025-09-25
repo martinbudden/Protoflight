@@ -7,7 +7,7 @@
 #include <cmath>
 
 
-MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(Debug& debug, const pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController) :
+MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(Debug& debug, const stm32_motor_pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController) :
     MotorMixerQuadBase(debug),
     _rpmFilters(rpmFilters),
     _dynamicIdleController(dynamicIdleController)

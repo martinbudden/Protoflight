@@ -12,7 +12,7 @@ Hz is used for motor revolutions per second rather than RPS, since RPS is genera
 */
 class MotorMixerQuadX_DShotBitbang : public MotorMixerQuadBase {
 public:
-    MotorMixerQuadX_DShotBitbang(Debug& debug, const pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController);
+    MotorMixerQuadX_DShotBitbang(Debug& debug, const stm32_motor_pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController);
 public:
     virtual void outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount) override;
     virtual DynamicIdleController* getDynamicIdleController() const override;

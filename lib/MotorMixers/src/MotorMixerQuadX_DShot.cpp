@@ -5,7 +5,7 @@
 #include <RPM_Filters.h>
 
 
-MotorMixerQuadX_DShot::MotorMixerQuadX_DShot(Debug& debug, const pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController) :
+MotorMixerQuadX_DShot::MotorMixerQuadX_DShot(Debug& debug, const motor_pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController) :
     MotorMixerQuadBase(debug),
     _rpmFilters(rpmFilters),
     _dynamicIdleController(dynamicIdleController)

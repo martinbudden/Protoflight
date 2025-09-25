@@ -133,7 +133,7 @@ void Main::setup()
 #endif
 #else
     static_assert(false && "MotorMixer not specified");
-#endif
+#endif // USE_MOTOR_MIXER
 
     // statically allocate the IMU_Filters
     static IMU_Filters imuFilters(motorMixer, AHRS_taskIntervalMicroseconds);

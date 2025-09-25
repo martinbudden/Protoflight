@@ -105,10 +105,9 @@ size_t packTelemetryData_Debug(uint8_t* telemetryDataPtr, uint32_t id, uint32_t 
 
     static_assert(static_cast<int>(TD_DEBUG::VALUE_COUNT) == static_cast<int>(Debug::VALUE_COUNT));
     for (size_t ii = 0; ii < TD_DEBUG::VALUE_COUNT; ++ii) {
-        td->values[ii] = debug.get(ii);
+        td->data.values[ii] = debug.get(ii);
     }
-    //!!TODO: add mode to TD_Debug packet
-    //td->mode = debug.getMode();
+    td->data.mode = debug.getMode();
 
     return td->len;
 }

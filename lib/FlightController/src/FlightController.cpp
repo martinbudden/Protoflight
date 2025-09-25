@@ -508,7 +508,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
                 // don't advance calculation to pitch axis when in level race mode
                 _angleModeCalculationState = STATE_CALCULATE_PITCH;
             }
-            _rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
+            _rollSinAngle = -orientationENU.sinRollClipped(); // sin(x-180) = -sin(x)
             const float rollSinAngleDelta = _rollAngleDTermFilter.filter(_rollSinAngle - _PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
             _outputs[ROLL_SIN_ANGLE] = _PIDS[ROLL_SIN_ANGLE].update(_rollSinAngle, rollSinAngleDelta, deltaT);
             _rollRateSetpointDPS = _outputs[ROLL_SIN_ANGLE];
@@ -516,7 +516,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
             _rollRateSetpointDPS -= yawRateSetpointDPS * _rollSinAngle;
         } else {
             _angleModeCalculationState = STATE_CALCULATE_ROLL;
-            _pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
+            _pitchSinAngle = -orientationENU.sinPitchClipped(); // this is cheaper to calculate than sinRoll
             const float pitchSinAngleDelta = _rollAngleDTermFilter.filter(_pitchSinAngle - _PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
             _outputs[PITCH_SIN_ANGLE] = _PIDS[PITCH_SIN_ANGLE].update(_pitchSinAngle, pitchSinAngleDelta, deltaT);
             _pitchRateSetpointDPS = _outputs[PITCH_SIN_ANGLE];

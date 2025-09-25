@@ -35,8 +35,8 @@ public:
     };
 #endif
 public:
-    MotorMixerQuadX_PWM(Debug& debug, const pins_t& pins);
-    MotorMixerQuadX_PWM(Debug& debug, const stm32_motor_pins4_t& pins);
+    MotorMixerQuadX_PWM(Debug& debug, const motor_pins_t& pins);
+    MotorMixerQuadX_PWM(Debug& debug, const stm32_motor_pins_t& pins);
 public:
     virtual void outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount) override;
     void writeMotor(uint8_t motorIndex, float motorOutput);

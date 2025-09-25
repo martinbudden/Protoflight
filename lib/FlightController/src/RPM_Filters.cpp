@@ -1,5 +1,5 @@
-#include "FastMath.h"
 #include "RPM_Filters.h"
+#include <FastTrigonometry.h>
 
 
 void RPM_Filters::init(uint32_t harmonicToUse, float Q)
@@ -47,7 +47,7 @@ void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
     // so omega is in range [0, PI]
     float s;
     float c;
-    FastMath::sincos(omega, s, c);
+    FastTrigonometry::sincos(omega, s, c);
     const float sinOmega = s;
     const float two_cosOmega = 2.0F * c;
     float weight = _weights[FUNDAMENTAL]*weightMultiplier;
