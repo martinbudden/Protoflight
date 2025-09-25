@@ -2,6 +2,7 @@
 
 #include "FC_TelemetryData.h"
 
+#include <Debug.h>
 #include <MSP_Base.h>
 #include <SV_TelemetryData.h>
 #include <StreamBuf.h>
@@ -88,3 +89,26 @@ size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t se
 
     return payloadSize + TD_MSP::PACKET_OVERHEAD;
 };
+
+/*!
+Packs the TD_Debug packet. Returns the length of the packet.
+*/
+size_t packTelemetryData_Debug(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, const Debug& debug)
+{
+    TD_DEBUG* td = reinterpret_cast<TD_DEBUG*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
+
+    td->id = id;
+    td->type = TD_TASK_INTERVALS::TYPE;
+    td->len = sizeof(TD_TASK_INTERVALS);
+    td->subType = 0;
+    td->sequenceNumber = static_cast<uint8_t>(sequenceNumber);
+
+    static_assert(static_cast<int>(TD_DEBUG::VALUE_COUNT) == static_cast<int>(Debug::VALUE_COUNT));
+    for (size_t ii = 0; ii < TD_DEBUG::VALUE_COUNT; ++ii) {
+        td->values[ii] = debug.get(ii);
+    }
+    //!!TODO: add mode to TD_Debug packet
+    //td->mode = debug.getMode();
+
+    return td->len;
+}

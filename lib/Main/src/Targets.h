@@ -137,7 +137,8 @@ Targets
     //#define USE_IMU_MPU6000
 #if defined(LIBRARY_IMU_USE_SPI_BUS)
     #define IMU_SPI_INDEX       BUS_INDEX_1
-    #define IMU_SPI_PINS        port_pins_t{.cs={PB,11},.sck={PB,14},.cipo={PB,14},.copi={PB,15},.irq={PB,10}}
+    #define IMU_SPI_PINS        pins_t{.cs=11,.sck=14,.cipo=14,.copi=15,.irq=10}
+    //#define IMU_SPI_PINS        port_pins_t{.cs={PB,11},.sck={PB,14},.cipo={PB,14},.copi={PB,15},.irq={PB,10}}
 #else
     //#define IMU_I2C_PINS        port_pins_t{.sda={PB,7},.scl={PB,6},.irq={0,0xFF}}
     #define IMU_I2C_PINS        pins_t{.sda=14,.scl=15,.irq=0xFF}

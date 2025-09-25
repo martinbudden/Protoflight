@@ -59,7 +59,7 @@ static const struct pio_program dshot_bidir_300_program = {
     .length = 31,
     .origin = -1,
     .pio_version {},
-    .used_gpio_ranges {}
+    //.used_gpio_ranges {}
 };
 
 static inline pio_sm_config dshot_bidir_300_program_get_default_config(uint offset) {

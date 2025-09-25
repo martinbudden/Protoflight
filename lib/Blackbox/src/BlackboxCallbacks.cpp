@@ -67,8 +67,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
         gyroRPS = queueItem.gyroRPS;
         gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered;
         acc = queueItem.acc;
-        //!!TODO: add orientation to BlackboxMessageQueue::queue_item_t in AHRS in StabilizedVehicle library
-        orientation = _ahrs.getOrientationForInstrumentationUsingLock();
+        orientation = queueItem.orientation;
     } else {
         mainState.time = currentTimeUs;
         const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();

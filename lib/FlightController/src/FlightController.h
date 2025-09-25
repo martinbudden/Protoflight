@@ -179,6 +179,9 @@ public:
     const MotorMixerBase& getMixer() const { return _mixer; }
     float getMixerAdjustedThrottle() const { return _mixerAdjustedThrottle; }
 
+    const Debug& getDebug() const { return _debug; }
+    Debug& getDebug() { return _debug; }
+
     const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
     void setFiltersConfig(const filters_config_t& filtersConfig);
     const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }

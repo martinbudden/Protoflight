@@ -5,7 +5,7 @@
 #include <cstdint>
 
 
-enum debug_type_e {
+enum debug_mode_e {
     DEBUG_NONE,
     DEBUG_CYCLETIME,
     DEBUG_BATTERY,
@@ -113,7 +113,7 @@ public:
     enum { VALUE_COUNT = 8 };
 public:
     Debug() = default;
-    inline void set(debug_type_e mode, size_t index, int16_t value) {
+    inline void set(debug_mode_e mode, size_t index, int16_t value) {
         if (_mode == mode) {
             _debug[index] = value;
         }
@@ -121,8 +121,10 @@ public:
     inline void set(size_t index, int16_t value) { _debug[index] = value; }
     inline void set(size_t index, int32_t value) { _debug[index] = static_cast<int16_t>(value); }
     inline int16_t get(size_t index) const { return _debug[index]; }
-    inline debug_type_e getMode() const { return _mode; }
+
+    void setMode(debug_mode_e mode) { _mode = mode; }
+    inline debug_mode_e getMode() const { return _mode; }
 private:
     std::array<int16_t, VALUE_COUNT> _debug {};
-    debug_type_e _mode {DEBUG_NONE};
+    debug_mode_e _mode {DEBUG_NONE};
 };

@@ -3,6 +3,7 @@
 #include "FC_Telemetry.h"
 
 #include <AHRS.h>
+#include <Debug.h>
 #include <NonVolatileStorage.h>
 #include <ReceiverBase.h>
 #include <SV_Telemetry.h>
@@ -72,24 +73,22 @@ bool BackchannelFlightController::packetControl(const CommandPacketControl& pack
     case CommandPacketControl::MOTORS_SWITCH_OFF:
         _flightController.motorsSwitchOff();
         return true;
-        break;
     case CommandPacketControl::MOTORS_SWITCH_ON:
         _flightController.motorsSwitchOn();
         return true;
-        break;
     case CommandPacketControl::RESET:
         //!!_flightController.motorsResetEncodersToZero();
         return true;
-        break;
     case CommandPacketControl::SET_MODE:
         //!!_flightController.setControlMode(static_cast<MotorPairController::control_mode_e>(packet.value));
         return true;
-        break;
     case CommandPacketControl::SET_PID_PROFILE:
         return false; // not implemented
     case CommandPacketControl::SET_RATES_PROFILE:
         return false; // not implemented
-        break;
+    /*case CommandPacketControl::SET_DEBUG_MODE:
+        _flightController.getDebug().setMode(static_cast<debug_mode_e>(packet.value));
+        return true;*/
     default:
         // do nothing
         break;
@@ -201,10 +200,16 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
     }
     case CommandPacketRequestData::REQUEST_VEHICLE_CONTROLLER_DATA: {
         const size_t len = packTelemetryData_FC_QUADCOPTER(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _flightController);
-        //Serial.printf("mpcLen:%d\r\n", len);
+        //Serial.printf("vcLen:%d\r\n", len);
         sendData(_transmitDataBufferPtr, len);
         break;
     }
+    /*case CommandPacketRequestData::REQUEST_DEBUG_DATA: {
+        const size_t len = packTelemetryData_Debug(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _flightController.getDebug());
+        //Serial.printf("debugLen:%d\r\n", len);
+        sendData(_transmitDataBufferPtr, len);
+        break;
+    }*/
     case CommandPacketRequestData::REQUEST_MSP_DATA: {
         (void)subCommand;
         //const size_t len = packTelemetryData_MSP(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _msp, subCommand);

@@ -3,11 +3,18 @@
 #include <FilterTemplates.h>
 #include <array>
 
-#if defined(FRAMEWORK_USE_FREERTOS)
+#if defined(FRAMEWORK_RPI_PICO)
+
+#include <pico/critical_section.h>
+#include <pico/mutex.h>
+
+#elif defined(FRAMEWORK_USE_FREERTOS)
+
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/semphr.h>
+#include <freertos/task.h>
 #else
 #if defined(FRAMEWORK_ARDUINO_STM32)
 #include <STM32FreeRTOS.h>
@@ -15,11 +22,9 @@
 #include <FreeRTOS.h>
 #include <queue.h>
 #include <semphr.h>
+#include <task.h>
 #endif
-#endif
-#if defined(FRAMEWORK_RPI_PICO)
-#include <pico/critical_section.h>
-#include <pico/mutex.h>
+
 #endif
 
 #include <xyz_type.h>
@@ -68,21 +73,14 @@ private:
     float _fadeRangeHz { 50.0F };
     float _Q { 0.0F };
     BiquadFilterT<xyz_t> _filters[MAX_MOTOR_COUNT][MAX_HARMONICS_COUNT];
-#if defined(FRAMEWORK_USE_FREERTOS)
-#if false
-    mutable portMUX_TYPE _spinlock = portMUX_INITIALIZER_UNLOCKED;
-    // taskENTER_CRITICAL disables interrupts. This also means context switches are prevented.
-    inline void LOCK_FILTERS() const { taskENTER_CRITICAL(&_spinlock); }
-    inline void UNLOCK_FILTERS() const { taskEXIT_CRITICAL(&_spinlock); }
-#else
-    // vTaskSuspendAll suspends the scheduler. This prevents a context switch from occurring but leaves interrupts enabled.
-    inline void LOCK_FILTERS() const { vTaskSuspendAll(); }
-    inline void UNLOCK_FILTERS() const { xTaskResumeAll(); }
-#endif
-#elif defined(FRAMEWORK_RPI_PICO)
+#if defined(FRAMEWORK_RPI_PICO)
     mutable mutex_t _mutex {};
     inline void LOCK_FILTERS() const { mutex_enter_blocking(&_mutex); }
     inline void UNLOCK_FILTERS() const { mutex_exit(&_mutex); }
+#elif defined(FRAMEWORK_USE_FREERTOS)
+    // vTaskSuspendAll suspends the scheduler. This prevents a context switch from occurring but leaves interrupts enabled.
+    inline void LOCK_FILTERS() const { vTaskSuspendAll(); }
+    inline void UNLOCK_FILTERS() const { xTaskResumeAll(); }
 #else
     inline void LOCK_FILTERS() const {}
     inline void UNLOCK_FILTERS() const {}

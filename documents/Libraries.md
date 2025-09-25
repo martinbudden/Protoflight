@@ -7,9 +7,9 @@
 | VectorQuaternionMatrix | yes       | 0.4.2  | 0.4.2   | yes        | no      |
 | SensorFusion           | yes       | 0.2.4  | 0.2.4   | yes        | no      |
 | StreamBuf              | yes       | 0.0.1  | 0.0.1   | yes        | no      |
-| IMU                    | yes       | 0.9.5  | 0.9.5   | yes        | no      |
+| IMU                    | yes       | 0.9.6  | 0.9.6   | yes        | no      |
 | TaskBase               | yes       | 0.0.7  | 0.0.7   | yes        | no      |
-| StabilizedVehicle      | yes       | 0.5.7  | 0.5.7   | yes        | no      |
+| StabilizedVehicle      | yes       | 0.5.8  | 0.5.8   | yes        | no      |
 | Receiver               | yes       | 0.5.6  | 0.5.6   | yes        | no      |
 | Backchannel            | yes       | 0.1.5  | 0.1.5   | yes        | no      |
 | MultiWiiSerialProtocol | yes       | 0.0.8  | 0.0.8   | yes        | no      |
@@ -26,16 +26,16 @@ Libraries
 ├── VectorQuaternionMatrix @ 0.4.2
 ├── FlashKLV @ 0.0.3
 │
-├── IMU @ 0.9.5
+├── IMU @ 0.9.6
 │   └── VectorQuaternionMatrix @ 0.4.2
 │
 ├── SensorFusion @ 0.2.4
 │   └── VectorQuaternionMatrix @ 0.4.2
 │
-├── StabilizedVehicle @ 0.5.7
+├── StabilizedVehicle @ 0.5.8
 │   ├── TaskBase @ 0.0.7
 │   ├── VectorQuaternionMatrix @ 0.4.2
-│   ├── IMU @ 0.9.5
+│   ├── IMU @ 0.9.6
 │   │   └── VectorQuaternionMatrix @ 0.4.2
 │   └── SensorFusion @ 0.2.4
 │       └── VectorQuaternionMatrix @ 0.4.2
@@ -50,10 +50,10 @@ Libraries
 
 
 └── Protoflight @ 0.0.1
-    ├── IMU @ 0.9.5
+    ├── IMU @ 0.9.6
     ├── Filters @ 0.9.2
     ├── PIDF @ 0.3.3
-    ├── StabilizedVehicle @ 0.5.6
+    ├── StabilizedVehicle @ 0.5.8
     ├── Receiver @ 0.5.6
     └── Backchannel @ 0.1.4
 
