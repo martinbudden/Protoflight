@@ -278,9 +278,9 @@ void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig)
             _dMaxPercent[axis] = 1.0F;
         }
     }
-    _dMaxGyroGain = D_MAX_GAIN_FACTOR * dMaxConfig.d_max_gain / D_MAX_LOWPASS_HZ;
+    _dMaxGyroGain = D_MAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / D_MAX_LOWPASS_HZ;
     // lowpass included inversely in gain since stronger lowpass decreases peak effect
-    _dMaxSetpointGain = D_MAX_SETPOINT_GAIN_FACTOR * dMaxConfig.d_max_gain * dMaxConfig.d_max_advance / 100.0F / D_MAX_LOWPASS_HZ;
+    _dMaxSetpointGain = D_MAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / D_MAX_LOWPASS_HZ;
 #endif
 }
 
@@ -341,24 +341,23 @@ void FlightController::calculateDMaxMultipliers()
 #if defined(USE_D_MAX)
     for (size_t ii = ROLL_RATE_DPS; ii <= PITCH_RATE_DPS; ++ii) {
         _dMaxMultiplier[ii] = 1.0F;
-        if (_dMaxPercent[ii] > 1.0f) {
+        if (_dMaxPercent[ii] > 1.0F) {
             const float deltaT = _ahrs.getTaskIntervalSeconds();
             const float gyroDeltaD = deltaT * _PIDS[ii].getErrorD(); //!!TODO: check using PID error in D_MAX, surely this is too easy
-            float dMaxGyroFactor = _dMaxRangeFilter[ii].filter(gyroDeltaD);
-            dMaxGyroFactor = fabsf(dMaxGyroFactor) * _dMaxGyroGain;
-            const float dMaxSetpointFactor = std::fabs(_PIDS[ii].getSetpointDelta()) * _dMaxSetpointGain;
-            const float dMaxBoost = std::fmaxf(dMaxGyroFactor, dMaxSetpointFactor);
+            const float gyroFactor = std::fabs(_dMaxRangeFilter[ii].filter(gyroDeltaD)) * _dMaxGyroGain;
+            const float setpointFactor = std::fabs(_PIDS[ii].getSetpointDelta()) * _dMaxSetpointGain;
+            const float boost = std::fmaxf(gyroFactor, setpointFactor);
             // dMaxBoost starts at zero, and by 1.0 we get Dmax, but it can exceed 1.0
-            _dMaxMultiplier[ii] += (_dMaxPercent[ii] - 1.0F) * dMaxBoost;
+            _dMaxMultiplier[ii] += (_dMaxPercent[ii] - 1.0F) * boost;
             _dMaxMultiplier[ii] = _dMaxLowpassFilter[ii].filter(_dMaxMultiplier[ii]);
-            // limit the gain to the fraction that DMax is greater than DMin
-            _dMaxMultiplier[ii] = std::fmin(_dMaxMultiplier[ii], _dMaxPercent[ii]);
+            // limit the multiplier to _dMaxPercent
+            _dMaxMultiplier[ii] = std::fminf(_dMaxMultiplier[ii], _dMaxPercent[ii]);
             if (_debug.getMode() == DEBUG_D_MAX) {
                 if (ii == FD_ROLL) {
-                    _debug.set(DEBUG_D_MAX, 0, lrintf(dMaxGyroFactor * 100));
-                    _debug.set(DEBUG_D_MAX, 1, lrintf(dMaxSetpointFactor * 100));
+                    _debug.set(DEBUG_D_MAX, 0, lrintf(gyroFactor * 100));
+                    _debug.set(DEBUG_D_MAX, 1, lrintf(setpointFactor * 100));
                     _debug.set(DEBUG_D_MAX, 2, lrintf(_pidConstants[ROLL_RATE_DPS].kd * _dMaxMultiplier[ROLL_RATE_DPS] * 10));
-                } else if (ii == FD_PITCH) {
+                } else {
                     _debug.set(DEBUG_D_MAX, 3, lrintf(_pidConstants[PITCH_RATE_DPS].kd * _dMaxMultiplier[PITCH_RATE_DPS] * 10));
                 }
             }

@@ -120,7 +120,7 @@ private:
     static IMU_Base& createIMU(int32_t& imuSampleRateHz);
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);
-    static void setPIDsFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);
+    static void loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController);
     static void print(const char* buf);
     static void reportMainTask();
     static void printTaskInfo(TaskBase::task_info_t& taskInfo);

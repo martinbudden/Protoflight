@@ -91,7 +91,7 @@ void Main::setup()
     static ReceiverNull receiver;
 #endif
 
-    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad(RadioController::RATES_INDEX_0));
+    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad(NonVolatileStorage::DEFAULT_RATE_PROFILE));
 
     // create the IMU and get its sample rate
 #if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
@@ -147,10 +147,7 @@ void Main::setup()
 
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
-    flightController.setFiltersConfig(nvs.FlightControllerFiltersConfigLoad());
-    flightController.setAntiGravityConfig(nvs.FlightControllerAntiGravityConfigLoad());
-    flightController.setDMaxConfig(nvs.FlightControllerDMaxConfigLoad());
-    setPIDsFromNonVolatileStorage(nvs, flightController);
+    loadPID_ProfileFromNonVolatileStorage(nvs, flightController);
 
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
@@ -389,11 +386,16 @@ void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs) // cppcheck
 }
 
 /*!
-Loads the PID settings for the FlightController. Must be called *after* the FlightController is created.
+Loads the PID profile for the FlightController. Must be called *after* the FlightController is created.
 */
-void Main::setPIDsFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController)
+void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController)
 {
-    // Load the PID constants from non volatile storage
+    const size_t pidProfile = NonVolatileStorage::DEFAULT_PID_PROFILE;
+    flightController.setFiltersConfig(nvs.FlightControllerFiltersConfigLoad());
+    flightController.setAntiGravityConfig(nvs.FlightControllerAntiGravityConfigLoad());
+    flightController.setDMaxConfig(nvs.FlightControllerDMaxConfigLoad(pidProfile));
+
+
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
         const VehicleControllerBase::PIDF_uint16_t pid = nvs.PID_load(ii);
         flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);

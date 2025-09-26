@@ -37,6 +37,10 @@ public:
 
     enum { READ_WRITE=false, READ_ONLY=true };
     enum { MAC_ADDRESS_LEN = 6 };
+
+    enum { DEFAULT_PID_PROFILE = 0, PID_PROFILE_COUNT = 4 };
+    enum { DEFAULT_RATE_PROFILE = 0, RATE_PROFILE_COUNT = 4 };
+
     struct xyz_int32_t {
         int32_t x;
         int32_t y;
@@ -67,7 +71,7 @@ public:
     int32_t MacAddressStore(const uint8_t* macAddress);
 
     VehicleControllerBase::PIDF_uint16_t PID_load(uint8_t index) const;
-    int32_t PID_store(uint8_t index, const VehicleControllerBase::PIDF_uint16_t& pid);
+    int32_t PID_store(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t index);
     void PID_reset(uint8_t index);
 
     DynamicIdleController::config_t DynamicIdleControllerConfigLoad() const;
@@ -79,8 +83,8 @@ public:
     FlightController::anti_gravity_config_t FlightControllerAntiGravityConfigLoad() const;
     int32_t FlightControllerAntiGravityConfigStore(const FlightController::anti_gravity_config_t& config);
 
-    FlightController::d_max_config_t FlightControllerDMaxConfigLoad() const;
-    int32_t FlightControllerDMaxConfigStore(const FlightController::d_max_config_t& config);
+    FlightController::d_max_config_t FlightControllerDMaxConfigLoad(size_t pidProfileIndex) const;
+    int32_t FlightControllerDMaxConfigStore(const FlightController::d_max_config_t& config, size_t pidProfileIndex);
 
     IMU_Filters::config_t ImuFiltersConfigLoad() const;
     int32_t ImuFiltersConfigStore(const IMU_Filters::config_t& config);
@@ -88,8 +92,8 @@ public:
     RadioController::failsafe_t RadioControllerFailsafeLoad();
     int32_t RadioControllerFailsafeStore(const RadioController::failsafe_t& failsafe);
 
-    RadioController::rates_t RadioControllerRatesLoad(uint8_t rateProfileIndex) const;
-    int32_t RadioControllerRatesStore(uint8_t rateProfileIndex, const RadioController::rates_t& rates);
+    RadioController::rates_t RadioControllerRatesLoad(size_t rateProfileIndex) const;
+    int32_t RadioControllerRatesStore(const RadioController::rates_t& rates, size_t rateProfileIndex);
 private:
 #if defined(USE_FLASH_KLV)
     FlashKLV _flashKLV;

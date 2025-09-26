@@ -238,7 +238,7 @@ private:
     uint32_t _setpointTickCountSum {0};
     enum { SETPOINT_TICKCOUNT_COUNTER_START = 100};
     uint32_t _setpointTickCountCounter {SETPOINT_TICKCOUNT_COUNTER_START};
-    float _setpointDeltaT;
+    float _setpointDeltaT {};
 
     // throttle value is scaled to the range [-1,0, 1.0]
     float _TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
@@ -256,13 +256,13 @@ private:
     static constexpr float D_MAX_GAIN_FACTOR = 0.00008F;
     static constexpr float D_MAX_SETPOINT_GAIN_FACTOR = 0.00008F;
     enum { D_MAX_RANGE_HZ = 85, D_MAX_LOWPASS_HZ = 35 };
-    float _dMaxGyroGain;
-    float _dMaxSetpointGain;
-    std::array<PowerTransferFilter2, RP_AXIS_COUNT> _dMaxRangeFilter;
-    std::array<PowerTransferFilter2, RP_AXIS_COUNT> _dMaxLowpassFilter;
-    std::array<float, RP_AXIS_COUNT> _dMaxPercent;
-    std::array<uint8_t, RP_AXIS_COUNT> _dMax;
-    d_max_config_t _dMaxConfig;
+    float _dMaxGyroGain {};
+    float _dMaxSetpointGain {};
+    std::array<PowerTransferFilter2, RP_AXIS_COUNT> _dMaxRangeFilter {};
+    std::array<PowerTransferFilter2, RP_AXIS_COUNT> _dMaxLowpassFilter {};
+    std::array<float, RP_AXIS_COUNT> _dMaxPercent {};
+    std::array<uint8_t, RP_AXIS_COUNT> _dMax {};
+    d_max_config_t _dMaxConfig {};
 #endif
     std::array<float, RP_AXIS_COUNT> _dMaxMultiplier {1.0F, 1.0F};
 

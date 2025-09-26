@@ -3,7 +3,6 @@
 #include <cstring>
 
 
-enum { RATE_PROFILE_COUNT = 4 };
 #if defined(USE_FLASH_KLV)
 // for FlashKLV, keys must be in range [0x0100, 0x3FFF]
 static const std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
@@ -20,10 +19,7 @@ static constexpr uint16_t FlightControllerDMaxConfigKey = 0x020C;
 
 static constexpr uint16_t ImuFiltersConfigKey = 0x0207;
 static constexpr uint16_t RadioControllerFailsafeKey = 0x0208;
-
-static const std::array<uint16_t, RATE_PROFILE_COUNT> RadioControllerRatesKeys= {
-    0x0210, 0x0211, 0x0212, 0x0213
-};
+static constexpr uint16_t RadioControllerRatesKey = 0x0209;
 
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
 
@@ -40,11 +36,11 @@ static const std::array<std::string, FlightController::PID_COUNT> PID_Keys = {
 
 static const char* DynamicIdleControllerConfigKey = "DIC";
 static const char* FlightControllerFiltersConfigKey = "FCF";
-static const char* FlightControllerAntiGravityConfigKey = "FCF";
-static const char* FlightControllerDMaxConfigKey = "FCD";
+static const char* FlightControllerAntiGravityConfigKey = "FCAG";
+static const char* FlightControllerDMaxConfigKey = "FCDM";
 static const char* ImuFiltersConfigKey = "IF";
-static const char* RadioControllerFailsafeKey = "RCF";
-static std::array<const char*, RATE_PROFILE_COUNT> RadioControllerRatesKeys = { "RCR0", "RCR1", "RCR2", "RCR3" };
+static const char* RadioControllerFailsafeKey = "RCFS";
+static const char* RadioControllerRatesKey = "RCR";
 static const char* AccOffsetKey = "ACC";
 static const char* GyroOffsetKey = "GYR";
 static const char* MacAddressKey = "MAC";
@@ -133,7 +129,7 @@ int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& f
     ImuFiltersConfigStore(imuFiltersConfig);
 
     const RadioController::rates_t& radioControllerRates = radioController.getRates();
-    RadioControllerRatesStore(RadioController::RATES_INDEX_0, radioControllerRates);
+    RadioControllerRatesStore(radioControllerRates, DEFAULT_RATE_PROFILE);
 
     return OK;
 }
@@ -265,18 +261,20 @@ int32_t NonVolatileStorage::FlightControllerAntiGravityConfigStore(const FlightC
 #endif
 }
 
-FlightController::d_max_config_t NonVolatileStorage::FlightControllerDMaxConfigLoad() const
+FlightController::d_max_config_t NonVolatileStorage::FlightControllerDMaxConfigLoad(size_t pidProfileIndex) const
 {
+    assert(pidProfileIndex < PID_PROFILE_COUNT);
 #if defined(USE_FLASH_KLV)
     FlightController::d_max_config_t config {};
-    if (FlashKLV::OK == _flashKLV.read(&config, sizeof(config), FlightControllerDMaxConfigKey)) {
+    if (FlashKLV::OK == _flashKLV.read(&config, sizeof(config), FlightControllerDMaxConfigKey + pidProfileIndex)) {
         return config;
     }
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        if (_preferences.isKey(FlightControllerDMaxConfigKey)) {
+        const std::string key = FlightControllerDMaxConfigKey + ('0' + pidProfileIndex);
+        if (_preferences.isKey(key.c_str())) {
             FlightController::d_max_config_t config {};
-            _preferences.getBytes(FlightControllerDMaxConfigKey, &config, sizeof(config));
+            _preferences.getBytes(key.c_str(), &config, sizeof(config));
             _preferences.end();
             return config;
         }
@@ -286,18 +284,26 @@ FlightController::d_max_config_t NonVolatileStorage::FlightControllerDMaxConfigL
     return DEFAULTS::flightControllerDMaxConfig;
 }
 
-int32_t NonVolatileStorage::FlightControllerDMaxConfigStore(const FlightController::d_max_config_t& config)
+int32_t NonVolatileStorage::FlightControllerDMaxConfigStore(const FlightController::d_max_config_t& config, size_t pidProfileIndex)
 {
+    assert(pidProfileIndex < PID_PROFILE_COUNT);
 #if defined(USE_FLASH_KLV)
+    const uint16_t key = FlightControllerDMaxConfigKey + pidProfileIndex;
     if (!memcmp(&DEFAULTS::flightControllerDMaxConfig, &config, sizeof(config))) {
         // value is the same as default, so no need to store it
-        _flashKLV.remove(FlightControllerDMaxConfigKey);
+        _flashKLV.remove(key);
         return OK_IS_DEFAULT;
     }
-    return _flashKLV.write(FlightControllerDMaxConfigKey, sizeof(config), &config);
+    return _flashKLV.write(key, sizeof(config), &config);
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        _preferences.putBytes(FlightControllerDMaxConfigKey, &config, sizeof(config));
+        const std::string key = FlightControllerDMaxConfigKey + ('0' + pidProfileIndex);
+        if (!memcmp(&DEFAULTS::flightControllerDMaxConfig, &config, sizeof(config))) {
+            // value is the same as default, so no need to store it
+            _preferences.remove(key.c_str());
+            return OK_IS_DEFAULT;
+        }
+        _preferences.putBytes(key.c_str(), &config, sizeof(config));
         return OK;
     }
     return ERROR_NOT_WRITTEN;
@@ -393,18 +399,20 @@ int32_t NonVolatileStorage::RadioControllerFailsafeStore(const RadioController::
 #endif
 }
 
-RadioController::rates_t NonVolatileStorage::RadioControllerRatesLoad(uint8_t rateProfileIndex) const
+RadioController::rates_t NonVolatileStorage::RadioControllerRatesLoad(size_t rateProfileIndex) const
 {
 #if defined(USE_FLASH_KLV)
+    const uint16_t key = RadioControllerRatesKey + rateProfileIndex;
     RadioController::rates_t rates {};
-    if (FlashKLV::OK == _flashKLV.read(&rates, sizeof(rates), RadioControllerRatesKeys[rateProfileIndex])) {
+    if (FlashKLV::OK == _flashKLV.read(&rates, sizeof(rates), key)) {
         return rates;
     }
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        if (_preferences.isKey(RadioControllerRatesKeys[rateProfileIndex])) {
+        const std::string key = RadioControllerRatesKey + ('0' + rateProfileIndex);
+        if (_preferences.isKey(key.c_str())) {
             RadioController::rates_t rates {};
-            _preferences.getBytes(RadioControllerRatesKeys[rateProfileIndex], &rates, sizeof(rates));
+            _preferences.getBytes(key.c_str(), &rates, sizeof(rates));
             _preferences.end();
             return rates;
         }
@@ -416,18 +424,25 @@ RadioController::rates_t NonVolatileStorage::RadioControllerRatesLoad(uint8_t ra
     return DEFAULTS::radioControllerRates;
 }
 
-int32_t NonVolatileStorage::RadioControllerRatesStore(uint8_t rateProfileIndex, const RadioController::rates_t& rates)
+int32_t NonVolatileStorage::RadioControllerRatesStore(const RadioController::rates_t& rates, size_t rateProfileIndex)
 {
 #if defined(USE_FLASH_KLV)
+    const uint16_t key = RadioControllerRatesKey + rateProfileIndex;
     if (!memcmp(&DEFAULTS::radioControllerRates, &rates, sizeof(rates))) {
         // value is the same as default, so no need to store it
-        _flashKLV.remove(RadioControllerRatesKeys[rateProfileIndex]);
+        _flashKLV.remove(key);
         return OK_IS_DEFAULT;
     }
-    return _flashKLV.write(RadioControllerRatesKeys[rateProfileIndex], sizeof(rates), &rates);
+    return _flashKLV.write(key, sizeof(rates), &rates);
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        _preferences.putBytes(RadioControllerRatesKeys[rateProfileIndex], &rates, sizeof(rates));
+        const std::string key = RadioControllerRatesKey + ('0' + rateProfileIndex);
+        if (!memcmp(&DEFAULTS::radioControllerRates, &rates, sizeof(rates))) {
+            // value is the same as default, so no need to store it
+            _preferences.remove(key.c_str());
+            return OK_IS_DEFAULT;
+        }
+        _preferences.putBytes(key.c_str(), &rates, sizeof(rates));
         _preferences.end();
         return OK;
     }
@@ -460,7 +475,7 @@ VehicleControllerBase::PIDF_uint16_t NonVolatileStorage::PID_load(uint8_t index)
     return DEFAULTS::flightControllerDefaultPIDs[index];
 }
 
-int32_t NonVolatileStorage::PID_store(uint8_t index, const VehicleControllerBase::PIDF_uint16_t& pid)
+int32_t NonVolatileStorage::PID_store(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t index)
 {
 #if defined(USE_FLASH_KLV)
     const uint16_t key = PID_Keys[index];
