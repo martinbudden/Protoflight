@@ -53,7 +53,7 @@ public:
     void init(uint32_t harmonicToUse, float Q);
     void setHarmonicToUse(uint8_t harmonicToUse) {_harmonicToUse = harmonicToUse; }
     void setMinimumFrequencyHz(float minFrequencyHz) { _minFrequencyHz = minFrequencyHz; }
-    void setFrequencyHz(size_t motorIndex, float frequencyHz);
+    void setFrequencyHz(size_t motorIndex, float frequencyHz); // called from the motor mixer
     void filter(xyz_t& input, size_t motorIndex);
     size_t getMotorCount() const { return _motorCount; }
 
