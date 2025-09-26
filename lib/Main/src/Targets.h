@@ -137,7 +137,7 @@ Targets
     //#define USE_IMU_MPU6000
 #if defined(LIBRARY_IMU_USE_SPI_BUS)
     #define IMU_SPI_INDEX       BUS_INDEX_1
-    #define IMU_SPI_PINS        stm32_spi__pins_t{.cs={PB,11},.sck={PB,14},.cipo={PB,14},.copi={PB,15},.irq={PB,10}}
+    #define IMU_SPI_PINS        stm32_spi_pins_t{.cs={PB,11},.sck={PB,14},.cipo={PB,14},.copi={PB,15},.irq={PB,10}}
 #else
     #define IMU_I2C_PINS        stm32_i2c_pins_t{.sda={PB,7},.scl={PB,6},.irq={0,0xFF}}
 #endif
@@ -147,7 +147,7 @@ Targets
     #define RECEIVER_PINS       stm32_rx_pins_t{.rx={PB,7},.tx={PB,6}}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          stm32_motor_pins4_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}}
+    #define MOTOR_PINS          stm32_motor_pins_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}}
 
     // NOTE this board uses SDIO for the SD card, so pins below are just to test the build
     #define SDCARD_SPI_PINS     stm32_spi_pins_t{.cs={PC,8},.sck={PC,9},.cipo={PC,10},.copi={PC,11},.irq={0,0xFF}}
