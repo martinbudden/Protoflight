@@ -79,6 +79,9 @@ public:
     FlightController::anti_gravity_config_t FlightControllerAntiGravityConfigLoad() const;
     int32_t FlightControllerAntiGravityConfigStore(const FlightController::anti_gravity_config_t& config);
 
+    FlightController::d_max_config_t FlightControllerDMaxConfigLoad() const;
+    int32_t FlightControllerDMaxConfigStore(const FlightController::d_max_config_t& config);
+
     IMU_Filters::config_t ImuFiltersConfigLoad() const;
     int32_t ImuFiltersConfigStore(const IMU_Filters::config_t& config);
 

@@ -12,11 +12,14 @@ static const std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
 static constexpr uint16_t AccOffsetKey = 0x0200;
 static constexpr uint16_t GyroOffsetKey = 0x0201;
 static constexpr uint16_t MacAddressKey = 0x0202;
-static constexpr uint16_t DynamicIdleControllerConfigKey = 0x0203;
-static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0204;
-static constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x0205;
-static constexpr uint16_t ImuFiltersConfigKey = 0x0206;
-static constexpr uint16_t RadioControllerFailsafeKey = 0x0207;
+// Part of PID profile
+static constexpr uint16_t DynamicIdleControllerConfigKey = 0x0400;
+static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0404;
+static constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x0408;
+static constexpr uint16_t FlightControllerDMaxConfigKey = 0x020C;
+
+static constexpr uint16_t ImuFiltersConfigKey = 0x0207;
+static constexpr uint16_t RadioControllerFailsafeKey = 0x0208;
 
 static const std::array<uint16_t, RATE_PROFILE_COUNT> RadioControllerRatesKeys= {
     0x0210, 0x0211, 0x0212, 0x0213
@@ -38,6 +41,7 @@ static const std::array<std::string, FlightController::PID_COUNT> PID_Keys = {
 static const char* DynamicIdleControllerConfigKey = "DIC";
 static const char* FlightControllerFiltersConfigKey = "FCF";
 static const char* FlightControllerAntiGravityConfigKey = "FCF";
+static const char* FlightControllerDMaxConfigKey = "FCD";
 static const char* ImuFiltersConfigKey = "IF";
 static const char* RadioControllerFailsafeKey = "RCF";
 static std::array<const char*, RATE_PROFILE_COUNT> RadioControllerRatesKeys = { "RCR0", "RCR1", "RCR2", "RCR3" };
@@ -145,7 +149,6 @@ DynamicIdleController::config_t NonVolatileStorage::DynamicIdleControllerConfigL
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
         if (_preferences.isKey(DynamicIdleControllerConfigKey)) {
             DynamicIdleController::config_t config {};
-            //const size_t len = _preferences.getBytesLength("DIC");
             _preferences.getBytes(DynamicIdleControllerConfigKey, &config, sizeof(config));
             _preferences.end();
             return config;
@@ -189,7 +192,6 @@ FlightController::filters_config_t NonVolatileStorage::FlightControllerFiltersCo
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
         if (_preferences.isKey(FlightControllerFiltersConfigKey)) {
             FlightController::filters_config_t config {};
-            //const size_t len = _preferences.getBytesLength("DIC");
             _preferences.getBytes(FlightControllerFiltersConfigKey, &config, sizeof(config));
             _preferences.end();
             return config;
@@ -232,7 +234,6 @@ FlightController::anti_gravity_config_t NonVolatileStorage::FlightControllerAnti
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
         if (_preferences.isKey(FlightControllerAntiGravityConfigKey)) {
             FlightController::anti_gravity_config_t config {};
-            //const size_t len = _preferences.getBytesLength("DIC");
             _preferences.getBytes(FlightControllerAntiGravityConfigKey, &config, sizeof(config));
             _preferences.end();
             return config;
@@ -264,6 +265,48 @@ int32_t NonVolatileStorage::FlightControllerAntiGravityConfigStore(const FlightC
 #endif
 }
 
+FlightController::d_max_config_t NonVolatileStorage::FlightControllerDMaxConfigLoad() const
+{
+#if defined(USE_FLASH_KLV)
+    FlightController::d_max_config_t config {};
+    if (FlashKLV::OK == _flashKLV.read(&config, sizeof(config), FlightControllerDMaxConfigKey)) {
+        return config;
+    }
+#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
+    if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
+        if (_preferences.isKey(FlightControllerDMaxConfigKey)) {
+            FlightController::d_max_config_t config {};
+            _preferences.getBytes(FlightControllerDMaxConfigKey, &config, sizeof(config));
+            _preferences.end();
+            return config;
+        }
+        _preferences.end();
+    }
+#endif
+    return DEFAULTS::flightControllerDMaxConfig;
+}
+
+int32_t NonVolatileStorage::FlightControllerDMaxConfigStore(const FlightController::d_max_config_t& config)
+{
+#if defined(USE_FLASH_KLV)
+    if (!memcmp(&DEFAULTS::flightControllerDMaxConfig, &config, sizeof(config))) {
+        // value is the same as default, so no need to store it
+        _flashKLV.remove(FlightControllerDMaxConfigKey);
+        return OK_IS_DEFAULT;
+    }
+    return _flashKLV.write(FlightControllerDMaxConfigKey, sizeof(config), &config);
+#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
+    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
+        _preferences.putBytes(FlightControllerDMaxConfigKey, &config, sizeof(config));
+        return OK;
+    }
+    return ERROR_NOT_WRITTEN;
+#else
+    (void)config;
+    return OK;
+#endif
+}
+
 IMU_Filters::config_t NonVolatileStorage::ImuFiltersConfigLoad() const
 {
 #if defined(USE_FLASH_KLV)
@@ -275,7 +318,6 @@ IMU_Filters::config_t NonVolatileStorage::ImuFiltersConfigLoad() const
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
         if (_preferences.isKey(ImuFiltersConfigKey)) {
             IMU_Filters::config_t config {};
-            //const size_t len = _preferences.getBytesLength("DIC");
             _preferences.getBytes(ImuFiltersConfigKey, &config, sizeof(config));
             _preferences.end();
             return config;

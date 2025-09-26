@@ -3,13 +3,13 @@
 | Library                | On github | tag    | release | platformio | Arduino |
 | ---------------------- | --------- | ------ | ------- | ---------- | ------- |
 | Filters                | yes       | 0.9.2  | 0.9.2   | yes        | no      |
-| PIDF                   | yes       | 0.3.3  | 0.3.3   | yes        | no      |
+| PIDF                   | yes       | 0.3.4  | 0.3.4   | yes        | no      |
 | VectorQuaternionMatrix | yes       | 0.4.3  | 0.4.3   | yes        | no      |
 | SensorFusion           | yes       | 0.2.5  | 0.2.5   | yes        | no      |
 | StreamBuf              | yes       | 0.0.1  | 0.0.1   | yes        | no      |
 | IMU                    | yes       | 0.9.7  | 0.9.7   | yes        | no      |
 | TaskBase               | yes       | 0.0.7  | 0.0.7   | yes        | no      |
-| StabilizedVehicle      | yes       | 0.5.9  | 0.5.9   | yes        | no      |
+| StabilizedVehicle      | yes       | 0.5.10 | 0.5.10  | yes        | no      |
 | Receiver               | yes       | 0.5.7  | 0.5.7   | yes        | no      |
 | Backchannel            | yes       | 0.1.6  | 0.1.6   | yes        | no      |
 | MultiWiiSerialProtocol | yes       | 0.0.8  | 0.0.8   | yes        | no      |
@@ -21,7 +21,7 @@
 ```text
 Libraries
 ├── Filters @ 0.9.2
-├── PIDF @ 0.3.3
+├── PIDF @ 0.3.4
 ├── TaskBase @ 0.0.7
 ├── VectorQuaternionMatrix @ 0.4.3
 ├── FlashKLV @ 0.0.3
@@ -32,7 +32,7 @@ Libraries
 ├── SensorFusion @ 0.2.5
 │   └── VectorQuaternionMatrix @ 0.4.3
 │
-├── StabilizedVehicle @ 0.5.9
+├── StabilizedVehicle @ 0.5.10
 │   ├── TaskBase @ 0.0.7
 │   ├── VectorQuaternionMatrix @ 0.4.3
 │   ├── IMU @ 0.9.7
@@ -52,8 +52,8 @@ Libraries
 └── Protoflight @ 0.0.1
     ├── IMU @ 0.9.7
     ├── Filters @ 0.9.2
-    ├── PIDF @ 0.3.3
-    ├── StabilizedVehicle @ 0.5.9
+    ├── PIDF @ 0.3.4
+    ├── StabilizedVehicle @ 0.5.10
     ├── Receiver @ 0.5.7
     └── Backchannel @ 0.1.6
 

@@ -122,6 +122,12 @@ void FlightController::setPID_F_MSP(pid_index_e pidIndex, uint16_t kf)
     _pidConstants[pidIndex].kf = _PIDS[pidIndex].getF();
 }
 
+void FlightController::setPID_S_MSP(pid_index_e pidIndex, uint16_t ks)
+{
+    _PIDS[pidIndex].setF(ks * _scaleFactors.ks);
+    _pidConstants[pidIndex].ks = _PIDS[pidIndex].getS();
+}
+
 uint32_t FlightController::getOutputPowerTimeMicroseconds() const
 {
     //return _mixer.getOutputPowerTimeMicroseconds();
@@ -258,6 +264,26 @@ void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGra
     _antiGravityIGain = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki;
 }
 
+void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig)
+{
+#if defined(USE_D_MAX)
+    _dMaxConfig = dMaxConfig;
+    for (size_t axis = 0; axis < AXIS_COUNT; ++axis) {
+        const uint8_t dMax = dMaxConfig.d_max[axis];
+        const PIDF_uint16_t pid16 = getPID_Constants(static_cast<pid_index_e>(axis));
+        if (pid16.kd > 0 && dMax > pid16.kd) {
+            // ratio of DMax to kd, eg if kd is 8 and DMax is 10 then dMaxPercent is 1.25
+            _dMaxPercent[axis] = static_cast<float>(dMax) / pid16.kd;
+        } else {
+            _dMaxPercent[axis] = 1.0F;
+        }
+    }
+    _dMaxGyroGain = D_MAX_GAIN_FACTOR * dMaxConfig.d_max_gain / D_MAX_LOWPASS_HZ;
+    // lowpass included inversely in gain since stronger lowpass decreases peak effect
+    _dMaxSetpointGain = D_MAX_SETPOINT_GAIN_FACTOR * dMaxConfig.d_max_gain * dMaxConfig.d_max_advance / 100.0F / D_MAX_LOWPASS_HZ;
+#endif
+}
+
 /*!
 Return he FC telemetry data.
 
@@ -302,29 +328,81 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
 }
 
 /*!
-Dynamic PID adjustments include:
+Calculate the dMaxMultipliers.
+
+This are multipliers that are applied to the roll and pitch axis DTerms.
+
+This means DTerms can be low in normal flight but are boosted to a higher value when required.
+
+They are boosted when the DTerm error is small and the setpoint change is also small.
+*/
+void FlightController::calculateDMaxMultipliers()
+{
+#if defined(USE_D_MAX)
+    for (size_t ii = ROLL_RATE_DPS; ii <= PITCH_RATE_DPS; ++ii) {
+        _dMaxMultiplier[ii] = 1.0F;
+        if (_dMaxPercent[ii] > 1.0f) {
+            const float deltaT = _ahrs.getTaskIntervalSeconds();
+            const float gyroDeltaD = deltaT * _PIDS[ii].getErrorD(); //!!TODO: check using PID error in D_MAX, surely this is too easy
+            float dMaxGyroFactor = _dMaxRangeFilter[ii].filter(gyroDeltaD);
+            dMaxGyroFactor = fabsf(dMaxGyroFactor) * _dMaxGyroGain;
+            const float dMaxSetpointFactor = std::fabs(_PIDS[ii].getSetpointDelta()) * _dMaxSetpointGain;
+            const float dMaxBoost = std::fmaxf(dMaxGyroFactor, dMaxSetpointFactor);
+            // dMaxBoost starts at zero, and by 1.0 we get Dmax, but it can exceed 1.0
+            _dMaxMultiplier[ii] += (_dMaxPercent[ii] - 1.0F) * dMaxBoost;
+            _dMaxMultiplier[ii] = _dMaxLowpassFilter[ii].filter(_dMaxMultiplier[ii]);
+            // limit the gain to the fraction that DMax is greater than DMin
+            _dMaxMultiplier[ii] = std::fmin(_dMaxMultiplier[ii], _dMaxPercent[ii]);
+            if (_debug.getMode() == DEBUG_D_MAX) {
+                if (ii == FD_ROLL) {
+                    _debug.set(DEBUG_D_MAX, 0, lrintf(dMaxGyroFactor * 100));
+                    _debug.set(DEBUG_D_MAX, 1, lrintf(dMaxSetpointFactor * 100));
+                    _debug.set(DEBUG_D_MAX, 2, lrintf(_pidConstants[ROLL_RATE_DPS].kd * _dMaxMultiplier[ROLL_RATE_DPS] * 10));
+                } else if (ii == FD_PITCH) {
+                    _debug.set(DEBUG_D_MAX, 3, lrintf(_pidConstants[PITCH_RATE_DPS].kd * _dMaxMultiplier[PITCH_RATE_DPS] * 10));
+                }
+            }
+        }
+    }
+#endif
+}
+
+/*!
+NOTE: CALLED FROM WITHIN THE RECEIVER TASK
+
+Dynamic PID adjustments made when throttle changes:
+
+These include:
 
 Throttle PID Attenuation: lowers the roll rate and pitch rate P and D terms when the throttle is high
 
 Anti-gravity: adjusts the roll rate and pitch rate P and I terms when the throttle is moving quickly
+
+D_MAX is not applied here, since it depends on the gyro value and so needs to be calculated in updateOutputsUsingPIDs()
 */
-void FlightController::applyDynamicPID_Adjustments(float throttle, uint32_t tickCount)
+void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttle, uint32_t tickCount)
 {
     // We don't know the period at which setpoints are updated (it depends on the receiver) so calculate this 
-    // so we can set the anti-gravity filter cutoff frequency
-    if (_antiGravityTickCountCounter != 0) {
-        _antiGravityTickCountSum += tickCount;
-        --_antiGravityTickCountCounter;
-        if (_antiGravityTickCountCounter == 0) {
-            const float deltaT = 0.001F * static_cast<float>(_antiGravityTickCountSum) / ANTI_GRAVITY_TICKCOUNT_COUNTER_START;
-            _antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, deltaT);
+    // so we can set the filters' cutoff frequency
+    if (_setpointTickCountCounter != 0) {
+        _setpointTickCountSum += tickCount;
+        --_setpointTickCountCounter;
+        if (_setpointTickCountCounter == 0) {
+            _setpointDeltaT = 0.001F * static_cast<float>(_setpointTickCountSum) / SETPOINT_TICKCOUNT_COUNTER_START;
+            _antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _setpointDeltaT);
+#if defined(USE_D_MAX)
+            for (size_t ii = 0; ii < AXIS_COUNT; ++ii) {
+                _dMaxRangeFilter[ii].setCutoffFrequency(D_MAX_RANGE_HZ, _setpointDeltaT);
+                _dMaxLowpassFilter[ii].setCutoffFrequency(D_MAX_LOWPASS_HZ, _setpointDeltaT);
+            }
+#endif
         }
     }
 
     const float throttleDelta = fabsf(throttle - _throttlePrevious);
     _throttlePrevious = throttle;
-    const float deltaT = static_cast<float>((tickCount - _tickCountPrevious)) * 0.001F;
-    _tickCountPrevious = tickCount;
+    const float deltaT = static_cast<float>((tickCount - _setpointTickCountPrevious)) * 0.001F;
+    _setpointTickCountPrevious = tickCount;
     float throttleDerivative = throttleDelta/deltaT;
     _debug.set(DEBUG_ANTI_GRAVITY, 0, lrintf(throttleDerivative * 100));
 
@@ -351,33 +429,34 @@ void FlightController::applyDynamicPID_Adjustments(float throttle, uint32_t tick
 
 
     // ****
-    // use _TPA to adjust the DTerms on roll and pitch
+    // calculate the Throttle PID Attenuation (TPA)
+    // TPA is applied here to the PTerms on roll and pitch, and is used as a multiplier 
+    // of the DTERM in updateOutputsUsingPIDs.
     // ****
 
-    // calculate the Throttle PID Attenuation (TPA)
     // _TPA is 1.0F (ie no attenuation) if throttleStick <= _TPA_Breakpoint;
     _TPA = 1.0F - _TPA_multiplier * std::fminf(0.0F, throttle - _TPA_breakpoint);
     _debug.set(DEBUG_TPA, 0, lrintf(_TPA * 1000));
-    _PIDS[ROLL_RATE_DPS].setD(_pidConstants[ROLL_RATE_DPS].kd * _TPA);
-    _PIDS[PITCH_RATE_DPS].setD(_pidConstants[PITCH_RATE_DPS].kd * _TPA);
 
     // ****
     // use TPA and anti-gravity to adjust the PTerms on roll and pitch
     // ****
 
-    const float setpointAttenuatorRoll = std::fmaxf(fabsf(_PIDS[ROLL_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
-    // attenuate effect if turning more than 50 deg/s, half at 100 deg/s
-    const float PTermBoostRoll = 1.0F + (throttleDerivative *_antiGravityPGain / setpointAttenuatorRoll);
+    // attenuate roll if setpoint greater than 50 DPS, half at 100 DPS
+    const float attenuatorRoll = std::fmaxf(fabsf(_PIDS[ROLL_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
+    const float PTermBoostRoll = 1.0F + (throttleDerivative *_antiGravityPGain / attenuatorRoll);
     _PIDS[ROLL_RATE_DPS].setP(_pidConstants[ROLL_RATE_DPS].kp * PTermBoostRoll * _TPA);
 
-    const float setpointAttenuatorPitch = std::fmaxf(fabsf(_PIDS[PITCH_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
-    // attenuate effect if turning more than 50 deg/s, half at 100 deg/s
-    const float PTermBoostPitch = 1.0F + (throttleDerivative *_antiGravityPGain / setpointAttenuatorPitch);
+    // attenuate pitch if setpoint greater than 50 DPS, half at 100 DPS
+    const float attenuatorPitch = std::fmaxf(fabsf(_PIDS[PITCH_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
+    const float PTermBoostPitch = 1.0F + (throttleDerivative *_antiGravityPGain / attenuatorPitch);
     _PIDS[PITCH_RATE_DPS].setP(_pidConstants[PITCH_RATE_DPS].kp * PTermBoostPitch * _TPA);
     _debug.set(DEBUG_ANTI_GRAVITY, 3, lrintf(PTermBoostPitch * 1000.0F));
 }
 
 /*!
+NOTE: CALLED FROM WITHIN THE RECEIVER TASK
+
 Use the new joystick values from the receiver to update the PID setpoints
 using the NED (North-East-Down) coordinate convention.
 
@@ -396,7 +475,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
     //!!TODO: put a critical section around this
     _outputThrottle = controls.throttleStick;
 
-    applyDynamicPID_Adjustments(controls.throttleStick, controls.tickCount);
+    applyDynamicPID_AdjustmentsOnThrottleChange(controls.throttleStick, controls.tickCount);
 
     //!!TODO: filter the roll and stick angles
     // Pushing the ROLL stick to the right gives a positive value of rollStick and we want this to be left side up.
@@ -442,6 +521,8 @@ void FlightController::updateSetpoints(const controls_t& controls)
 }
 
 /*!
+NOTE: CALLED FROM WITHIN THE RECEIVER TASK
+
 Detect crash or yaw spin. Runs in context of Receiver Task.
 */
 void FlightController::detectCrashOrSpin()
@@ -605,6 +686,10 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
         return;
     }
 
+#if defined(USE_D_MAX)
+    calculateDMaxMultipliers();
+#endif
+
     if (_useAngleMode) {
         updateRateSetpointsForAngleMode(orientationENU, deltaT);
     }
@@ -615,24 +700,24 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
 
     const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
     const float rollRateDeltaDPS = _rollRateDTermFilter.filter(rollRateDPS - _PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
-    _outputs[ROLL_RATE_DPS] = _PIDS[ROLL_RATE_DPS].updateDelta(rollRateDPS, _TPA*rollRateDeltaDPS, deltaT);
+    _outputs[ROLL_RATE_DPS] = _PIDS[ROLL_RATE_DPS].updateDelta(rollRateDPS, rollRateDeltaDPS*_TPA*_dMaxMultiplier[ROLL_RATE_DPS], deltaT);
     // filter the output
     _outputs[ROLL_RATE_DPS] = _outputFilters[ROLL_RATE_DPS].filter(_outputs[ROLL_RATE_DPS]);
 
     const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
     const float pitchRateDeltaDPS = _pitchRateDTermFilter.filter(pitchRateDPS - _PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
-    _outputs[PITCH_RATE_DPS] = _PIDS[PITCH_RATE_DPS].updateDelta(pitchRateDPS, _TPA*pitchRateDeltaDPS, deltaT);
+    _outputs[PITCH_RATE_DPS] = _PIDS[PITCH_RATE_DPS].updateDelta(pitchRateDPS, pitchRateDeltaDPS*_TPA*_dMaxMultiplier[PITCH_RATE_DPS], deltaT);
     // filter the output
     _outputs[PITCH_RATE_DPS] = _outputFilters[PITCH_RATE_DPS].filter(_outputs[PITCH_RATE_DPS]);
 
-    // DTerm is zero for yawRate, so call updatePI() with no DTerm filtering or TPA
+    // DTerm is zero for yawRate, so call updatePI() with no DTerm filtering, no TPA, and no DMax
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
     _outputs[YAW_RATE_DPS] = _PIDS[YAW_RATE_DPS].updatePI(yawRateDPS, deltaT);
     // filter the output
     _outputs[YAW_RATE_DPS] = _outputFilters[YAW_RATE_DPS].filter(_outputs[YAW_RATE_DPS]);
 
     // The VehicleControllerTask is waiting on the message queue, so signal it tha there is output data available.
-    // This will result in outputToMixer being called
+    // This will result in outputToMixer being called by the scheduler
     const VehicleControllerMessageQueue::queue_item_t queueItem {
         .throttle = _outputThrottle,
         .roll = _outputs[ROLL_RATE_DPS],
@@ -643,6 +728,8 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
 }
 
 /*!
+NOTE: CALLED FROM WITHIN THE VEHICLE CONTROLLER TASK
+
 Called from within the VehicleControllerTask when signalled that output data is available.
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)

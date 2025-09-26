@@ -1,5 +1,7 @@
 #pragma once
 
+#define USE_D_MAX
+
 #include "FlightControllerTelemetry.h"
 
 #include <Filters.h>
@@ -49,7 +51,9 @@ public:
         CONTROL_MODE_HORIZON = 2,
         CONTROL_MODE_ALTITUDE_HOLD = 3
     };
-    enum { AXIS_COUNT = 3 };
+    enum { AXIS_COUNT = 3 }; //!< roll, pitch, and yaw axis count
+    enum { RP_AXIS_COUNT = 2 }; //!< roll and pitch axis count
+    enum flight_dynamics_index_e { FD_ROLL = 0, FD_PITCH = 1, FD_YAW = 2, FD_AXIS_COUNT = 3 };
     enum pid_index_e {
         ROLL_RATE_DPS = 0,
         PITCH_RATE_DPS = 1,
@@ -114,6 +118,11 @@ public:
         uint8_t p_gain;
         uint8_t i_gain;
     };
+    struct d_max_config_t {
+        std::array<uint8_t, AXIS_COUNT> d_max; // Maximum D value on each axis
+        uint8_t d_max_gain; // gain factor for amount of gyro / setpoint activity required to boost D
+        uint8_t d_max_advance; // percentage multiplier for setpoint
+    };
     struct controls_t {
         uint32_t tickCount;
         float throttleStick;
@@ -127,6 +136,7 @@ public:
 
     typedef std::array<PIDF::PIDF_t, PID_COUNT> pidf_array_t;
     typedef std::array<PIDF_uint16_t, PID_COUNT> pidf_uint16_array_t;
+
 public:
     inline bool motorsIsOn() const { return _mixer.motorsIsOn(); }
     void motorsSwitchOff();
@@ -167,6 +177,7 @@ public:
 
     inline float getPID_Setpoint(pid_index_e pidIndex) const { return _PIDS[pidIndex].getSetpoint(); }
     void setPID_Setpoint(pid_index_e pidIndex, float setpoint) { _PIDS[pidIndex].setSetpoint(setpoint); }
+
     void switchPID_integrationOn() { for (auto& pid : _PIDS) { pid.switchIntegrationOn();} }
     void switchPID_integrationOff() { for (auto& pid : _PIDS) { pid.switchIntegrationOff();} }
 
@@ -187,20 +198,22 @@ public:
     void setFiltersConfig(const filters_config_t& filtersConfig);
     const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }
     void setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig);
+    void setDMaxConfig(const d_max_config_t& dMaxConfig);
+    const d_max_config_t& getDMaxConfig() { return _dMaxConfig; }
 public:
     [[noreturn]] static void Task(void* arg);
 public:
     void detectCrashOrSpin();
     void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _yawSpinThresholdDPS = yawSpinThresholdDPS; }
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
-    void applyDynamicPID_Adjustments(float throttle, uint32_t tickCount);
+    void calculateDMaxMultipliers();
+    void applyDynamicPID_AdjustmentsOnThrottleChange(float throttle, uint32_t tickCount);
     void updateSetpoints(const controls_t& controls);
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
     virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
     void updateOutputsUsingPIDs(float deltaT);
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
-private:
-    MotorMixerBase& motorMixer(uint32_t taskIntervalMicroseconds);
+
 private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
     MotorMixerBase& _mixer;
@@ -220,6 +233,13 @@ private:
     uint32_t _takeOffCountStart {0};
     uint32_t _takeOffTickThreshold {1000};
 
+    // setpoint timing
+    uint32_t _setpointTickCountPrevious {0};
+    uint32_t _setpointTickCountSum {0};
+    enum { SETPOINT_TICKCOUNT_COUNTER_START = 100};
+    uint32_t _setpointTickCountCounter {SETPOINT_TICKCOUNT_COUNTER_START};
+    float _setpointDeltaT;
+
     // throttle value is scaled to the range [-1,0, 1.0]
     float _TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
     float _TPA_multiplier {0.0F};
@@ -230,11 +250,21 @@ private:
     float _antiGravityIGain {};
     float _antiGravityPGain {};
     float _throttlePrevious {0.0F};
-    uint32_t _tickCountPrevious {0};
-    uint32_t _antiGravityTickCountSum {0};
-    enum { ANTI_GRAVITY_TICKCOUNT_COUNTER_START = 100};
-    uint32_t _antiGravityTickCountCounter {ANTI_GRAVITY_TICKCOUNT_COUNTER_START};
     PowerTransferFilter2 _antiGravityThrottleFilter {};
+
+#ifdef USE_D_MAX
+    static constexpr float D_MAX_GAIN_FACTOR = 0.00008F;
+    static constexpr float D_MAX_SETPOINT_GAIN_FACTOR = 0.00008F;
+    enum { D_MAX_RANGE_HZ = 85, D_MAX_LOWPASS_HZ = 35 };
+    float _dMaxGyroGain;
+    float _dMaxSetpointGain;
+    std::array<PowerTransferFilter2, RP_AXIS_COUNT> _dMaxRangeFilter;
+    std::array<PowerTransferFilter2, RP_AXIS_COUNT> _dMaxLowpassFilter;
+    std::array<float, RP_AXIS_COUNT> _dMaxPercent;
+    std::array<uint8_t, RP_AXIS_COUNT> _dMax;
+    d_max_config_t _dMaxConfig;
+#endif
+    std::array<float, RP_AXIS_COUNT> _dMaxMultiplier {1.0F, 1.0F};
 
     // angle mode data
     enum { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
@@ -273,7 +303,6 @@ private:
         0.013754F,
         0.01F // !!TODO: provisional value
     };
-
 
     // DTerm filters
     filters_config_t _filtersConfig {};

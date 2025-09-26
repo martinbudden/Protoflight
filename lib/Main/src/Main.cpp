@@ -149,7 +149,9 @@ void Main::setup()
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
     flightController.setFiltersConfig(nvs.FlightControllerFiltersConfigLoad());
     flightController.setAntiGravityConfig(nvs.FlightControllerAntiGravityConfigLoad());
+    flightController.setDMaxConfig(nvs.FlightControllerDMaxConfigLoad());
     setPIDsFromNonVolatileStorage(nvs, flightController);
+
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
 

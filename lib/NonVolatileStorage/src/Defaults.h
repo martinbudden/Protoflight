@@ -51,6 +51,12 @@ static const FlightController::anti_gravity_config_t flightControllerAntiGravity
     .i_gain = 80
 };
 
+static const FlightController::d_max_config_t flightControllerDMaxConfig = {
+    .d_max = { 40, 46, 0 },
+    .d_max_gain = 37,
+    .d_max_advance = 20
+};
+
 static const IMU_Filters::config_t imuFiltersConfig = {
     .gyro_notch1_hz = 0,
     .gyro_notch1_cutoff = 0,
