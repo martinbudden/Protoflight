@@ -49,6 +49,7 @@ public:
         CONTROL_MODE_HORIZON = 2,
         CONTROL_MODE_ALTITUDE_HOLD = 3
     };
+    enum { AXIS_COUNT = 3 };
     enum pid_index_e {
         ROLL_RATE_DPS = 0,
         PITCH_RATE_DPS = 1,
@@ -192,7 +193,7 @@ public:
     void detectCrashOrSpin();
     void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _yawSpinThresholdDPS = yawSpinThresholdDPS; }
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
-    void applyAntiGravity(float throttle, uint32_t tickCount);
+    void applyDynamicPID_Adjustments(float throttle, uint32_t tickCount);
     void updateSetpoints(const controls_t& controls);
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
     virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
@@ -228,10 +229,6 @@ private:
     anti_gravity_config_t _antiGravityConfig {};
     float _antiGravityIGain {};
     float _antiGravityPGain {};
-    float _rollRateITerm {0.0F};
-    float _pitchRateITerm {0.0F};
-    float _rollRatePTerm {0.0F};
-    float _pitchRatePTerm {0.0F};
     float _throttlePrevious {0.0F};
     uint32_t _tickCountPrevious {0};
     uint32_t _antiGravityTickCountSum {0};
@@ -264,7 +261,8 @@ private:
     float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };
     float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };
 
-    std::array<PIDF, PID_COUNT> _PIDS {};
+    std::array<PIDF::PIDF_t, PID_COUNT> _pidConstants {}; //!< the PID constants as set by tuning
+    std::array<PIDF, PID_COUNT> _PIDS {}; //!< PIDF controllers, with dynamically altered PID values
     std::array<float, PID_COUNT> _outputs {}; //<! PID outputs. These are stored since the output from one PID may be used as the input to another
     std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> _outputFilters;
     // Betaflight-compatible scale factors.

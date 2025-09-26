@@ -113,9 +113,9 @@ public:
     enum { VALUE_COUNT = 8 };
 public:
     Debug() = default;
-    inline void set(debug_mode_e mode, size_t index, int16_t value) {
+    inline void set(debug_mode_e mode, size_t index, int32_t value) {
         if (_mode == mode) {
-            _debug[index] = value;
+            _debug[index] = static_cast<int16_t>(value);
         }
     }
     inline void set(size_t index, int16_t value) { _debug[index] = value; }

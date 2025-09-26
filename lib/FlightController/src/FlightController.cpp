@@ -95,42 +95,31 @@ void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_
     _PIDS[pidIndex].setPID(pid);
     _PIDS[pidIndex].switchIntegrationOff();
     // keep copies of P and I terms so they can be adjusted by anti-gravity
-    _rollRatePTerm = _PIDS[ROLL_RATE_DPS].getP();
-    _pitchRatePTerm = _PIDS[PITCH_RATE_DPS].getP();
-    _rollRateITerm = _PIDS[ROLL_RATE_DPS].getI();
-    _pitchRateITerm = _PIDS[PITCH_RATE_DPS].getI();
+    _pidConstants[pidIndex] = _PIDS[pidIndex].getPID();
 }
 
 void FlightController::setPID_P_MSP(pid_index_e pidIndex, uint16_t kp)
 {
     _PIDS[pidIndex].setP(kp * _scaleFactors.kp);
-    if (pidIndex == ROLL_RATE_DPS) {
-        _rollRatePTerm = _PIDS[ROLL_RATE_DPS].getP();
-    }
-    if (pidIndex == PITCH_RATE_DPS) {
-        _pitchRatePTerm = _PIDS[PITCH_RATE_DPS].getP();
-    }
+    _pidConstants[pidIndex].kp = _PIDS[pidIndex].getP();
 }
 
 void FlightController::setPID_I_MSP(pid_index_e pidIndex, uint16_t ki)
 {
     _PIDS[pidIndex].setI(ki * _scaleFactors.ki);
-    if (pidIndex == ROLL_RATE_DPS) {
-        _rollRateITerm = _PIDS[ROLL_RATE_DPS].getI();
-    }
-    if (pidIndex == PITCH_RATE_DPS) {
-        _pitchRateITerm = _PIDS[PITCH_RATE_DPS].getI();
-    }
+    _pidConstants[pidIndex].ki = _PIDS[pidIndex].getI();
 }
 
 void FlightController::setPID_D_MSP(pid_index_e pidIndex, uint16_t kd)
 {
     _PIDS[pidIndex].setD(kd * _scaleFactors.kd);
+    _pidConstants[pidIndex].kd = _PIDS[pidIndex].getD();
 }
 
 void FlightController::setPID_F_MSP(pid_index_e pidIndex, uint16_t kf)
 {
     _PIDS[pidIndex].setF(kf * _scaleFactors.kf);
+    _pidConstants[pidIndex].kf = _PIDS[pidIndex].getF();
 }
 
 uint32_t FlightController::getOutputPowerTimeMicroseconds() const
@@ -313,10 +302,16 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
 }
 
 /*!
-If the throttle is moving quickly then adjust the P and I terms for the roll rate and pitch rate PIDs
+Dynamic PID adjustments include:
+
+Throttle PID Attenuation: lowers the roll rate and pitch rate P and D terms when the throttle is high
+
+Anti-gravity: adjusts the roll rate and pitch rate P and I terms when the throttle is moving quickly
 */
-void FlightController::applyAntiGravity(float throttle, uint32_t tickCount)
+void FlightController::applyDynamicPID_Adjustments(float throttle, uint32_t tickCount)
 {
+    // We don't know the period at which setpoints are updated (it depends on the receiver) so calculate this 
+    // so we can set the anti-gravity filter cutoff frequency
     if (_antiGravityTickCountCounter != 0) {
         _antiGravityTickCountSum += tickCount;
         --_antiGravityTickCountCounter;
@@ -331,7 +326,7 @@ void FlightController::applyAntiGravity(float throttle, uint32_t tickCount)
     const float deltaT = static_cast<float>((tickCount - _tickCountPrevious)) * 0.001F;
     _tickCountPrevious = tickCount;
     float throttleDerivative = throttleDelta/deltaT;
-    _debug.set(DEBUG_ANTI_GRAVITY, 0, static_cast<int16_t>(lrintf(throttleDerivative * 100)));
+    _debug.set(DEBUG_ANTI_GRAVITY, 0, lrintf(throttleDerivative * 100));
 
     const float throttleReversed = 1.0F - throttle;
     throttleDerivative *= throttleReversed * throttleReversed;
@@ -340,28 +335,46 @@ void FlightController::applyAntiGravity(float throttle, uint32_t tickCount)
         throttleDerivative *= throttleReversed * 0.5F;
         // when increasing throttle, focus even more on the low throttle range
     }
-    // filtering suppresses peaks relative to troughs and prolongs the effects
+    // filtering suppresses peaks relative to troughs and prolongs the anti-gravity effects
     throttleDerivative = _antiGravityThrottleFilter.filter(throttleDerivative);
-    _debug.set(DEBUG_ANTI_GRAVITY, 1, static_cast<int16_t>(lrintf(throttleDerivative * 100)));
+    _debug.set(DEBUG_ANTI_GRAVITY, 1, lrintf(throttleDerivative * 100));
 
-    // set I term accelerators
+    // ****
+    // use anti-gravity to adjust the ITerms on roll and pitch
+    // ****
+
     static constexpr float ANTIGRAVITY_KI = 0.34F;
     const float ITermAccelerator =  throttleDerivative * _antiGravityIGain * ANTIGRAVITY_KI;
-    _PIDS[ROLL_RATE_DPS].setI(_rollRateITerm + ITermAccelerator);
-    _PIDS[PITCH_RATE_DPS].setI(_pitchRateITerm + ITermAccelerator);
-    _debug.set(DEBUG_ANTI_GRAVITY, 2, static_cast<int16_t>(lrintf(1.0F + ITermAccelerator/_PIDS[PITCH_RATE_DPS].getI()*1000.0F)));
+    _PIDS[ROLL_RATE_DPS].setI(_pidConstants[ROLL_RATE_DPS].ki + ITermAccelerator);
+    _PIDS[PITCH_RATE_DPS].setI(_pidConstants[PITCH_RATE_DPS].ki + ITermAccelerator);
+    _debug.set(DEBUG_ANTI_GRAVITY, 2, lrintf(1.0F + ITermAccelerator/_PIDS[PITCH_RATE_DPS].getI()*1000.0F));
 
-    // set P term boosts
+
+    // ****
+    // use _TPA to adjust the DTerms on roll and pitch
+    // ****
+
+    // calculate the Throttle PID Attenuation (TPA)
+    // _TPA is 1.0F (ie no attenuation) if throttleStick <= _TPA_Breakpoint;
+    _TPA = 1.0F - _TPA_multiplier * std::fminf(0.0F, throttle - _TPA_breakpoint);
+    _debug.set(DEBUG_TPA, 0, lrintf(_TPA * 1000));
+    _PIDS[ROLL_RATE_DPS].setD(_pidConstants[ROLL_RATE_DPS].kd * _TPA);
+    _PIDS[PITCH_RATE_DPS].setD(_pidConstants[PITCH_RATE_DPS].kd * _TPA);
+
+    // ****
+    // use TPA and anti-gravity to adjust the PTerms on roll and pitch
+    // ****
+
     const float setpointAttenuatorRoll = std::fmaxf(fabsf(_PIDS[ROLL_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
     // attenuate effect if turning more than 50 deg/s, half at 100 deg/s
     const float PTermBoostRoll = 1.0F + (throttleDerivative *_antiGravityPGain / setpointAttenuatorRoll);
-    _PIDS[ROLL_RATE_DPS].setP(_rollRatePTerm * PTermBoostRoll);
+    _PIDS[ROLL_RATE_DPS].setP(_pidConstants[ROLL_RATE_DPS].kp * PTermBoostRoll * _TPA);
 
     const float setpointAttenuatorPitch = std::fmaxf(fabsf(_PIDS[PITCH_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
     // attenuate effect if turning more than 50 deg/s, half at 100 deg/s
     const float PTermBoostPitch = 1.0F + (throttleDerivative *_antiGravityPGain / setpointAttenuatorPitch);
-    _PIDS[PITCH_RATE_DPS].setP(_pitchRatePTerm * PTermBoostPitch);
-    _debug.set(DEBUG_ANTI_GRAVITY, 3, static_cast<int16_t>(lrintf(PTermBoostPitch * 1000.0F)));
+    _PIDS[PITCH_RATE_DPS].setP(_pidConstants[PITCH_RATE_DPS].kp * PTermBoostPitch * _TPA);
+    _debug.set(DEBUG_ANTI_GRAVITY, 3, lrintf(PTermBoostPitch * 1000.0F));
 }
 
 /*!
@@ -382,11 +395,8 @@ void FlightController::updateSetpoints(const controls_t& controls)
 
     //!!TODO: put a critical section around this
     _outputThrottle = controls.throttleStick;
-    // adjust the Throttle PID Attenuation (TPA)
-    // _TPA is 1.0F (ie no attenuation) if throttleStick <= _TPA_Breakpoint;
-    _TPA = 1.0F - _TPA_multiplier * std::fminf(0.0F, controls.throttleStick - _TPA_breakpoint);
 
-    applyAntiGravity(controls.throttleStick, controls.tickCount);
+    applyDynamicPID_Adjustments(controls.throttleStick, controls.tickCount);
 
     //!!TODO: filter the roll and stick angles
     // Pushing the ROLL stick to the right gives a positive value of rollStick and we want this to be left side up.
