@@ -44,7 +44,7 @@ namespace { // use anonymous namespace to make items local to this translation u
     Main* mainTask;
 } // end namespace
 
-void setup()// cppcheck-suppress unusedFunction
+void setup() // cppcheck-suppress unusedFunction
 {
     static Main mainTaskStatic;
     mainTask = &mainTaskStatic;
@@ -52,7 +52,7 @@ void setup()// cppcheck-suppress unusedFunction
 }
 
 
-void loop()// cppcheck-suppress unusedFunction
+void loop() // cppcheck-suppress unusedFunction
 {
     mainTask->loop();
 }
