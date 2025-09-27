@@ -10,17 +10,6 @@ IMU_Filters::IMU_Filters(const MotorMixerBase& motorMixer, float looptimeSeconds
 {
 }
 
-void IMU_Filters::setRPM_Filters(RPM_Filters* rpmFilters)
-{
-    _rpmFilters = rpmFilters;
-}
-
-void IMU_Filters::init(float Q)
-{
-    if (_rpmFilters) {
-        _rpmFilters->init(RPM_Filters::USE_FUNDAMENTAL_ONLY, Q);
-    }
-}
 
 void IMU_Filters::setConfig(const config_t& config)
 {
@@ -82,7 +71,7 @@ Execution time varies, however, and may take up to about 50 microseconds.
 */
 void IMU_Filters::setFilters()
 {
-    if (_rpmFilters && _filterFromAHRS) {
+    if (_rpmFilters && _rpmFilters->getConfig().rpm_filter_harmonics > 0 && _filterFromAHRS) {
         _rpmFilters->setFrequencyHz(_motorIndex, _motorMixer.getMotorFrequencyHz(_motorIndex));
         ++_motorIndex;
         if (_motorIndex==_motorCount) {

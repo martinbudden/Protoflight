@@ -3,7 +3,6 @@
 #include <cstring>
 
 
-#if defined(USE_FLASH_KLV)
 /*
 Flash KLV keys:
 
@@ -20,6 +19,8 @@ Other keys are invalid and may not be used. In particular keys of 0, 64-255, and
 
 This gives a total of 16,169 usable keys.
 */
+
+#if defined(USE_FLASH_KLV)
 
 static constexpr uint16_t PID_ProfileIndexKey = 0x0001;
 static constexpr uint16_t RateProfileIndexKey = 0x0002;

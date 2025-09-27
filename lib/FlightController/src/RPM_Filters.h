@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FilterTemplates.h>
+#include <Filters.h>
 #include <array>
 
 #if defined(FRAMEWORK_RPI_PICO)
@@ -55,16 +56,12 @@ public:
         uint16_t rpm_filter_lpf_hz;         // LPF cutoff (from motor rpm converted to Hz)
     };
 public:
-    enum { FUNDAMENTAL = 0, HARMONIC = 1, MAX_HARMONICS_COUNT = 2 };
+    enum { FUNDAMENTAL = 0, SECOND_HARMONIC = 1, THIRD_HARMONIC = 2 };
     enum { MAX_MOTOR_COUNT = 4 };
-    enum { USE_FUNDAMENTAL_ONLY = 0, USE_FUNDAMENTAL_AND_SECOND_HARMONIC = 1, USE_FUNDAMENTAL_AND_THIRD_HARMONIC = 2 };
 public:
     RPM_Filters(size_t motorCount, float looptimeSeconds) : _motorCount(motorCount), _looptimeSeconds(looptimeSeconds) {}
-    void init(uint32_t harmonicToUse, float Q);
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
-    void setHarmonicToUse(uint8_t harmonicToUse) {_harmonicToUse = harmonicToUse; }
-    void setMinimumFrequencyHz(float minFrequencyHz) { _minFrequencyHz = minFrequencyHz; }
     void setFrequencyHz(size_t motorIndex, float frequencyHz); // called from the motor mixer
     void filter(xyz_t& input, size_t motorIndex);
     size_t getMotorCount() const { return _motorCount; }
@@ -75,16 +72,15 @@ public:
 private:
     size_t _motorCount;
     float _looptimeSeconds;
-    uint32_t _harmonicToUse {USE_FUNDAMENTAL_ONLY};
-    uint32_t _filterHarmonic {};
-    std::array<float, MAX_HARMONICS_COUNT> _weights = { 1.0F, 1.0F };
+    std::array<float, RPM_FILTER_HARMONICS_COUNT> _weights {};
     float _minFrequencyHz { 100.0F };
     float _maxFrequencyHz {};
     float _halfOfMaxFrequencyHz {};
     float _thirdOfMaxFrequencyHz {};
     float _fadeRangeHz { 50.0F };
     float _Q { 0.0F };
-    BiquadFilterT<xyz_t> _filters[MAX_MOTOR_COUNT][MAX_HARMONICS_COUNT];
+    BiquadFilterT<xyz_t> _filters[MAX_MOTOR_COUNT][RPM_FILTER_HARMONICS_COUNT];
+    std::array<PowerTransferFilter1, MAX_MOTOR_COUNT> _motorRPM_Filters {};
     config_t _config {};
 #if defined(FRAMEWORK_RPI_PICO)
     mutable mutex_t _mutex {};

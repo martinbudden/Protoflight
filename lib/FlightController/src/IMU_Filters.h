@@ -2,7 +2,6 @@
 
 #include <FilterTemplates.h>
 #include <IMU_FiltersBase.h>
-#include <array>
 #include <cstdint>
 #include <xyz_type.h>
 
@@ -29,11 +28,9 @@ public:
     };
 public:
     IMU_Filters(const MotorMixerBase& motorMixer, float looptimeSeconds);
-    void setRPM_Filters(RPM_Filters* rpmFilters);
+    void setRPM_Filters(RPM_Filters* rpmFilters) { _rpmFilters = rpmFilters; }
     const RPM_Filters* getRPM_Filters() const { return _rpmFilters; }
     RPM_Filters* getRPM_Filters() { return _rpmFilters; }
-    void setFilterFromAHRS(bool filterFromAHRS) { _filterFromAHRS = filterFromAHRS; }
-    void init(float Q);
 public:
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
     virtual void setFilters() override;
