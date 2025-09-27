@@ -20,8 +20,8 @@ static constexpr FlightController::pidf_uint16_array_t flightControllerDefaultPI
     { 45, 80,  0, 120, 0 }, // yaw rate
     { 50, 75, 75,  50, 0 }, // roll angle
     { 50, 75, 75,  50, 0 }, // pitch angle
-    {  0,  0,  0,   0, 0 }, // roll sin angle
-    {  0,  0,  0,   0, 0 }, // pitch sin angle
+    { 50, 75, 75,  50, 0 }, // roll sin angle
+    { 50, 75, 75,  50, 0 }, // pitch sin angle
 }};
 
 static const DynamicIdleController::config_t dynamicIdleControllerConfig = {

@@ -39,4 +39,6 @@ private:
     RadioController& _radioController;
     ReceiverBase& _receiver;
     Debug& _debug;
+    uint8_t _pidProfileIndex {0};
+    uint8_t _ratesProfileIndex {0};
 };

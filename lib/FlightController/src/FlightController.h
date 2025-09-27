@@ -199,19 +199,20 @@ public:
     const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }
     void setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig);
     void setDMaxConfig(const d_max_config_t& dMaxConfig);
-    const d_max_config_t& getDMaxConfig() { return _dMaxConfig; }
+    const d_max_config_t& getDMaxConfig() const { return _dMaxConfig; }
 public:
     [[noreturn]] static void Task(void* arg);
 public:
     void detectCrashOrSpin();
     void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _yawSpinThresholdDPS = yawSpinThresholdDPS; }
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
+
     void calculateDMaxMultipliers();
     void applyDynamicPID_AdjustmentsOnThrottleChange(float throttle, uint32_t tickCount);
     void updateSetpoints(const controls_t& controls);
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
+
     virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
-    void updateOutputsUsingPIDs(float deltaT);
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 
 private:
@@ -284,6 +285,7 @@ private:
     float _pitchRateAtMaxPowerDPS {1000.0};
     float _yawRateAtMaxPowerDPS {1000.0};
     float _mixerAdjustedThrottle {0.0F};
+    float _yawRateSetpoint {0.0F};
 
     // yaw spin recovery
     uint32_t _yawSpinRecovery { false };

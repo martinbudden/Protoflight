@@ -495,6 +495,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // For NED nose left is positive yaw, so sign of setpoint is same as sign of _yawStick.
     // So sign of _yawStick is left unchanged.
     _PIDS[YAW_RATE_DPS].setSetpoint(controls.yawStickDPS);
+    _yawRateSetpoint = controls.yawStickDPS;
 
     // When in ground mode, the PID I-terms are set to zero to avoid integral windup on the ground
     if (_groundMode) {
@@ -533,6 +534,9 @@ void FlightController::detectCrashOrSpin()
     }
 }
 
+/*!
+NOTE: CALLED FROM WITHIN THE AHRS TASK
+*/
 void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT)
 {
     if (fabsf(gyroENU_RPS.z) > _yawSpinRecoveredRPS) {
@@ -564,18 +568,9 @@ void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT
     }
 }
 
-
-void FlightController::updateOutputsUsingPIDs(float deltaT)
-{
-    // get orientation, gyro, and acceleration from AHRS in ENU (East-North-Up) format
-    const Quaternion orientationENU = _ahrs.getOrientationUsingLock();
-
-    const AHRS::data_t dataENU = _ahrs.getAhrsDataUsingLock();
-
-    updateOutputsUsingPIDs(dataENU.gyroRPS, dataENU.acc, orientationENU, deltaT);
-}
-
 /*!
+NOTE: CALLED FROM WITHIN THE AHRS TASK
+
 In angle mode, the roll and pitch angles are used to set the setpoints for the rollRate and pitchRate PIDs.
 In NFE(Not Fast Enough) Racer mode (aka level race mode) is equivalent to angle mode on roll and acro mode on pitch.
 */
@@ -658,16 +653,17 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
     const float yawRateSetpointAttenuation = sqrtf(1.0F - minSinAngle2); // this is equal to fmaxf(rollCosAngle, pitchCosAngle)
 #endif
     // attenuate yaw rate setpoint
-    _PIDS[YAW_RATE_DPS].setSetpoint(_PIDS[YAW_RATE_DPS].getSetpoint()*yawRateSetpointAttenuation);
+    _PIDS[YAW_RATE_DPS].setSetpoint(_yawRateSetpoint*yawRateSetpointAttenuation);
 }
 
 /*!
+NOTE: CALLED FROM WITHIN THE AHRS TASK
+
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyroRPS, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
 
-NOTE: this function may be configured to be called either from the FlightController loop() function (ie in the VehicleController task),
-or from the AHRS loop() function (ie in the AHRS task).
-In the latter case it is typically called at frequency of between 1000Hz and 8000Hz, so it has to be FAST.
+NOTE: this function is called in the context of the AHRS task.
+It is typically called at frequency of between 1000Hz and 8000Hz, so it has to be FAST.
 */
 void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT)
 {
@@ -727,9 +723,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
 }
 
 /*!
-NOTE: CALLED FROM WITHIN THE VEHICLE CONTROLLER TASK
-
-Called from within the VehicleControllerTask when signalled that output data is available.
+Called from within the VehicleControllerTask when signalled by the AHRS task that output data is available.
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {

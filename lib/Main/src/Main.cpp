@@ -69,6 +69,9 @@ void Main::setup()
     // Statically allocate and initialize nonvolatile storage
     static NonVolatileStorage nvs;
     nvs.init();
+    const uint8_t currentRateProfile = nvs.RateProfileIndexLoad();
+    const uint8_t currentPID_Profile = nvs.PidProfileIndexLoad();
+    nvs.setCurrentPidProfileIndex(currentPID_Profile);
 
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
     // Set WiFi to station mode
@@ -91,7 +94,7 @@ void Main::setup()
     static ReceiverNull receiver;
 #endif
 
-    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad(NonVolatileStorage::DEFAULT_RATE_PROFILE));
+    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad(currentRateProfile));
 
     // create the IMU and get its sample rate
 #if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
@@ -120,7 +123,7 @@ void Main::setup()
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
-    static DynamicIdleController dynamicIdleController(nvs.DynamicIdleControllerConfigLoad(), AHRS_taskIntervalMicroseconds / FC_TASK_DENOMINATOR, debug);
+    static DynamicIdleController dynamicIdleController(nvs.DynamicIdleControllerConfigLoad(currentPID_Profile), AHRS_taskIntervalMicroseconds / FC_TASK_DENOMINATOR, debug);
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
     static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS, rpmFilters, dynamicIdleController);
 #else
@@ -147,7 +150,7 @@ void Main::setup()
 
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
-    loadPID_ProfileFromNonVolatileStorage(nvs, flightController);
+    loadPID_ProfileFromNonVolatileStorage(nvs, flightController, currentPID_Profile);
 
     ahrs.setVehicleController(&flightController);
     radioController.setFlightController(&flightController);
@@ -388,16 +391,14 @@ void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs) // cppcheck
 /*!
 Loads the PID profile for the FlightController. Must be called *after* the FlightController is created.
 */
-void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController)
+void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController, uint8_t pidProfile)
 {
-    const size_t pidProfile = NonVolatileStorage::DEFAULT_PID_PROFILE;
-    flightController.setFiltersConfig(nvs.FlightControllerFiltersConfigLoad());
-    flightController.setAntiGravityConfig(nvs.FlightControllerAntiGravityConfigLoad());
+    flightController.setFiltersConfig(nvs.FlightControllerFiltersConfigLoad(pidProfile));
+    flightController.setAntiGravityConfig(nvs.FlightControllerAntiGravityConfigLoad(pidProfile));
     flightController.setDMaxConfig(nvs.FlightControllerDMaxConfigLoad(pidProfile));
 
-
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
-        const VehicleControllerBase::PIDF_uint16_t pid = nvs.PID_load(ii);
+        const VehicleControllerBase::PIDF_uint16_t pid = nvs.PID_load(ii, pidProfile);
         flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
         const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
 #if !defined(FRAMEWORK_STM32_CUBE)
