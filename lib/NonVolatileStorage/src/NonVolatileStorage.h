@@ -65,46 +65,53 @@ public:
 #endif
     int32_t storeAll(const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, uint8_t pidProfile, uint8_t ratesProfile);
 
-    bool AccOffsetLoad(int32_t& x, int32_t& y, int32_t& z) const;
-    int32_t AccOffsetStore(int32_t x, int32_t y, int32_t z);
+    bool loadAccOffset(int32_t& x, int32_t& y, int32_t& z) const;
+    int32_t storeAccOffset(int32_t x, int32_t y, int32_t z);
 
-    bool GyroOffsetLoad(int32_t& x, int32_t& y, int32_t& z) const;
-    int32_t GyroOffsetStore(int32_t x, int32_t y, int32_t z);
+    bool loadGyroOffset(int32_t& x, int32_t& y, int32_t& z) const;
+    int32_t storeGyroOffset(int32_t x, int32_t y, int32_t z);
 
-    void MacAddressLoad(uint8_t* macAddress) const;
-    int32_t MacAddressStore(const uint8_t* macAddress);
+    void loadMacAddress(uint8_t* macAddress) const;
+    int32_t storeMacAddress(const uint8_t* macAddress);
 
-    uint8_t PidProfileIndexLoad() const;
-    int32_t PidProfileIndexStore(uint8_t pidProfileIndex);
+    uint8_t loadPidProfileIndex() const;
+    int32_t storePidProfileIndex(uint8_t pidProfileIndex);
 
-    uint8_t RateProfileIndexLoad() const;
-    int32_t RateProfileIndexStore(uint8_t rateProfileIndex);
+    uint8_t loadRateProfileIndex() const;
+    int32_t storeRateProfileIndex(uint8_t rateProfileIndex);
 
-    VehicleControllerBase::PIDF_uint16_t PID_load(uint8_t pidIndex, uint8_t pidProfileIndex) const;
-    int32_t PID_store(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex, uint8_t pidProfileIndex);
-    int32_t PID_store(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex) { return PID_store(pid, pidIndex, _currentPidProfileIndex); }
-    void PID_reset(uint8_t index);
+    VehicleControllerBase::PIDF_uint16_t loadPID(uint8_t pidIndex, uint8_t pidProfileIndex) const;
+    int32_t storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex, uint8_t pidProfileIndex);
+    int32_t storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex) { return storePID(pid, pidIndex, _currentPidProfileIndex); }
+    void resetPID(uint8_t pidIndex, uint8_t pidProfileIndex);
+    void resetPID(uint8_t pidIndex) { resetPID(pidIndex, _currentPidProfileIndex); }
 
-    DynamicIdleController::config_t DynamicIdleControllerConfigLoad(uint8_t pidProfileIndex) const;
-    int32_t DynamicIdleControllerConfigStore(const DynamicIdleController::config_t& config, uint8_t pidProfileIndex);
+#if !defined(USE_FLASH_KLV)
+    bool loadItem(const char* key, void* item, size_t length) const;
+    bool loadItem(const char* key, uint8_t pidProfileIndex, void* item, size_t length) const;
+    int32_t storeItem(const char* key, const void* item, size_t length, const void* defaults);
+    int32_t storeItem(const char* key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults);
+#endif
+    DynamicIdleController::config_t loadDynamicIdleControllerConfig(uint8_t pidProfileIndex) const;
+    int32_t storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config, uint8_t pidProfileIndex);
 
-    FlightController::filters_config_t FlightControllerFiltersConfigLoad(uint8_t pidProfileIndex) const;
-    int32_t FlightControllerFiltersConfigStore(const FlightController::filters_config_t& config, uint8_t pidProfileIndex);
+    FlightController::filters_config_t loadFlightControllerFiltersConfig(uint8_t pidProfileIndex) const;
+    int32_t storeFlightControllerFiltersConfig(const FlightController::filters_config_t& config, uint8_t pidProfileIndex);
 
-    FlightController::anti_gravity_config_t FlightControllerAntiGravityConfigLoad(uint8_t pidProfileIndex) const;
-    int32_t FlightControllerAntiGravityConfigStore(const FlightController::anti_gravity_config_t& config, uint8_t pidProfileIndex);
+    FlightController::anti_gravity_config_t loadFlightControllerAntiGravityConfig(uint8_t pidProfileIndex) const;
+    int32_t storeFlightControllerAntiGravityConfig(const FlightController::anti_gravity_config_t& config, uint8_t pidProfileIndex);
 
-    FlightController::d_max_config_t FlightControllerDMaxConfigLoad(uint8_t pidProfileIndex) const;
-    int32_t FlightControllerDMaxConfigStore(const FlightController::d_max_config_t& config, uint8_t pidProfileIndex);
+    FlightController::d_max_config_t loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const;
+    int32_t storeFlightControllerDMaxConfig(const FlightController::d_max_config_t& config, uint8_t pidProfileIndex);
 
-    IMU_Filters::config_t ImuFiltersConfigLoad() const;
-    int32_t ImuFiltersConfigStore(const IMU_Filters::config_t& config);
+    IMU_Filters::config_t loadImuFiltersConfig() const;
+    int32_t storeImuFiltersConfig(const IMU_Filters::config_t& config);
 
-    RadioController::failsafe_t RadioControllerFailsafeLoad();
-    int32_t RadioControllerFailsafeStore(const RadioController::failsafe_t& failsafe);
+    RadioController::failsafe_t loadRadioControllerFailsafe();
+    int32_t storeRadioControllerFailsafe(const RadioController::failsafe_t& failsafe);
 
-    RadioController::rates_t RadioControllerRatesLoad(uint8_t rateProfileIndex) const;
-    int32_t RadioControllerRatesStore(const RadioController::rates_t& rates, uint8_t rateProfileIndex);
+    RadioController::rates_t loadRadioControllerRates(uint8_t rateProfileIndex) const;
+    int32_t storeRadioControllerRates(const RadioController::rates_t& rates, uint8_t rateProfileIndex);
 
 private:
 #if defined(USE_FLASH_KLV)

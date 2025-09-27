@@ -69,8 +69,8 @@ void Main::setup()
     // Statically allocate and initialize nonvolatile storage
     static NonVolatileStorage nvs;
     nvs.init();
-    const uint8_t currentRateProfile = nvs.RateProfileIndexLoad();
-    const uint8_t currentPID_Profile = nvs.PidProfileIndexLoad();
+    const uint8_t currentRateProfile = nvs.loadRateProfileIndex();
+    const uint8_t currentPID_Profile = nvs.loadPidProfileIndex();
     nvs.setCurrentPidProfileIndex(currentPID_Profile);
 
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
@@ -94,7 +94,7 @@ void Main::setup()
     static ReceiverNull receiver;
 #endif
 
-    static RadioController radioController(receiver, nvs.RadioControllerRatesLoad(currentRateProfile));
+    static RadioController radioController(receiver, nvs.loadRadioControllerRates(currentRateProfile));
 
     // create the IMU and get its sample rate
 #if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
@@ -123,7 +123,7 @@ void Main::setup()
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
-    static DynamicIdleController dynamicIdleController(nvs.DynamicIdleControllerConfigLoad(currentPID_Profile), AHRS_taskIntervalMicroseconds / FC_TASK_DENOMINATOR, debug);
+    static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(currentPID_Profile), AHRS_taskIntervalMicroseconds / FC_TASK_DENOMINATOR, debug);
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
     static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS, rpmFilters, dynamicIdleController);
 #else
@@ -140,7 +140,7 @@ void Main::setup()
 
     // statically allocate the IMU_Filters
     static IMU_Filters imuFilters(motorMixer, AHRS_taskIntervalMicroseconds);
-    imuFilters.setConfig(nvs.ImuFiltersConfigLoad());
+    imuFilters.setConfig(nvs.loadImuFiltersConfig());
 #if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     imuFilters.setRPM_Filters(&rpmFilters);
 #endif
@@ -368,14 +368,14 @@ void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs) // cppcheck
 {
     // Set the gyro offsets from non-volatile storage.
     IMU_Base::xyz_int32_t offset {};
-    if (nvs.GyroOffsetLoad(offset.x, offset.y, offset.z)) {
+    if (nvs.loadGyroOffset(offset.x, offset.y, offset.z)) {
         ahrs.setGyroOffset(offset);
 #if !defined(FRAMEWORK_STM32_CUBE)
         std::array<char, 128> buf;
         sprintf(&buf[0], "**** AHRS gyroOffsets loaded from NVS: gx:%5d, gy:%5d, gz:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
         print(&buf[0]);
 #endif
-        if (nvs.AccOffsetLoad(offset.x, offset.y, offset.z)) {
+        if (nvs.loadAccOffset(offset.x, offset.y, offset.z)) {
             ahrs.setAccOffset(offset);
 #if !defined(FRAMEWORK_STM32_CUBE)
             sprintf(&buf[0], "**** AHRS accOffsets loaded from NVS: ax:%5d, ay:%5d, az:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
@@ -393,12 +393,12 @@ Loads the PID profile for the FlightController. Must be called *after* the Fligh
 */
 void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController, uint8_t pidProfile)
 {
-    flightController.setFiltersConfig(nvs.FlightControllerFiltersConfigLoad(pidProfile));
-    flightController.setAntiGravityConfig(nvs.FlightControllerAntiGravityConfigLoad(pidProfile));
-    flightController.setDMaxConfig(nvs.FlightControllerDMaxConfigLoad(pidProfile));
+    flightController.setFiltersConfig(nvs.loadFlightControllerFiltersConfig(pidProfile));
+    flightController.setAntiGravityConfig(nvs.loadFlightControllerAntiGravityConfig(pidProfile));
+    flightController.setDMaxConfig(nvs.loadFlightControllerDMaxConfig(pidProfile));
 
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
-        const VehicleControllerBase::PIDF_uint16_t pid = nvs.PID_load(ii, pidProfile);
+        const VehicleControllerBase::PIDF_uint16_t pid = nvs.loadPID(ii, pidProfile);
         flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
         const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
 #if !defined(FRAMEWORK_STM32_CUBE)
