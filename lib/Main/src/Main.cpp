@@ -123,6 +123,7 @@ void Main::setup()
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     enum { MOTOR_COUNT = 4 };
     static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
+    rpmFilters.setConfig(nvs.loadRPM_FiltersConfig());
     static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(currentPID_Profile), AHRS_taskIntervalMicroseconds / FC_TASK_DENOMINATOR, debug);
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
     static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS, rpmFilters, dynamicIdleController);
@@ -140,7 +141,7 @@ void Main::setup()
 
     // statically allocate the IMU_Filters
     static IMU_Filters imuFilters(motorMixer, AHRS_taskIntervalMicroseconds);
-    imuFilters.setConfig(nvs.loadImuFiltersConfig());
+    imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
 #if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     imuFilters.setRPM_Filters(&rpmFilters);
 #endif

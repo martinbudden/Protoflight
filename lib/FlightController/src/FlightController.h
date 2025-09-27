@@ -138,6 +138,8 @@ public:
     typedef std::array<PIDF_uint16_t, PID_COUNT> pidf_uint16_array_t;
 
 public:
+    const AHRS& getAHRS() const { return _ahrs; }
+
     inline bool motorsIsOn() const { return _mixer.motorsIsOn(); }
     void motorsSwitchOff();
     void motorsSwitchOn();

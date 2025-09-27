@@ -26,12 +26,12 @@ public:
         uint8_t gyro_lpf1_type;
         uint8_t gyro_lpf2_type;
         // uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
-        uint8_t rpm_filter_harmonics;
-        uint8_t rpm_filter_min_hz;
     };
 public:
     IMU_Filters(const MotorMixerBase& motorMixer, float looptimeSeconds);
     void setRPM_Filters(RPM_Filters* rpmFilters);
+    const RPM_Filters* getRPM_Filters() const { return _rpmFilters; }
+    RPM_Filters* getRPM_Filters() { return _rpmFilters; }
     void setFilterFromAHRS(bool filterFromAHRS) { _filterFromAHRS = filterFromAHRS; }
     void init(float Q);
 public:

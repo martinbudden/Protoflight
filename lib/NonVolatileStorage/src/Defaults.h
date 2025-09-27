@@ -68,8 +68,15 @@ static const IMU_Filters::config_t imuFiltersConfig = {
     .gyro_dynamic_lpf1_max_hz = 0,
     .gyro_lpf1_type = 0,
     .gyro_lpf2_type = IMU_Filters::config_t::PT1,
-    .rpm_filter_harmonics = RPM_Filters::USE_FUNDAMENTAL_ONLY,
-    .rpm_filter_min_hz = 100
+};
+
+static const RPM_Filters::config_t rpmFiltersConfig = {
+    .rpm_filter_harmonics = 3,
+    .rpm_filter_weights = { 100, 100, 100 },
+    .rpm_filter_min_hz = 100,
+    .rpm_filter_fade_range_hz = 50,
+    .rpm_filter_q = 500,
+    .rpm_filter_lpf_hz = 150,
 };
 
 static const RadioController::failsafe_t radioControllerFailsafe = {

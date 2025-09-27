@@ -13,10 +13,6 @@ IMU_Filters::IMU_Filters(const MotorMixerBase& motorMixer, float looptimeSeconds
 void IMU_Filters::setRPM_Filters(RPM_Filters* rpmFilters)
 {
     _rpmFilters = rpmFilters;
-    constexpr float defaultQ = 5.0F;
-    _rpmFilters->init(RPM_Filters::USE_FUNDAMENTAL_ONLY, defaultQ);
-    _rpmFilters->setMinimumFrequencyHz(_config.rpm_filter_min_hz);
-    //_rpmFilters->setHarmonicToUse(_config.rpm_filter_harmonics);
 }
 
 void IMU_Filters::init(float Q)

@@ -27,6 +27,16 @@ void RPM_Filters::init(uint32_t harmonicToUse, float Q)
     // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 }
 
+void RPM_Filters::setConfig(const config_t& config)
+{
+    _config = config;
+    //!!TODO: sort out RPM_Filters::setConfig and init
+    //constexpr float defaultQ = 5.0F;
+    //_rpmFilters->init(RPM_Filters::USE_FUNDAMENTAL_ONLY, defaultQ);
+    //_rpmFilters->setMinimumFrequencyHz(_config.rpm_filter_min_hz);
+    //_rpmFilters->setHarmonicToUse(_config.rpm_filter_harmonics);
+}
+
 /*!
 This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */

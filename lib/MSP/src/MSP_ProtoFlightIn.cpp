@@ -207,6 +207,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
 
     case MSP_SET_FILTER_CONFIG: {
         IMU_Filters::config_t imuFiltersConfig {};
+        RPM_Filters::config_t rpmFiltersConfig {};
         FlightController::filters_config_t fcFilters {};
 
         imuFiltersConfig.gyro_lpf1_hz = src.readU8();
@@ -252,8 +253,8 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             src.readU16();
             //dynamic_notch_min_hz =
             src.readU16();
-            imuFiltersConfig.rpm_filter_harmonics = src.readU8();
-            imuFiltersConfig.rpm_filter_min_hz = src.readU8();
+            rpmFiltersConfig.rpm_filter_harmonics = src.readU8();
+            rpmFiltersConfig.rpm_filter_min_hz = src.readU8();
         }
         if (src.bytesRemaining() >= 2) {
             // Added in MSP API 1.43
@@ -267,8 +268,12 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             // dynamic_notch_count =
             src.readU8();
         }
-        IMU_FiltersBase& imuFiltersObject = _ahrs.getIMU_Filters();
-        static_cast<IMU_Filters&>(imuFiltersObject).setConfig(imuFiltersConfig); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        imuFilters.setConfig(imuFiltersConfig);
+        RPM_Filters* rpmFilters = imuFilters.getRPM_Filters();
+        if (rpmFilters) {
+            rpmFilters->setConfig(rpmFiltersConfig);
+        }
         _flightController.setFiltersConfig(fcFilters);
         break;
     }
@@ -291,7 +296,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             // can't save to non volatile storage if the motors are on
             return RESULT_ERROR;
         }
-        _nonVolatileStorage.storeAll(_ahrs, _flightController, _radioController, _receiver, _pidProfileIndex, _ratesProfileIndex);
+        _nonVolatileStorage.storeAll(_flightController, _radioController, _pidProfileIndex, _ratesProfileIndex);
         break;
     case MSP_SET_BOARD_ALIGNMENT_CONFIG:
         //rollDegrees = src.readU16();

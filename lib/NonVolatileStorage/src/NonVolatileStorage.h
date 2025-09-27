@@ -63,7 +63,7 @@ public:
 #else
     int32_t remove(const std::string& name);
 #endif
-    int32_t storeAll(const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, uint8_t pidProfile, uint8_t ratesProfile);
+    int32_t storeAll(const FlightController& flightController, const RadioController& radioController, uint8_t pidProfile, uint8_t ratesProfile);
 
     bool loadAccOffset(int32_t& x, int32_t& y, int32_t& z) const;
     int32_t storeAccOffset(int32_t x, int32_t y, int32_t z);
@@ -104,8 +104,11 @@ public:
     FlightController::d_max_config_t loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerDMaxConfig(const FlightController::d_max_config_t& config, uint8_t pidProfileIndex);
 
-    IMU_Filters::config_t loadImuFiltersConfig() const;
-    int32_t storeImuFiltersConfig(const IMU_Filters::config_t& config);
+    IMU_Filters::config_t loadIMU_FiltersConfig() const;
+    int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
+
+    RPM_Filters::config_t loadRPM_FiltersConfig() const;
+    int32_t storeRPM_FiltersConfig(const RPM_Filters::config_t& config);
 
     RadioController::failsafe_t loadRadioControllerFailsafe();
     int32_t storeRadioControllerFailsafe(const RadioController::failsafe_t& failsafe);
