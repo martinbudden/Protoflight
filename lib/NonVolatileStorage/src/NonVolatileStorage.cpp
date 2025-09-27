@@ -56,12 +56,7 @@ static const std::array<std::string, FlightController::PID_COUNT> PID_Keys = {
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
-static const char* AccOffsetKey = "ACC";
-static const char* GyroOffsetKey = "GYR";
 static const char* MacAddressKey = "MAC";
-static const char* PID_ProfileIndexKey = "PPI";
-static const char* RateProfileIndexKey = "RPI";
-static const char* RadioControllerRatesKey = "RCR";
 #endif
 
 static const char* DynamicIdleControllerConfigKey = "DIC";
@@ -71,6 +66,14 @@ static const char* FlightControllerDMaxConfigKey = "FCDM";
 static const char* IMU_FiltersConfigKey = "IF";
 static const char* RPM_FiltersConfigKey = "RPM";
 static const char* RadioControllerFailsafeKey = "RCFS";
+static const char* RadioControllerRatesKey = "RCR";
+
+static const char* PID_ProfileIndexKey = "PPI";
+static const char* RateProfileIndexKey = "RPI";
+
+static const char* AccOffsetKey = "ACC";
+static const char* GyroOffsetKey = "GYR";
+
 #endif
 
 NonVolatileStorage::NonVolatileStorage(uint32_t flashMemorySize)
@@ -135,118 +138,6 @@ int32_t NonVolatileStorage::remove(const std::string& name)
     return OK;
 }
 #endif
-
-uint8_t NonVolatileStorage::loadPidProfileIndex() const
-{
-#if defined(USE_FLASH_KLV)
-    const uint16_t key = PID_ProfileIndexKey;
-    uint8_t profileIndex {}; // NOLINT(misc-const-correctness) false positive
-    if (FlashKLV::OK == _flashKLV.read(&profileIndex, sizeof(profileIndex), key)) {
-        return profileIndex;
-    }
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        const std::string key = PID_ProfileIndexKey;
-        if (_preferences.isKey(key.c_str())) {
-            uint8_t profileIndex {}; // NOLINT(misc-const-correctness) false positive
-            _preferences.getBytes(key.c_str(), &profileIndex, sizeof(profileIndex));
-            _preferences.end();
-            return profileIndex;
-        }
-        _preferences.end();
-    }
-#endif
-    return DEFAULT_PID_PROFILE;
-}
-
-int32_t NonVolatileStorage::storePidProfileIndex(uint8_t profileIndex)
-{
-    if (profileIndex >= PID_PROFILE_COUNT) {
-        return ERROR_INVALID_PROFILE;
-    }
-#if defined(USE_FLASH_KLV)
-    const uint16_t key = PID_ProfileIndexKey;
-    if (profileIndex == DEFAULT_PID_PROFILE) {
-        // value is the same as default, so no need to store it
-        _flashKLV.remove(key);
-        return OK_IS_DEFAULT;
-    }
-    return _flashKLV.write(key, sizeof(profileIndex), &profileIndex);
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        const std::string key = PID_ProfileIndexKey;
-        if (profileIndex == DEFAULT_PID_PROFILE) {
-            // value is the same as default, so no need to store it
-            _preferences.remove(key.c_str());
-            _preferences.end();
-            return OK_IS_DEFAULT;
-        }
-        _preferences.putBytes(key.c_str(), &profileIndex, sizeof(profileIndex));
-        _preferences.end();
-        return OK;
-    }
-    return ERROR_NOT_WRITTEN;
-#else
-    (void)profileIndex;
-    return OK;
-#endif
-}
-
-uint8_t NonVolatileStorage::loadRateProfileIndex() const
-{
-#if defined(USE_FLASH_KLV)
-    const uint16_t key = RateProfileIndexKey;
-    uint8_t profileIndex {}; // NOLINT(misc-const-correctness) false positive
-    if (FlashKLV::OK == _flashKLV.read(&profileIndex, sizeof(profileIndex), key)) {
-        return profileIndex;
-    }
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        const std::string key = RateProfileIndexKey;
-        if (_preferences.isKey(key.c_str())) {
-            uint8_t profileIndex {}; // NOLINT(misc-const-correctness) false positive
-            _preferences.getBytes(key.c_str(), &profileIndex, sizeof(profileIndex));
-            _preferences.end();
-            return profileIndex;
-        }
-        _preferences.end();
-    }
-#endif
-    return DEFAULT_RATE_PROFILE;
-}
-
-int32_t NonVolatileStorage::storeRateProfileIndex(uint8_t profileIndex)
-{
-    if (profileIndex >= RATE_PROFILE_COUNT) {
-        return ERROR_INVALID_PROFILE;
-    }
-#if defined(USE_FLASH_KLV)
-    const uint16_t key = RateProfileIndexKey;
-    if (profileIndex == DEFAULT_PID_PROFILE) {
-        // value is the same as default, so no need to store it
-        _flashKLV.remove(key);
-        return OK_IS_DEFAULT;
-    }
-    return _flashKLV.write(key, sizeof(profileIndex), &profileIndex);
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        const std::string key = RateProfileIndexKey;
-        if (profileIndex == DEFAULT_RATE_PROFILE) {
-            // value is the same as default, so no need to store it
-            _preferences.remove(key.c_str());
-            _preferences.end();
-            return OK_IS_DEFAULT;
-        }
-        _preferences.putBytes(key.c_str(), &profileIndex, sizeof(profileIndex));
-        _preferences.end();
-        return OK;
-    }
-    return ERROR_NOT_WRITTEN;
-#else
-    (void)profileIndex;
-    return OK;
-#endif
-}
 
 #if defined(USE_FLASH_KLV)
 bool NonVolatileStorage::loadItem(uint16_t key, void* item, size_t length) const
@@ -365,10 +256,48 @@ int32_t NonVolatileStorage::storeItem(const char* key, uint8_t pidProfileIndex, 
 
 
 
+uint8_t NonVolatileStorage::loadPidProfileIndex() const
+{
+    uint8_t profileIndex {};
+    if (loadItem(PID_ProfileIndexKey, &profileIndex, sizeof(profileIndex))) { // cppcheck-suppress knownConditionTrueFalse
+        return profileIndex;
+    }
+    return DEFAULT_PID_PROFILE;
+}
+
+int32_t NonVolatileStorage::storePidProfileIndex(uint8_t profileIndex)
+{
+    if (profileIndex >= PID_PROFILE_COUNT) {
+        return ERROR_INVALID_PROFILE;
+    }
+    const uint8_t defaultProfileIndex = DEFAULT_PID_PROFILE;
+    return storeItem(PID_ProfileIndexKey, &profileIndex, sizeof(profileIndex), &defaultProfileIndex);
+}
+
+
+uint8_t NonVolatileStorage::loadRateProfileIndex() const
+{
+    uint8_t profileIndex {};
+    if (loadItem(RateProfileIndexKey, &profileIndex, sizeof(profileIndex))) { // cppcheck-suppress knownConditionTrueFalse
+        return profileIndex;
+    }
+    return DEFAULT_RATE_PROFILE;
+}
+
+int32_t NonVolatileStorage::storeRateProfileIndex(uint8_t profileIndex)
+{
+    if (profileIndex >= RATE_PROFILE_COUNT) {
+        return ERROR_INVALID_PROFILE;
+    }
+    const uint8_t defaultProfileIndex = DEFAULT_RATE_PROFILE;
+    return storeItem(RateProfileIndexKey, &profileIndex, sizeof(profileIndex), &defaultProfileIndex);
+}
+
+
 DynamicIdleController::config_t NonVolatileStorage::loadDynamicIdleControllerConfig(uint8_t pidProfileIndex) const
 {
     DynamicIdleController::config_t config {};
-    if (loadItem(DynamicIdleControllerConfigKey, pidProfileIndex, &config, sizeof(config))) {
+    if (loadItem(DynamicIdleControllerConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }
     return DEFAULTS::dynamicIdleControllerConfig;
@@ -383,7 +312,7 @@ int32_t NonVolatileStorage::storeDynamicIdleControllerConfig(const DynamicIdleCo
 FlightController::filters_config_t NonVolatileStorage::loadFlightControllerFiltersConfig(uint8_t pidProfileIndex) const
 {
     FlightController::filters_config_t config {};
-    if (loadItem(FlightControllerFiltersConfigKey, pidProfileIndex, &config, sizeof(config))) {
+    if (loadItem(FlightControllerFiltersConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }
     return DEFAULTS::flightControllerFiltersConfig;
@@ -398,7 +327,7 @@ int32_t NonVolatileStorage::storeFlightControllerFiltersConfig(const FlightContr
 FlightController::anti_gravity_config_t NonVolatileStorage::loadFlightControllerAntiGravityConfig(uint8_t pidProfileIndex) const
 {
     FlightController::anti_gravity_config_t config {};
-    if (loadItem(FlightControllerAntiGravityConfigKey, pidProfileIndex, &config, sizeof(config))) {
+    if (loadItem(FlightControllerAntiGravityConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }
     return DEFAULTS::flightControllerAntiGravityConfig;
@@ -413,7 +342,7 @@ int32_t NonVolatileStorage::storeFlightControllerAntiGravityConfig(const FlightC
 FlightController::d_max_config_t NonVolatileStorage::loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const
 {
     FlightController::d_max_config_t config {};
-    if (loadItem(FlightControllerDMaxConfigKey, pidProfileIndex, &config, sizeof(config))) {
+    if (loadItem(FlightControllerDMaxConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }
     return DEFAULTS::flightControllerDMaxConfig;
@@ -428,7 +357,7 @@ int32_t NonVolatileStorage::storeFlightControllerDMaxConfig(const FlightControll
 IMU_Filters::config_t NonVolatileStorage::loadIMU_FiltersConfig() const
 {
     IMU_Filters::config_t config {};
-    if (loadItem(IMU_FiltersConfigKey, &config, sizeof(config))) {
+    if (loadItem(IMU_FiltersConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }
     return DEFAULTS::imuFiltersConfig;
@@ -443,7 +372,7 @@ int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& 
 RPM_Filters::config_t NonVolatileStorage::loadRPM_FiltersConfig() const
 {
     RPM_Filters::config_t config {};
-    if (loadItem(RPM_FiltersConfigKey, &config, sizeof(config))) {
+    if (loadItem(RPM_FiltersConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }
     return DEFAULTS::rpmFiltersConfig;
@@ -458,8 +387,7 @@ int32_t NonVolatileStorage::storeRPM_FiltersConfig(const RPM_Filters::config_t& 
 RadioController::failsafe_t NonVolatileStorage::loadRadioControllerFailsafe() // NOLINT(readability-make-member-function-const)
 {
     RadioController::failsafe_t failsafe {};
-    if (loadItem(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe))) {
-        return failsafe;
+    if (loadItem(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe))) { // cppcheck-suppress knownConditionTrueFalse
     }
     return DEFAULTS::radioControllerFailsafe;
 }
@@ -471,26 +399,19 @@ int32_t NonVolatileStorage::storeRadioControllerFailsafe(const RadioController::
 
 RadioController::rates_t NonVolatileStorage::loadRadioControllerRates(uint8_t rateProfileIndex) const
 {
+    if (rateProfileIndex >= RATE_PROFILE_COUNT) {
+        return DEFAULTS::radioControllerRates;
+    }
+    RadioController::rates_t rates {};
 #if defined(USE_FLASH_KLV)
     const uint16_t key = RadioControllerRatesKey + rateProfileIndex;
-    RadioController::rates_t rates {};
-    if (FlashKLV::OK == _flashKLV.read(&rates, sizeof(rates), key)) {
+#else
+    const std::string keyString = RadioControllerRatesKey + ('0' + rateProfileIndex);
+    const char* key = keyString.c_str();
+#endif
+    if (loadItem(key, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
         return rates;
     }
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        const std::string key = RadioControllerRatesKey + ('0' + rateProfileIndex);
-        if (_preferences.isKey(key.c_str())) {
-            RadioController::rates_t rates {};
-            _preferences.getBytes(key.c_str(), &rates, sizeof(rates));
-            _preferences.end();
-            return rates;
-        }
-        _preferences.end();
-    }
-#else
-    (void)rateProfileIndex;
-#endif
     return DEFAULTS::radioControllerRates;
 }
 
@@ -501,31 +422,11 @@ int32_t NonVolatileStorage::storeRadioControllerRates(const RadioController::rat
     }
 #if defined(USE_FLASH_KLV)
     const uint16_t key = RadioControllerRatesKey + rateProfileIndex;
-    if (!memcmp(&DEFAULTS::radioControllerRates, &rates, sizeof(rates))) {
-        // value is the same as default, so no need to store it
-        _flashKLV.remove(key);
-        return OK_IS_DEFAULT;
-    }
-    return _flashKLV.write(key, sizeof(rates), &rates);
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        const std::string key = RadioControllerRatesKey + ('0' + rateProfileIndex);
-        if (!memcmp(&DEFAULTS::radioControllerRates, &rates, sizeof(rates))) {
-            // value is the same as default, so no need to store it
-            _preferences.remove(key.c_str());
-            _preferences.end();
-            return OK_IS_DEFAULT;
-        }
-        _preferences.putBytes(key.c_str(), &rates, sizeof(rates));
-        _preferences.end();
-        return OK;
-    }
-    return ERROR_NOT_WRITTEN;
 #else
-    (void)rateProfileIndex;
-    (void)rates;
-    return OK;
+    const std::string keyString = RadioControllerRatesKey + ('0' + rateProfileIndex);
+    const char* key = keyString.c_str();
 #endif
+    return storeItem(key, &rates, sizeof(rates), &DEFAULTS::radioControllerRates);
 }
 
 VehicleControllerBase::PIDF_uint16_t NonVolatileStorage::loadPID(uint8_t pidIndex, uint8_t pidProfileIndex) const
@@ -535,23 +436,15 @@ VehicleControllerBase::PIDF_uint16_t NonVolatileStorage::loadPID(uint8_t pidInde
         return DEFAULTS::flightControllerDefaultPIDs[pidIndex];
     }
 #if defined(USE_FLASH_KLV)
-    const uint16_t key = PID_Keys[pidIndex];
+    const uint16_t key = PID_Keys[pidIndex] + pidProfileIndex;
+#else
+    const std::string keyString = PID_Keys[pidIndex] + static_cast<char>('0' + pidProfileIndex);
+    const char* key = keyString.c_str();
+#endif
     VehicleControllerBase::PIDF_uint16_t pid {};
-    if (FlashKLV::OK == _flashKLV.read(&pid, sizeof(pid), key)) {
+    if (loadItem(key, &pid, sizeof(pid))) { // cppcheck-suppress knownConditionTrueFalse
         return pid;
     }
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        const std::string key = PID_Keys[pidIndex];
-        if (_preferences.isKey(key.c_str())) {
-            VehicleControllerBase::PIDF_uint16_t pid {};
-            _preferences.getBytes(key.c_str(), &pid, sizeof(pid));
-            _preferences.end();
-            return pid;
-        }
-        _preferences.end();
-    }
-#endif
     return DEFAULTS::flightControllerDefaultPIDs[pidIndex];
 }
 
@@ -562,31 +455,12 @@ int32_t NonVolatileStorage::storePID(const VehicleControllerBase::PIDF_uint16_t&
         return ERROR_INVALID_PROFILE;
     }
 #if defined(USE_FLASH_KLV)
-    const uint16_t key = PID_Keys[pidIndex];
-    if (!memcmp(&DEFAULTS::flightControllerDefaultPIDs[pidIndex], &pid, sizeof(pid))) {
-        // value is the same as default, so no need to store it
-        _flashKLV.remove(key);
-        return OK_IS_DEFAULT;
-    }
-    return _flashKLV.write(key, sizeof(pid), &pid);
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        const std::string key = PID_Keys[pidIndex];
-        if (!memcmp(&DEFAULTS::flightControllerDefaultPIDs[pidIndex], &pid, sizeof(pid))) {
-            // value is the same as default, so no need to store it
-            _preferences.remove(key.c_str());
-            _preferences.end();
-            return OK_IS_DEFAULT;
-        }
-        _preferences.putBytes(key.c_str(), &pid, sizeof(pid));
-        _preferences.end();
-        return OK;
-    }
-    return ERROR_NOT_WRITTEN;
+    const uint16_t key = PID_Keys[pidIndex] + pidProfileIndex;
 #else
-    (void)pid;
-    return OK;
+    const std::string keyString = PID_Keys[pidIndex] + static_cast<char>('0' + pidProfileIndex);
+    const char* key = keyString.c_str();
 #endif
+    return storeItem(key, &key, sizeof(pid), &DEFAULTS::flightControllerDefaultPIDs[pidIndex]);
 }
 
 void NonVolatileStorage::resetPID(uint8_t pidIndex, uint8_t pidProfileIndex)
@@ -606,102 +480,40 @@ void NonVolatileStorage::resetPID(uint8_t pidIndex, uint8_t pidProfileIndex)
 
 bool NonVolatileStorage::loadAccOffset(int32_t& x, int32_t& y, int32_t& z) const
 {
-#if defined(USE_FLASH_KLV)
-    xyz_int32_t xyz {}; // NOLINT(misc-const-correctness)
-    if (FlashKLV::OK == _flashKLV.read(&xyz, sizeof(xyz), AccOffsetKey)) {
+    xyz_int32_t xyz {};
+    if (loadItem(AccOffsetKey, &xyz, sizeof(xyz))) { // cppcheck-suppress knownConditionTrueFalse
         x = xyz.x;
         y = xyz.y;
         z = xyz.z;
-    }
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        if (_preferences.isKey(AccOffsetKey)) {
-            xyz_int32_t xyz {}; // NOLINT(misc-const-correctness) false positive
-            _preferences.getBytes(AccOffsetKey, &xyz, sizeof(xyz));
-            x = xyz.x;
-            y = xyz.y;
-            z = xyz.z;
-        }
-        _preferences.end();
         return true;
     }
-#else
-    (void)x;
-    (void)y;
-    (void)z;
-#endif
     return false;
 }
 
 int32_t NonVolatileStorage::storeAccOffset(int32_t x, int32_t y, int32_t z)
 {
-#if defined(USE_FLASH_KLV)
     const xyz_int32_t xyz = { .x = x, .y = y, .z = z };
-    return _flashKLV.write(AccOffsetKey, sizeof(xyz), &xyz);
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        const xyz_int32_t xyz = { .x = x, .y = y, .z = z };
-        _preferences.putBytes(AccOffsetKey, &xyz, sizeof(xyz));
-        _preferences.end();
-        return OK;
-    }
-    return ERROR_NOT_WRITTEN;
-#else
-    (void)x;
-    (void)y;
-    (void)z;
-    return OK;
-#endif
+    const xyz_int32_t xyzDefault = { .x = 0, .y = 0, .z = 0 };
+    return storeItem(AccOffsetKey, &xyz, sizeof(xyz), &xyzDefault);
 }
 
 bool NonVolatileStorage::loadGyroOffset(int32_t& x, int32_t& y, int32_t& z) const
 {
-#if defined(USE_FLASH_KLV)
-    xyz_int32_t xyz {}; // NOLINT(misc-const-correctness)
-    if (FlashKLV::OK == _flashKLV.read(&xyz, sizeof(xyz), GyroOffsetKey)) {
+    xyz_int32_t xyz {};
+    if (loadItem(GyroOffsetKey, &xyz, sizeof(xyz))) { // cppcheck-suppress knownConditionTrueFalse
         x = xyz.x;
         y = xyz.y;
         z = xyz.z;
-    }
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        if (_preferences.isKey(GyroOffsetKey)) {
-            xyz_int32_t xyz {}; // NOLINT(misc-const-correctness) false positive
-            _preferences.getBytes(GyroOffsetKey, &xyz, sizeof(xyz));
-            x = xyz.x;
-            y = xyz.y;
-            z = xyz.z;
-        }
-        _preferences.end();
         return true;
     }
-#else
-    (void)x;
-    (void)y;
-    (void)z;
-#endif
     return false;
 }
 
 int32_t NonVolatileStorage::storeGyroOffset(int32_t x, int32_t y, int32_t z)
 {
-#if defined(USE_FLASH_KLV)
     const xyz_int32_t xyz = { .x = x, .y = y, .z = z };
-    return _flashKLV.write(GyroOffsetKey, sizeof(xyz), &xyz);
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        const xyz_int32_t xyz = { .x = x, .y = y, .z = z };
-        _preferences.putBytes(GyroOffsetKey, &xyz, sizeof(xyz));
-        _preferences.end();
-        return OK;
-    }
-    return ERROR_NOT_WRITTEN;
-#else
-    (void)x;
-    (void)y;
-    (void)z;
-    return OK;
-#endif
+    const xyz_int32_t xyzDefault = { .x = 0, .y = 0, .z = 0 };
+    return storeItem(GyroOffsetKey, &xyz, sizeof(xyz), &xyzDefault);
 }
 
 void NonVolatileStorage::loadMacAddress(uint8_t* macAddress) const // NOLINT(readability-non-const-parameter)
