@@ -86,7 +86,12 @@ public:
     void resetPID(uint8_t pidIndex, uint8_t pidProfileIndex);
     void resetPID(uint8_t pidIndex) { resetPID(pidIndex, _currentPidProfileIndex); }
 
-#if !defined(USE_FLASH_KLV)
+#if defined(USE_FLASH_KLV)
+    bool loadItem(uint16_t key, void* item, size_t length) const;
+    bool loadItem(uint16_t key, uint8_t pidProfileIndex, void* item, size_t length) const;
+    int32_t storeItem(uint16_t key, const void* item, size_t length, const void* defaults);
+    int32_t storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults);
+#else
     bool loadItem(const char* key, void* item, size_t length) const;
     bool loadItem(const char* key, uint8_t pidProfileIndex, void* item, size_t length) const;
     int32_t storeItem(const char* key, const void* item, size_t length, const void* defaults);
