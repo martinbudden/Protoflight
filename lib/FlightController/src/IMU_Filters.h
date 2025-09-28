@@ -41,11 +41,10 @@ protected:
     float _looptimeSeconds;
     size_t _motorCount;
     size_t _motorIndex {0};
-    config_t _config {};
-    uint32_t _filterFromAHRS {false};
+    const config_t _config {}; //!< configuration data is const once it has been set in setConfig
     RPM_Filters* _rpmFilters {nullptr};
 
-    FilterBaseT<xyz_t>*  _gyroLPF1 {nullptr};
+    FilterBaseT<xyz_t>* _gyroLPF1 {nullptr};
     uint32_t  _useGyroNotch1 {false};
     uint32_t  _useGyroNotch2 {false};
 

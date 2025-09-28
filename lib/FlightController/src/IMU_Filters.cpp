@@ -13,7 +13,7 @@ IMU_Filters::IMU_Filters(const MotorMixerBase& motorMixer, float looptimeSeconds
 
 void IMU_Filters::setConfig(const config_t& config)
 {
-    _config = config;
+    const_cast<config_t&>(_config) = config; // NOLINT(cppcoreguidelines-pro-type-const-cast)
 
     // set up gyroLPF1.
     const uint16_t gyro_lpf1_hz = config.gyro_lpf1_hz == 0 ? 500 : config.gyro_lpf1_hz;
@@ -64,20 +64,11 @@ void IMU_Filters::setConfig(const config_t& config)
 }
 
 /*!
-This may be called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
-
-This takes, on average, about 26 microseconds to execute on a 240MHz ESP32 S3, with USE_THIRD_HARMONIC.
-Execution time varies, however, and may take up to about 50 microseconds.
+Does nothing, since RPM filtering is done in the context of the Flight Controller Task.
+This is the place to put the Fast Fourier Transform (FFT) if dynamic notch filters are implemented.
 */
 void IMU_Filters::setFilters()
 {
-    if (_rpmFilters && _rpmFilters->getConfig().rpm_filter_harmonics > 0 && _filterFromAHRS) {
-        _rpmFilters->setFrequencyHz(_motorIndex, _motorMixer.getMotorFrequencyHz(_motorIndex));
-        ++_motorIndex;
-        if (_motorIndex==_motorCount) {
-            _motorIndex = 0;
-        }
-    }
 }
 
 /*!
@@ -96,7 +87,7 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
         // call filterVirtual(), since type of filter is variable
         gyroRPS = _gyroLPF1->filterVirtual(gyroRPS);
     }
-    // gyroLPF2 always applied
+    // gyroLPF2 is always applied
     gyroRPS = _gyroLPF2.filter(gyroRPS);
 
     // apply the notch filters
@@ -105,20 +96,5 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
     }
     if (_useGyroNotch2) {
         gyroRPS = _gyroNotch2.filter(gyroRPS);
-    }
-
-    // apply the RPM filters
-    if (_rpmFilters) {
-        if (_motorCount == 4) {
-            // unwind loop if there are only 4 motors
-            _rpmFilters->filter(gyroRPS, 0);
-            _rpmFilters->filter(gyroRPS, 1);
-            _rpmFilters->filter(gyroRPS, 2);
-            _rpmFilters->filter(gyroRPS, 3);
-        } else {
-            for (size_t motorIndex = 0; motorIndex < _motorCount; ++motorIndex) {
-                _rpmFilters->filter(gyroRPS, motorIndex);
-            }
-        }
     }
 }
