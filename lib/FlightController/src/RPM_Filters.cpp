@@ -4,7 +4,7 @@
 
 void RPM_Filters::setConfig(const config_t& config)
 {
-    const_cast<config_t&>(_config) = config;
+    const_cast<config_t&>(_config) = config; // NOLINT(cppcoreguidelines-pro-type-const-cast)
     _Q = static_cast<float>(_config.rpm_filter_q) * 0.01F;
 
     // just under  Nyquist frequency (ie just under half sampling rate)

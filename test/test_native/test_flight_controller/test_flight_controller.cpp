@@ -3,9 +3,11 @@
 
 #include <AHRS.h>
 #include <Debug.h>
+#include <Defaults.h>
 #include <IMU_FiltersBase.h>
 #include <IMU_Null.h>
 #include <MotorMixerBase.h>
+#include <NonVolatileStorage.h>
 #include <RadioController.h>
 #include <ReceiverNull.h>
 #include <SensorFusion.h>
@@ -101,6 +103,22 @@ void test_flight_controller()
 
     static const std::string pidNamePitch = fc.getPID_Name(FlightController::PITCH_ANGLE_DEGREES);
     TEST_ASSERT_TRUE(pidNamePitch.compare("PITCH_ANGLE") == 0);
+
+    FlightController::tpa_config_t tpaConfig = fc.getTPA_Config();
+    TEST_ASSERT_EQUAL(0, tpaConfig.tpa_breakpoint);
+    TEST_ASSERT_EQUAL(0, tpaConfig.tpa_mode);
+    TEST_ASSERT_EQUAL(0, tpaConfig.tpa_rate);
+
+    static NonVolatileStorage nvs;
+    nvs.init();
+
+    tpaConfig = nvs.loadFlightControllerTPA_Config(NonVolatileStorage::DEFAULT_PID_PROFILE);
+    fc.setTPA_Config(tpaConfig);
+
+    tpaConfig = fc.getTPA_Config();
+    TEST_ASSERT_EQUAL(DEFAULTS::flightControllerTPA_Config.tpa_breakpoint, tpaConfig.tpa_breakpoint);
+    TEST_ASSERT_EQUAL(DEFAULTS::flightControllerTPA_Config.tpa_mode, tpaConfig.tpa_mode);
+    TEST_ASSERT_EQUAL(DEFAULTS::flightControllerTPA_Config.tpa_rate, tpaConfig.tpa_rate);
 }
 
 void test_flight_controller_pid_indexes()

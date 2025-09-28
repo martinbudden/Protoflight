@@ -35,8 +35,9 @@ static constexpr uint16_t MacAddressKey = 0x0202;
 // Note that keys of items in PID profile must go up in jumps of 4, since 1 key is used for each profile
 static constexpr uint16_t DynamicIdleControllerConfigKey = 0x0400;
 static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0404;
-static constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x0408;
-static constexpr uint16_t FlightControllerDMaxConfigKey = 0x040C;
+static constexpr uint16_t FlightControllerTPA_ConfigKey = 0x408;
+static constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x040C;
+static constexpr uint16_t FlightControllerDMaxConfigKey = 0x0410;
 
 static constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
 static constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
@@ -62,6 +63,7 @@ static const char* MacAddressKey = "MAC";
 
 static const char* DynamicIdleControllerConfigKey = "DIC";
 static const char* FlightControllerFiltersConfigKey = "FCF";
+static const char* FlightControllerTPA_ConfigKey = "FCTPA";
 static const char* FlightControllerAntiGravityConfigKey = "FCAG";
 static const char* FlightControllerDMaxConfigKey = "FCDM";
 static const char* IMU_FiltersConfigKey = "IF";
@@ -322,6 +324,21 @@ FlightController::filters_config_t NonVolatileStorage::loadFlightControllerFilte
 int32_t NonVolatileStorage::storeFlightControllerFiltersConfig(const FlightController::filters_config_t& config, uint8_t pidProfileIndex)
 {
     return storeItem(FlightControllerFiltersConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerFiltersConfig);
+}
+
+
+FlightController::tpa_config_t NonVolatileStorage::loadFlightControllerTPA_Config(uint8_t pidProfileIndex) const
+{
+    FlightController::tpa_config_t config {};
+    if (loadItem(FlightControllerTPA_ConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }
+    return DEFAULTS::flightControllerTPA_Config;
+}
+
+int32_t NonVolatileStorage::storeFlightControllerTPA_Config(const FlightController::tpa_config_t& config, uint8_t pidProfileIndex)
+{
+    return storeItem(FlightControllerTPA_ConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerTPA_Config);
 }
 
 

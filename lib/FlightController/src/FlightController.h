@@ -113,6 +113,12 @@ public:
         uint8_t dterm_lpf2_type;
         uint16_t output_lpf_hz;
     };
+    enum tpa_mode_e { TPA_MODE_PD, TPA_MODE_D, TPA_MODE_PDS };
+    struct tpa_config_t {
+        uint8_t tpa_mode;
+        uint8_t tpa_rate;
+        uint16_t tpa_breakpoint;
+    };
     struct anti_gravity_config_t {
         uint8_t cutoff_hz;
         uint8_t p_gain;
@@ -196,10 +202,15 @@ public:
     const Debug& getDebug() const { return _debug; }
     Debug& getDebug() { return _debug; }
 
-    const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
     void setFiltersConfig(const filters_config_t& filtersConfig);
-    const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }
+    const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
+
+    void setTPA_Config(const tpa_config_t& tpaConfig);
+    const tpa_config_t& getTPA_Config() const { return _tpaConfig; }
+
     void setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig);
+    const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }
+
     void setDMaxConfig(const d_max_config_t& dMaxConfig);
     const d_max_config_t& getDMaxConfig() const { return _dMaxConfig; }
 public:
@@ -246,8 +257,9 @@ private:
 
 
     // configuration data is const once it has been set in set*Config()
-    const anti_gravity_config_t _antiGravityConfig {};
     const filters_config_t _filtersConfig {};
+    const tpa_config_t _tpaConfig {};
+    const anti_gravity_config_t _antiGravityConfig {};
     const float _antiGravityIGain {};
     const float _antiGravityPGain {};
 #ifdef USE_D_MAX

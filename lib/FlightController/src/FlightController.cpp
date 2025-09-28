@@ -214,7 +214,7 @@ void FlightController::setControlMode(control_mode_e controlMode)
 
 void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 {
-    const_cast<filters_config_t&>(_filtersConfig) = filtersConfig;
+    const_cast<filters_config_t&>(_filtersConfig) = filtersConfig; // NOLINT(cppcoreguidelines-pro-type-const-cast)
     //!!TODO: check dT value for filters config
     const float dT = static_cast<float>(_taskIntervalMicroseconds) / 1000000.0F;
     //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
@@ -258,12 +258,19 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
     }
 }
 
+void FlightController::setTPA_Config(const tpa_config_t& tpaConfig)
+{
+    const_cast<tpa_config_t&>(_tpaConfig) = tpaConfig; // NOLINT(cppcoreguidelines-pro-type-const-cast)
+}
+
 void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig)
 {
     // cast away constness to allow otherwise constant data to be set here
-    const_cast<anti_gravity_config_t&>(_antiGravityConfig) = antiGravityConfig;
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+    const_cast<anti_gravity_config_t&>(_antiGravityConfig) = antiGravityConfig; 
     const_cast<float&>(_antiGravityPGain) = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp;
     const_cast<float&>(_antiGravityIGain) = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki;
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
 void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig)
@@ -280,9 +287,11 @@ void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig)
             _dMaxPercent[axis] = 1.0F;
         }
     }
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
     const_cast<float&>(_dMaxGyroGain) = D_MAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / D_MAX_LOWPASS_HZ;
     // lowpass included inversely in gain since stronger lowpass decreases peak effect
     const_cast<float&>(_dMaxSetpointGain) = D_MAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / D_MAX_LOWPASS_HZ;
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 #endif
 }
 

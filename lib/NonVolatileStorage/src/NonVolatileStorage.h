@@ -103,6 +103,9 @@ public:
     FlightController::filters_config_t loadFlightControllerFiltersConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerFiltersConfig(const FlightController::filters_config_t& config, uint8_t pidProfileIndex);
 
+    FlightController::tpa_config_t loadFlightControllerTPA_Config(uint8_t pidProfileIndex) const;
+    int32_t storeFlightControllerTPA_Config(const FlightController::tpa_config_t& config, uint8_t pidProfileIndex);
+
     FlightController::anti_gravity_config_t loadFlightControllerAntiGravityConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerAntiGravityConfig(const FlightController::anti_gravity_config_t& config, uint8_t pidProfileIndex);
 

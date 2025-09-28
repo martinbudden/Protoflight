@@ -45,6 +45,12 @@ static const FlightController::filters_config_t flightControllerFiltersConfig = 
     .output_lpf_hz = 500
 };
 
+static const FlightController::tpa_config_t flightControllerTPA_Config = {
+    .tpa_mode = FlightController::TPA_MODE_D,
+    .tpa_rate = 65,
+    .tpa_breakpoint = 1350,
+};
+
 static const FlightController::anti_gravity_config_t flightControllerAntiGravityConfig = {
     .cutoff_hz = 5,
     .p_gain = 100,
