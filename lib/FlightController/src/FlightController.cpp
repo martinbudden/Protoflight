@@ -370,7 +370,7 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
         .yaw    = queueItem.yaw / _yawRateAtMaxPowerDPS
     };
 
+    _mixer.outputToMotors(commands, deltaT, tickCount);
     // the mixer may adjust the throttle value, so save this value for the blackbox record
     _fcM.mixerAdjustedThrottle= commands.throttle;
-    _mixer.outputToMotors(commands, deltaT, tickCount);
 }
