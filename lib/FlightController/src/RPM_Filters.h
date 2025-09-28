@@ -73,9 +73,15 @@ private:
     size_t _motorCount;
     float _looptimeSeconds;
     // computation data so setFrequencyHz() can be run as a state machine
-    float _weightMultiplier;
-    float _sinOmega;
-    float _two_cosOmega;
+    enum state_e { STATE_FUNDAMENTAL, STATE_SECOND_HARMONIC, STATE_THIRD_HARMONIC };
+    struct state_t {
+        state_e state;
+        float frequencyHzUnclipped;
+        float weightMultiplier;
+        float sinOmega;
+        float two_cosOmega;
+    };
+    state_t _state  { STATE_FUNDAMENTAL, 0.0F, 0.0F, 0.0F, 0.0F };
 
     std::array<float, RPM_FILTER_HARMONICS_COUNT> _weights {};
     float _minFrequencyHz { 100.0F };

@@ -206,9 +206,11 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
     }
 
     case MSP_SET_FILTER_CONFIG: {
-        IMU_Filters::config_t imuFiltersConfig {};
-        RPM_Filters::config_t rpmFiltersConfig {};
-        FlightController::filters_config_t fcFilters {};
+        auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
+        RPM_Filters* rpmFilters = imuFilters.getRPM_Filters();
+        RPM_Filters::config_t rpmFiltersConfig = rpmFilters ? rpmFilters->getConfig() : RPM_Filters::config_t {};
+        FlightController::filters_config_t fcFilters = _flightController.getFiltersConfig();
 
         imuFiltersConfig.gyro_lpf1_hz = src.readU8();
         fcFilters.dterm_lpf1_hz = src.readU16();
@@ -268,9 +270,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             // dynamic_notch_count =
             src.readU8();
         }
-        auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         imuFilters.setConfig(imuFiltersConfig);
-        RPM_Filters* rpmFilters = imuFilters.getRPM_Filters();
         if (rpmFilters) {
             rpmFilters->setConfig(rpmFiltersConfig);
         }

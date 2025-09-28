@@ -72,7 +72,7 @@ static const IMU_Filters::config_t imuFiltersConfig = {
 
 static const RPM_Filters::config_t rpmFiltersConfig = {
     .rpm_filter_harmonics = 3,
-    .rpm_filter_weights = { 100, 100, 100 },
+    .rpm_filter_weights = { 100, 0, 100 }, // default is not to filter second harmonic
     .rpm_filter_min_hz = 100,
     .rpm_filter_fade_range_hz = 50,
     .rpm_filter_q = 500,

@@ -10,6 +10,7 @@
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #include <MSP_protocol.h>
+#include <RPM_Filters.h>
 #include <RadioController.h>
 #include <ReceiverBase.h>
 
@@ -321,8 +322,12 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_FILTER_CONFIG : {
-        const IMU_Filters::config_t imuFiltersConfig = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()).getConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+        const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
         const FlightController::filters_config_t fcFilters = _flightController.getFiltersConfig();
+        const RPM_Filters* rpmFilters = imuFilters.getRPM_Filters();
+        RPM_Filters::config_t rpmFiltersConfig = rpmFilters ? rpmFilters->getConfig() : RPM_Filters::config_t {};
+
         dst.writeU8(static_cast<uint8_t>(imuFiltersConfig.gyro_lpf1_hz));
         dst.writeU16(fcFilters.dterm_lpf1_hz);
         dst.writeU16(fcFilters.yaw_lpf_hz);
@@ -349,6 +354,15 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU16(imuFiltersConfig.gyro_dynamic_lpf1_max_hz);
         dst.writeU16(fcFilters.dterm_dynamic_lpf1_min_hz);
         dst.writeU16(fcFilters.dterm_dynamic_lpf1_max_hz);
+        // Added in MSP API 1.42
+        dst.writeU8(0);  // DEPRECATED 1.43: dyn_notch_range
+        dst.writeU8(0);  // DEPRECATED 1.44: dyn_notch_width_percent
+        dst.writeU16(0); // dynNotchConfig.dyn_notch_q
+        dst.writeU16(0); // dynNotchConfig.dyn_notch_min_hz
+        dst.writeU8(rpmFiltersConfig.rpm_filter_harmonics);
+        dst.writeU8(rpmFiltersConfig.rpm_filter_min_hz);
+        // Added in MSP API 1.43
+        dst.writeU16(0); // dynNotchConfig.dyn_notch_max_hz
         break;
     }
     case MSP_SENSOR_CONFIG: {
