@@ -72,6 +72,11 @@ public:
 private:
     size_t _motorCount;
     float _looptimeSeconds;
+    // computation data so setFrequencyHz() can be run as a state machine
+    float _weightMultiplier;
+    float _sinOmega;
+    float _two_cosOmega;
+
     std::array<float, RPM_FILTER_HARMONICS_COUNT> _weights {};
     float _minFrequencyHz { 100.0F };
     float _maxFrequencyHz {};
@@ -81,7 +86,7 @@ private:
     float _Q { 0.0F };
     BiquadFilterT<xyz_t> _filters[MAX_MOTOR_COUNT][RPM_FILTER_HARMONICS_COUNT];
     std::array<PowerTransferFilter1, MAX_MOTOR_COUNT> _motorRPM_Filters {};
-    config_t _config {};
+    const config_t _config {}; //!< const once has been set in setConfig
 #if defined(FRAMEWORK_RPI_PICO)
     mutable mutex_t _mutex {};
     inline void LOCK_FILTERS() const { mutex_enter_blocking(&_mutex); }
