@@ -32,14 +32,17 @@
 
 
 /*!
-There are up to 6 RPM filters for each motor.
+There are up to 3 filters for each motor, one for filtering at the fundamental frequency
+and up to two others, for filtering at the second harmonic and the third harmonic.
 
-There are three filters, one for each of X, Y, and Z at the FUNDAMENTAL frequency.
+`setFilter` is called in the context of the Flight Controller task,
+and `filter` is called in the context of the AHRS task.
 
-There are optionally three more filters, one for each of X, Y, and Z at a HARMONIC frequency.
+The `setFilter` computations are time-critical and are divided up into chucks and driven by a state machine, to
+reduce the time taken by each invocation of the function.
 
-If a harmonic frequency used, it can be set to be either the SECOND HARMONIC (ie twice the FUNDAMENTAL frequency)
-or the THIRD HARMONIC (ie 3 times the FUNDAMENTAL frequency).
+The `filter` function is also driven by a state machine within `IMU_Filters::filter`, again to reduce the time
+taken by each invocation of the function.
 
 Generally speaking, the SECOND HARMONIC is used for 2-bladed propellors, and the THIRD HARMONIC is used
 for 3-bladed propellors.
@@ -90,8 +93,8 @@ private:
     float _thirdOfMaxFrequencyHz {};
     float _fadeRangeHz { 50.0F };
     float _Q { 0.0F };
-    BiquadFilterT<xyz_t> _filters[MAX_MOTOR_COUNT][RPM_FILTER_HARMONICS_COUNT];
-    std::array<PowerTransferFilter1, MAX_MOTOR_COUNT> _motorRPM_Filters {};
+    BiquadFilterT<xyz_t> _filters[MAX_MOTOR_COUNT][RPM_FILTER_HARMONICS_COUNT]; //!< note this is a template filter that filters all 3 axes
+    std::array<PowerTransferFilter1, MAX_MOTOR_COUNT> _motorRPM_Filters {}; //!< filters the motor RPM before it is used to set the filter frequency
     const config_t _config {}; //!< configuration data is const once it has been set in setConfig
 #if defined(FRAMEWORK_RPI_PICO)
     mutable mutex_t _mutex {};

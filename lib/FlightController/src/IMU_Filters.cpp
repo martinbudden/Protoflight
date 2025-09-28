@@ -64,7 +64,8 @@ void IMU_Filters::setConfig(const config_t& config)
 }
 
 /*!
-Does nothing, since RPM filtering is done in the context of the Flight Controller Task.
+Does nothing, since `RPM_Filters::setFrequencyHz` is called in the context of the Flight Controller task.
+
 This is the place to put the Fast Fourier Transform (FFT) if dynamic notch filters are implemented.
 */
 void IMU_Filters::setFilters()
@@ -73,9 +74,6 @@ void IMU_Filters::setFilters()
 
 /*!
 This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
-
-This takes of the order of 15 microseconds to execute on a 240MHz ESP32 S3.
-Max time is up to 30 microseconds.
 */
 void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
 {
@@ -96,5 +94,12 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
     }
     if (_useGyroNotch2) {
         gyroRPS = _gyroNotch2.filter(gyroRPS);
+    }
+    if (_rpmFilters) {
+        // apply the RPM filters, filter one motor each time this function is called
+        _rpmFilters->filter(gyroRPS, _motorIndex++);
+        if (_motorIndex == _motorCount) {
+            _motorIndex = 0;
+        }
     }
 }
