@@ -46,6 +46,9 @@ static constexpr uint16_t RadioControllerFailsafeKey = 0x0506;
 
 #else
 
+// NOTE: the ESP32 Preferences versions take advantage of the Small String Optimization (SSO)
+// which means that strings of less than (about) 16 characters are stored in the string object
+// rather than on the heap.
 static const std::array<std::string, FlightController::PID_COUNT> PID_Keys = {
     "RoRa",
     "PiRa",
@@ -79,6 +82,10 @@ static const char* GyroOffsetKey = "GYR";
 
 #endif
 
+/*!
+NOTE: NonVolatileStorage load functions return items by value. c++ uses Return Value Optimization (RVO)
+so this is not inefficient.
+*/
 NonVolatileStorage::NonVolatileStorage(uint32_t flashMemorySize)
 #if defined(USE_FLASH_KLV)
     : _flashKLV(flashMemorySize)
