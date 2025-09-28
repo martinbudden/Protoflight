@@ -28,7 +28,7 @@ FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, M
     _debug(debug),
     _taskDenominator(taskDenominator)
 {
-    _antiGravityThrottleFilter.setToPassthrough();
+    _sh.antiGravityThrottleFilter.setToPassthrough();
 }
 
 static const std::array<std::string, FlightController::PID_COUNT> PID_NAMES = {
@@ -54,18 +54,18 @@ VehicleControllerBase::PIDF_uint16_t FlightController::getPID_MSP(size_t index) 
 
     const auto pidIndex = static_cast<pid_index_e>(index);
     const PIDF_uint16_t ret = {
-        .kp = static_cast<uint16_t>(_PIDS[pidIndex].getP() / _scaleFactors.kp),
-        .ki = static_cast<uint16_t>(_PIDS[pidIndex].getI() / _scaleFactors.ki),
-        .kd = static_cast<uint16_t>(_PIDS[pidIndex].getD() / _scaleFactors.kd),
-        .kf = static_cast<uint16_t>(_PIDS[pidIndex].getF() / _scaleFactors.kf),
-        .ks = static_cast<uint16_t>(_PIDS[pidIndex].getS() / _scaleFactors.ks),
+        .kp = static_cast<uint16_t>(_sh.PIDS[pidIndex].getP() / _scaleFactors.kp),
+        .ki = static_cast<uint16_t>(_sh.PIDS[pidIndex].getI() / _scaleFactors.ki),
+        .kd = static_cast<uint16_t>(_sh.PIDS[pidIndex].getD() / _scaleFactors.kd),
+        .kf = static_cast<uint16_t>(_sh.PIDS[pidIndex].getF() / _scaleFactors.kf),
+        .ks = static_cast<uint16_t>(_sh.PIDS[pidIndex].getS() / _scaleFactors.ks),
     };
     return ret;
 }
 
 VehicleControllerBase::PIDF_uint16_t FlightController::getPID_Constants(pid_index_e pidIndex) const
 {
-    const PIDF::PIDF_t pid = _PIDS[pidIndex].getPID();
+    const PIDF::PIDF_t pid = _sh.PIDS[pidIndex].getPID();
     const VehicleControllerBase::PIDF_uint16_t pid16 = {
         static_cast<uint16_t>(std::lroundf(pid.kp / _scaleFactors.kp)),
         static_cast<uint16_t>(std::lroundf(pid.ki / _scaleFactors.ki)),
@@ -91,40 +91,40 @@ void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_
         static_cast<float>(pid16.ks) * _scaleFactors.ks
     };
 
-    _PIDS[pidIndex].setPID(pid);
-    _PIDS[pidIndex].switchIntegrationOff();
+    _sh.PIDS[pidIndex].setPID(pid);
+    _sh.PIDS[pidIndex].switchIntegrationOff();
     // keep copies of P and I terms so they can be adjusted by anti-gravity
-    _pidConstants[pidIndex] = _PIDS[pidIndex].getPID();
+    _fc.pidConstants[pidIndex] = _sh.PIDS[pidIndex].getPID();
 }
 
 void FlightController::setPID_P_MSP(pid_index_e pidIndex, uint16_t kp)
 {
-    _PIDS[pidIndex].setP(kp * _scaleFactors.kp);
-    _pidConstants[pidIndex].kp = _PIDS[pidIndex].getP();
+    _sh.PIDS[pidIndex].setP(kp * _scaleFactors.kp);
+    _fc.pidConstants[pidIndex].kp = _sh.PIDS[pidIndex].getP();
 }
 
 void FlightController::setPID_I_MSP(pid_index_e pidIndex, uint16_t ki)
 {
-    _PIDS[pidIndex].setI(ki * _scaleFactors.ki);
-    _pidConstants[pidIndex].ki = _PIDS[pidIndex].getI();
+    _sh.PIDS[pidIndex].setI(ki * _scaleFactors.ki);
+    _fc.pidConstants[pidIndex].ki = _sh.PIDS[pidIndex].getI();
 }
 
 void FlightController::setPID_D_MSP(pid_index_e pidIndex, uint16_t kd)
 {
-    _PIDS[pidIndex].setD(kd * _scaleFactors.kd);
-    _pidConstants[pidIndex].kd = _PIDS[pidIndex].getD();
+    _sh.PIDS[pidIndex].setD(kd * _scaleFactors.kd);
+    _fc.pidConstants[pidIndex].kd = _sh.PIDS[pidIndex].getD();
 }
 
 void FlightController::setPID_F_MSP(pid_index_e pidIndex, uint16_t kf)
 {
-    _PIDS[pidIndex].setF(kf * _scaleFactors.kf);
-    _pidConstants[pidIndex].kf = _PIDS[pidIndex].getF();
+    _sh.PIDS[pidIndex].setF(kf * _scaleFactors.kf);
+    _fc.pidConstants[pidIndex].kf = _sh.PIDS[pidIndex].getF();
 }
 
 void FlightController::setPID_S_MSP(pid_index_e pidIndex, uint16_t ks)
 {
-    _PIDS[pidIndex].setF(ks * _scaleFactors.ks);
-    _pidConstants[pidIndex].ks = _PIDS[pidIndex].getS();
+    _sh.PIDS[pidIndex].setF(ks * _scaleFactors.ks);
+    _fc.pidConstants[pidIndex].ks = _sh.PIDS[pidIndex].getS();
 }
 
 uint32_t FlightController::getOutputPowerTimeMicroseconds() const
@@ -164,8 +164,8 @@ float FlightController::getAmperage() const
 void FlightController::motorsSwitchOff()
 {
     _mixer.motorsSwitchOff();
-    _takeOffCountStart = 0;
-    _groundMode = true;
+    _sh.takeOffCountStart = 0;
+    _sh.groundMode = true;
     switchPID_integrationOff();
     if (_blackbox) {
         _blackbox->endLog();
@@ -200,26 +200,26 @@ Sets the control mode.
 */
 void FlightController::setControlMode(control_mode_e controlMode)
 {
-    if (controlMode == _controlMode) {
+    if (controlMode == _fc.controlMode) {
         return;
     }
-    _controlMode = controlMode;
+    _fc.controlMode = controlMode;
     // reset the PID integral values when we change control mode
-    for (auto& pid : _PIDS) {
+    for (auto& pid : _sh.PIDS) {
         pid.resetIntegral();
     }
 }
 
 void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 {
-    _filtersConfig = filtersConfig;
+    _fc.filtersConfig = filtersConfig;
     //!!TODO: check dT value for filters config
     const float dT = static_cast<float>(_taskIntervalMicroseconds) / 1000000.0F;
     //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
 
     if (filtersConfig.dterm_lpf1_hz == 0) {
-        _rollRateDTermFilter.setToPassthrough();
-        _pitchRateDTermFilter.setToPassthrough();
+        _sh.rollRateDTermFilter.setToPassthrough();
+        _sh.pitchRateDTermFilter.setToPassthrough();
     } else {
         // if the user has selected a filter, then provide a PowerTransfer1 filter.
         // If no filter selected, then set the filter to passthrough
@@ -231,55 +231,55 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
         case filters_config_t::BIQUAD:
             [[fallthrough]];
         case filters_config_t::PT1:
-            _rollRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _rollAngleDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _pitchRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _pitchAngleDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.rollRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.rollAngleDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.pitchRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.pitchAngleDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
             break;
         default:
-            _rollRateDTermFilter.setToPassthrough();
-            _rollAngleDTermFilter.setToPassthrough();
-            _pitchRateDTermFilter.setToPassthrough();
-            _pitchAngleDTermFilter.setToPassthrough();
+            _sh.rollRateDTermFilter.setToPassthrough();
+            _sh.rollAngleDTermFilter.setToPassthrough();
+            _sh.pitchRateDTermFilter.setToPassthrough();
+            _sh.pitchAngleDTermFilter.setToPassthrough();
             break;
         }
     }
     if (filtersConfig.output_lpf_hz == 0) {
-        _outputFilters[ROLL_RATE_DPS].setToPassthrough();
-        _outputFilters[PITCH_RATE_DPS].setToPassthrough();
-        _outputFilters[YAW_RATE_DPS].setToPassthrough();
+        _sh.outputFilters[ROLL_RATE_DPS].setToPassthrough();
+        _sh.outputFilters[PITCH_RATE_DPS].setToPassthrough();
+        _sh.outputFilters[YAW_RATE_DPS].setToPassthrough();
     } else {
         const float ahrsDeltaT = static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F;
-        _outputFilters[ROLL_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
-        _outputFilters[PITCH_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
-        _outputFilters[YAW_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
+        _sh.outputFilters[ROLL_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
+        _sh.outputFilters[PITCH_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
+        _sh.outputFilters[YAW_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
     }
 }
 
 void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig)
 {
-    _antiGravityConfig = antiGravityConfig;
-    _antiGravityPGain = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp;
-    _antiGravityIGain = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki;
+    _fc.antiGravityConfig = antiGravityConfig;
+    _fc.antiGravityPGain = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp;
+    _fc.antiGravityIGain = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki;
 }
 
 void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig)
 {
 #if defined(USE_D_MAX)
-    _dMaxConfig = dMaxConfig;
+    _fc.dMaxConfig = dMaxConfig;
     for (size_t axis = 0; axis < AXIS_COUNT; ++axis) {
         const uint8_t dMax = dMaxConfig.d_max[axis];
         const PIDF_uint16_t pid16 = getPID_Constants(static_cast<pid_index_e>(axis));
         if (pid16.kd > 0 && dMax > pid16.kd) {
             // ratio of DMax to kd, eg if kd is 8 and DMax is 10 then dMaxPercent is 1.25
-            _dMaxPercent[axis] = static_cast<float>(dMax) / pid16.kd;
+            _fc.dMaxPercent[axis] = static_cast<float>(dMax) / pid16.kd;
         } else {
-            _dMaxPercent[axis] = 1.0F;
+            _fc.dMaxPercent[axis] = 1.0F;
         }
     }
-    _dMaxGyroGain = D_MAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / D_MAX_LOWPASS_HZ;
+    _fc.dMaxGyroGain = fc_t::D_MAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / fc_t::D_MAX_LOWPASS_HZ;
     // lowpass included inversely in gain since stronger lowpass decreases peak effect
-    _dMaxSetpointGain = D_MAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / D_MAX_LOWPASS_HZ;
+    _fc.dMaxSetpointGain = fc_t::D_MAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / fc_t::D_MAX_LOWPASS_HZ;
 #endif
 }
 
@@ -302,19 +302,19 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
         telemetry.motors[ii].rpm = _mixer.getMotorRPM(ii);
     }
     if (motorsIsOn()) {
-        const PIDF::error_t rollRateError = _PIDS[ROLL_RATE_DPS].getError();
+        const PIDF::error_t rollRateError = _sh.PIDS[ROLL_RATE_DPS].getError();
         telemetry.rollRateError = { rollRateError.P, rollRateError.I, rollRateError.D, rollRateError.F, rollRateError.S };
 
-        const PIDF::error_t pitchRateError = _PIDS[PITCH_RATE_DPS].getError();
+        const PIDF::error_t pitchRateError = _sh.PIDS[PITCH_RATE_DPS].getError();
         telemetry.pitchRateError = { pitchRateError.P, pitchRateError.I, pitchRateError.D, pitchRateError.F, pitchRateError.S };
 
-        const PIDF::error_t yawRateError = _PIDS[YAW_RATE_DPS].getError();
+        const PIDF::error_t yawRateError = _sh.PIDS[YAW_RATE_DPS].getError();
         telemetry.yawRateError = { yawRateError.P, yawRateError.I, yawRateError.D, yawRateError.F, yawRateError.S };
 
-        const PIDF::error_t rollAngleError = _PIDS[ROLL_ANGLE_DEGREES].getError();
+        const PIDF::error_t rollAngleError = _sh.PIDS[ROLL_ANGLE_DEGREES].getError();
         telemetry.rollAngleError = { rollAngleError.P, rollAngleError.I, rollAngleError.D, rollAngleError.F, rollAngleError.S };
 
-        const PIDF::error_t pitchAngleError = _PIDS[PITCH_ANGLE_DEGREES].getError();
+        const PIDF::error_t pitchAngleError = _sh.PIDS[PITCH_ANGLE_DEGREES].getError();
         telemetry.pitchAngleError = { pitchAngleError.P, pitchAngleError.I, pitchAngleError.D, pitchAngleError.F, pitchAngleError.S };
     } else {
         telemetry.rollRateError =  { 0.0F, 0.0F, 0.0F, 0.0F, 0.0F };
@@ -331,11 +331,11 @@ Called from within the VehicleControllerTask when signalled by the AHRS task tha
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {
-    ++_taskSignalledCount;
-    if (_taskSignalledCount < _taskDenominator) {
+    ++_fc.taskSignalledCount;
+    if (_fc.taskSignalledCount < _taskDenominator) {
         return;
     }
-    _taskSignalledCount = 0;
+    _fc.taskSignalledCount = 0;
 
     if (_radioController.getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
         MotorMixerBase::commands_t commands {
@@ -346,7 +346,7 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
         };
         _mixer.outputToMotors(commands, deltaT, tickCount);
         // the mixer may adjust the throttle value, so save this value for the blackbox record
-        _mixerAdjustedThrottle= commands.throttle;
+        _fc.mixerAdjustedThrottle= commands.throttle;
         return;
     }
 
@@ -359,6 +359,6 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
     };
 
     // the mixer may adjust the throttle value, so save this value for the blackbox record
-    _mixerAdjustedThrottle= commands.throttle;
+    _fc.mixerAdjustedThrottle= commands.throttle;
     _mixer.outputToMotors(commands, deltaT, tickCount);
 }

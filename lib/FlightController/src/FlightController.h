@@ -147,7 +147,7 @@ public:
     inline bool motorsIsDisabled() const { return _mixer.motorsIsDisabled(); }
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
-    inline control_mode_e getControlMode() const { return _controlMode; }
+    inline control_mode_e getControlMode() const { return _fc.controlMode; }
     void setControlMode(control_mode_e controlMode);
 
     bool isArmingFlagSet(arming_flag_e armingFlag) const;
@@ -166,7 +166,7 @@ public:
 
     const std::string& getPID_Name(pid_index_e pidIndex) const;
 
-    inline const PIDF& getPID(pid_index_e pidIndex) const { return _PIDS[pidIndex]; }
+    inline const PIDF& getPID(pid_index_e pidIndex) const { return _sh.PIDS[pidIndex]; }
     PIDF_uint16_t getPID_Constants(pid_index_e pidIndex) const;
     void setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16);
 
@@ -177,11 +177,11 @@ public:
     void setPID_F_MSP(pid_index_e pidIndex, uint16_t kf);
     void setPID_S_MSP(pid_index_e pidIndex, uint16_t ks);
 
-    inline float getPID_Setpoint(pid_index_e pidIndex) const { return _PIDS[pidIndex].getSetpoint(); }
-    void setPID_Setpoint(pid_index_e pidIndex, float setpoint) { _PIDS[pidIndex].setSetpoint(setpoint); }
+    inline float getPID_Setpoint(pid_index_e pidIndex) const { return _sh.PIDS[pidIndex].getSetpoint(); }
+    void setPID_Setpoint(pid_index_e pidIndex, float setpoint) { _sh.PIDS[pidIndex].setSetpoint(setpoint); }
 
-    void switchPID_integrationOn() { for (auto& pid : _PIDS) { pid.switchIntegrationOn();} }
-    void switchPID_integrationOff() { for (auto& pid : _PIDS) { pid.switchIntegrationOff();} }
+    void switchPID_integrationOn() { for (auto& pid : _sh.PIDS) { pid.switchIntegrationOn();} }
+    void switchPID_integrationOff() { for (auto& pid : _sh.PIDS) { pid.switchIntegrationOff();} }
 
     // Functions to calculate roll, pitch, and yaw rates in the NED coordinate frame, converting from gyroRPS in the ENU coordinate frame
     // Note that for NED, roll is about the y-axis and pitch is about the x-axis.
@@ -191,22 +191,22 @@ public:
 
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
     const MotorMixerBase& getMixer() const { return _mixer; }
-    float getMixerAdjustedThrottle() const { return _mixerAdjustedThrottle; }
+    float getMixerAdjustedThrottle() const { return _fc.mixerAdjustedThrottle; }
 
     const Debug& getDebug() const { return _debug; }
     Debug& getDebug() { return _debug; }
 
-    const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
+    const filters_config_t& getFiltersConfig() const { return _fc.filtersConfig; }
     void setFiltersConfig(const filters_config_t& filtersConfig);
-    const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }
+    const anti_gravity_config_t& getAntiGravityConfig() const { return _fc.antiGravityConfig; }
     void setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig);
     void setDMaxConfig(const d_max_config_t& dMaxConfig);
-    const d_max_config_t& getDMaxConfig() const { return _dMaxConfig; }
+    const d_max_config_t& getDMaxConfig() const { return _fc.dMaxConfig; }
 public:
     [[noreturn]] static void Task(void* arg);
 public:
     void detectCrashOrSpin();
-    void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _yawSpinThresholdDPS = yawSpinThresholdDPS; }
+    void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _fc.yawSpinThresholdDPS = yawSpinThresholdDPS; }
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
 
     void calculateDMaxMultipliers();
@@ -224,81 +224,95 @@ private:
     Debug& _debug;
     Blackbox* _blackbox {nullptr};
     const uint32_t _taskDenominator;
-    uint32_t _taskSignalledCount {0};
-    control_mode_e _controlMode {CONTROL_MODE_RATE};
-    uint32_t _useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
-    uint32_t _useAngleModeOnRollAcroModeOnPitch {false}; // used for "level race mode" aka "NFE race mode"
-
+    //!!TODO: constants below need to be made configurable
+    const uint32_t _useAngleModeOnRollAcroModeOnPitch {false}; // used for "level race mode" aka "NFE race mode"
     // ground mode handling
-    int _groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
-    float _takeOffThrottleThreshold {0.2F};
-    uint32_t _takeOffTickCount {0};
-    uint32_t _takeOffCountStart {0};
-    uint32_t _takeOffTickThreshold {1000};
-
-    // setpoint timing
-    uint32_t _setpointTickCountPrevious {0};
-    uint32_t _setpointTickCountSum {0};
-    enum { SETPOINT_TICKCOUNT_COUNTER_START = 100};
-    uint32_t _setpointTickCountCounter {SETPOINT_TICKCOUNT_COUNTER_START};
-    float _setpointDeltaT {};
-
-    // throttle value is scaled to the range [-1,0, 1.0]
-    float _TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
-    float _TPA_multiplier {0.0F};
-    float _TPA_breakpoint {0.6F};
-
-    // anti-gravity, increase P and I terms when rapid throttle movements occur
-    anti_gravity_config_t _antiGravityConfig {};
-    float _antiGravityIGain {};
-    float _antiGravityPGain {};
-    float _throttlePrevious {0.0F};
-    PowerTransferFilter2 _antiGravityThrottleFilter {};
-
-#ifdef USE_D_MAX
-    static constexpr float D_MAX_GAIN_FACTOR = 0.00008F;
-    static constexpr float D_MAX_SETPOINT_GAIN_FACTOR = 0.00008F;
-    enum { D_MAX_RANGE_HZ = 85, D_MAX_LOWPASS_HZ = 35 };
-    float _dMaxGyroGain {};
-    float _dMaxSetpointGain {};
-    std::array<PowerTransferFilter2, RP_AXIS_COUNT> _dMaxRangeFilter {};
-    std::array<PowerTransferFilter2, RP_AXIS_COUNT> _dMaxLowpassFilter {};
-    std::array<float, RP_AXIS_COUNT> _dMaxPercent {};
-    std::array<uint8_t, RP_AXIS_COUNT> _dMax {};
-    d_max_config_t _dMaxConfig {};
-#endif
-    std::array<float, RP_AXIS_COUNT> _dMaxMultiplier {1.0F, 1.0F};
-
-    // angle mode data
-    enum { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
-    uint32_t _angleModeCalculationState { STATE_CALCULATE_ROLL };
-    uint32_t _angleModeUseQuaternionSpace {false};
-    float _maxRollRateDPS {500.0F};
-    float _rollStickSinAngle {0.0F};
-    float _rollRateSetpointDPS {0.0F};
-    float _rollSinAngle {0.0F};
-    float _maxPitchRateDPS {500.0F};
-    float _pitchStickSinAngle {0.0F};
-    float _pitchRateSetpointDPS {0.0F};
-    float _pitchSinAngle {0.0F};
-
-    float _outputThrottle {0.0F};
-    float _rollRateAtMaxPowerDPS {1000.0};
-    float _pitchRateAtMaxPowerDPS {1000.0};
-    float _yawRateAtMaxPowerDPS {1000.0};
-    float _mixerAdjustedThrottle {0.0F};
-    float _yawRateSetpoint {0.0F};
-
+    const float _takeOffThrottleThreshold {0.2F};
+    const uint32_t _takeOffTickThreshold {1000};
+    const uint32_t _angleModeUseQuaternionSpace {false};
     // yaw spin recovery
-    uint32_t _yawSpinRecovery { false };
-    float _yawSpinThresholdDPS {0.0F};
-    float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };
-    float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };
+    const float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };
+    const float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };
+    const float _rollRateAtMaxPowerDPS {1000.0};
+    const float _pitchRateAtMaxPowerDPS {1000.0};
+    const float _yawRateAtMaxPowerDPS {1000.0};
 
-    std::array<PIDF::PIDF_t, PID_COUNT> _pidConstants {}; //!< the PID constants as set by tuning
-    std::array<PIDF, PID_COUNT> _PIDS {}; //!< PIDF controllers, with dynamically altered PID values
-    std::array<float, PID_COUNT> _outputs {}; //<! PID outputs. These are stored since the output from one PID may be used as the input to another
-    std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> _outputFilters;
+    // member data is divided into structs, according to which task may set that data
+    // so only functions running in the context of the receiver task can set data in the rx_t struct, etc
+    // this is to help avoid race conditions
+    // data that can be set by more than one task is in the shared struct
+    struct fc_t {
+        uint32_t taskSignalledCount {0};
+        control_mode_e controlMode {CONTROL_MODE_RATE};
+        float yawSpinThresholdDPS {0.0F};
+        float TPA_multiplier {0.0F};
+        float TPA_breakpoint {0.6F};
+        anti_gravity_config_t antiGravityConfig {};
+        float antiGravityIGain {};
+        float antiGravityPGain {};
+        float mixerAdjustedThrottle {0.0F};
+        filters_config_t filtersConfig {};
+#ifdef USE_D_MAX
+        static constexpr float D_MAX_GAIN_FACTOR = 0.00008F;
+        static constexpr float D_MAX_SETPOINT_GAIN_FACTOR = 0.00008F;
+        enum { D_MAX_RANGE_HZ = 85, D_MAX_LOWPASS_HZ = 35 };
+        float dMaxGyroGain {};
+        float dMaxSetpointGain {};
+        std::array<float, RP_AXIS_COUNT> dMaxPercent {};
+        std::array<uint8_t, RP_AXIS_COUNT> dMax {};
+        d_max_config_t dMaxConfig {};
+#endif
+        std::array<PIDF::PIDF_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning
+    };
+    struct rx_t {
+        // setpoint timing
+        uint32_t setpointTickCountPrevious {0};
+        uint32_t setpointTickCountSum {0};
+        enum { SETPOINT_TICKCOUNT_COUNTER_START = 100};
+        uint32_t setpointTickCountCounter {SETPOINT_TICKCOUNT_COUNTER_START};
+        float setpointDeltaT {};
+        float throttlePrevious {0.0F};
+        float yawRateSetpointDPS {0.0F};
+        uint32_t useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
+        // throttle value is scaled to the range [-1,0, 1.0]
+        float TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
+    };
+    struct ah_t {
+        float maxRollRateDPS {500.0F};
+        float rollStickSinAngle {0.0F};
+        float rollRateSetpointDPS {0.0F};
+        float rollSinAngle {0.0F};
+        float maxPitchRateDPS {500.0F};
+        float pitchStickSinAngle {0.0F};
+        float pitchRateSetpointDPS {0.0F};
+        float pitchSinAngle {0.0F};
+        enum { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
+        uint32_t angleModeCalculationState { STATE_CALCULATE_ROLL };
+        std::array<float, PID_COUNT> outputs {}; //<! PID outputs. These are stored since the output from one PID may be used as the input to another
+        std::array<float, RP_AXIS_COUNT> dMaxMultiplier {1.0F, 1.0F};
+    };
+    struct shared_t {
+        int groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
+        uint32_t takeOffCountStart {0};
+        PowerTransferFilter2 antiGravityThrottleFilter {};
+        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilter {};
+        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxLowpassFilter {};
+        uint32_t yawSpinRecovery { false };
+        float outputThrottle {0.0F};
+        std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID values
+        std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> outputFilters;
+        // DTerm filters
+        PowerTransferFilter1 rollRateDTermFilter {};
+        PowerTransferFilter1 pitchRateDTermFilter {};
+        PowerTransferFilter1 rollAngleDTermFilter {};
+        PowerTransferFilter1 pitchAngleDTermFilter {};
+    };
+
+    fc_t _fc;
+    rx_t _rx;
+    ah_t _ah;
+    shared_t _sh;
+
     // Betaflight-compatible scale factors.
     static constexpr PIDF::PIDF_t _scaleFactors = {
         0.032029F,
@@ -307,13 +321,4 @@ private:
         0.013754F,
         0.01F // !!TODO: provisional value
     };
-
-    // DTerm filters
-    filters_config_t _filtersConfig {};
-    PowerTransferFilter1 _rollRateDTermFilter {};
-    PowerTransferFilter1 _pitchRateDTermFilter {};
-    PowerTransferFilter1 _rollAngleDTermFilter {};
-    PowerTransferFilter1 _pitchAngleDTermFilter {};
-    PowerTransferFilter1 _rollStickFilter {};
-    PowerTransferFilter1 _pitchStickFilter {};
 };
