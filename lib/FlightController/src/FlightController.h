@@ -147,7 +147,7 @@ public:
     inline bool motorsIsDisabled() const { return _mixer.motorsIsDisabled(); }
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
-    inline control_mode_e getControlMode() const { return _fc.controlMode; }
+    inline control_mode_e getControlMode() const { return _fcC.controlMode; }
     void setControlMode(control_mode_e controlMode);
 
     bool isArmingFlagSet(arming_flag_e armingFlag) const;
@@ -191,22 +191,22 @@ public:
 
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
     const MotorMixerBase& getMixer() const { return _mixer; }
-    float getMixerAdjustedThrottle() const { return _fc.mixerAdjustedThrottle; }
+    float getMixerAdjustedThrottle() const { return _fcC.mixerAdjustedThrottle; }
 
     const Debug& getDebug() const { return _debug; }
     Debug& getDebug() { return _debug; }
 
-    const filters_config_t& getFiltersConfig() const { return _fc.filtersConfig; }
+    const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
     void setFiltersConfig(const filters_config_t& filtersConfig);
-    const anti_gravity_config_t& getAntiGravityConfig() const { return _fc.antiGravityConfig; }
+    const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }
     void setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig);
     void setDMaxConfig(const d_max_config_t& dMaxConfig);
-    const d_max_config_t& getDMaxConfig() const { return _fc.dMaxConfig; }
+    const d_max_config_t& getDMaxConfig() const { return _dMaxConfig; }
 public:
     [[noreturn]] static void Task(void* arg);
 public:
     void detectCrashOrSpin();
-    void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _fc.yawSpinThresholdDPS = yawSpinThresholdDPS; }
+    void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _sh.yawSpinThresholdDPS = yawSpinThresholdDPS; }
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
 
     void calculateDMaxMultipliers();
@@ -224,6 +224,7 @@ private:
     Debug& _debug;
     Blackbox* _blackbox {nullptr};
     const uint32_t _taskDenominator;
+
     //!!TODO: constants below need to be made configurable
     const uint32_t _useAngleModeOnRollAcroModeOnPitch {false}; // used for "level race mode" aka "NFE race mode"
     // ground mode handling
@@ -233,35 +234,41 @@ private:
     // yaw spin recovery
     const float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };
     const float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };
+    // TPA
+    const float _TPA_multiplier {0.0F};
+    const float _TPA_breakpoint {0.6F};
+    // flight dynamics scaling
+    const float _maxRollRateDPS {500.0F};
+    const float _maxPitchRateDPS {500.0F};
     const float _rollRateAtMaxPowerDPS {1000.0};
     const float _pitchRateAtMaxPowerDPS {1000.0};
     const float _yawRateAtMaxPowerDPS {1000.0};
 
+
+    // configuration data is const once it has been set in set*Config()
+    const anti_gravity_config_t _antiGravityConfig {};
+    const filters_config_t _filtersConfig {};
+    const float _antiGravityIGain {};
+    const float _antiGravityPGain {};
+#ifdef USE_D_MAX
+    d_max_config_t _dMaxConfig {};
+    static constexpr float D_MAX_GAIN_FACTOR = 0.00008F;
+    static constexpr float D_MAX_SETPOINT_GAIN_FACTOR = 0.00008F;
+    enum { D_MAX_RANGE_HZ = 85, D_MAX_LOWPASS_HZ = 35 };
+    float _dMaxGyroGain {};
+    float _dMaxSetpointGain {};
+    std::array<float, RP_AXIS_COUNT> _dMaxPercent {};
+    std::array<uint8_t, RP_AXIS_COUNT> _dMax {};
+#endif
+
     // member data is divided into structs, according to which task may set that data
-    // so only functions running in the context of the receiver task can set data in the rx_t struct, etc
+    // so, for example,  only functions running in the context of the receiver task can set data using _rxM
     // this is to help avoid race conditions
-    // data that can be set by more than one task is in the shared struct
+    // data that can be set by more than one task is in the shared_t struct
     struct fc_t {
         uint32_t taskSignalledCount {0};
         control_mode_e controlMode {CONTROL_MODE_RATE};
-        float yawSpinThresholdDPS {0.0F};
-        float TPA_multiplier {0.0F};
-        float TPA_breakpoint {0.6F};
-        anti_gravity_config_t antiGravityConfig {};
-        float antiGravityIGain {};
-        float antiGravityPGain {};
         float mixerAdjustedThrottle {0.0F};
-        filters_config_t filtersConfig {};
-#ifdef USE_D_MAX
-        static constexpr float D_MAX_GAIN_FACTOR = 0.00008F;
-        static constexpr float D_MAX_SETPOINT_GAIN_FACTOR = 0.00008F;
-        enum { D_MAX_RANGE_HZ = 85, D_MAX_LOWPASS_HZ = 35 };
-        float dMaxGyroGain {};
-        float dMaxSetpointGain {};
-        std::array<float, RP_AXIS_COUNT> dMaxPercent {};
-        std::array<uint8_t, RP_AXIS_COUNT> dMax {};
-        d_max_config_t dMaxConfig {};
-#endif
         std::array<PIDF::PIDF_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning
     };
     struct rx_t {
@@ -278,11 +285,9 @@ private:
         float TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
     };
     struct ah_t {
-        float maxRollRateDPS {500.0F};
         float rollStickSinAngle {0.0F};
         float rollRateSetpointDPS {0.0F};
         float rollSinAngle {0.0F};
-        float maxPitchRateDPS {500.0F};
         float pitchStickSinAngle {0.0F};
         float pitchRateSetpointDPS {0.0F};
         float pitchSinAngle {0.0F};
@@ -294,26 +299,31 @@ private:
     struct shared_t {
         int groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
         uint32_t takeOffCountStart {0};
-        PowerTransferFilter2 antiGravityThrottleFilter {};
-        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilter {};
-        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxLowpassFilter {};
+        float yawSpinThresholdDPS {0.0F};
         uint32_t yawSpinRecovery { false };
         float outputThrottle {0.0F};
         std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID values
         std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> outputFilters;
+        PowerTransferFilter2 antiGravityThrottleFilter {};
         // DTerm filters
         PowerTransferFilter1 rollRateDTermFilter {};
         PowerTransferFilter1 pitchRateDTermFilter {};
         PowerTransferFilter1 rollAngleDTermFilter {};
         PowerTransferFilter1 pitchAngleDTermFilter {};
+#if defined(USE_D_MAX)
+        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilter {};
+        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxLowpassFilter {};
+#endif
     };
 
-    fc_t _fc;
-    rx_t _rx;
-    ah_t _ah;
-    shared_t _sh;
+    fc_t _fcM; //!< MODIFIABLE partition of member data CAN be set in the context of the Flight Controller Task
+    const fc_t& _fcC; //!< CONSTANT partition of member data that MUST be used outside the context of the Flight Controller Task
+    rx_t _rxM; //!< MODIFIABLE partition of member data CAN be set in the context of the Receiver Task
+    const rx_t& _rxC; //!< CONSTANT partition of member data that MUST be used outside the context of the Receiver Task
+    ah_t _ahM; //!< MODIFIABLE partition of member data CAN be set in the context of the AHRS Task
+    shared_t _sh; //!< member data that is set in the context of more than one task
 
-    // Betaflight-compatible scale factors.
+    // Betaflight-compatible PID scale factors.
     static constexpr PIDF::PIDF_t _scaleFactors = {
         0.032029F,
         0.244381F,

@@ -26,7 +26,9 @@ FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, M
     _mixer(motorMixer),
     _radioController(radioController),
     _debug(debug),
-    _taskDenominator(taskDenominator)
+    _taskDenominator(taskDenominator),
+    _fcC(_fcM),
+    _rxC(_rxM)
 {
     _sh.antiGravityThrottleFilter.setToPassthrough();
 }
@@ -94,37 +96,37 @@ void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_
     _sh.PIDS[pidIndex].setPID(pid);
     _sh.PIDS[pidIndex].switchIntegrationOff();
     // keep copies of P and I terms so they can be adjusted by anti-gravity
-    _fc.pidConstants[pidIndex] = _sh.PIDS[pidIndex].getPID();
+    _fcM.pidConstants[pidIndex] = _sh.PIDS[pidIndex].getPID();
 }
 
 void FlightController::setPID_P_MSP(pid_index_e pidIndex, uint16_t kp)
 {
     _sh.PIDS[pidIndex].setP(kp * _scaleFactors.kp);
-    _fc.pidConstants[pidIndex].kp = _sh.PIDS[pidIndex].getP();
+    _fcM.pidConstants[pidIndex].kp = _sh.PIDS[pidIndex].getP();
 }
 
 void FlightController::setPID_I_MSP(pid_index_e pidIndex, uint16_t ki)
 {
     _sh.PIDS[pidIndex].setI(ki * _scaleFactors.ki);
-    _fc.pidConstants[pidIndex].ki = _sh.PIDS[pidIndex].getI();
+    _fcM.pidConstants[pidIndex].ki = _sh.PIDS[pidIndex].getI();
 }
 
 void FlightController::setPID_D_MSP(pid_index_e pidIndex, uint16_t kd)
 {
     _sh.PIDS[pidIndex].setD(kd * _scaleFactors.kd);
-    _fc.pidConstants[pidIndex].kd = _sh.PIDS[pidIndex].getD();
+    _fcM.pidConstants[pidIndex].kd = _sh.PIDS[pidIndex].getD();
 }
 
 void FlightController::setPID_F_MSP(pid_index_e pidIndex, uint16_t kf)
 {
     _sh.PIDS[pidIndex].setF(kf * _scaleFactors.kf);
-    _fc.pidConstants[pidIndex].kf = _sh.PIDS[pidIndex].getF();
+    _fcM.pidConstants[pidIndex].kf = _sh.PIDS[pidIndex].getF();
 }
 
 void FlightController::setPID_S_MSP(pid_index_e pidIndex, uint16_t ks)
 {
     _sh.PIDS[pidIndex].setF(ks * _scaleFactors.ks);
-    _fc.pidConstants[pidIndex].ks = _sh.PIDS[pidIndex].getS();
+    _fcM.pidConstants[pidIndex].ks = _sh.PIDS[pidIndex].getS();
 }
 
 uint32_t FlightController::getOutputPowerTimeMicroseconds() const
@@ -200,10 +202,10 @@ Sets the control mode.
 */
 void FlightController::setControlMode(control_mode_e controlMode)
 {
-    if (controlMode == _fc.controlMode) {
+    if (controlMode == _fcM.controlMode) {
         return;
     }
-    _fc.controlMode = controlMode;
+    _fcM.controlMode = controlMode;
     // reset the PID integral values when we change control mode
     for (auto& pid : _sh.PIDS) {
         pid.resetIntegral();
@@ -212,7 +214,7 @@ void FlightController::setControlMode(control_mode_e controlMode)
 
 void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 {
-    _fc.filtersConfig = filtersConfig;
+    const_cast<filters_config_t&>(_filtersConfig) = filtersConfig;
     //!!TODO: check dT value for filters config
     const float dT = static_cast<float>(_taskIntervalMicroseconds) / 1000000.0F;
     //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
@@ -258,28 +260,29 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 
 void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig)
 {
-    _fc.antiGravityConfig = antiGravityConfig;
-    _fc.antiGravityPGain = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp;
-    _fc.antiGravityIGain = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki;
+    // cast away constness to allow otherwise constant data to be set here
+    const_cast<anti_gravity_config_t&>(_antiGravityConfig) = antiGravityConfig;
+    const_cast<float&>(_antiGravityPGain) = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp;
+    const_cast<float&>(_antiGravityIGain) = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki;
 }
 
 void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig)
 {
 #if defined(USE_D_MAX)
-    _fc.dMaxConfig = dMaxConfig;
+    const_cast<d_max_config_t&>(_dMaxConfig) = dMaxConfig;
     for (size_t axis = 0; axis < AXIS_COUNT; ++axis) {
         const uint8_t dMax = dMaxConfig.d_max[axis];
         const PIDF_uint16_t pid16 = getPID_Constants(static_cast<pid_index_e>(axis));
         if (pid16.kd > 0 && dMax > pid16.kd) {
             // ratio of DMax to kd, eg if kd is 8 and DMax is 10 then dMaxPercent is 1.25
-            _fc.dMaxPercent[axis] = static_cast<float>(dMax) / pid16.kd;
+            const_cast<float&>(_dMaxPercent[axis]) = static_cast<float>(dMax) / pid16.kd;
         } else {
-            _fc.dMaxPercent[axis] = 1.0F;
+            _dMaxPercent[axis] = 1.0F;
         }
     }
-    _fc.dMaxGyroGain = fc_t::D_MAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / fc_t::D_MAX_LOWPASS_HZ;
+    const_cast<float&>(_dMaxGyroGain) = D_MAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / D_MAX_LOWPASS_HZ;
     // lowpass included inversely in gain since stronger lowpass decreases peak effect
-    _fc.dMaxSetpointGain = fc_t::D_MAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / fc_t::D_MAX_LOWPASS_HZ;
+    const_cast<float&>(_dMaxSetpointGain) = D_MAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / D_MAX_LOWPASS_HZ;
 #endif
 }
 
@@ -331,11 +334,11 @@ Called from within the VehicleControllerTask when signalled by the AHRS task tha
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {
-    ++_fc.taskSignalledCount;
-    if (_fc.taskSignalledCount < _taskDenominator) {
+    ++_fcM.taskSignalledCount;
+    if (_fcM.taskSignalledCount < _taskDenominator) {
         return;
     }
-    _fc.taskSignalledCount = 0;
+    _fcM.taskSignalledCount = 0;
 
     if (_radioController.getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
         MotorMixerBase::commands_t commands {
@@ -346,7 +349,7 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
         };
         _mixer.outputToMotors(commands, deltaT, tickCount);
         // the mixer may adjust the throttle value, so save this value for the blackbox record
-        _fc.mixerAdjustedThrottle= commands.throttle;
+        _fcM.mixerAdjustedThrottle= commands.throttle;
         return;
     }
 
@@ -359,6 +362,6 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
     };
 
     // the mixer may adjust the throttle value, so save this value for the blackbox record
-    _fc.mixerAdjustedThrottle= commands.throttle;
+    _fcM.mixerAdjustedThrottle= commands.throttle;
     _mixer.outputToMotors(commands, deltaT, tickCount);
 }

@@ -20,32 +20,32 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
 {
     // We don't know the period at which setpoints are updated (it depends on the receiver) so calculate this 
     // so we can set the filters' cutoff frequency
-    if (_rx.setpointTickCountCounter != 0) {
-        _rx.setpointTickCountSum += tickCount;
-        --_rx.setpointTickCountCounter;
-        if (_rx.setpointTickCountCounter == 0) {
-            _rx.setpointDeltaT = 0.001F * static_cast<float>(_rx.setpointTickCountSum) / rx_t::SETPOINT_TICKCOUNT_COUNTER_START;
-            _sh.antiGravityThrottleFilter.setCutoffFrequency(_fc.antiGravityConfig.cutoff_hz, _rx.setpointDeltaT);
+    if (_rxM.setpointTickCountCounter != 0) {
+        _rxM.setpointTickCountSum += tickCount;
+        --_rxM.setpointTickCountCounter;
+        if (_rxM.setpointTickCountCounter == 0) {
+            _rxM.setpointDeltaT = 0.001F * static_cast<float>(_rxM.setpointTickCountSum) / rx_t::SETPOINT_TICKCOUNT_COUNTER_START;
+            _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
 #if defined(USE_D_MAX)
             for (size_t ii = 0; ii < AXIS_COUNT; ++ii) {
-                _sh.dMaxRangeFilter[ii].setCutoffFrequency(fc_t::D_MAX_RANGE_HZ, _rx.setpointDeltaT);
-                _sh.dMaxLowpassFilter[ii].setCutoffFrequency(fc_t::D_MAX_LOWPASS_HZ, _rx.setpointDeltaT);
+                _sh.dMaxRangeFilter[ii].setCutoffFrequency(D_MAX_RANGE_HZ, _rxM.setpointDeltaT);
+                _sh.dMaxLowpassFilter[ii].setCutoffFrequency(D_MAX_LOWPASS_HZ, _rxM.setpointDeltaT);
             }
 #endif
         }
     }
 
-    const float throttleDelta = fabsf(throttle - _rx.throttlePrevious);
-    _rx.throttlePrevious = throttle;
-    const float deltaT = static_cast<float>((tickCount - _rx.setpointTickCountPrevious)) * 0.001F;
-    _rx.setpointTickCountPrevious = tickCount;
+    const float throttleDelta = fabsf(throttle - _rxM.throttlePrevious);
+    _rxM.throttlePrevious = throttle;
+    const float deltaT = static_cast<float>((tickCount - _rxM.setpointTickCountPrevious)) * 0.001F;
+    _rxM.setpointTickCountPrevious = tickCount;
     float throttleDerivative = throttleDelta/deltaT;
     _debug.set(DEBUG_ANTI_GRAVITY, 0, lrintf(throttleDerivative * 100));
 
     const float throttleReversed = 1.0F - throttle;
     throttleDerivative *= throttleReversed * throttleReversed;
     // generally focus on the low throttle period
-    if (throttle > _rx.throttlePrevious) {
+    if (throttle > _rxM.throttlePrevious) {
         throttleDerivative *= throttleReversed * 0.5F;
         // when increasing throttle, focus even more on the low throttle range
     }
@@ -58,9 +58,9 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     // ****
 
     static constexpr float ANTIGRAVITY_KI = 0.34F;
-    const float ITermAccelerator =  throttleDerivative * _fc.antiGravityIGain * ANTIGRAVITY_KI;
-    _sh.PIDS[ROLL_RATE_DPS].setI(_fc.pidConstants[ROLL_RATE_DPS].ki + ITermAccelerator);
-    _sh.PIDS[PITCH_RATE_DPS].setI(_fc.pidConstants[PITCH_RATE_DPS].ki + ITermAccelerator);
+    const float ITermAccelerator =  throttleDerivative * _antiGravityIGain * ANTIGRAVITY_KI;
+    _sh.PIDS[ROLL_RATE_DPS].setI(_fcC.pidConstants[ROLL_RATE_DPS].ki + ITermAccelerator);
+    _sh.PIDS[PITCH_RATE_DPS].setI(_fcC.pidConstants[PITCH_RATE_DPS].ki + ITermAccelerator);
     _debug.set(DEBUG_ANTI_GRAVITY, 2, lrintf(1.0F + ITermAccelerator/_sh.PIDS[PITCH_RATE_DPS].getI()*1000.0F));
 
 
@@ -71,8 +71,8 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     // ****
 
     // _TPA is 1.0F (ie no attenuation) if throttleStick <= _TPA_Breakpoint;
-    _rx.TPA = 1.0F - _fc.TPA_multiplier * std::fminf(0.0F, throttle - _fc.TPA_breakpoint);
-    _debug.set(DEBUG_TPA, 0, lrintf(_rx.TPA * 1000));
+    _rxM.TPA = 1.0F - _TPA_multiplier * std::fminf(0.0F, throttle - _TPA_breakpoint);
+    _debug.set(DEBUG_TPA, 0, lrintf(_rxM.TPA * 1000));
 
     // ****
     // use TPA and anti-gravity to adjust the PTerms on roll and pitch
@@ -80,13 +80,13 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
 
     // attenuate roll if setpoint greater than 50 DPS, half at 100 DPS
     const float attenuatorRoll = std::fmaxf(fabsf(_sh.PIDS[ROLL_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
-    const float PTermBoostRoll = 1.0F + (throttleDerivative *_fc.antiGravityPGain / attenuatorRoll);
-    _sh.PIDS[ROLL_RATE_DPS].setP(_fc.pidConstants[ROLL_RATE_DPS].kp * PTermBoostRoll * _rx.TPA);
+    const float PTermBoostRoll = 1.0F + (throttleDerivative *_antiGravityPGain / attenuatorRoll);
+    _sh.PIDS[ROLL_RATE_DPS].setP(_fcC.pidConstants[ROLL_RATE_DPS].kp * PTermBoostRoll * _rxM.TPA);
 
     // attenuate pitch if setpoint greater than 50 DPS, half at 100 DPS
     const float attenuatorPitch = std::fmaxf(fabsf(_sh.PIDS[PITCH_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
-    const float PTermBoostPitch = 1.0F + (throttleDerivative *_fc.antiGravityPGain / attenuatorPitch);
-    _sh.PIDS[PITCH_RATE_DPS].setP(_fc.pidConstants[PITCH_RATE_DPS].kp * PTermBoostPitch * _rx.TPA);
+    const float PTermBoostPitch = 1.0F + (throttleDerivative *_antiGravityPGain / attenuatorPitch);
+    _sh.PIDS[PITCH_RATE_DPS].setP(_fcC.pidConstants[PITCH_RATE_DPS].kp * PTermBoostPitch * _rxM.TPA);
     _debug.set(DEBUG_ANTI_GRAVITY, 3, lrintf(PTermBoostPitch * 1000.0F));
 }
 
@@ -132,7 +132,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // For NED nose left is positive yaw, so sign of setpoint is same as sign of _yawStick.
     // So sign of _yawStick is left unchanged.
     _sh.PIDS[YAW_RATE_DPS].setSetpoint(controls.yawStickDPS);
-    _rx.yawRateSetpointDPS = controls.yawStickDPS;
+    _rxM.yawRateSetpointDPS = controls.yawStickDPS;
 
     // When in ground mode, the PID I-terms are set to zero to avoid integral windup on the ground
     if (_sh.groundMode) {
@@ -154,7 +154,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // Angle Mode is used if the controlMode is set to angle mode, or failsafe is on.
     // Angle Mode is prevented when in Ground Mode, so the aircraft doesn't try and self-level while it is still on the ground.
     // This value is cached here, to avoid evaluating a reasonably complex condition in updateOutputsUsingPIDs()
-    _rx.useAngleMode = (_fc.controlMode == CONTROL_MODE_ANGLE || (_radioController.getFailsafePhase() != RadioController::FAILSAFE_IDLE)) && !_sh.groundMode;
+    _rxM.useAngleMode = (_fcC.controlMode == CONTROL_MODE_ANGLE || (_radioController.getFailsafePhase() != RadioController::FAILSAFE_IDLE)) && !_sh.groundMode;
 }
 
 /*!
@@ -164,7 +164,7 @@ Detect crash or yaw spin. Runs in context of Receiver Task.
 */
 void FlightController::detectCrashOrSpin()
 {
-    if (_fc.yawSpinThresholdDPS !=0.0F && fabsf(_sh.PIDS[YAW_RATE_DPS].getPreviousMeasurement()) > _fc.yawSpinThresholdDPS) {
+    if (_sh.yawSpinThresholdDPS !=0.0F && fabsf(_sh.PIDS[YAW_RATE_DPS].getPreviousMeasurement()) > _sh.yawSpinThresholdDPS) {
         // yaw spin detected
         _sh.yawSpinRecovery = true;
         switchPID_integrationOff();
