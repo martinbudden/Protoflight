@@ -38,6 +38,7 @@ static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0404;
 static constexpr uint16_t FlightControllerTPA_ConfigKey = 0x408;
 static constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x040C;
 static constexpr uint16_t FlightControllerDMaxConfigKey = 0x0410;
+static constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x0414;
 
 static constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
 static constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
@@ -69,6 +70,8 @@ static const char* FlightControllerFiltersConfigKey = "FCF";
 static const char* FlightControllerTPA_ConfigKey = "FCTPA";
 static const char* FlightControllerAntiGravityConfigKey = "FCAG";
 static const char* FlightControllerDMaxConfigKey = "FCDM";
+static const char* FlightControllerCrashRecoveryConfigKey = "FCCR";
+
 static const char* IMU_FiltersConfigKey = "IF";
 static const char* RPM_FiltersConfigKey = "RPM";
 static const char* RadioControllerFailsafeKey = "RCFS";
@@ -377,6 +380,22 @@ int32_t NonVolatileStorage::storeFlightControllerDMaxConfig(const FlightControll
 {
     return storeItem(FlightControllerDMaxConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerDMaxConfig);
 }
+
+
+FlightController::crash_recovery_config_t NonVolatileStorage::loadFlightControllerCrashRecoveryConfig(uint8_t pidProfileIndex) const
+{
+    FlightController::crash_recovery_config_t crashRecoveryConfig {};
+    if (loadItem(FlightControllerDMaxConfigKey, pidProfileIndex, &crashRecoveryConfig, sizeof(crashRecoveryConfig))) { // cppcheck-suppress knownConditionTrueFalse
+        return crashRecoveryConfig;
+    }
+    return DEFAULTS::flightControllerCrashRecoveryConfig;
+}
+
+int32_t NonVolatileStorage::storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& crashRecoveryConfig, uint8_t pidProfileIndex)
+{
+    return storeItem(FlightControllerCrashRecoveryConfigKey, pidProfileIndex, &crashRecoveryConfig, sizeof(crashRecoveryConfig), &DEFAULTS::flightControllerDMaxConfig);
+}
+
 
 
 IMU_Filters::config_t NonVolatileStorage::loadIMU_FiltersConfig() const

@@ -66,7 +66,7 @@ static const FlightController::d_max_config_t flightControllerDMaxConfig = {
     .d_max_advance = 20
 };
 
-static const FlightController::crash_recovery_t flightControllerCrashRecoveryConfig = {
+static const FlightController::crash_recovery_config_t flightControllerCrashRecoveryConfig = {
     .crash_dthreshold = 50,
     .crash_gthreshold = 400,
     .crash_setpoint_threshold = 350,

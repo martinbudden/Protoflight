@@ -398,6 +398,7 @@ void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, Flight
     flightController.setTPA_Config(nvs.loadFlightControllerTPA_Config(pidProfile));
     flightController.setAntiGravityConfig(nvs.loadFlightControllerAntiGravityConfig(pidProfile));
     flightController.setDMaxConfig(nvs.loadFlightControllerDMaxConfig(pidProfile));
+    flightController.setCrashRecoveryConfig(nvs.loadFlightControllerCrashRecoveryConfig(pidProfile));
 
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
         const VehicleControllerBase::PIDF_uint16_t pid = nvs.loadPID(ii, pidProfile);

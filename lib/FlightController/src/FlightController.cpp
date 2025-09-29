@@ -265,11 +265,11 @@ void FlightController::setTPA_Config(const tpa_config_t& tpaConfig)
 
     // default of 1350 gives 0.35. range is limited to 0 to 0.99
     enum { PWM_RANGE_MIN = 1000 };
-    const_cast<float&>(_tpaBreakpoint) = clip((tpaConfig.tpa_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.0F, 0.99F);
-    const_cast<float&>(_tpaMultiplier) = (tpaConfig.tpa_rate / 100.0F) / (1.0F - _tpaBreakpoint);
+    const_cast<float&>(_tpa.breakpoint) = clip((tpaConfig.tpa_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.0F, 0.99F);
+    const_cast<float&>(_tpa.multiplier) = (tpaConfig.tpa_rate / 100.0F) / (1.0F - _tpa.breakpoint);
 
     // ensure tpaLowBreakpoint is always <= tpaBreakpoint
-    const_cast<float&>(_tpaLowBreakpoint) = std::fminf(clip((tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpaBreakpoint);
+    const_cast<float&>(_tpa.lowBreakpoint) = std::fminf(clip((tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpa.breakpoint);
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
@@ -278,31 +278,50 @@ void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGra
     // cast away constness to allow otherwise constant data to be set here
     // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
     const_cast<anti_gravity_config_t&>(_antiGravityConfig) = antiGravityConfig; 
-    const_cast<float&>(_antiGravityPGain) = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp;
-    const_cast<float&>(_antiGravityIGain) = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki;
+    const_cast<anti_gravity_runtime_t&>(_antiGravity) = { 
+        .PGain = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp,
+        .IGain = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki
+    };
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
 void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig)
 {
 #if defined(USE_D_MAX)
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
     const_cast<d_max_config_t&>(_dMaxConfig) = dMaxConfig;
     for (size_t axis = 0; axis < AXIS_COUNT; ++axis) {
         const uint8_t dMax = dMaxConfig.d_max[axis];
         const PIDF_uint16_t pid16 = getPID_Constants(static_cast<pid_index_e>(axis));
         if (pid16.kd > 0 && dMax > pid16.kd) {
             // ratio of DMax to kd, eg if kd is 8 and DMax is 10 then dMaxPercent is 1.25
-            const_cast<float&>(_dMaxPercent[axis]) = static_cast<float>(dMax) / pid16.kd;
+            const_cast<float&>(_dMax.percent[axis]) = static_cast<float>(dMax) / pid16.kd;
         } else {
-            _dMaxPercent[axis] = 1.0F;
+            const_cast<float&>(_dMax.percent[axis]) = 1.0F;
         }
     }
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-    const_cast<float&>(_dMaxGyroGain) = D_MAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / D_MAX_LOWPASS_HZ;
+    const_cast<float&>(_dMax.gyroGain) = DMAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / DMAX_LOWPASS_HZ;
     // lowpass included inversely in gain since stronger lowpass decreases peak effect
-    const_cast<float&>(_dMaxSetpointGain) = D_MAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / D_MAX_LOWPASS_HZ;
+    const_cast<float&>(_dMax.setpointGain) = DMAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / DMAX_LOWPASS_HZ;
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 #endif
+}
+
+void FlightController::setCrashRecoveryConfig(const crash_recovery_config_t& crashRecoveryConfig)
+{
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+    const_cast<crash_recovery_config_t&>(_crashRecoveryConfig) = crashRecoveryConfig;
+    const_cast<crash_recovery_runtime_t&>(_crash) = {
+        .timeLimitUs = static_cast<uint32_t>(crashRecoveryConfig.crash_time * 1000),
+        .timeDelayUs = static_cast<uint32_t>(crashRecoveryConfig.crash_delay * 1000),
+        .recoveryAngleDeciDegrees = crashRecoveryConfig.crash_recovery_angle * 10,
+        .recoveryRate = static_cast<float>(crashRecoveryConfig.crash_recovery_rate),
+        .gyroThresholdDPS = static_cast<float>(crashRecoveryConfig.crash_gthreshold), // error in deg/s
+        .DtermThresholdDPSPS = static_cast<float>(crashRecoveryConfig.crash_dthreshold * 1000), // gyro delta in deg/s/s * 1000 to match original 2017 intent
+        .setpointThresholdDPS = static_cast<float>(crashRecoveryConfig.crash_setpoint_threshold),
+        .limitYaw = static_cast<float>(crashRecoveryConfig.crash_limit_yaw)
+    };
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
 /*!

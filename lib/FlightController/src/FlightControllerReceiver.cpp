@@ -28,8 +28,8 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
             _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
 #if defined(USE_D_MAX)
             for (size_t ii = 0; ii < AXIS_COUNT; ++ii) {
-                _sh.dMaxRangeFilter[ii].setCutoffFrequency(D_MAX_RANGE_HZ, _rxM.setpointDeltaT);
-                _sh.dMaxLowpassFilter[ii].setCutoffFrequency(D_MAX_LOWPASS_HZ, _rxM.setpointDeltaT);
+                _sh.dMaxRangeFilter[ii].setCutoffFrequency(DMAX_RANGE_HZ, _rxM.setpointDeltaT);
+                _sh.dMaxLowpassFilter[ii].setCutoffFrequency(DMAX_LOWPASS_HZ, _rxM.setpointDeltaT);
             }
 #endif
         }
@@ -58,7 +58,7 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     // ****
 
     static constexpr float ANTIGRAVITY_KI = 0.34F;
-    const float ITermAccelerator =  throttleDerivative * _antiGravityIGain * ANTIGRAVITY_KI;
+    const float ITermAccelerator =  throttleDerivative * _antiGravity.IGain * ANTIGRAVITY_KI;
     _sh.PIDS[ROLL_RATE_DPS].setI(_fcC.pidConstants[ROLL_RATE_DPS].ki + ITermAccelerator);
     _sh.PIDS[PITCH_RATE_DPS].setI(_fcC.pidConstants[PITCH_RATE_DPS].ki + ITermAccelerator);
     _debug.set(DEBUG_ANTI_GRAVITY, 2, lrintf(1.0F + ITermAccelerator/_sh.PIDS[PITCH_RATE_DPS].getI()*1000.0F));
@@ -71,7 +71,7 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     // ****
 
     // _TPA is 1.0F (ie no attenuation) if throttleStick <= _tpaBreakpoint;
-    _rxM.TPA = 1.0F - _tpaMultiplier * std::fminf(0.0F, throttle - _tpaBreakpoint);
+    _rxM.TPA = 1.0F - _tpa.multiplier * std::fminf(0.0F, throttle - _tpa.breakpoint);
     _debug.set(DEBUG_TPA, 0, lrintf(_rxM.TPA * 1000));
 
     // ****
@@ -80,12 +80,12 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
 
     // attenuate roll if setpoint greater than 50 DPS, half at 100 DPS
     const float attenuatorRoll = std::fmaxf(fabsf(_sh.PIDS[ROLL_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
-    const float PTermBoostRoll = 1.0F + (throttleDerivative *_antiGravityPGain / attenuatorRoll);
+    const float PTermBoostRoll = 1.0F + (throttleDerivative *_antiGravity.PGain / attenuatorRoll);
     _sh.PIDS[ROLL_RATE_DPS].setP(_fcC.pidConstants[ROLL_RATE_DPS].kp * PTermBoostRoll * _rxM.TPA);
 
     // attenuate pitch if setpoint greater than 50 DPS, half at 100 DPS
     const float attenuatorPitch = std::fmaxf(fabsf(_sh.PIDS[PITCH_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
-    const float PTermBoostPitch = 1.0F + (throttleDerivative *_antiGravityPGain / attenuatorPitch);
+    const float PTermBoostPitch = 1.0F + (throttleDerivative *_antiGravity.PGain / attenuatorPitch);
     _sh.PIDS[PITCH_RATE_DPS].setP(_fcC.pidConstants[PITCH_RATE_DPS].kp * PTermBoostPitch * _rxM.TPA);
     _debug.set(DEBUG_ANTI_GRAVITY, 3, lrintf(PTermBoostPitch * 1000.0F));
 }
@@ -167,6 +167,14 @@ void FlightController::detectCrashOrSpin()
     if (_sh.yawSpinThresholdDPS !=0.0F && fabsf(_sh.PIDS[YAW_RATE_DPS].getPreviousMeasurement()) > _sh.yawSpinThresholdDPS) {
         // yaw spin detected
         _sh.yawSpinRecovery = true;
+        switchPID_integrationOff();
+    }
+    const size_t axis = YAW_RATE_DPS;
+    const PIDF pid = _sh.PIDS[axis];
+    if (std::fabs(pid.getErrorRawD()) > _crash.DtermThresholdDPSPS
+        && std::fabs(pid.getErrorRawP()) > _crash.gyroThresholdDPS
+        && std::fabs(pid.getSetpoint()) < _crash.setpointThresholdDPS) {
+        _sh.crashDetected = true;
         switchPID_integrationOff();
     }
 }

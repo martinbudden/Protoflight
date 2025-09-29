@@ -122,18 +122,37 @@ public:
         uint8_t tpa_low_always;
         uint16_t tpa_low_breakpoint;
     };
+    struct tpa_runtime_t {
+        float breakpoint;
+        float multiplier;
+        float lowBreakpoint;
+        float lowMultiplier;
+    };
     struct anti_gravity_config_t {
         uint8_t cutoff_hz;
         uint8_t p_gain;
         uint8_t i_gain;
+    };
+    struct anti_gravity_runtime_t {
+        float PGain;
+        float IGain;
     };
     struct d_max_config_t {
         std::array<uint8_t, RP_AXIS_COUNT> d_max; // Maximum D value on each axis
         uint8_t d_max_gain;     // gain factor for amount of gyro / setpoint activity required to boost D
         uint8_t d_max_advance;  // percentage multiplier for setpoint
     };
+    static constexpr float DMAX_GAIN_FACTOR = 0.00008F;
+    static constexpr float DMAX_SETPOINT_GAIN_FACTOR = 0.00008F;
+    enum { DMAX_RANGE_HZ = 85, DMAX_LOWPASS_HZ = 35 };
+    struct d_max_runtime_t {
+        float gyroGain;
+        float setpointGain;
+        std::array<float, RP_AXIS_COUNT> percent;
+        std::array<uint8_t, RP_AXIS_COUNT> max;
+    };
     enum crash_recovery_e { CRASH_RECOVERY_OFF = 0, CRASH_RECOVERY_ON, CRASH_RECOVERY_BEEP, CRASH_RECOVERY_DISARM };
-    struct crash_recovery_t {
+    struct crash_recovery_config_t {
         uint16_t crash_dthreshold;          // dterm crash value
         uint16_t crash_gthreshold;          // gyro crash value
         uint16_t crash_setpoint_threshold;  // setpoint must be below this value to detect crash, so flips and rolls are not interpreted as crashes
@@ -143,6 +162,16 @@ public:
         uint8_t crash_recovery_angle;       // degrees
         uint8_t crash_recovery_rate;        // degrees per second
         uint8_t crash_recovery;             // off, on, on and beeps when it is in crash recovery mode
+    };
+    struct crash_recovery_runtime_t {
+        uint32_t timeLimitUs;
+        uint32_t timeDelayUs;
+        int32_t recoveryAngleDeciDegrees;
+        float recoveryRate;
+        float gyroThresholdDPS;
+        float DtermThresholdDPSPS; // degrees per second per second
+        float setpointThresholdDPS;
+        float limitYaw;
     };
     struct controls_t {
         uint32_t tickCount;
@@ -155,11 +184,11 @@ public:
         control_mode_e controlMode;
     };
 
-    typedef std::array<PIDF::PIDF_t, PID_COUNT> pidf_array_t;
     typedef std::array<PIDF_uint16_t, PID_COUNT> pidf_uint16_array_t;
 
 public:
     static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
+
     const AHRS& getAHRS() const { return _ahrs; }
 
     inline bool motorsIsOn() const { return _mixer.motorsIsOn(); }
@@ -229,6 +258,9 @@ public:
 
     void setDMaxConfig(const d_max_config_t& dMaxConfig);
     const d_max_config_t& getDMaxConfig() const { return _dMaxConfig; }
+
+    void setCrashRecoveryConfig(const crash_recovery_config_t& crashRecoveryConfig);
+    const crash_recovery_config_t& getCrashRecoveryConfig() const { return _crashRecoveryConfig; }
 public:
     [[noreturn]] static void Task(void* arg);
 public:
@@ -252,7 +284,7 @@ private:
     Blackbox* _blackbox {nullptr};
     const uint32_t _taskDenominator;
 
-    //!!TODO: constants below need to be made configurable
+    //!!TODO: some constants below need to be made configurable
     const uint32_t _useAngleModeOnRollAcroModeOnPitch {false}; // used for "level race mode" aka "NFE race mode"
     // ground mode handling
     const float _takeOffThrottleThreshold {0.2F};
@@ -268,26 +300,18 @@ private:
     const float _pitchRateAtMaxPowerDPS {1000.0};
     const float _yawRateAtMaxPowerDPS {1000.0};
 
-    // configuration data is const once it has been set in set*Config()
+    // configuration and runtime data is const once it has been set in set*Config()
     const filters_config_t _filtersConfig {};
     const tpa_config_t _tpaConfig {};
-    const float _tpaBreakpoint {};
-    const float _tpaMultiplier {1.0F};
-    const float _tpaLowBreakpoint {};
-    const float _tpaLowMultiplier {1.0F};
+    const tpa_runtime_t _tpa { 0.0F, 1.0F, 0.0F, 1.0F };
     const anti_gravity_config_t _antiGravityConfig {};
-    const float _antiGravityIGain {};
-    const float _antiGravityPGain {};
+    const anti_gravity_runtime_t _antiGravity {};
 #ifdef USE_D_MAX
-    d_max_config_t _dMaxConfig {};
-    static constexpr float D_MAX_GAIN_FACTOR = 0.00008F;
-    static constexpr float D_MAX_SETPOINT_GAIN_FACTOR = 0.00008F;
-    enum { D_MAX_RANGE_HZ = 85, D_MAX_LOWPASS_HZ = 35 };
-    float _dMaxGyroGain {};
-    float _dMaxSetpointGain {};
-    std::array<float, RP_AXIS_COUNT> _dMaxPercent {};
-    std::array<uint8_t, RP_AXIS_COUNT> _dMax {};
+    const d_max_config_t _dMaxConfig {};
+    const d_max_runtime_t _dMax {};
 #endif
+    const crash_recovery_config_t _crashRecoveryConfig {};
+    const crash_recovery_runtime_t _crash {};
 
     // member data is divided into structs, according to which task may set that data
     // so, for example, only functions running in the context of the receiver task can set data using _rxM
@@ -328,6 +352,7 @@ private:
         uint32_t takeOffCountStart {0};
         float yawSpinThresholdDPS {0.0F};
         uint32_t yawSpinRecovery { false };
+        bool crashDetected { false };
         // throttle value is scaled to the range [-1,0, 1.0]
         float outputThrottle {0.0F};
         std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID values
