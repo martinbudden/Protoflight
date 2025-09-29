@@ -395,6 +395,7 @@ Loads the PID profile for the FlightController. Must be called *after* the Fligh
 void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController, uint8_t pidProfile)
 {
     flightController.setFiltersConfig(nvs.loadFlightControllerFiltersConfig(pidProfile));
+    flightController.setTPA_Config(nvs.loadFlightControllerTPA_Config(pidProfile));
     flightController.setAntiGravityConfig(nvs.loadFlightControllerAntiGravityConfig(pidProfile));
     flightController.setDMaxConfig(nvs.loadFlightControllerDMaxConfig(pidProfile));
 

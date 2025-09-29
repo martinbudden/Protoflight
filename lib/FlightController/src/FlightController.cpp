@@ -260,7 +260,17 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 
 void FlightController::setTPA_Config(const tpa_config_t& tpaConfig)
 {
-    const_cast<tpa_config_t&>(_tpaConfig) = tpaConfig; // NOLINT(cppcoreguidelines-pro-type-const-cast)
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+    const_cast<tpa_config_t&>(_tpaConfig) = tpaConfig;
+
+    // default of 1350 gives 0.35. range is limited to 0 to 0.99
+    enum { PWM_RANGE_MIN = 1000 };
+    const_cast<float&>(_tpaBreakpoint) = clip((tpaConfig.tpa_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.0F, 0.99F);
+    const_cast<float&>(_tpaMultiplier) = (tpaConfig.tpa_rate / 100.0F) / (1.0F - _tpaBreakpoint);
+
+    // ensure tpaLowBreakpoint is always <= tpaBreakpoint
+    const_cast<float&>(_tpaLowBreakpoint) = std::fminf(clip((tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpaBreakpoint);
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
 void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig)

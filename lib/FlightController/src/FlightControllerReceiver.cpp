@@ -70,8 +70,8 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     // of the DTERM in updateOutputsUsingPIDs.
     // ****
 
-    // _TPA is 1.0F (ie no attenuation) if throttleStick <= _TPA_Breakpoint;
-    _rxM.TPA = 1.0F - _TPA_multiplier * std::fminf(0.0F, throttle - _TPA_breakpoint);
+    // _TPA is 1.0F (ie no attenuation) if throttleStick <= _tpaBreakpoint;
+    _rxM.TPA = 1.0F - _tpaMultiplier * std::fminf(0.0F, throttle - _tpaBreakpoint);
     _debug.set(DEBUG_TPA, 0, lrintf(_rxM.TPA * 1000));
 
     // ****

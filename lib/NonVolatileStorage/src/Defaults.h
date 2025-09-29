@@ -49,6 +49,9 @@ static const FlightController::tpa_config_t flightControllerTPA_Config = {
     .tpa_mode = FlightController::TPA_MODE_D,
     .tpa_rate = 65,
     .tpa_breakpoint = 1350,
+    .tpa_low_rate = 20,
+    .tpa_low_always = 0,
+    .tpa_low_breakpoint = 1050,
 };
 
 static const FlightController::anti_gravity_config_t flightControllerAntiGravityConfig = {
@@ -58,9 +61,21 @@ static const FlightController::anti_gravity_config_t flightControllerAntiGravity
 };
 
 static const FlightController::d_max_config_t flightControllerDMaxConfig = {
-    .d_max = { 40, 46, 0 },
+    .d_max = { 40, 46 },
     .d_max_gain = 37,
     .d_max_advance = 20
+};
+
+static const FlightController::crash_recovery_t flightControllerCrashRecoveryConfig = {
+    .crash_dthreshold = 50,
+    .crash_gthreshold = 400,
+    .crash_setpoint_threshold = 350,
+    .crash_time = 500,
+    .crash_delay = 0,
+    .crash_limit_yaw = 200,
+    .crash_recovery_angle = 10,
+    .crash_recovery_rate = 100,
+    .crash_recovery = FlightController::CRASH_RECOVERY_OFF,
 };
 
 static const IMU_Filters::config_t imuFiltersConfig = {

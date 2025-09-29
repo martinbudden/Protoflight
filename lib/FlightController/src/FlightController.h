@@ -118,6 +118,9 @@ public:
         uint8_t tpa_mode;
         uint8_t tpa_rate;
         uint16_t tpa_breakpoint;
+        int8_t tpa_low_rate;
+        uint8_t tpa_low_always;
+        uint16_t tpa_low_breakpoint;
     };
     struct anti_gravity_config_t {
         uint8_t cutoff_hz;
@@ -125,9 +128,21 @@ public:
         uint8_t i_gain;
     };
     struct d_max_config_t {
-        std::array<uint8_t, AXIS_COUNT> d_max; // Maximum D value on each axis
-        uint8_t d_max_gain; // gain factor for amount of gyro / setpoint activity required to boost D
-        uint8_t d_max_advance; // percentage multiplier for setpoint
+        std::array<uint8_t, RP_AXIS_COUNT> d_max; // Maximum D value on each axis
+        uint8_t d_max_gain;     // gain factor for amount of gyro / setpoint activity required to boost D
+        uint8_t d_max_advance;  // percentage multiplier for setpoint
+    };
+    enum crash_recovery_e { CRASH_RECOVERY_OFF = 0, CRASH_RECOVERY_ON, CRASH_RECOVERY_BEEP, CRASH_RECOVERY_DISARM };
+    struct crash_recovery_t {
+        uint16_t crash_dthreshold;          // dterm crash value
+        uint16_t crash_gthreshold;          // gyro crash value
+        uint16_t crash_setpoint_threshold;  // setpoint must be below this value to detect crash, so flips and rolls are not interpreted as crashes
+        uint16_t crash_time;                // ms
+        uint16_t crash_delay;               // ms
+        uint16_t crash_limit_yaw;           // limits yaw error rate, so crashes don't cause huge throttle increase
+        uint8_t crash_recovery_angle;       // degrees
+        uint8_t crash_recovery_rate;        // degrees per second
+        uint8_t crash_recovery;             // off, on, on and beeps when it is in crash recovery mode
     };
     struct controls_t {
         uint32_t tickCount;
@@ -144,6 +159,7 @@ public:
     typedef std::array<PIDF_uint16_t, PID_COUNT> pidf_uint16_array_t;
 
 public:
+    static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
     const AHRS& getAHRS() const { return _ahrs; }
 
     inline bool motorsIsOn() const { return _mixer.motorsIsOn(); }
@@ -245,20 +261,20 @@ private:
     // yaw spin recovery
     const float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };
     const float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };
-    // TPA
-    const float _TPA_multiplier {0.0F};
-    const float _TPA_breakpoint {0.6F};
-    // flight dynamics scaling
+    // other constants
     const float _maxRollRateDPS {500.0F};
     const float _maxPitchRateDPS {500.0F};
     const float _rollRateAtMaxPowerDPS {1000.0};
     const float _pitchRateAtMaxPowerDPS {1000.0};
     const float _yawRateAtMaxPowerDPS {1000.0};
 
-
     // configuration data is const once it has been set in set*Config()
     const filters_config_t _filtersConfig {};
     const tpa_config_t _tpaConfig {};
+    const float _tpaBreakpoint {};
+    const float _tpaMultiplier {1.0F};
+    const float _tpaLowBreakpoint {};
+    const float _tpaLowMultiplier {1.0F};
     const anti_gravity_config_t _antiGravityConfig {};
     const float _antiGravityIGain {};
     const float _antiGravityPGain {};
@@ -274,7 +290,7 @@ private:
 #endif
 
     // member data is divided into structs, according to which task may set that data
-    // so, for example,  only functions running in the context of the receiver task can set data using _rxM
+    // so, for example, only functions running in the context of the receiver task can set data using _rxM
     // this is to help avoid race conditions
     // data that can be set by more than one task is in the shared_t struct
     struct fc_t {
@@ -293,7 +309,6 @@ private:
         float throttlePrevious {0.0F};
         float yawRateSetpointDPS {0.0F};
         uint32_t useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
-        // throttle value is scaled to the range [-1,0, 1.0]
         float TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
     };
     struct ah_t {
@@ -313,6 +328,7 @@ private:
         uint32_t takeOffCountStart {0};
         float yawSpinThresholdDPS {0.0F};
         uint32_t yawSpinRecovery { false };
+        // throttle value is scaled to the range [-1,0, 1.0]
         float outputThrottle {0.0F};
         std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID values
         std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> outputFilters;
@@ -328,12 +344,12 @@ private:
 #endif
     };
 
-    fc_t _fcM; //!< MODIFIABLE partition of member data CAN be set in the context of the Flight Controller Task
-    const fc_t& _fcC; //!< CONSTANT partition of member data that MUST be used outside the context of the Flight Controller Task
-    rx_t _rxM; //!< MODIFIABLE partition of member data CAN be set in the context of the Receiver Task
-    const rx_t& _rxC; //!< CONSTANT partition of member data that MUST be used outside the context of the Receiver Task
-    ah_t _ahM; //!< MODIFIABLE partition of member data CAN be set in the context of the AHRS Task
-    shared_t _sh; //!< member data that is set in the context of more than one task
+    fc_t _fcM;          //!< MODIFIABLE partition of member data CAN be set in the context of the Flight Controller Task
+    const fc_t& _fcC;   //!< CONSTANT partition of member data that MUST be used outside the context of the Flight Controller Task
+    rx_t _rxM;          //!< MODIFIABLE partition of member data CAN be set in the context of the Receiver Task
+    const rx_t& _rxC;   //!< CONSTANT partition of member data that MUST be used outside the context of the Receiver Task
+    ah_t _ahM;          //!< MODIFIABLE partition of member data CAN be set in the context of the AHRS Task
+    shared_t _sh;       //!< member data that is set in the context of more than one task
 
     // Betaflight-compatible PID scale factors.
     static constexpr PIDF::PIDF_t _scaleFactors = {
