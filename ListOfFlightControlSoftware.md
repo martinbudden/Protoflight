@@ -77,7 +77,8 @@ Therefore, ESP-Drone can be used in STEAM education. Part of the code is from Cr
 StampFly is an open source educational drone developed by Kouhei Ito and M5Stack.
 See [Stamp Fly: An Open-Source DIY Drone Kit from Japan-Shenzhen](https://www.hackster.io/stampfly/stamp-fly-an-open-source-diy-drone-kit-from-japan-shenzhen-93d099).
 
-It is a quadcopter based on the ESP32-S3, and it was created it with the goal of making it "legally flyable in Japan and usable for drone control classes"
+It is a quadcopter based on the ESP32-S3, and it was created it with the goal of making it
+"legally flyable in Japan and usable for drone control classes"
 [source code](https://github.com/m5stack/M5StampFly)
 
 M5Stack StampFly is based on [Kanazawa StampFly](https://github.com/M5Fly-kanazawa/StampFly2024June)
@@ -106,6 +107,12 @@ Includes [Bi directional DShot using RPI Pico PIO](https://github.com/bastian200
 ### [Scout](https://github.com/TimHanewich/scout)
 
 Python-based Quadcopter Flight Controller Software using a Raspberry Pi Pico, MPU-6050, and a FlySky radio transmitter & receiver.
+
+### [ROSflight](https://github.com/rosflight/rosflight_firmware)
+
+ROSflight is a software architecture which uses a flight controller in tandem with a companion computer running ROS.
+This architecture provides direct control of lower-level functions via the embedded processor while also enabling more
+complicated functionality such as vision processing and optimization via the companion computer and ROS.
 
 ### [Reefwing](https://github.com/Reefwing-Software)
 
