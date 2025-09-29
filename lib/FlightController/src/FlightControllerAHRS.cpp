@@ -231,4 +231,3 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     };
     SIGNAL(queueItem);
 }
-
