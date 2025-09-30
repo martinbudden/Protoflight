@@ -220,8 +220,12 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
     //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
 
     if (filtersConfig.dterm_lpf1_hz == 0) {
-        _sh.rollRateDTermFilter.setToPassthrough();
-        _sh.pitchRateDTermFilter.setToPassthrough();
+        _sh.dTermFilters[ROLL_RATE_DPS].setToPassthrough();
+        _sh.dTermFilters[ROLL_ANGLE_DEGREES].setToPassthrough();
+        _sh.dTermFilters[ROLL_SIN_ANGLE].setToPassthrough();
+        _sh.dTermFilters[PITCH_RATE_DPS].setToPassthrough();
+        _sh.dTermFilters[PITCH_ANGLE_DEGREES].setToPassthrough();
+        _sh.dTermFilters[PITCH_SIN_ANGLE].setToPassthrough();
     } else {
         // if the user has selected a filter, then provide a PowerTransfer1 filter.
         // If no filter selected, then set the filter to passthrough
@@ -233,16 +237,20 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
         case filters_config_t::BIQUAD:
             [[fallthrough]];
         case filters_config_t::PT1:
-            _sh.rollRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _sh.rollAngleDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _sh.pitchRateDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _sh.pitchAngleDTermFilter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.dTermFilters[ROLL_RATE_DPS].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.dTermFilters[ROLL_ANGLE_DEGREES].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.dTermFilters[ROLL_SIN_ANGLE].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.dTermFilters[PITCH_RATE_DPS].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.dTermFilters[PITCH_ANGLE_DEGREES].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            _sh.dTermFilters[PITCH_SIN_ANGLE].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
             break;
         default:
-            _sh.rollRateDTermFilter.setToPassthrough();
-            _sh.rollAngleDTermFilter.setToPassthrough();
-            _sh.pitchRateDTermFilter.setToPassthrough();
-            _sh.pitchAngleDTermFilter.setToPassthrough();
+            _sh.dTermFilters[ROLL_RATE_DPS].setToPassthrough();
+            _sh.dTermFilters[ROLL_ANGLE_DEGREES].setToPassthrough();
+            _sh.dTermFilters[ROLL_SIN_ANGLE].setToPassthrough();
+            _sh.dTermFilters[PITCH_RATE_DPS].setToPassthrough();
+            _sh.dTermFilters[PITCH_ANGLE_DEGREES].setToPassthrough();
+            _sh.dTermFilters[PITCH_SIN_ANGLE].setToPassthrough();
             break;
         }
     }
@@ -265,8 +273,8 @@ void FlightController::setTPA_Config(const tpa_config_t& tpaConfig)
 
     // default of 1350 gives 0.35. range is limited to 0 to 0.99
     enum { PWM_RANGE_MIN = 1000 };
-    const_cast<float&>(_tpa.breakpoint) = clip((tpaConfig.tpa_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.0F, 0.99F);
-    const_cast<float&>(_tpa.multiplier) = (tpaConfig.tpa_rate / 100.0F) / (1.0F - _tpa.breakpoint);
+    const_cast<float&>(_tpa.breakpoint) = clip(static_cast<float>(tpaConfig.tpa_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.0F, 0.99F);
+    const_cast<float&>(_tpa.multiplier) = (static_cast<float>(tpaConfig.tpa_rate) / 100.0F) / (1.0F - _tpa.breakpoint);
 
     // ensure tpaLowBreakpoint is always <= tpaBreakpoint
     const_cast<float&>(_tpa.lowBreakpoint) = std::fminf(clip((tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpa.breakpoint);
@@ -285,9 +293,9 @@ void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGra
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
-void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig)
-{
 #if defined(USE_D_MAX)
+void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig) // NOLINT(readability-make-member-function-const)
+{
     // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
     const_cast<d_max_config_t&>(_dMaxConfig) = dMaxConfig;
     for (size_t axis = 0; axis < AXIS_COUNT; ++axis) {
@@ -304,8 +312,17 @@ void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig)
     // lowpass included inversely in gain since stronger lowpass decreases peak effect
     const_cast<float&>(_dMax.setpointGain) = DMAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / DMAX_LOWPASS_HZ;
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
-#endif
 }
+#endif
+
+#if defined(USE_ITERM_RELAX)
+void FlightController::setITermRelaxConfig(const iterm_relax_config_t& iTermRelaxConfig)
+{
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+    const_cast<iterm_relax_config_t&>(_iTermRelaxConfig) = iTermRelaxConfig;
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+}
+#endif
 
 void FlightController::setCrashRecoveryConfig(const crash_recovery_config_t& crashRecoveryConfig)
 {

@@ -60,11 +60,20 @@ static const FlightController::anti_gravity_config_t flightControllerAntiGravity
     .i_gain = 80
 };
 
+#if defined(USE_D_MAX)
 static const FlightController::d_max_config_t flightControllerDMaxConfig = {
     .d_max = { 40, 46 },
     .d_max_gain = 37,
     .d_max_advance = 20
 };
+#endif
+
+#if defined(USE_ITERM_RELAX)
+static const FlightController::iterm_relax_config_t flightControllerITermRelaxConfig = {
+    .iterm_relax = FlightController::ITERM_RELAX_ON,
+    .iterm_relax_cutoff = 15,
+};
+#endif
 
 static const FlightController::crash_recovery_config_t flightControllerCrashRecoveryConfig = {
     .crash_dthreshold = 50,

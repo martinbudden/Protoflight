@@ -308,8 +308,7 @@ classDiagram
 
     class FlightController {
         array~PIDF~ _pids
-        Filter _rollRateDTermFilter
-        Filter _pitchRateDTermFilter
+        array~Filter~ _dTermFilters
         array~Filter~ _stickSetpointFilters
         outputToMixer() override
         updateSetpoints()

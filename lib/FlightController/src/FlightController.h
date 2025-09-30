@@ -1,6 +1,7 @@
 #pragma once
 
-#define USE_D_MAX
+//#define USE_D_MAX
+//#define USE_ITERM_RELAX
 
 #include "FlightControllerTelemetry.h"
 
@@ -163,6 +164,13 @@ public:
         uint8_t crash_recovery_rate;        // degrees per second
         uint8_t crash_recovery;             // off, on, on and beeps when it is in crash recovery mode
     };
+#if defined(USE_ITERM_RELAX)
+    enum iterm_relax_e { ITERM_RELAX_OFF, ITERM_RELAX_ON };
+    struct iterm_relax_config_t {
+        uint8_t iterm_relax;        // Enable iterm suppression during stick input
+        uint8_t iterm_relax_cutoff; // Cutoff frequency used by low pass filter which predicts average response of the quad to setpoint
+    };
+#endif
     struct crash_recovery_runtime_t {
         uint32_t timeLimitUs;
         uint32_t timeDelayUs;
@@ -188,6 +196,9 @@ public:
 
 public:
     static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
+    static float applyDeadband(float value, float deadband) {
+        return (std::fabs(value) < deadband) ? 0.0F : (value >= 0.0F) ? value - deadband : value + deadband;
+    }
 
     const AHRS& getAHRS() const { return _ahrs; }
 
@@ -256,11 +267,19 @@ public:
     void setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig);
     const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }
 
+#if defined(USE_D_MAX)
     void setDMaxConfig(const d_max_config_t& dMaxConfig);
     const d_max_config_t& getDMaxConfig() const { return _dMaxConfig; }
+#endif
+
+#if defined(USE_ITERM_RELAX)
+    void setITermRelaxConfig(const iterm_relax_config_t& iTermRelaxConfig);
+    const iterm_relax_config_t& getITermRelaxConfig() const { return _iTermRelaxConfig; }
+#endif
 
     void setCrashRecoveryConfig(const crash_recovery_config_t& crashRecoveryConfig);
     const crash_recovery_config_t& getCrashRecoveryConfig() const { return _crashRecoveryConfig; }
+
 public:
     [[noreturn]] static void Task(void* arg);
 public:
@@ -273,6 +292,7 @@ public:
     void updateSetpoints(const controls_t& controls);
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
 
+    float calculateITermError(size_t axis, float measurement);
     virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 
@@ -306,13 +326,15 @@ private:
     const tpa_runtime_t _tpa { 0.0F, 1.0F, 0.0F, 1.0F };
     const anti_gravity_config_t _antiGravityConfig {};
     const anti_gravity_runtime_t _antiGravity {};
-#ifdef USE_D_MAX
+#if defined(USE_D_MAX)
     const d_max_config_t _dMaxConfig {};
     const d_max_runtime_t _dMax {};
 #endif
+#if defined(USE_ITERM_RELAX)
+    const iterm_relax_config_t _iTermRelaxConfig = { ITERM_RELAX_ON, 15 };
+#endif
     const crash_recovery_config_t _crashRecoveryConfig {};
     const crash_recovery_runtime_t _crash {};
-
     // member data is divided into structs, according to which task may set that data
     // so, for example, only functions running in the context of the receiver task can set data using _rxM
     // this is to help avoid race conditions
@@ -331,9 +353,14 @@ private:
         uint32_t setpointTickCountCounter {SETPOINT_TICKCOUNT_COUNTER_START};
         float setpointDeltaT {};
         float throttlePrevious {0.0F};
+        float iTermAccelerator {0.0F};
         float yawRateSetpointDPS {0.0F};
         uint32_t useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
         float TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
+#if defined(USE_ITERM_RELAX)
+        std::array<float, RP_AXIS_COUNT> setpointLPs {};
+        std::array<float, RP_AXIS_COUNT> setpointHPs {};
+#endif
     };
     struct ah_t {
         float rollStickSinAngle {0.0F};
@@ -359,14 +386,15 @@ private:
         std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> outputFilters;
         PowerTransferFilter2 antiGravityThrottleFilter {};
         // DTerm filters
-        PowerTransferFilter1 rollRateDTermFilter {};
-        PowerTransferFilter1 pitchRateDTermFilter {};
-        PowerTransferFilter1 rollAngleDTermFilter {};
-        PowerTransferFilter1 pitchAngleDTermFilter {};
+        std::array<PowerTransferFilter1, PID_COUNT> dTermFilters;
 #if defined(USE_D_MAX)
-        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilter {};
-        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxLowpassFilter {};
+        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilters {};
+        std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxLowpassFilters {};
 #endif
+#if defined(USE_ITERM_RELAX)
+        std::array<PowerTransferFilter1, RP_AXIS_COUNT> iTermRelaxFilters {};
+#endif
+
     };
 
     fc_t _fcM;          //!< MODIFIABLE partition of member data CAN be set in the context of the Flight Controller Task

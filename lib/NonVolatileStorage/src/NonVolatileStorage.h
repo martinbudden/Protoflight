@@ -112,6 +112,11 @@ public:
     FlightController::d_max_config_t loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerDMaxConfig(const FlightController::d_max_config_t& config, uint8_t pidProfileIndex);
 
+#if defined(USE_ITERM_RELAX)
+    FlightController::iterm_relax_config_t loadFlightControllerITermRelaxConfig(uint8_t pidProfileIndex) const;
+    int32_t storeFlightControllerITermRelaxConfig(const FlightController::iterm_relax_config_t& config, uint8_t pidProfileIndex);
+#endif
+
     FlightController::crash_recovery_config_t loadFlightControllerCrashRecoveryConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& crashRecoveryConfig, uint8_t pidProfileIndex);
 

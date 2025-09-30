@@ -28,8 +28,13 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
             _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
 #if defined(USE_D_MAX)
             for (size_t ii = 0; ii < AXIS_COUNT; ++ii) {
-                _sh.dMaxRangeFilter[ii].setCutoffFrequency(DMAX_RANGE_HZ, _rxM.setpointDeltaT);
-                _sh.dMaxLowpassFilter[ii].setCutoffFrequency(DMAX_LOWPASS_HZ, _rxM.setpointDeltaT);
+                _sh.dMaxRangeFilters[ii].setCutoffFrequency(DMAX_RANGE_HZ, _rxM.setpointDeltaT);
+                _sh.dMaxLowpassFilters[ii].setCutoffFrequency(DMAX_LOWPASS_HZ, _rxM.setpointDeltaT);
+            }
+#endif
+#if defined(USE_ITERM_RELAX)
+            for (size_t ii = 0; ii < RP_AXIS_COUNT; ++ii) {
+                _sh.iTermRelaxFilters[ii].setCutoffFrequency(_iTermRelaxConfig.iterm_relax_cutoff, _rxM.setpointDeltaT);
             }
 #endif
         }
@@ -58,10 +63,10 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     // ****
 
     static constexpr float ANTIGRAVITY_KI = 0.34F;
-    const float ITermAccelerator =  throttleDerivative * _antiGravity.IGain * ANTIGRAVITY_KI;
-    _sh.PIDS[ROLL_RATE_DPS].setI(_fcC.pidConstants[ROLL_RATE_DPS].ki + ITermAccelerator);
-    _sh.PIDS[PITCH_RATE_DPS].setI(_fcC.pidConstants[PITCH_RATE_DPS].ki + ITermAccelerator);
-    _debug.set(DEBUG_ANTI_GRAVITY, 2, lrintf(1.0F + ITermAccelerator/_sh.PIDS[PITCH_RATE_DPS].getI()*1000.0F));
+    _rxM.iTermAccelerator =  throttleDerivative * _antiGravity.IGain * ANTIGRAVITY_KI;
+    _sh.PIDS[ROLL_RATE_DPS].setI(_fcC.pidConstants[ROLL_RATE_DPS].ki + _rxM.iTermAccelerator);
+    _sh.PIDS[PITCH_RATE_DPS].setI(_fcC.pidConstants[PITCH_RATE_DPS].ki + _rxM.iTermAccelerator);
+    _debug.set(DEBUG_ANTI_GRAVITY, 2, lrintf(1.0F + _rxM.iTermAccelerator/_sh.PIDS[PITCH_RATE_DPS].getI()*1000.0F));
 
 
     // ****
@@ -113,27 +118,58 @@ void FlightController::updateSetpoints(const controls_t& controls)
 
     applyDynamicPID_AdjustmentsOnThrottleChange(controls.throttleStick, controls.tickCount);
 
-    //!!TODO: filter the roll and stick angles
+    //
+    // Roll axis
+    //
     // Pushing the ROLL stick to the right gives a positive value of rollStick and we want this to be left side up.
     // For NED left side up is positive roll, so sign of setpoint is same sign as rollStick.
     // So sign of _rollStick is left unchanged.
     _sh.PIDS[ROLL_RATE_DPS].setSetpoint(controls.rollStickDPS);
+#if false
+    //!!TODO: filter the setpointDerivative
+    if (_rxM.setpointDeltaT != 0) {
+        _sh.PIDS[ROLL_RATE_DPS].setSetpointDerivative(_sh.PIDS[ROLL_RATE_DPS].getSetpoint() / _rxM.setpointDeltaT);
+    }
+#endif
+#if defined(USE_ITERM_RELAX)
+    _rxM.setpointLPs[ROLL_RATE_DPS] = _sh.iTermRelaxFilters[ROLL_RATE_DPS].filter(controls.rollStickDPS);
+    _rxM.setpointHPs[ROLL_RATE_DPS] = std::fabs(controls.rollStickDPS - _rxM.setpointLPs[ROLL_RATE_DPS]);
+#endif
     _sh.PIDS[ROLL_ANGLE_DEGREES].setSetpoint(controls.rollStickDegrees);
     _sh.PIDS[ROLL_SIN_ANGLE].setSetpoint(sinf(controls.rollStickDegrees * degreesToRadians));
 
+    //
+    // Pitch axis
+    //
     // Pushing the  PITCH stick forward gives a positive value of _pitchStick and we want this to be nose up.
     // For NED nose up is positive pitch, so sign of setpoint is opposite sign as _pitchStick.
     // So sign of _pitchStick is negated.
     _sh.PIDS[PITCH_RATE_DPS].setSetpoint(-controls.pitchStickDPS);
+#if false
+    //!!TODO: filter the setpointDerivative
+    if (_rxM.setpointDeltaT != 0) {
+        _sh.PIDS[PITCH_RATE_DPS].setSetpointDerivative(_sh.PIDS[PITCH_RATE_DPS].getSetpoint() / _rxM.setpointDeltaT);
+    }
+#endif
+#if defined(USE_ITERM_RELAX)
+    _rxM.setpointLPs[PITCH_RATE_DPS] = _sh.iTermRelaxFilters[PITCH_RATE_DPS].filter(controls.pitchStickDPS);
+    _rxM.setpointHPs[PITCH_RATE_DPS] = std::fabs(controls.pitchStickDPS - _rxM.setpointLPs[PITCH_RATE_DPS]);
+#endif
     _sh.PIDS[PITCH_ANGLE_DEGREES].setSetpoint(-controls.pitchStickDegrees);
     _sh.PIDS[ROLL_SIN_ANGLE].setSetpoint(sinf(-controls.pitchStickDegrees * degreesToRadians));
 
+    //
+    // Yaw axis
+    //
     // Pushing the YAW stick to the right gives a positive value of _yawStick and we want this to be nose right.
     // For NED nose left is positive yaw, so sign of setpoint is same as sign of _yawStick.
     // So sign of _yawStick is left unchanged.
     _sh.PIDS[YAW_RATE_DPS].setSetpoint(controls.yawStickDPS);
     _rxM.yawRateSetpointDPS = controls.yawStickDPS;
 
+    //
+    // Modes
+    //
     // When in ground mode, the PID I-terms are set to zero to avoid integral windup on the ground
     if (_sh.groundMode) {
         // exit ground mode if the throttle has been above _takeOffThrottleThreshold for _takeOffTickThreshold ticks

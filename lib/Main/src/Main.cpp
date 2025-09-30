@@ -397,7 +397,12 @@ void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, Flight
     flightController.setFiltersConfig(nvs.loadFlightControllerFiltersConfig(pidProfile));
     flightController.setTPA_Config(nvs.loadFlightControllerTPA_Config(pidProfile));
     flightController.setAntiGravityConfig(nvs.loadFlightControllerAntiGravityConfig(pidProfile));
+#if defined(USE_D_MAX)
     flightController.setDMaxConfig(nvs.loadFlightControllerDMaxConfig(pidProfile));
+#endif
+#if defined(USE_ITERM_RELAX)
+    flightController.setITermRelaxConfig(nvs.loadFlightControllerITermRelaxConfig(pidProfile));
+#endif
     flightController.setCrashRecoveryConfig(nvs.loadFlightControllerCrashRecoveryConfig(pidProfile));
 
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {

@@ -37,8 +37,13 @@ static constexpr uint16_t DynamicIdleControllerConfigKey = 0x0400;
 static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0404;
 static constexpr uint16_t FlightControllerTPA_ConfigKey = 0x408;
 static constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x040C;
+#if defined(USE_D_MAX)
 static constexpr uint16_t FlightControllerDMaxConfigKey = 0x0410;
-static constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x0414;
+#endif
+#if defined(USE_ITERM_RELAX)
+static constexpr uint16_t FlightControllerITermRelaxConfigKey = 0x0414;
+#endif
+static constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x0418;
 
 static constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
 static constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
@@ -69,7 +74,12 @@ static const char* DynamicIdleControllerConfigKey = "DIC";
 static const char* FlightControllerFiltersConfigKey = "FCF";
 static const char* FlightControllerTPA_ConfigKey = "FCTPA";
 static const char* FlightControllerAntiGravityConfigKey = "FCAG";
+#if defined(USE_D_MAX)
 static const char* FlightControllerDMaxConfigKey = "FCDM";
+#endif
+#if defined(USE_ITERM_RELAX)
+static const char* FlightControllerITermRelaxConfigKey = "FCITR";
+#endif
 static const char* FlightControllerCrashRecoveryConfigKey = "FCCR";
 
 static const char* IMU_FiltersConfigKey = "IF";
@@ -367,6 +377,7 @@ int32_t NonVolatileStorage::storeFlightControllerAntiGravityConfig(const FlightC
 }
 
 
+#if defined(USE_D_MAX)
 FlightController::d_max_config_t NonVolatileStorage::loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const
 {
     FlightController::d_max_config_t config {};
@@ -380,12 +391,30 @@ int32_t NonVolatileStorage::storeFlightControllerDMaxConfig(const FlightControll
 {
     return storeItem(FlightControllerDMaxConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerDMaxConfig);
 }
+#endif
+
+
+#if defined(USE_ITERM_RELAX)
+FlightController::iterm_relax_config_t NonVolatileStorage::loadFlightControllerITermRelaxConfig(uint8_t pidProfileIndex) const
+{
+    FlightController::iterm_relax_config_t config {};
+    if (loadItem(FlightControllerITermRelaxConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }
+    return DEFAULTS::flightControllerITermRelaxConfig;
+}
+
+int32_t NonVolatileStorage::storeFlightControllerITermRelaxConfig(const FlightController::iterm_relax_config_t& config, uint8_t pidProfileIndex)
+{
+    return storeItem(FlightControllerITermRelaxConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerITermRelaxConfig);
+}
+#endif
 
 
 FlightController::crash_recovery_config_t NonVolatileStorage::loadFlightControllerCrashRecoveryConfig(uint8_t pidProfileIndex) const
 {
     FlightController::crash_recovery_config_t crashRecoveryConfig {};
-    if (loadItem(FlightControllerDMaxConfigKey, pidProfileIndex, &crashRecoveryConfig, sizeof(crashRecoveryConfig))) { // cppcheck-suppress knownConditionTrueFalse
+    if (loadItem(FlightControllerCrashRecoveryConfigKey, pidProfileIndex, &crashRecoveryConfig, sizeof(crashRecoveryConfig))) { // cppcheck-suppress knownConditionTrueFalse
         return crashRecoveryConfig;
     }
     return DEFAULTS::flightControllerCrashRecoveryConfig;
@@ -393,7 +422,7 @@ FlightController::crash_recovery_config_t NonVolatileStorage::loadFlightControll
 
 int32_t NonVolatileStorage::storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& crashRecoveryConfig, uint8_t pidProfileIndex)
 {
-    return storeItem(FlightControllerCrashRecoveryConfigKey, pidProfileIndex, &crashRecoveryConfig, sizeof(crashRecoveryConfig), &DEFAULTS::flightControllerDMaxConfig);
+    return storeItem(FlightControllerCrashRecoveryConfigKey, pidProfileIndex, &crashRecoveryConfig, sizeof(crashRecoveryConfig), &DEFAULTS::flightControllerCrashRecoveryConfig);
 }
 
 
@@ -610,8 +639,18 @@ int32_t NonVolatileStorage::storeAll(const FlightController& flightController, c
     const FlightController::anti_gravity_config_t flightControllerAntiGravityConfig = flightController.getAntiGravityConfig();
     storeFlightControllerAntiGravityConfig(flightControllerAntiGravityConfig, pidProfile);
 
+#if defined(USE_D_MAX)
     const FlightController::d_max_config_t flightControllerDMaxConfig = flightController.getDMaxConfig();
     storeFlightControllerDMaxConfig(flightControllerDMaxConfig, pidProfile);
+#endif
+
+#if defined(USE_ITERM_RELAX)
+    const FlightController::iterm_relax_config_t flightControllerITermRelaxConfig = flightController.getITermRelaxConfig();
+    storeFlightControllerITermRelaxConfig(flightControllerITermRelaxConfig, pidProfile);
+#endif
+
+    const FlightController::crash_recovery_config_t flightControllerCrashRecoveryConfig = flightController.getCrashRecoveryConfig();
+    storeFlightControllerCrashRecoveryConfig(flightControllerCrashRecoveryConfig, pidProfile);
 
     const IMU_Filters::config_t imuFiltersConfig = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()).getConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     storeIMU_FiltersConfig(imuFiltersConfig);
