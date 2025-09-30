@@ -40,7 +40,6 @@ protected:
     const MotorMixerBase& _motorMixer;
     float _looptimeSeconds;
     size_t _motorCount;
-    size_t _motorIndex {0};
     const config_t _config {}; //!< configuration data is const once it has been set in setConfig
     RPM_Filters* _rpmFilters {nullptr};
 

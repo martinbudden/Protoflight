@@ -97,9 +97,15 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
     }
     if (_rpmFilters) {
         // apply the RPM filters, filter one motor each time this function is called
-        _rpmFilters->filter(gyroRPS, _motorIndex++);
-        if (_motorIndex == _motorCount) {
-            _motorIndex = 0;
+        if (_motorCount == 4) {
+            _rpmFilters->filter(gyroRPS, 0);
+            _rpmFilters->filter(gyroRPS, 1);
+            _rpmFilters->filter(gyroRPS, 2);
+            _rpmFilters->filter(gyroRPS, 3);
+        } else {
+            for (size_t ii = 0; ii < _motorCount; ++ii) {
+               _rpmFilters->filter(gyroRPS, ii);
+            }
         }
     }
 }
