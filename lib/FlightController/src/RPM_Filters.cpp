@@ -24,12 +24,12 @@ void RPM_Filters::setConfig(const config_t& config)
     // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 
     if (config.rpm_filter_lpf_hz == 0) {
-        for (auto& filter : _motorRPM_Filters) {
-            filter.setToPassthrough();
+        for (auto& rpmFilter : _motorRPM_Filters) {
+            rpmFilter.setToPassthrough();
         }
     } else {
-        for (auto& filter : _motorRPM_Filters) {
-            filter.setCutoffFrequencyAndReset(config.rpm_filter_lpf_hz, _looptimeSeconds);
+        for (auto& rpmFilter : _motorRPM_Filters) {
+            rpmFilter.setCutoffFrequencyAndReset(config.rpm_filter_lpf_hz, _looptimeSeconds);
         }
     }
 }
