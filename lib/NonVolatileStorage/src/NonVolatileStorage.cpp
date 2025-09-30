@@ -20,8 +20,6 @@ Other keys are invalid and may not be used. In particular keys of 0, 64-255, and
 This gives a total of 16,169 usable keys.
 */
 
-#if defined(USE_FLASH_KLV)
-
 static constexpr uint16_t PID_ProfileIndexKey = 0x0001;
 static constexpr uint16_t RateProfileIndexKey = 0x0002;
 static const std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
@@ -50,50 +48,10 @@ static constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
 static constexpr uint16_t RPM_FiltersConfigKey = 0x0505;
 static constexpr uint16_t RadioControllerFailsafeKey = 0x0506;
 
-#else
-
-// NOTE: the ESP32 Preferences versions take advantage of the Small String Optimization (SSO)
-// which means that strings of less than (about) 16 characters are stored in the string object
-// rather than on the heap.
-static const std::array<std::string, FlightController::PID_COUNT> PID_Keys = {
-    "RoRa",
-    "PiRa",
-    "YaRa",
-    "RoAn",
-    "PiAn"
-    "RoSA",
-    "PiSA"
-};
-
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
-static const char* MacAddressKey = "MAC";
 #endif
 
-static const char* DynamicIdleControllerConfigKey = "DIC";
-static const char* FlightControllerFiltersConfigKey = "FCF";
-static const char* FlightControllerTPA_ConfigKey = "FCTPA";
-static const char* FlightControllerAntiGravityConfigKey = "FCAG";
-#if defined(USE_D_MAX)
-static const char* FlightControllerDMaxConfigKey = "FCDM";
-#endif
-#if defined(USE_ITERM_RELAX)
-static const char* FlightControllerITermRelaxConfigKey = "FCITR";
-#endif
-static const char* FlightControllerCrashRecoveryConfigKey = "FCCR";
-
-static const char* IMU_FiltersConfigKey = "IF";
-static const char* RPM_FiltersConfigKey = "RPM";
-static const char* RadioControllerFailsafeKey = "RCFS";
-static const char* RadioControllerRatesKey = "RCR";
-
-static const char* PID_ProfileIndexKey = "PPI";
-static const char* RateProfileIndexKey = "RPI";
-
-static const char* AccOffsetKey = "ACC";
-static const char* GyroOffsetKey = "GYR";
-
-#endif
 
 /*!
 NOTE: NonVolatileStorage load functions return items by value. c++ uses Return Value Optimization (RVO)
@@ -141,71 +99,54 @@ int32_t NonVolatileStorage::clear()
 #endif
 }
 
-#if defined(USE_FLASH_KLV)
+void NonVolatileStorage::toHexChars(char* charPtr, uint16_t value)
+{
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
+    *charPtr++ = '0';
+    *charPtr++ = 'x';
+
+    auto digit = static_cast<uint8_t>(value >> 24U);
+    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A');
+    digit = static_cast<uint8_t>((value >> 16U) & 0x000FU);
+    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A');
+    digit = static_cast<uint8_t>((value >> 8U) & 0x000FU);
+    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A');
+    digit = static_cast<uint8_t>(value & 0x000FU);
+    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A');
+    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
+}
+
 int32_t NonVolatileStorage::remove(uint16_t key)
 {
-    return _flashKLV.remove(key);
-}
-
-#else
-
-int32_t NonVolatileStorage::remove(const std::string& name)
-{
-#if defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        _preferences.remove(name.c_str());
-    }
-#else
-    (void)name;
-#endif
-    return OK;
-}
-#endif
-
 #if defined(USE_FLASH_KLV)
+    return _flashKLV.remove(key);
+#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
+    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
+        std::array<char, 8> keyS;
+        toHexChars(&keyS[0], key);
+        _preferences.remove(&keyS[0]);
+        _preferences.end();
+    }
+    return OK;
+#else
+    (void)key;
+    return OK;
+#endif
+}
+
+
 bool NonVolatileStorage::loadItem(uint16_t key, void* item, size_t length) const
 {
+#if defined(USE_FLASH_KLV)
     if (FlashKLV::OK == _flashKLV.read(item, length, key)) {
         return true;
     }
-    return false;
-}
-
-bool NonVolatileStorage::loadItem(uint16_t key, uint8_t pidProfileIndex, void* item, size_t length) const
-{
-    if (pidProfileIndex >= PID_PROFILE_COUNT) {
-        return false;
-    }
-    return loadItem(key + pidProfileIndex, item, length);
-}
-
-int32_t NonVolatileStorage::storeItem(uint16_t key, const void* item, size_t length, const void* defaults)
-{
-    if (!memcmp(defaults, item, length)) {
-        // value is the same as default, so no need to store it
-        _flashKLV.remove(key);
-        return OK_IS_DEFAULT;
-    }
-    return _flashKLV.write(key, length, item);
-}
-
-int32_t NonVolatileStorage::storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults)
-{
-    if (pidProfileIndex >= PID_PROFILE_COUNT) {
-        return ERROR_INVALID_PROFILE;
-    }
-    return storeItem(key + pidProfileIndex, item, length, defaults);
-}
-
-#else
-
-bool NonVolatileStorage::loadItem(const char* key, void* item, size_t length) const
-{
-#if defined(USE_ARDUINO_ESP32_PREFERENCES)
+#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        const std::string itemKey = key;
-        if (_preferences.isKey(itemKey.c_str())) {
-            _preferences.getBytes(itemKey.c_str(), item, length);
+        std::array<char, 8> keyS;
+        toHexChars(&keyS[0], key);
+        if (_preferences.isKey(&keyS[0])) {
+            _preferences.getBytes(&keyS[0], item, length);
             _preferences.end();
             return true;
         }
@@ -219,64 +160,54 @@ bool NonVolatileStorage::loadItem(const char* key, void* item, size_t length) co
     return false;
 }
 
-bool NonVolatileStorage::loadItem(const char* key, uint8_t pidProfileIndex, void* item, size_t length) const
+bool NonVolatileStorage::loadItem(uint16_t key, uint8_t pidProfileIndex, void* item, size_t length) const
 {
     if (pidProfileIndex >= PID_PROFILE_COUNT) {
         return false;
     }
-#if defined(USE_ARDUINO_ESP32_PREFERENCES)
-    const std::string itemKey = key + ('0' + pidProfileIndex);
-    return loadItem(itemKey.c_str(), item, length);
-#else
-    (void)key;
-    (void)item;
-    (void)length;
-#endif
-    return false;
+    return loadItem(key + pidProfileIndex, item, length);
 }
 
-int32_t NonVolatileStorage::storeItem(const char* key, const void* item, size_t length, const void* defaults)
+int32_t NonVolatileStorage::storeItem(uint16_t key, const void* item, size_t length, const void* defaults)
 {
-#if defined(USE_ARDUINO_ESP32_PREFERENCES)
+#if defined(USE_FLASH_KLV)
+    if (!memcmp(defaults, item, length)) {
+        // value is the same as default, so no need to store it
+        _flashKLV.remove(key);
+        return OK_IS_DEFAULT;
+    }
+    return _flashKLV.write(key, length, item);
+#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        const std::string itemKey = key;
+        std::array<char, 8> keyS;
+        toHexChars(&keyS[0], key);
         if (!memcmp(defaults, item, length)) {
             // value is the same as default, so no need to store it
-            _preferences.remove(itemKey.c_str());
+            _preferences.remove(&keyS[0]);
             _preferences.end();
             return OK_IS_DEFAULT;
         }
-        _preferences.putBytes(itemKey.c_str(), item, length);
+        _preferences.putBytes(&keyS[0], item, length);
         _preferences.end();
         return OK;
     }
+    return ERROR_NOT_WRITTEN;
 #else
     (void)key;
     (void)item;
     (void)length;
     (void)defaults;
-#endif
     return ERROR_NOT_WRITTEN;
+#endif
 }
 
-int32_t NonVolatileStorage::storeItem(const char* key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults)
+int32_t NonVolatileStorage::storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults)
 {
     if (pidProfileIndex >= PID_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
     }
-#if defined(USE_ARDUINO_ESP32_PREFERENCES)
-    const std::string itemKey = key + ('0' + pidProfileIndex);
-    return storeItem(itemKey.c_str(), item, length, defaults);
-#else
-    (void)key;
-    (void)item;
-    (void)length;
-    (void)defaults;
-#endif
-    return ERROR_NOT_WRITTEN;
+    return storeItem(key + pidProfileIndex, item, length, defaults);
 }
-#endif //USE_FLASH_KLV
-
 
 
 uint8_t NonVolatileStorage::loadPidProfileIndex() const
@@ -476,12 +407,7 @@ RadioController::rates_t NonVolatileStorage::loadRadioControllerRates(uint8_t ra
         return DEFAULTS::radioControllerRates;
     }
     RadioController::rates_t rates {};
-#if defined(USE_FLASH_KLV)
     const uint16_t key = RadioControllerRatesKey + rateProfileIndex;
-#else
-    const std::string keyString = RadioControllerRatesKey + ('0' + rateProfileIndex);
-    const char* key = keyString.c_str();
-#endif
     if (loadItem(key, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
         return rates;
     }
@@ -493,12 +419,7 @@ int32_t NonVolatileStorage::storeRadioControllerRates(const RadioController::rat
     if (rateProfileIndex >= RATE_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
     }
-#if defined(USE_FLASH_KLV)
     const uint16_t key = RadioControllerRatesKey + rateProfileIndex;
-#else
-    const std::string keyString = RadioControllerRatesKey + ('0' + rateProfileIndex);
-    const char* key = keyString.c_str();
-#endif
     return storeItem(key, &rates, sizeof(rates), &DEFAULTS::radioControllerRates);
 }
 
@@ -508,12 +429,7 @@ VehicleControllerBase::PIDF_uint16_t NonVolatileStorage::loadPID(uint8_t pidInde
     if (pidProfileIndex >= PID_PROFILE_COUNT) {
         return DEFAULTS::flightControllerDefaultPIDs[pidIndex];
     }
-#if defined(USE_FLASH_KLV)
     const uint16_t key = PID_Keys[pidIndex] + pidProfileIndex;
-#else
-    const std::string keyString = PID_Keys[pidIndex] + static_cast<char>('0' + pidProfileIndex);
-    const char* key = keyString.c_str();
-#endif
     VehicleControllerBase::PIDF_uint16_t pid {};
     if (loadItem(key, &pid, sizeof(pid))) { // cppcheck-suppress knownConditionTrueFalse
         return pid;
@@ -527,12 +443,7 @@ int32_t NonVolatileStorage::storePID(const VehicleControllerBase::PIDF_uint16_t&
     if (pidProfileIndex >= PID_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
     }
-#if defined(USE_FLASH_KLV)
     const uint16_t key = PID_Keys[pidIndex] + pidProfileIndex;
-#else
-    const std::string keyString = PID_Keys[pidIndex] + static_cast<char>('0' + pidProfileIndex);
-    const char* key = keyString.c_str();
-#endif
     return storeItem(key, &key, sizeof(pid), &DEFAULTS::flightControllerDefaultPIDs[pidIndex]);
 }
 
@@ -540,14 +451,7 @@ void NonVolatileStorage::resetPID(uint8_t pidIndex, uint8_t pidProfileIndex)
 {
     assert(pidIndex <= FlightController::PID_COUNT);
     assert(pidProfileIndex < PID_PROFILE_COUNT);
-#if defined(USE_FLASH_KLV)
-    _flashKLV.remove(PID_Keys[pidIndex]);
-#elif defined(USE_ARDUINO_ESP32_PREFERENCES)
-    if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        _preferences.remove(PID_Keys[pidIndex].c_str());
-        _preferences.end();
-    }
-#endif
+    remove(PID_Keys[pidIndex]);
 }
 
 
@@ -595,7 +499,9 @@ void NonVolatileStorage::loadMacAddress(uint8_t* macAddress) const // NOLINT(rea
     (void)macAddress;
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
-        _preferences.getBytes(MacAddressKey, macAddress, MAC_ADDRESS_LEN);
+        std::array<char, 8> keyS;
+        toHexChars(&keyS[0], MacAddressKey);
+        _preferences.getBytes(&keyS[0], macAddress, MAC_ADDRESS_LEN);
         _preferences.end();
     }
 #else
@@ -610,7 +516,9 @@ int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
     return OK;
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
-        _preferences.putBytes(MacAddressKey, macAddress, MAC_ADDRESS_LEN);
+        std::array<char, 8> keyS;
+        toHexChars(&keyS[0], MacAddressKey);
+        _preferences.putBytes(&keyS[0], macAddress, MAC_ADDRESS_LEN);
         _preferences.end();
         return OK;
     }

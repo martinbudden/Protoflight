@@ -53,16 +53,14 @@ public:
     explicit NonVolatileStorage(uint32_t flashMemorySize);
     void init();
     static size_t min(size_t a, uint16_t b) { return a > b ? b : a; }
+    static void toHexChars(char* charPtr, uint16_t value);
 
     uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
     void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) { _currentPidProfileIndex = currentPidProfileIndex; }
 
     int32_t clear();
-#if defined(USE_FLASH_KLV)
     int32_t remove(uint16_t key);
-#else
-    int32_t remove(const std::string& name);
-#endif
+
     int32_t storeAll(const FlightController& flightController, const RadioController& radioController, uint8_t pidProfile, uint8_t ratesProfile);
 
     bool loadAccOffset(int32_t& x, int32_t& y, int32_t& z) const;
@@ -86,17 +84,11 @@ public:
     void resetPID(uint8_t pidIndex, uint8_t pidProfileIndex);
     void resetPID(uint8_t pidIndex) { resetPID(pidIndex, _currentPidProfileIndex); }
 
-#if defined(USE_FLASH_KLV)
     bool loadItem(uint16_t key, void* item, size_t length) const;
     bool loadItem(uint16_t key, uint8_t pidProfileIndex, void* item, size_t length) const;
     int32_t storeItem(uint16_t key, const void* item, size_t length, const void* defaults);
     int32_t storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults);
-#else
-    bool loadItem(const char* key, void* item, size_t length) const;
-    bool loadItem(const char* key, uint8_t pidProfileIndex, void* item, size_t length) const;
-    int32_t storeItem(const char* key, const void* item, size_t length, const void* defaults);
-    int32_t storeItem(const char* key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults);
-#endif
+
     DynamicIdleController::config_t loadDynamicIdleControllerConfig(uint8_t pidProfileIndex) const;
     int32_t storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config, uint8_t pidProfileIndex);
 
