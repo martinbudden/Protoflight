@@ -320,7 +320,9 @@ private:
     const float _pitchRateAtMaxPowerDPS {1000.0};
     const float _yawRateAtMaxPowerDPS {1000.0};
 
+    //
     // configuration and runtime data is const once it has been set in set*Config()
+    //
     const filters_config_t _filtersConfig {};
     const tpa_config_t _tpaConfig {};
     const tpa_runtime_t _tpa { 0.0F, 1.0F, 0.0F, 1.0F };
@@ -335,10 +337,13 @@ private:
 #endif
     const crash_recovery_config_t _crashRecoveryConfig {};
     const crash_recovery_runtime_t _crash {};
+
+    //
     // member data is divided into structs, according to which task may set that data
     // so, for example, only functions running in the context of the receiver task can set data using _rxM
     // this is to help avoid race conditions
     // data that can be set by more than one task is in the shared_t struct
+    //
     struct fc_t {
         uint32_t taskSignalledCount {0};
         control_mode_e controlMode {CONTROL_MODE_RATE};
@@ -372,7 +377,7 @@ private:
         enum { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
         uint32_t angleModeCalculationState { STATE_CALCULATE_ROLL };
         std::array<float, PID_COUNT> outputs {}; //<! PID outputs. These are stored since the output from one PID may be used as the input to another
-        std::array<float, RP_AXIS_COUNT> dMaxMultiplier {1.0F, 1.0F};
+        std::array<float, RP_AXIS_COUNT> dMaxMultiplier {1.0F, 1.0F}; // used even if USE_D_MAX not defined
     };
     struct shared_t {
         int groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
@@ -397,11 +402,11 @@ private:
 
     };
 
-    fc_t _fcM;          //!< MODIFIABLE partition of member data CAN be set in the context of the Flight Controller Task
-    const fc_t& _fcC;   //!< CONSTANT partition of member data that MUST be used outside the context of the Flight Controller Task
-    rx_t _rxM;          //!< MODIFIABLE partition of member data CAN be set in the context of the Receiver Task
-    const rx_t& _rxC;   //!< CONSTANT partition of member data that MUST be used outside the context of the Receiver Task
-    ah_t _ahM;          //!< MODIFIABLE partition of member data CAN be set in the context of the AHRS Task
+    fc_t _fcM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the Flight Controller Task
+    const fc_t& _fcC;   //!< CONSTANT   partition of member data that MUST be used outside the context of the Flight Controller Task
+    rx_t _rxM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the Receiver Task
+    const rx_t& _rxC;   //!< CONSTANT   partition of member data that MUST be used outside the context of the Receiver Task
+    ah_t _ahM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the AHRS Task
     shared_t _sh;       //!< member data that is set in the context of more than one task
 
     // Betaflight-compatible PID scale factors.

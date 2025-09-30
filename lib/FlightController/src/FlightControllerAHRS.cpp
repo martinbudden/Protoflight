@@ -17,7 +17,7 @@ They are boosted when the DTerm error is small and the setpoint change is also s
 void FlightController::calculateDMaxMultipliers()
 {
 #if defined(USE_D_MAX)
-    for (size_t ii = ROLL_RATE_DPS; ii <= PITCH_RATE_DPS; ++ii) {
+    for (size_t ii = 0; ii <= RP_AXIS_COUNT; ++ii) {
         _ahM.dMaxMultiplier[ii] = 1.0F;
         if (_dMax.percent[ii] > 1.0F) {
             const float deltaT = _ahrs.getTaskIntervalSeconds();
@@ -25,10 +25,10 @@ void FlightController::calculateDMaxMultipliers()
             const float gyroFactor = std::fabs(_sh.dMaxRangeFilters[ii].filter(gyroDeltaD)) * _dMax.gyroGain;
             const float setpointFactor = std::fabs(_sh.PIDS[ii].getSetpointDelta()) * _dMax.setpointGain;
             const float boost = std::fmaxf(gyroFactor, setpointFactor);
-            // dMaxBoost starts at zero, and by 1.0 we get Dmax, but it can exceed 1.0
+            // boost starts at zero, and by 1.0 we get Dmax, but it can exceed 1.0
             _ahM.dMaxMultiplier[ii] += (_dMax.percent[ii] - 1.0F) * boost;
             _ahM.dMaxMultiplier[ii] = _sh.dMaxLowpassFilters[ii].filter(_ahM.dMaxMultiplier[ii]);
-            // limit the multiplier to _dMaxPercent
+            // limit the multiplier to _dMax.percent
             _ahM.dMaxMultiplier[ii] = std::fminf(_ahM.dMaxMultiplier[ii], _dMax.percent[ii]);
             if (_debug.getMode() == DEBUG_D_MAX) {
                 if (ii == FD_ROLL) {

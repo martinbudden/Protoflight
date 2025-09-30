@@ -302,6 +302,12 @@ void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig) // NOLINT
     const_cast<float&>(_dMax.gyroGain) = DMAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / DMAX_LOWPASS_HZ;
     // lowpass included inversely in gain since stronger lowpass decreases peak effect
     const_cast<float&>(_dMax.setpointGain) = DMAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / DMAX_LOWPASS_HZ;
+    for (auto& filter : _sh.dMaxRangeFilters) {
+        filter.setToPassthrough();
+    }
+    for (auto& filter : _sh.dMaxLowpassFilters) {
+        filter.setToPassthrough();
+    }
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 #endif
@@ -311,6 +317,9 @@ void FlightController::setITermRelaxConfig(const iterm_relax_config_t& iTermRela
 {
     // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
     const_cast<iterm_relax_config_t&>(_iTermRelaxConfig) = iTermRelaxConfig;
+        for (auto& filter : _sh.iTermRelaxFilters) {
+            filter.setToPassthrough();
+        }
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 #endif

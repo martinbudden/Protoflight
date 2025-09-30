@@ -27,14 +27,16 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
             _rxM.setpointDeltaT = 0.001F * static_cast<float>(_rxM.setpointTickCountSum) / rx_t::SETPOINT_TICKCOUNT_COUNTER_START;
             _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
 #if defined(USE_D_MAX)
-            for (size_t ii = 0; ii < AXIS_COUNT; ++ii) {
-                _sh.dMaxRangeFilters[ii].setCutoffFrequency(DMAX_RANGE_HZ, _rxM.setpointDeltaT);
-                _sh.dMaxLowpassFilters[ii].setCutoffFrequency(DMAX_LOWPASS_HZ, _rxM.setpointDeltaT);
+            for (auto& filter : _sh.dMaxRangeFilters) {
+                filter.setCutoffFrequency(DMAX_RANGE_HZ, _rxM.setpointDeltaT);
+            }
+            for (auto& filter : _sh.dMaxLowpassFilters) {
+                filter.setCutoffFrequency(DMAX_LOWPASS_HZ, _rxM.setpointDeltaT);
             }
 #endif
 #if defined(USE_ITERM_RELAX)
-            for (size_t ii = 0; ii < RP_AXIS_COUNT; ++ii) {
-                _sh.iTermRelaxFilters[ii].setCutoffFrequency(_iTermRelaxConfig.iterm_relax_cutoff, _rxM.setpointDeltaT);
+            for (auto& filter : _sh.iTermRelaxFilters) {
+                filter.setCutoffFrequency(_iTermRelaxConfig.iterm_relax_cutoff, _rxM.setpointDeltaT);
             }
 #endif
         }
