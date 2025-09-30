@@ -33,6 +33,11 @@ FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, M
     _sh.antiGravityThrottleFilter.setToPassthrough();
 }
 
+// NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#define _rxM "error not modifiable in this task"
+#define _ahM "error not modifiable in this task"
+// NOLINTEND(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+
 static const std::array<std::string, FlightController::PID_COUNT> PID_NAMES = {
     "ROLL_RATE",
     "PITCH_RATE",

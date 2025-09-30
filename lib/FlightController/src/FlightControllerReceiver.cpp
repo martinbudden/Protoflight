@@ -2,6 +2,11 @@
 #include "FlightController.h"
 #include <RadioController.h>
 
+// NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+#define _fcM "error not modifiable in this task"
+#define _ahM "error not modifiable in this task"
+// NOLINTEND(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+
 
 /*!
 NOTE: CALLED FROM WITHIN THE RECEIVER TASK
