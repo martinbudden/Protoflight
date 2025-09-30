@@ -220,12 +220,9 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
     //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
 
     if (filtersConfig.dterm_lpf1_hz == 0) {
-        _sh.dTermFilters[ROLL_RATE_DPS].setToPassthrough();
-        _sh.dTermFilters[ROLL_ANGLE_DEGREES].setToPassthrough();
-        _sh.dTermFilters[ROLL_SIN_ANGLE].setToPassthrough();
-        _sh.dTermFilters[PITCH_RATE_DPS].setToPassthrough();
-        _sh.dTermFilters[PITCH_ANGLE_DEGREES].setToPassthrough();
-        _sh.dTermFilters[PITCH_SIN_ANGLE].setToPassthrough();
+        for (auto& filter : _sh.dTermFilters) {
+            filter.setToPassthrough();
+        }
     } else {
         // if the user has selected a filter, then provide a PowerTransfer1 filter.
         // If no filter selected, then set the filter to passthrough
@@ -237,32 +234,26 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
         case filters_config_t::BIQUAD:
             [[fallthrough]];
         case filters_config_t::PT1:
-            _sh.dTermFilters[ROLL_RATE_DPS].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _sh.dTermFilters[ROLL_ANGLE_DEGREES].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _sh.dTermFilters[ROLL_SIN_ANGLE].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _sh.dTermFilters[PITCH_RATE_DPS].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _sh.dTermFilters[PITCH_ANGLE_DEGREES].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
-            _sh.dTermFilters[PITCH_SIN_ANGLE].setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            for (auto& filter : _sh.dTermFilters) {
+                filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+            }
             break;
         default:
-            _sh.dTermFilters[ROLL_RATE_DPS].setToPassthrough();
-            _sh.dTermFilters[ROLL_ANGLE_DEGREES].setToPassthrough();
-            _sh.dTermFilters[ROLL_SIN_ANGLE].setToPassthrough();
-            _sh.dTermFilters[PITCH_RATE_DPS].setToPassthrough();
-            _sh.dTermFilters[PITCH_ANGLE_DEGREES].setToPassthrough();
-            _sh.dTermFilters[PITCH_SIN_ANGLE].setToPassthrough();
+            for (auto& filter : _sh.dTermFilters) {
+                filter.setToPassthrough();
+            }
             break;
         }
     }
     if (filtersConfig.output_lpf_hz == 0) {
-        _sh.outputFilters[ROLL_RATE_DPS].setToPassthrough();
-        _sh.outputFilters[PITCH_RATE_DPS].setToPassthrough();
-        _sh.outputFilters[YAW_RATE_DPS].setToPassthrough();
+        for (auto& filter : _sh.outputFilters) {
+            filter.setToPassthrough();
+        }
     } else {
         const float ahrsDeltaT = static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F;
-        _sh.outputFilters[ROLL_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
-        _sh.outputFilters[PITCH_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
-        _sh.outputFilters[YAW_RATE_DPS].setCutoffFrequency(filtersConfig.output_lpf_hz, ahrsDeltaT);
+        for (auto& filter : _sh.outputFilters) {
+            filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, ahrsDeltaT);
+        }
     }
 }
 
