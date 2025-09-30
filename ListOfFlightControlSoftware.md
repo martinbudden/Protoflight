@@ -123,4 +123,9 @@ Including
 2. [Reefwing-MSP](https://github.com/Reefwing-Software/Reefwing-MSP) Reefwing MultiWii Serial Protocol
 3. [Reefwing-SBUS](https://github.com/Reefwing-Software/Reefwing-SBUS) SBUS Library for the Nano 33 BLE
 
-and others
+
+### [ASAC FC](https://github.com/victorhook/asac-fc)
+
+A Simple And Cool Flight Controller (ASAC FC) is a flight controller based on the rp2040 microcontroller, completely open-source.
+
+Victor has also designed an open source RP2040 flight controller PCB and has published schematics.
