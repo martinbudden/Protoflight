@@ -40,9 +40,10 @@ static const FlightController::filters_config_t flightControllerFiltersConfig = 
     .dterm_dynamic_lpf1_min_hz = 0,
     .dterm_dynamic_lpf1_max_hz = 0,
     .yaw_lpf_hz = 0,
+    .output_lpf_hz = 500,
     .dterm_lpf1_type = FlightController::filters_config_t::PT1,
     .dterm_lpf2_type = FlightController::filters_config_t::PT1,
-    .output_lpf_hz = 500
+    .rc_smoothing_feedforward_cutoff = 0,
 };
 
 static const FlightController::tpa_config_t flightControllerTPA_Config = {

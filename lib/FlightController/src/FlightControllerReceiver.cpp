@@ -31,6 +31,17 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
         if (_rxM.setpointTickCountCounter == 0) {
             _rxM.setpointDeltaT = 0.001F * static_cast<float>(_rxM.setpointTickCountSum) / rx_t::SETPOINT_TICKCOUNT_COUNTER_START;
             _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
+            // Feedforward filters
+            if (_filtersConfig.rc_smoothing_feedforward_cutoff == 0) {
+                for (auto& filter : _sh.feedforwardFilters) {
+                    filter.setToPassthrough();
+                }
+            } else {
+                for (auto& filter : _sh.feedforwardFilters) {
+                    filter.setCutoffFrequencyAndReset(_filtersConfig.rc_smoothing_feedforward_cutoff, _rxM.setpointDeltaT);
+                }
+            }
+
 #if defined(USE_D_MAX)
             for (auto& filter : _sh.dMaxRangeFilters) {
                 filter.setCutoffFrequency(DMAX_RANGE_HZ, _rxM.setpointDeltaT);
@@ -132,12 +143,11 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // For NED left side up is positive roll, so sign of setpoint is same sign as rollStick.
     // So sign of _rollStick is left unchanged.
     _sh.PIDS[ROLL_RATE_DPS].setSetpoint(controls.rollStickDPS);
-#if false
-    //!!TODO: filter the setpointDerivative
     if (_rxM.setpointDeltaT != 0) {
-        _sh.PIDS[ROLL_RATE_DPS].setSetpointDerivative(_sh.PIDS[ROLL_RATE_DPS].getSetpoint() / _rxM.setpointDeltaT);
+        float setpointDerivative = _sh.PIDS[ROLL_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
+        setpointDerivative = _sh.feedforwardFilters[ROLL_RATE_DPS].filter(setpointDerivative);
+        _sh.PIDS[ROLL_RATE_DPS].setSetpointDerivative(setpointDerivative);
     }
-#endif
 #if defined(USE_ITERM_RELAX)
     _rxM.setpointLPs[ROLL_RATE_DPS] = _sh.iTermRelaxFilters[ROLL_RATE_DPS].filter(controls.rollStickDPS);
     _rxM.setpointHPs[ROLL_RATE_DPS] = std::fabs(controls.rollStickDPS - _rxM.setpointLPs[ROLL_RATE_DPS]);
@@ -152,12 +162,11 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // For NED nose up is positive pitch, so sign of setpoint is opposite sign as _pitchStick.
     // So sign of _pitchStick is negated.
     _sh.PIDS[PITCH_RATE_DPS].setSetpoint(-controls.pitchStickDPS);
-#if false
-    //!!TODO: filter the setpointDerivative
     if (_rxM.setpointDeltaT != 0) {
-        _sh.PIDS[PITCH_RATE_DPS].setSetpointDerivative(_sh.PIDS[PITCH_RATE_DPS].getSetpoint() / _rxM.setpointDeltaT);
+        float setpointDerivative = _sh.PIDS[PITCH_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
+        setpointDerivative = _sh.feedforwardFilters[PITCH_RATE_DPS].filter(setpointDerivative);
+        _sh.PIDS[PITCH_RATE_DPS].setSetpointDerivative(setpointDerivative);
     }
-#endif
 #if defined(USE_ITERM_RELAX)
     _rxM.setpointLPs[PITCH_RATE_DPS] = _sh.iTermRelaxFilters[PITCH_RATE_DPS].filter(controls.pitchStickDPS);
     _rxM.setpointHPs[PITCH_RATE_DPS] = std::fabs(controls.pitchStickDPS - _rxM.setpointLPs[PITCH_RATE_DPS]);

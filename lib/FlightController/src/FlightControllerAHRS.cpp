@@ -110,7 +110,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
             }
             _ahM.rollSinAngle = -orientationENU.sinRollClipped(); // sin(x-180) = -sin(x)
             const float rollSinAngleDelta = _sh.dTermFilters[ROLL_SIN_ANGLE].filter(_ahM.rollSinAngle - _sh.PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
-            _ahM.outputs[ROLL_SIN_ANGLE] = _sh.PIDS[ROLL_SIN_ANGLE].update(_ahM.rollSinAngle, rollSinAngleDelta, deltaT);
+            _ahM.outputs[ROLL_SIN_ANGLE] = _sh.PIDS[ROLL_SIN_ANGLE].updateDelta(_ahM.rollSinAngle, rollSinAngleDelta, deltaT);
             _ahM.rollRateSetpointDPS = _ahM.outputs[ROLL_SIN_ANGLE];
             // a component of YAW changes roll, so update accordingly !!TODO:check sign
             _ahM.rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.rollSinAngle;
@@ -118,7 +118,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
             _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_ROLL;
             _ahM.pitchSinAngle = -orientationENU.sinPitchClipped(); // this is cheaper to calculate than sinRoll
             const float pitchSinAngleDelta = _sh.dTermFilters[PITCH_SIN_ANGLE].filter(_ahM.pitchSinAngle - _sh.PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
-            _ahM.outputs[PITCH_SIN_ANGLE] = _sh.PIDS[PITCH_SIN_ANGLE].update(_ahM.pitchSinAngle, pitchSinAngleDelta, deltaT);
+            _ahM.outputs[PITCH_SIN_ANGLE] = _sh.PIDS[PITCH_SIN_ANGLE].updateDelta(_ahM.pitchSinAngle, pitchSinAngleDelta, deltaT);
             _ahM.pitchRateSetpointDPS = _ahM.outputs[PITCH_SIN_ANGLE];
             // a component of YAW changes roll, so update accordingly !!TODO:check sign
             _ahM.pitchRateSetpointDPS += yawRateSetpointDPS * _ahM.pitchSinAngle;
@@ -136,7 +136,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
             _ahM.rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
             _rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
             const float rollAngleDelta = _sh.dTermFilters[ROLL_ANGLE_DEGREES].filter(_rollAngleDegreesRaw - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
-            _ahM.outputs[ROLL_ANGLE_DEGREES] = _sh.PIDS[ROLL_ANGLE_DEGREES].update(_rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
+            _ahM.outputs[ROLL_ANGLE_DEGREES] = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(_rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
             _ahM.rollRateSetpointDPS = _ahM.outputs[ROLL_ANGLE_DEGREES];
             _ahM.rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.rollSinAngle;
         } else {
@@ -144,7 +144,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
             _ahM.pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
             _pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
             const float pitchAngleDelta = _sh.dTermFilters[ROLL_ANGLE_DEGREES].filter(_pitchAngleDegreesRaw - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
-            _ahM.outputs[PITCH_ANGLE_DEGREES] = _sh.PIDS[PITCH_ANGLE_DEGREES].update(_pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
+            _ahM.outputs[PITCH_ANGLE_DEGREES] = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(_pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
             _ahM.pitchRateSetpointDPS = _ahM.outputs[PITCH_ANGLE_DEGREES];
             _ahM.pitchRateSetpointDPS += yawRateSetpointDPS * _ahM.pitchSinAngle;
         }
@@ -223,10 +223,10 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     //
     const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
     const float rollRateDeltaDPS = _sh.dTermFilters[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
-    _ahM.outputs[ROLL_RATE_DPS] = _sh.PIDS[ROLL_RATE_DPS].updateDelta(
+    _ahM.outputs[ROLL_RATE_DPS] = _sh.PIDS[ROLL_RATE_DPS].updateDeltaITerm(
         rollRateDPS, 
         rollRateDeltaDPS*_rxC.TPA*_ahM.dMaxMultiplier[ROLL_RATE_DPS], 
-        //calculateITermError(ROLL_RATE_DPS, rollRateDPS),
+        calculateITermError(ROLL_RATE_DPS, rollRateDPS),
         deltaT);
     // filter the output
     _ahM.outputs[ROLL_RATE_DPS] = _sh.outputFilters[ROLL_RATE_DPS].filter(_ahM.outputs[ROLL_RATE_DPS]);
@@ -236,10 +236,10 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     //
     const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
     const float pitchRateDeltaDPS = _sh.dTermFilters[PITCH_RATE_DPS].filter(pitchRateDPS - _sh.PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
-    _ahM.outputs[PITCH_RATE_DPS] = _sh.PIDS[PITCH_RATE_DPS].updateDelta(
+    _ahM.outputs[PITCH_RATE_DPS] = _sh.PIDS[PITCH_RATE_DPS].updateDeltaITerm(
         pitchRateDPS,
         pitchRateDeltaDPS*_rxC.TPA*_ahM.dMaxMultiplier[PITCH_RATE_DPS],
-        //calculateITermError(PITCH_RATE_DPS, rollRateDPS),
+        calculateITermError(PITCH_RATE_DPS, rollRateDPS),
         deltaT);
     // filter the output
     _ahM.outputs[PITCH_RATE_DPS] = _sh.outputFilters[PITCH_RATE_DPS].filter(_ahM.outputs[PITCH_RATE_DPS]);
@@ -249,7 +249,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     //
     // DTerm is zero for yawRate, so call updatePI() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no FeedForward
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
-    _ahM.outputs[YAW_RATE_DPS] = _sh.PIDS[YAW_RATE_DPS].updatePI(yawRateDPS, deltaT);
+    _ahM.outputs[YAW_RATE_DPS] = _sh.PIDS[YAW_RATE_DPS].updatePIS(yawRateDPS, deltaT);
     // filter the output
     _ahM.outputs[YAW_RATE_DPS] = _sh.outputFilters[YAW_RATE_DPS].filter(_ahM.outputs[YAW_RATE_DPS]);
 

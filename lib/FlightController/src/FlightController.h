@@ -1,7 +1,7 @@
 #pragma once
 
 //#define USE_D_MAX
-//#define USE_ITERM_RELAX
+#define USE_ITERM_RELAX
 
 #include "FlightControllerTelemetry.h"
 
@@ -110,9 +110,10 @@ public:
         uint16_t dterm_dynamic_lpf1_min_hz;
         uint16_t dterm_dynamic_lpf1_max_hz;
         uint16_t yaw_lpf_hz;
+        uint16_t output_lpf_hz;
         uint8_t dterm_lpf1_type;
         uint8_t dterm_lpf2_type;
-        uint16_t output_lpf_hz;
+        uint8_t rc_smoothing_feedforward_cutoff;
     };
     enum tpa_mode_e { TPA_MODE_PD, TPA_MODE_D, TPA_MODE_PDS };
     struct tpa_config_t {
@@ -380,18 +381,18 @@ private:
         std::array<float, RP_AXIS_COUNT> dMaxMultiplier {1.0F, 1.0F}; // used even if USE_D_MAX not defined
     };
     struct shared_t {
-        int groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
+        bool groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
+        bool crashDetected {false};
         uint32_t takeOffCountStart {0};
         float yawSpinThresholdDPS {0.0F};
-        uint32_t yawSpinRecovery { false };
-        bool crashDetected { false };
+        uint32_t yawSpinRecovery {false};
         // throttle value is scaled to the range [-1,0, 1.0]
         float outputThrottle {0.0F};
         std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID values
         std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> outputFilters;
         PowerTransferFilter2 antiGravityThrottleFilter {};
-        // DTerm filters
         std::array<PowerTransferFilter1, PID_COUNT> dTermFilters;
+        std::array<PowerTransferFilter3, RP_AXIS_COUNT> feedforwardFilters;
 #if defined(USE_D_MAX)
         std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilters {};
         std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxLowpassFilters {};

@@ -38,7 +38,7 @@ TODO: functions have been directly copied from ESC_DShot and need renaming.
 class DShotCodec {
 public:
     enum telemetry_type_e {
-        TELEMETRY_TYPE_ERPM           = 0,
+        TELEMETRY_TYPE_ERPM           = 0, // Electrical RPM
         TELEMETRY_TYPE_TEMPERATURE    = 1, // Temperature Celsius
         TELEMETRY_TYPE_VOLTAGE        = 2, // Voltage with a step size of 0.25V ie [0, 0.25 ..., 63.75]
         TELEMETRY_TYPE_CURRENT        = 3, // Current with a step size of 1A ie [0, 1, ..., 255]

@@ -221,9 +221,10 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 {
     const_cast<filters_config_t&>(_filtersConfig) = filtersConfig; // NOLINT(cppcoreguidelines-pro-type-const-cast)
     //!!TODO: check dT value for filters config
-    const float dT = static_cast<float>(_taskIntervalMicroseconds) / 1000000.0F;
+    const float deltaT = static_cast<float>(_taskIntervalMicroseconds) * 0.000001F;
     //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
 
+    // DTerm filters
     if (filtersConfig.dterm_lpf1_hz == 0) {
         for (auto& filter : _sh.dTermFilters) {
             filter.setToPassthrough();
@@ -240,7 +241,7 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
             [[fallthrough]];
         case filters_config_t::PT1:
             for (auto& filter : _sh.dTermFilters) {
-                filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, dT);
+                filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, deltaT);
             }
             break;
         default:
@@ -250,6 +251,8 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
             break;
         }
     }
+
+    // Output filters
     if (filtersConfig.output_lpf_hz == 0) {
         for (auto& filter : _sh.outputFilters) {
             filter.setToPassthrough();
@@ -257,7 +260,7 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
     } else {
         const float ahrsDeltaT = static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F;
         for (auto& filter : _sh.outputFilters) {
-            filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, ahrsDeltaT);
+            filter.setCutoffFrequencyAndReset(filtersConfig.output_lpf_hz, ahrsDeltaT);
         }
     }
 }
