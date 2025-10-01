@@ -101,9 +101,10 @@ public:
     FlightController::anti_gravity_config_t loadFlightControllerAntiGravityConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerAntiGravityConfig(const FlightController::anti_gravity_config_t& config, uint8_t pidProfileIndex);
 
+#if defined(USE_D_MAX)
     FlightController::d_max_config_t loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerDMaxConfig(const FlightController::d_max_config_t& config, uint8_t pidProfileIndex);
-
+#endif
 #if defined(USE_ITERM_RELAX)
     FlightController::iterm_relax_config_t loadFlightControllerITermRelaxConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerITermRelaxConfig(const FlightController::iterm_relax_config_t& config, uint8_t pidProfileIndex);

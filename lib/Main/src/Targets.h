@@ -19,6 +19,8 @@ Targets
 #if defined(TARGET_M5STACK_STAMPS3)
     #define BOARD_IDENTIFIER    "M5Stack_StampS3"
 
+    #define USE_YAW_SPIN_RECOVERY
+
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_MPU6886
     #define IMU_I2C_PINS        i2c_pins_t{.sda=38,.scl=39,.irq=16}
@@ -48,6 +50,11 @@ Targets
 #if defined(TARGET_M5STACK_CORE2)
     #define BOARD_IDENTIFIER    "M5Stack_Core2"
 
+    #define USE_D_MAX
+    #define USE_ITERM_RELAX
+    #define USE_YAW_SPIN_RECOVERY
+    #define USE_CRASH_RECOVERY
+
     #define IMU_AXIS_ORDER      IMU_Base::YNEG_XPOS_ZPOS
     #define AHRS_TASK_INTERVAL_MICROSECONDS     5000
     #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
@@ -71,6 +78,9 @@ Targets
 #if defined(TARGET_PICO)
     #define BOARD_IDENTIFIER "RPI_Pico"
 
+    #define USE_ITERM_RELAX
+    #define USE_YAW_SPIN_RECOVERY
+
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
 #if defined(LIBRARY_IMU_USE_SPI_BUS)
@@ -87,6 +97,11 @@ Targets
 
 #if defined(TARGET_PICO2)
     #define BOARD_IDENTIFIER    "RPI_Pico2"
+
+    #define USE_D_MAX
+    #define USE_ITERM_RELAX
+    #define USE_YAW_SPIN_RECOVERY
+    #define USE_CRASH_RECOVERY
 
     #define FC_TASK_DENOMINATOR 1
     //#define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
@@ -118,6 +133,10 @@ Targets
     // see https://madflight.com/Board-ESP-FC2/
     // pins: https://github.com/qqqlab/madflight/blob/main/src/brd/madflight_FC3.h
     // schematic: https://madflight.com/img/madflight-ESP-FC2.pdf
+
+    #define USE_ITERM_RELAX
+    #define USE_YAW_SPIN_RECOVERY
+
     #define FC_TASK_DENOMINATOR 1
     #define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
     //#define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
@@ -146,6 +165,9 @@ Targets
     // pins: https://github.com/qqqlab/madflight/blob/main/src/brd/madflight_FC3.h
     // schematic: https://madflight.com/img/madflight-FC3.pdf
 
+    #define USE_ITERM_RELAX
+    #define USE_YAW_SPIN_RECOVERY
+
     #define FC_TASK_DENOMINATOR 1
     #define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
     //#define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
@@ -173,6 +195,8 @@ Targets
 #if defined(TARGET_SEED_XIAO_NRF52840_SENSE)
     #define BOARD_IDENTIFIER    "NRF52840_Sense"
 
+    #define USE_YAW_SPIN_RECOVERY
+
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
     #define IMU_I2C_PINS        i2c_pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
@@ -187,6 +211,11 @@ Targets
 
 #if defined(TARGET_ADAFRUIT_FEATHER_F405)
     #define BOARD_IDENTIFIER    "Feather_F405"
+
+    #define USE_D_MAX
+    #define USE_ITERM_RELAX
+    #define USE_YAW_SPIN_RECOVERY
+    #define USE_CRASH_RECOVERY
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
@@ -214,6 +243,10 @@ Targets
 
 #if defined(TARGET_AFROFLIGHT_F301CB)
     #define BOARD_IDENTIFIER    "AfroFlight_F301CB"
+
+    #define USE_D_MAX
+    #define USE_ITERM_RELAX
+    #define USE_YAW_SPIN_RECOVERY
 
     #define USART_1_PINS        stm32_rx_pins_t{.rx={PA,10},.tx={PA,9}} // TX output is always inverted (for FrSky). Internally connected to USB port via CP2102 IC
     #define USART_2_PINS        stm32_rx_pins_t{.rx={PA,3},.tx={PA,2}}

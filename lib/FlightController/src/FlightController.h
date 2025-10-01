@@ -1,17 +1,14 @@
 #pragma once
 
-#define USE_D_MAX
-#define USE_ITERM_RELAX
-#define USE_YAW_SPIN_RECOVERY
-#define USE_CRASH_RECOVERY
-
 #include "FlightControllerTelemetry.h"
 
 #include <Filters.h>
 #include <MotorMixerBase.h>
 #include <PIDF.h>
 #include <RadioControllerBase.h>
+#include <Targets.h>
 #include <VehicleControllerBase.h>
+
 #include <array>
 #include <string>
 #include <xyz_type.h>

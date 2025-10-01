@@ -84,7 +84,7 @@ VehicleControllerBase::PIDF_uint16_t FlightController::getPID_Constants(pid_inde
     return pid16;
 }
 /*!
-Set the P, I, D, and F values for the PID with index pidIndex.
+Set the P, I, D, F, and S values for the PID with index pidIndex.
 Integration is switched off, so that there is no integral windup before takeoff.
 */
 void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16)
@@ -100,7 +100,7 @@ void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_
 
     _sh.PIDS[pidIndex].setPID(pid);
     _sh.PIDS[pidIndex].switchIntegrationOff();
-    // keep copies of P and I terms so they can be adjusted by anti-gravity
+    // keep copies of the PID constants so they can be adjusted by anti-gravity
     _fcM.pidConstants[pidIndex] = _sh.PIDS[pidIndex].getPID();
 }
 
@@ -403,7 +403,7 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
 }
 
 /*!
-Called from within the VehicleControllerTask when signalled by the AHRS task that output data is available.
+Called by the scheduler when signalled by the AHRS task that output data is available.
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {
