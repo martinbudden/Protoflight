@@ -33,13 +33,13 @@ static const DynamicIdleController::config_t dynamicIdleControllerConfig = {
 };
 
 static const FlightController::filters_config_t flightControllerFiltersConfig = {
-    .dterm_lpf1_hz = 100,
-    .dterm_lpf2_hz = 0,
+    .dterm_lpf1_hz = 75,
+    .dterm_lpf2_hz = 150,
     .dterm_notch_hz = 0,
     .dterm_notch_cutoff = 160,
-    .dterm_dynamic_lpf1_min_hz = 0,
-    .dterm_dynamic_lpf1_max_hz = 0,
-    .yaw_lpf_hz = 0,
+    .dterm_dynamic_lpf1_min_hz = 75,
+    .dterm_dynamic_lpf1_max_hz = 150,
+    .yaw_lpf_hz = 100,
     .output_lpf_hz = 500,
     .dterm_lpf1_type = FlightController::filters_config_t::PT1,
     .dterm_lpf2_type = FlightController::filters_config_t::PT1,
@@ -76,6 +76,14 @@ static const FlightController::iterm_relax_config_t flightControllerITermRelaxCo
 };
 #endif
 
+#if defined(USE_YAW_SPIN_RECOVERY)
+static const FlightController::yaw_spin_recovery_config_t flightControllerYawSpinRecoveryConfig = {
+    .yaw_spin_threshold = 1950,
+    .yaw_spin_recovery = FlightController::YAW_SPIN_RECOVERY_OFF,
+};
+#endif
+
+#if defined(USE_CRASH_RECOVERY)
 static const FlightController::crash_recovery_config_t flightControllerCrashRecoveryConfig = {
     .crash_dthreshold = 50,
     .crash_gthreshold = 400,
@@ -87,6 +95,7 @@ static const FlightController::crash_recovery_config_t flightControllerCrashReco
     .crash_recovery_rate = 100,
     .crash_recovery = FlightController::CRASH_RECOVERY_OFF,
 };
+#endif
 
 static const IMU_Filters::config_t imuFiltersConfig = {
     .gyro_notch1_hz = 0,

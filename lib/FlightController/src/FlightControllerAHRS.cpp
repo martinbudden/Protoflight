@@ -54,14 +54,15 @@ NOTE: CALLED FROM WITHIN THE AHRS TASK
 */
 void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT)
 {
-    if (fabsf(gyroENU_RPS.z) > _yawSpinRecoveredRPS) {
+#if defined(USE_YAW_SPIN_RECOVERY)
+    if (fabsf(gyroENU_RPS.z) > _yawSpin.recoveredRPS) {
         _sh.outputThrottle = 0.5F; // half throttle gives maximum yaw authority, since outputs will have maximum range before being clipped
         // use the YAW_RATE_DPS PID to bring the spin down to zero
         _sh.PIDS[YAW_RATE_DPS].setSetpoint(0.0F);
         const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
         _ahM.outputs[YAW_RATE_DPS] = _sh.PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT);
 
-        if (fabsf(gyroENU_RPS.z) > _yawSpinPartiallyRecoveredRPS) {
+        if (fabsf(gyroENU_RPS.z) > _yawSpin.partiallyRecoveredRPS) {
             // we are at a high spin rate, so don't yet attempt to recover the roll and pitch spin
             _ahM.outputs[ROLL_RATE_DPS] = 0.0F;
             _ahM.outputs[PITCH_RATE_DPS] = 0.0F;
@@ -81,6 +82,10 @@ void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT
         // switch PID integration back on
         switchPID_integrationOn();
     }
+#else
+    (void)gyroENU_RPS;
+    (void)deltaT;
+#endif
 }
 
 /*!
@@ -171,14 +176,22 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
     _sh.PIDS[YAW_RATE_DPS].setSetpoint(_rxC.yawRateSetpointDPS*yawRateSetpointAttenuation);
 }
 
+/*!
+NOTE: CALLED FROM WITHIN THE AHRS TASK
+*/
 float FlightController::calculateITermError(size_t axis, float measurement)
 {
 #if defined(USE_ITERM_RELAX)
     if (_iTermRelaxConfig.iterm_relax == ITERM_RELAX_ON) {
-        return applyDeadband(_rxC.setpointLPs[ROLL_RATE_DPS] - measurement, _rxC.setpointHPs[ROLL_RATE_DPS]);
+        const float iTermError = applyDeadband(_rxC.setpointLPs[axis] - measurement, _rxC.setpointHPs[axis]);
+        if (axis == ROLL_RATE_DPS && _debug.getMode() == DEBUG_ITERM_RELAX) {
+            _debug.set(DEBUG_ITERM_RELAX, 0, lrintf(_rxC.setpointHPs[axis]));
+            _debug.set(DEBUG_ITERM_RELAX, 2, lrintf(iTermError));
+        }
+        return iTermError;
     }
 #endif
-    return _sh.PIDS[axis].getSetpoint() - measurement; // just setpoint - measurement, if no ITerm relax
+    return _sh.PIDS[axis].getSetpoint() - measurement; // iTermError is just `setpoint - measurement`, if there is no ITerm relax
 }
 
 /*!
@@ -194,6 +207,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
 {
     (void)accENU; // not using acc, since we use the orientation quaternion instead
 
+#if defined(USE_YAW_SPIN_RECOVERY)
     if (_sh.yawSpinRecovery) {
         recoverFromYawSpin(gyroENU_RPS, deltaT);
         const VehicleControllerMessageQueue::queue_item_t queueItem {
@@ -205,6 +219,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
         SIGNAL(queueItem);
         return;
     }
+#endif
 
 #if defined(USE_D_MAX)
     calculateDMaxMultipliers();
@@ -222,12 +237,12 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     // Roll axis
     //
     const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
-    const float rollRateDeltaDPS = _sh.dTermFilters[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
+    const float rollRateDeltaFilteredDPS = _sh.dTermFilters[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
     _ahM.outputs[ROLL_RATE_DPS] = _sh.PIDS[ROLL_RATE_DPS].updateDeltaITerm(
-        rollRateDPS, 
-        rollRateDeltaDPS*_rxC.TPA*_ahM.dMaxMultiplier[ROLL_RATE_DPS], 
-        calculateITermError(ROLL_RATE_DPS, rollRateDPS),
-        deltaT);
+                                                                rollRateDPS, 
+                                                                rollRateDeltaFilteredDPS*_rxC.TPA*_ahM.dMaxMultiplier[ROLL_RATE_DPS], 
+                                                                calculateITermError(ROLL_RATE_DPS, rollRateDPS),
+                                                                deltaT);
     // filter the output
     _ahM.outputs[ROLL_RATE_DPS] = _sh.outputFilters[ROLL_RATE_DPS].filter(_ahM.outputs[ROLL_RATE_DPS]);
 
@@ -235,26 +250,26 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     // Pitch axis
     //
     const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
-    const float pitchRateDeltaDPS = _sh.dTermFilters[PITCH_RATE_DPS].filter(pitchRateDPS - _sh.PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
+    const float pitchRateDeltaFilteredDPS = _sh.dTermFilters[PITCH_RATE_DPS].filter(pitchRateDPS - _sh.PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
     _ahM.outputs[PITCH_RATE_DPS] = _sh.PIDS[PITCH_RATE_DPS].updateDeltaITerm(
-        pitchRateDPS,
-        pitchRateDeltaDPS*_rxC.TPA*_ahM.dMaxMultiplier[PITCH_RATE_DPS],
-        calculateITermError(PITCH_RATE_DPS, rollRateDPS),
-        deltaT);
+                                                                pitchRateDPS,
+                                                                pitchRateDeltaFilteredDPS*_rxC.TPA*_ahM.dMaxMultiplier[PITCH_RATE_DPS],
+                                                                calculateITermError(PITCH_RATE_DPS, rollRateDPS),
+                                                                deltaT);
     // filter the output
     _ahM.outputs[PITCH_RATE_DPS] = _sh.outputFilters[PITCH_RATE_DPS].filter(_ahM.outputs[PITCH_RATE_DPS]);
 
     //
     // Yaw axis
     //
-    // DTerm is zero for yawRate, so call updatePI() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no FeedForward
+    // DTerm is zero for yawRate, so call updatePIS() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no FeedForward
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
     _ahM.outputs[YAW_RATE_DPS] = _sh.PIDS[YAW_RATE_DPS].updatePIS(yawRateDPS, deltaT);
     // filter the output
     _ahM.outputs[YAW_RATE_DPS] = _sh.outputFilters[YAW_RATE_DPS].filter(_ahM.outputs[YAW_RATE_DPS]);
 
-    // The VehicleControllerTask is waiting on the message queue, so signal it so that there is output data available.
-    // This will result in outputToMixer() being called by the scheduler
+    // The FlightControllerTask is waiting on the message queue, so signal it so that there is output data available.
+    // This will result in outputToMixer() being called by the scheduler.
     const VehicleControllerMessageQueue::queue_item_t queueItem {
         .throttle = _sh.outputThrottle,
         .roll = _ahM.outputs[ROLL_RATE_DPS],

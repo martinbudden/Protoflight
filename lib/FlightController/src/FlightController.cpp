@@ -332,6 +332,16 @@ void FlightController::setITermRelaxConfig(const iterm_relax_config_t& iTermRela
 }
 #endif
 
+#if defined(USE_YAW_SPIN_RECOVERY)
+void FlightController::setYawSpinRecoveryConfig(const yaw_spin_recovery_config_t& yawSpinRecoveryConfig)
+{
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+    const_cast<yaw_spin_recovery_config_t&>(_yawSpinRecoveryConfig) = yawSpinRecoveryConfig;
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+}
+#endif
+
+#if defined(USE_CRASH_RECOVERY)
 void FlightController::setCrashRecoveryConfig(const crash_recovery_config_t& crashRecoveryConfig)
 {
     // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
@@ -348,6 +358,7 @@ void FlightController::setCrashRecoveryConfig(const crash_recovery_config_t& cra
     };
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
+#endif
 
 /*!
 Return he FC telemetry data.

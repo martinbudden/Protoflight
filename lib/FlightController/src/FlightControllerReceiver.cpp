@@ -113,6 +113,14 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     _debug.set(DEBUG_ANTI_GRAVITY, 3, lrintf(PTermBoostPitch * 1000.0F));
 }
 
+void FlightController::setYawSpinThresholdDPS(float yawSpinThresholdDPS)
+{
+#if defined(USE_YAW_SPIN)
+    _sh.yawSpinThresholdDPS = yawSpinThresholdDPS;
+#else
+    (void)yawSpinThresholdDPS;
+#endif
+}
 /*!
 NOTE: CALLED FROM WITHIN THE RECEIVER TASK
 
@@ -216,11 +224,14 @@ Detect crash or yaw spin. Runs in context of Receiver Task.
 */
 void FlightController::detectCrashOrSpin()
 {
+#if defined(USE_YAW_SPIN_RECOVERY)
     if (_sh.yawSpinThresholdDPS !=0.0F && fabsf(_sh.PIDS[YAW_RATE_DPS].getPreviousMeasurement()) > _sh.yawSpinThresholdDPS) {
         // yaw spin detected
         _sh.yawSpinRecovery = true;
         switchPID_integrationOff();
     }
+#endif
+#if defined(USE_CRASH_RECOVERY)
     const size_t axis = YAW_RATE_DPS;
     const PIDF pid = _sh.PIDS[axis];
     if (std::fabs(pid.getErrorRawD()) > _crash.DtermThresholdDPSPS
@@ -229,4 +240,5 @@ void FlightController::detectCrashOrSpin()
         _sh.crashDetected = true;
         switchPID_integrationOff();
     }
+#endif
 }

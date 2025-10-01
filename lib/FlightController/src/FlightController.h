@@ -1,7 +1,9 @@
 #pragma once
 
-//#define USE_D_MAX
+#define USE_D_MAX
 #define USE_ITERM_RELAX
+#define USE_YAW_SPIN_RECOVERY
+#define USE_CRASH_RECOVERY
 
 #include "FlightControllerTelemetry.h"
 
@@ -153,6 +155,19 @@ public:
         std::array<float, RP_AXIS_COUNT> percent;
         std::array<uint8_t, RP_AXIS_COUNT> max;
     };
+#if defined(USE_YAW_SPIN_RECOVERY)
+    enum yaw_spin_recovery_mode_e { YAW_SPIN_RECOVERY_OFF = 0, YAW_SPIN_RECOVERY_ON, YAW_SPIN_RECOVERY_AUTO };
+    struct yaw_spin_recovery_config_t {
+        int16_t yaw_spin_threshold;
+        uint8_t yaw_spin_recovery;
+    };
+    struct yaw_spin_recovery_runtime_t {
+        // yaw spin recovery
+        float recoveredRPS;
+        float partiallyRecoveredRPS;
+    };
+#endif
+#if defined(USE_CRASH_RECOVERY)
     enum crash_recovery_e { CRASH_RECOVERY_OFF = 0, CRASH_RECOVERY_ON, CRASH_RECOVERY_BEEP, CRASH_RECOVERY_DISARM };
     struct crash_recovery_config_t {
         uint16_t crash_dthreshold;          // dterm crash value
@@ -165,13 +180,6 @@ public:
         uint8_t crash_recovery_rate;        // degrees per second
         uint8_t crash_recovery;             // off, on, on and beeps when it is in crash recovery mode
     };
-#if defined(USE_ITERM_RELAX)
-    enum iterm_relax_e { ITERM_RELAX_OFF, ITERM_RELAX_ON };
-    struct iterm_relax_config_t {
-        uint8_t iterm_relax;        // Enable iterm suppression during stick input
-        uint8_t iterm_relax_cutoff; // Cutoff frequency used by low pass filter which predicts average response of the quad to setpoint
-    };
-#endif
     struct crash_recovery_runtime_t {
         uint32_t timeLimitUs;
         uint32_t timeDelayUs;
@@ -182,6 +190,14 @@ public:
         float setpointThresholdDPS;
         float limitYaw;
     };
+#endif
+#if defined(USE_ITERM_RELAX)
+    enum iterm_relax_e { ITERM_RELAX_OFF, ITERM_RELAX_ON };
+    struct iterm_relax_config_t {
+        uint8_t iterm_relax;        // Enable iterm suppression during stick input
+        uint8_t iterm_relax_cutoff; // Cutoff frequency used by low pass filter which predicts average response of the quad to setpoint
+    };
+#endif
     struct controls_t {
         uint32_t tickCount;
         float throttleStick;
@@ -278,14 +294,21 @@ public:
     const iterm_relax_config_t& getITermRelaxConfig() const { return _iTermRelaxConfig; }
 #endif
 
+#if defined(USE_YAW_SPIN_RECOVERY)
+    void setYawSpinRecoveryConfig(const yaw_spin_recovery_config_t& yawSpinRecoveryConfig);
+    const yaw_spin_recovery_config_t& getYawSpinRecoveryConfig() const { return _yawSpinRecoveryConfig; }
+#endif
+
+#if defined(USE_CRASH_RECOVERY)
     void setCrashRecoveryConfig(const crash_recovery_config_t& crashRecoveryConfig);
     const crash_recovery_config_t& getCrashRecoveryConfig() const { return _crashRecoveryConfig; }
+#endif
 
 public:
     [[noreturn]] static void Task(void* arg);
 public:
     void detectCrashOrSpin();
-    void setYawSpinThresholdDPS(float yawSpinThresholdDPS) { _sh.yawSpinThresholdDPS = yawSpinThresholdDPS; }
+    void setYawSpinThresholdDPS(float yawSpinThresholdDPS);
     void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
 
     void calculateDMaxMultipliers();
@@ -311,9 +334,6 @@ private:
     const float _takeOffThrottleThreshold {0.2F};
     const uint32_t _takeOffTickThreshold {1000};
     const uint32_t _angleModeUseQuaternionSpace {false};
-    // yaw spin recovery
-    const float _yawSpinRecoveredRPS { 100.0F * degreesToRadians };
-    const float _yawSpinPartiallyRecoveredRPS { 400.F * degreesToRadians };
     // other constants
     const float _maxRollRateDPS {500.0F};
     const float _maxPitchRateDPS {500.0F};
@@ -334,10 +354,16 @@ private:
     const d_max_runtime_t _dMax {};
 #endif
 #if defined(USE_ITERM_RELAX)
-    const iterm_relax_config_t _iTermRelaxConfig = { ITERM_RELAX_ON, 15 };
+    const iterm_relax_config_t _iTermRelaxConfig = {.iterm_relax=ITERM_RELAX_ON, .iterm_relax_cutoff=15};
 #endif
+#if defined(USE_YAW_SPIN_RECOVERY)
+    const yaw_spin_recovery_config_t _yawSpinRecoveryConfig {.yaw_spin_threshold=1950, .yaw_spin_recovery=YAW_SPIN_RECOVERY_OFF};
+    const yaw_spin_recovery_runtime_t _yawSpin = {.recoveredRPS=100.0F*degreesToRadians,. partiallyRecoveredRPS=400.F*degreesToRadians};
+#endif
+#if defined(USE_CRASH_RECOVERY)
     const crash_recovery_config_t _crashRecoveryConfig {};
     const crash_recovery_runtime_t _crash {};
+#endif
 
     //
     // member data is divided into structs, according to which task may set that data
@@ -384,8 +410,10 @@ private:
         bool groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
         bool crashDetected {false};
         uint32_t takeOffCountStart {0};
+#if defined(USE_YAW_SPIN_RECOVERY)
         float yawSpinThresholdDPS {0.0F};
         uint32_t yawSpinRecovery {false};
+#endif
         // throttle value is scaled to the range [-1,0, 1.0]
         float outputThrottle {0.0F};
         std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID values

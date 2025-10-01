@@ -108,9 +108,14 @@ public:
     FlightController::iterm_relax_config_t loadFlightControllerITermRelaxConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerITermRelaxConfig(const FlightController::iterm_relax_config_t& config, uint8_t pidProfileIndex);
 #endif
-
+#if defined(USE_YAW_SPIN_RECOVERY)
+    FlightController::yaw_spin_recovery_config_t loadFlightControllerYawSpinRecoveryConfig(uint8_t pidProfileIndex) const;
+    int32_t storeFlightControllerYawSpinRecoveryConfig(const FlightController::yaw_spin_recovery_config_t& config, uint8_t pidProfileIndex);
+#endif
+#if defined(USE_CRASH_RECOVERY)
     FlightController::crash_recovery_config_t loadFlightControllerCrashRecoveryConfig(uint8_t pidProfileIndex) const;
-    int32_t storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& crashRecoveryConfig, uint8_t pidProfileIndex);
+    int32_t storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& config, uint8_t pidProfileIndex);
+#endif
 
     IMU_Filters::config_t loadIMU_FiltersConfig() const;
     int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);

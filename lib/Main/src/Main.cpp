@@ -403,7 +403,12 @@ void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, Flight
 #if defined(USE_ITERM_RELAX)
     flightController.setITermRelaxConfig(nvs.loadFlightControllerITermRelaxConfig(pidProfile));
 #endif
+#if defined(USE_YAW_SPIN_RECOVERY)
+    flightController.setYawSpinRecoveryConfig(nvs.loadFlightControllerYawSpinRecoveryConfig(pidProfile));
+#endif
+#if defined(USE_CRASH_RECOVERY)
     flightController.setCrashRecoveryConfig(nvs.loadFlightControllerCrashRecoveryConfig(pidProfile));
+#endif
 
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
         const VehicleControllerBase::PIDF_uint16_t pid = nvs.loadPID(ii, pidProfile);

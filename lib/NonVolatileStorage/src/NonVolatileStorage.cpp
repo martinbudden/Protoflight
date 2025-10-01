@@ -41,7 +41,12 @@ static constexpr uint16_t FlightControllerDMaxConfigKey = 0x0410;
 #if defined(USE_ITERM_RELAX)
 static constexpr uint16_t FlightControllerITermRelaxConfigKey = 0x0414;
 #endif
-static constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x0418;
+#if defined(USE_YAW_SPIN_RECOVERY)
+static constexpr uint16_t FlightControllerYawSpinRecoveryConfigKey = 0x0418;
+#endif
+#if defined(USE_CRASH_RECOVERY)
+static constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x041C;
+#endif
 
 static constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
 static constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
@@ -343,20 +348,38 @@ int32_t NonVolatileStorage::storeFlightControllerITermRelaxConfig(const FlightCo
 #endif
 
 
+#if defined(USE_YAW_SPIN_RECOVERY)
+FlightController::yaw_spin_recovery_config_t NonVolatileStorage::loadFlightControllerYawSpinRecoveryConfig(uint8_t pidProfileIndex) const
+{
+    FlightController::yaw_spin_recovery_config_t config {};
+    if (loadItem(FlightControllerYawSpinRecoveryConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }
+    return DEFAULTS::flightControllerYawSpinRecoveryConfig;
+}
+
+int32_t NonVolatileStorage::storeFlightControllerYawSpinRecoveryConfig(const FlightController::yaw_spin_recovery_config_t& config, uint8_t pidProfileIndex)
+{
+    return storeItem(FlightControllerYawSpinRecoveryConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerYawSpinRecoveryConfig);
+}
+#endif
+
+
+#if defined(USE_CRASH_RECOVERY)
 FlightController::crash_recovery_config_t NonVolatileStorage::loadFlightControllerCrashRecoveryConfig(uint8_t pidProfileIndex) const
 {
-    FlightController::crash_recovery_config_t crashRecoveryConfig {};
-    if (loadItem(FlightControllerCrashRecoveryConfigKey, pidProfileIndex, &crashRecoveryConfig, sizeof(crashRecoveryConfig))) { // cppcheck-suppress knownConditionTrueFalse
-        return crashRecoveryConfig;
+    FlightController::crash_recovery_config_t config {};
+    if (loadItem(FlightControllerCrashRecoveryConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
     }
     return DEFAULTS::flightControllerCrashRecoveryConfig;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& crashRecoveryConfig, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& config, uint8_t pidProfileIndex)
 {
-    return storeItem(FlightControllerCrashRecoveryConfigKey, pidProfileIndex, &crashRecoveryConfig, sizeof(crashRecoveryConfig), &DEFAULTS::flightControllerCrashRecoveryConfig);
+    return storeItem(FlightControllerCrashRecoveryConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerCrashRecoveryConfig);
 }
-
+#endif
 
 
 IMU_Filters::config_t NonVolatileStorage::loadIMU_FiltersConfig() const
@@ -558,8 +581,15 @@ int32_t NonVolatileStorage::storeAll(const FlightController& flightController, c
     storeFlightControllerITermRelaxConfig(flightControllerITermRelaxConfig, pidProfile);
 #endif
 
+#if defined(USE_YAW_SPIN_RECOVERY)
+    const FlightController::yaw_spin_recovery_config_t flightControllerYawSpinRecoveryConfig = flightController.getYawSpinRecoveryConfig();
+    storeFlightControllerYawSpinRecoveryConfig(flightControllerYawSpinRecoveryConfig, pidProfile);
+#endif
+
+#if defined(USE_CRASH_RECOVERY)
     const FlightController::crash_recovery_config_t flightControllerCrashRecoveryConfig = flightController.getCrashRecoveryConfig();
     storeFlightControllerCrashRecoveryConfig(flightControllerCrashRecoveryConfig, pidProfile);
+#endif
 
     const IMU_Filters::config_t imuFiltersConfig = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()).getConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     storeIMU_FiltersConfig(imuFiltersConfig);
