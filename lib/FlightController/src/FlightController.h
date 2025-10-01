@@ -419,7 +419,8 @@ private:
         std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID values
         std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> outputFilters;
         PowerTransferFilter2 antiGravityThrottleFilter {};
-        std::array<PowerTransferFilter1, PID_COUNT> dTermFilters;
+        std::array<PowerTransferFilter1, PID_COUNT> dTermFilters1;
+        std::array<PowerTransferFilter1, PID_COUNT> dTermFilters2;
         std::array<PowerTransferFilter3, RP_AXIS_COUNT> feedforwardFilters;
 #if defined(USE_D_MAX)
         std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilters {};

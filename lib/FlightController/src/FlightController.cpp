@@ -219,36 +219,35 @@ void FlightController::setControlMode(control_mode_e controlMode)
 
 void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 {
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
     const_cast<filters_config_t&>(_filtersConfig) = filtersConfig; // NOLINT(cppcoreguidelines-pro-type-const-cast)
+    // always used PT1 filters for DTerm filters.
+    const_cast<uint8_t&>(filtersConfig.dterm_lpf1_type) = FlightController::filters_config_t::PT1;
+    const_cast<uint8_t&>(filtersConfig.dterm_lpf2_type) = FlightController::filters_config_t::PT1;
     //!!TODO: check dT value for filters config
     const float deltaT = static_cast<float>(_taskIntervalMicroseconds) * 0.000001F;
     //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 
     // DTerm filters
     if (filtersConfig.dterm_lpf1_hz == 0) {
-        for (auto& filter : _sh.dTermFilters) {
+        for (auto& filter : _sh.dTermFilters1) {
             filter.setToPassthrough();
         }
     } else {
-        // if the user has selected a filter, then provide a PowerTransfer1 filter.
-        // If no filter selected, then set the filter to passthrough
-        switch (filtersConfig.dterm_lpf1_type) {
-        case filters_config_t::PT2:
-            [[fallthrough]];
-        case filters_config_t::PT3:
-            [[fallthrough]];
-        case filters_config_t::BIQUAD:
-            [[fallthrough]];
-        case filters_config_t::PT1:
-            for (auto& filter : _sh.dTermFilters) {
-                filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, deltaT);
-            }
-            break;
-        default:
-            for (auto& filter : _sh.dTermFilters) {
-                filter.setToPassthrough();
-            }
-            break;
+        // DTerm filters always use a PowerTransfer1 filter.
+        for (auto& filter : _sh.dTermFilters1) {
+            filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, deltaT);
+        }
+    }
+    if (filtersConfig.dterm_lpf2_hz == 0) {
+        for (auto& filter : _sh.dTermFilters2) {
+            filter.setToPassthrough();
+        }
+    } else {
+        // DTerm filters always use a PowerTransfer1 filter.
+        for (auto& filter : _sh.dTermFilters2) {
+            filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf2_hz, deltaT);
         }
     }
 

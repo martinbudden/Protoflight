@@ -114,7 +114,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
                 _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_PITCH;
             }
             _ahM.rollSinAngle = -orientationENU.sinRollClipped(); // sin(x-180) = -sin(x)
-            const float rollSinAngleDelta = _sh.dTermFilters[ROLL_SIN_ANGLE].filter(_ahM.rollSinAngle - _sh.PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
+            const float rollSinAngleDelta = _sh.dTermFilters1[ROLL_SIN_ANGLE].filter(_ahM.rollSinAngle - _sh.PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
             _ahM.outputs[ROLL_SIN_ANGLE] = _sh.PIDS[ROLL_SIN_ANGLE].updateDelta(_ahM.rollSinAngle, rollSinAngleDelta, deltaT);
             _ahM.rollRateSetpointDPS = _ahM.outputs[ROLL_SIN_ANGLE];
             // a component of YAW changes roll, so update accordingly !!TODO:check sign
@@ -122,7 +122,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
         } else {
             _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_ROLL;
             _ahM.pitchSinAngle = -orientationENU.sinPitchClipped(); // this is cheaper to calculate than sinRoll
-            const float pitchSinAngleDelta = _sh.dTermFilters[PITCH_SIN_ANGLE].filter(_ahM.pitchSinAngle - _sh.PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
+            const float pitchSinAngleDelta = _sh.dTermFilters1[PITCH_SIN_ANGLE].filter(_ahM.pitchSinAngle - _sh.PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
             _ahM.outputs[PITCH_SIN_ANGLE] = _sh.PIDS[PITCH_SIN_ANGLE].updateDelta(_ahM.pitchSinAngle, pitchSinAngleDelta, deltaT);
             _ahM.pitchRateSetpointDPS = _ahM.outputs[PITCH_SIN_ANGLE];
             // a component of YAW changes roll, so update accordingly !!TODO:check sign
@@ -140,7 +140,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
             }
             _ahM.rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
             _rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
-            const float rollAngleDelta = _sh.dTermFilters[ROLL_ANGLE_DEGREES].filter(_rollAngleDegreesRaw - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
+            const float rollAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_rollAngleDegreesRaw - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
             _ahM.outputs[ROLL_ANGLE_DEGREES] = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(_rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
             _ahM.rollRateSetpointDPS = _ahM.outputs[ROLL_ANGLE_DEGREES];
             _ahM.rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.rollSinAngle;
@@ -148,7 +148,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
             _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_ROLL;
             _ahM.pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
             _pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
-            const float pitchAngleDelta = _sh.dTermFilters[ROLL_ANGLE_DEGREES].filter(_pitchAngleDegreesRaw - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
+            const float pitchAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_pitchAngleDegreesRaw - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
             _ahM.outputs[PITCH_ANGLE_DEGREES] = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(_pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
             _ahM.pitchRateSetpointDPS = _ahM.outputs[PITCH_ANGLE_DEGREES];
             _ahM.pitchRateSetpointDPS += yawRateSetpointDPS * _ahM.pitchSinAngle;
@@ -237,10 +237,11 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     // Roll axis
     //
     const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
-    const float rollRateDeltaFilteredDPS = _sh.dTermFilters[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
+    float rollRateDeltaFilteredDPS = _sh.dTermFilters1[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
+    rollRateDeltaFilteredDPS = _sh.dTermFilters2[ROLL_RATE_DPS].filter(rollRateDeltaFilteredDPS);
     _ahM.outputs[ROLL_RATE_DPS] = _sh.PIDS[ROLL_RATE_DPS].updateDeltaITerm(
                                                                 rollRateDPS, 
-                                                                rollRateDeltaFilteredDPS*_rxC.TPA*_ahM.dMaxMultiplier[ROLL_RATE_DPS], 
+                                                                rollRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[ROLL_RATE_DPS], 
                                                                 calculateITermError(ROLL_RATE_DPS, rollRateDPS),
                                                                 deltaT);
     // filter the output
@@ -250,10 +251,11 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     // Pitch axis
     //
     const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
-    const float pitchRateDeltaFilteredDPS = _sh.dTermFilters[PITCH_RATE_DPS].filter(pitchRateDPS - _sh.PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
+    float pitchRateDeltaFilteredDPS = _sh.dTermFilters1[PITCH_RATE_DPS].filter(rollRateDPS - _sh.PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
+    pitchRateDeltaFilteredDPS = _sh.dTermFilters2[PITCH_RATE_DPS].filter(pitchRateDeltaFilteredDPS);
     _ahM.outputs[PITCH_RATE_DPS] = _sh.PIDS[PITCH_RATE_DPS].updateDeltaITerm(
                                                                 pitchRateDPS,
-                                                                pitchRateDeltaFilteredDPS*_rxC.TPA*_ahM.dMaxMultiplier[PITCH_RATE_DPS],
+                                                                pitchRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[PITCH_RATE_DPS],
                                                                 calculateITermError(PITCH_RATE_DPS, rollRateDPS),
                                                                 deltaT);
     // filter the output
