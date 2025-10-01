@@ -47,7 +47,7 @@ void MotorMixerQuadX_DShot::outputToMotors(commands_t& commands, float deltaT, u
         const float throttleIncrease = _dynamicIdleController.getMinimumAllowedMotorHz() == 0.0F ? 0.0F : _dynamicIdleController.calculateSpeedIncrease(calculateSlowestMotorHz(), deltaT);
         commands.throttle += throttleIncrease;
         // set the throttle to value returned by the mixer
-        commands.throttle = mixQuadX(_motorOutputs, commands);
+        commands.throttle = mixQuadX(_motorOutputs, commands, _motorOutputMin);
     } else {
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
     }

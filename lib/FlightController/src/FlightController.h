@@ -6,7 +6,9 @@
 #include <MotorMixerBase.h>
 #include <PIDF.h>
 #include <RadioControllerBase.h>
+#if !defined(FRAMEWORK_TEST)
 #include <Targets.h>
+#endif
 #include <VehicleControllerBase.h>
 
 #include <array>
