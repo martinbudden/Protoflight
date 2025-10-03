@@ -3,7 +3,7 @@
 
 ESC_DShotBitbang* ESC_DShotBitbang::self; // alias of `this` to be used in ISR
 
-#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && !defined(FRAMEWORK_STM32_CUBE_F1)
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && defined(FRAMEWORK_STM32_CUBE_F4)
 
 #if true
 #define CONCAT(a, b) a##b
@@ -36,7 +36,7 @@ DMA_STREAM_IRQ_HANDLER(2,2,L,B)
 #else
 void DMA2_Stream6_IRQHandler()
 {
-#if !defined(FRAMEWORK_STM32_CUBE_F1)
+#if defined(FRAMEWORK_STM32_CUBE_F4)
     // HISR:  DMA high interrupt status register
     // HIFCR: DMA high interrupt flag clear register
     if (DMA2->HISR & DMA_HISR_TCIF6) {
@@ -60,7 +60,7 @@ void DMA2_Stream6_IRQHandler()
 
 void DMA2_Stream2_IRQHandler()
 {
-#if !defined(FRAMEWORK_STM32_CUBE_F1)
+#if defined(FRAMEWORK_STM32_CUBE_F4)
     // LISR:  DMA low interrupt status register
     // LIFCR: DMA low interrupt flag clear register
     if (DMA2->LISR & DMA_LISR_TCIF2) {

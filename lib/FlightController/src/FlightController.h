@@ -147,7 +147,8 @@ public:
     };
     static constexpr float DMAX_GAIN_FACTOR = 0.00008F;
     static constexpr float DMAX_SETPOINT_GAIN_FACTOR = 0.00008F;
-    enum { DMAX_RANGE_HZ = 85, DMAX_LOWPASS_HZ = 35 };
+    static constexpr float DMAX_RANGE_HZ = 85.0F;
+    static constexpr float DMAX_LOWPASS_HZ = 35.0F;
     struct d_max_runtime_t {
         float gyroGain;
         float setpointGain;
@@ -245,6 +246,8 @@ public:
     const std::string& getPID_Name(pid_index_e pidIndex) const;
 
     inline const PIDF& getPID(pid_index_e pidIndex) const { return _sh.PIDS[pidIndex]; }
+    void setPID_D(pid_index_e pidIndex, float kd);
+
     PIDF_uint16_t getPID_Constants(pid_index_e pidIndex) const;
     void setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16);
 

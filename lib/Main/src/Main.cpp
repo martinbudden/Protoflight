@@ -114,7 +114,7 @@ void Main::setup()
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_STM32_CUBE)
 #else
-    Serial.printf("\r\n**** AHRS_taskIntervalMicroseconds:%u, IMU sample rate:%dHz\r\n\r\n", AHRS_taskIntervalMicroseconds, imuSampleRateHz);
+    Serial.printf("\r\n**** AHRS_taskIntervalMicroseconds:%u, IMU sample rate:%dHz\r\n\r\n", static_cast<unsigned int>(AHRS_taskIntervalMicroseconds), static_cast<int>(imuSampleRateHz));
 #endif
 
     // Statically allocate the MotorMixer object as defined by the build flags.
@@ -321,18 +321,18 @@ void Main::reportMainTask()
     const TaskHandle_t taskHandle = xTaskGetCurrentTaskHandle();
     const UBaseType_t taskPriority = uxTaskPriorityGet(taskHandle);
     const char* taskName = pcTaskGetName(taskHandle);
-    Serial.printf("\r\n\r\n**** Main loop task, name:'%s' priority:%u, tickRate:%uHz\r\n", taskName, taskPriority, configTICK_RATE_HZ);
+    Serial.printf("\r\n\r\n**** Main loop task, name:'%s' priority:%d, tickRate:%dHz\r\n", taskName, static_cast<int>(taskPriority), configTICK_RATE_HZ);
 #endif
 }
 
 void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
 {
 #if defined(FRAMEWORK_ARDUINO_ESP32)
-    Serial.printf("**** %s, %.*s core:%u, priority:%u, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", taskInfo.core, taskInfo.priority);
+    Serial.printf("**** %s, %.*s core:%d, priority:%d, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", static_cast<int>(taskInfo.core), static_cast<int>(taskInfo.priority));
     if (taskInfo.taskIntervalMicroseconds == 0) {
         Serial.printf("interrupt driven\r\n");
     } else {
-        Serial.printf("task interval:%ums\r\n", taskInfo.taskIntervalMicroseconds / 1000);
+        Serial.printf("task interval:%ums\r\n", static_cast<unsigned int>(taskInfo.taskIntervalMicroseconds / 1000));
     }
 #else
     (void)taskInfo;

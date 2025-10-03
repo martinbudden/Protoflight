@@ -50,7 +50,7 @@ size_t packTelemetryData_FC_QUADCOPTER(uint8_t* telemetryDataPtr, uint32_t id, u
     //!!td->taskIntervalTicks = static_cast<uint8_t>(vehicleControllerTask.getTickCountDelta());
 
     td->flags = flightController.motorsIsOn() ? TD_FC_QUADCOPTER::MOTORS_ON_FLAG : 0x00;
-    td->flags |= static_cast<uint8_t>(TD_FC_QUADCOPTER::CONTROL_MODE_MASK & flightController.getControlMode()); // NOLINT(hicpp-signed-bitwise)
+    td->flags |= static_cast<uint16_t>(static_cast<uint16_t>(TD_FC_QUADCOPTER::CONTROL_MODE_MASK) & static_cast<uint16_t>(flightController.getControlMode())); //NOLINT(hicpp-signed-bitwise)
 
     const flight_controller_quadcopter_telemetry_t telemetryData = flightController.getTelemetryData();
     //!!memcpy(&td->data, &telemetryData, sizeof(flight_controller_quadcopter_telemetry_t));

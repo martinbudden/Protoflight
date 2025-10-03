@@ -29,7 +29,7 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
         _rxM.setpointTickCountSum += tickCount;
         --_rxM.setpointTickCountCounter;
         if (_rxM.setpointTickCountCounter == 0) {
-            _rxM.setpointDeltaT = 0.001F * static_cast<float>(_rxM.setpointTickCountSum) / rx_t::SETPOINT_TICKCOUNT_COUNTER_START;
+            _rxM.setpointDeltaT = 0.001F * static_cast<float>(_rxM.setpointTickCountSum) / static_cast<float>(rx_t::SETPOINT_TICKCOUNT_COUNTER_START);
             _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
             // Feedforward filters
             if (_filtersConfig.rc_smoothing_feedforward_cutoff == 0) {

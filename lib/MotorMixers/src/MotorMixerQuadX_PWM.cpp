@@ -86,6 +86,7 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const motor_pins_t& pins)
     constexpr int frequency = 150000;
     // PWM Resolution
     constexpr int resolution = 8;
+#if defined(ESPRESSIF32_6_11_0)
     if (pins.m0 != 0xFF) {
         ledcSetup(M0, frequency, resolution);
         ledcAttachPin(pins.m0, M0);
@@ -102,6 +103,20 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const motor_pins_t& pins)
         ledcSetup(M3, frequency, resolution);
         ledcAttachPin(pins.m3, M3);
     }
+#else
+    if (pins.m0 != 0xFF) {
+        ledcAttach(pins.m0, frequency, resolution);
+    }
+    if (pins.m1 != 0xFF) {
+        ledcAttach(pins.m1, frequency, resolution);
+    }
+    if (pins.m2 != 0xFF) {
+        ledcAttach(pins.m2, frequency, resolution);
+    }
+    if (pins.m3 != 0xFF) {
+        ledcAttach(pins.m3, frequency, resolution);
+    }
+#endif
 #else // defaults to FRAMEWORK_ARDUINO
     if (pins.m0 != 0xFF) {
         pinMode(pins.m0, OUTPUT);
@@ -120,11 +135,11 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const motor_pins_t& pins)
 #endif // FRAMEWORK
 }
 
-void MotorMixerQuadX_PWM::writeMotor(uint8_t motorIndex, float motorOutput)
+void MotorMixerQuadX_PWM::writeMotor(uint8_t motorIndex, float motorOutput) // NOLINT(readability-make-member-function-const_
 {
     const pwm_pin_t& pin = _pins[motorIndex];
     // scale motor output to GPIO range (normally [0,255] or [0, 65535])
-    const uint16_t output = static_cast<uint16_t>(roundf(_pwmScale*clip(motorOutput, 0.0F, 1.0F)));
+    const auto output = static_cast<uint16_t>(roundf(_pwmScale*clip(motorOutput, 0.0F, 1.0F)));
 #if defined(FRAMEWORK_RPI_PICO)
     if (pin.pin != 0xFF) {
         pwm_set_gpio_level(pin.pin, output);
@@ -142,7 +157,11 @@ void MotorMixerQuadX_PWM::writeMotor(uint8_t motorIndex, float motorOutput)
 #else // defaults to FRAMEWORK_ARDUINO
 #if defined(FRAMEWORK_ARDUINO_ESP32)
     if (pin.pin != 0xFF) {
+#if defined(ESPRESSIF32_6_11_0)
         ledcWrite(motorIndex, output);
+#else
+        ledcWrite(pin.pin, output);
+#endif
     }
 #else
     if (pin.pin != 0xFF) {

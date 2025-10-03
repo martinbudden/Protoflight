@@ -6,7 +6,7 @@
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
 void ESC_DShotBitbang::IRQ_Handler(port_t& port)
 {
-#if !defined(FRAMEWORK_STM32_CUBE_F1)
+#if defined(FRAMEWORK_STM32_CUBE_F4)
     // set GPIOs as inputs:
     //port.GPIO->MODER &= ~GPIO_MODER_MODER2;
     //port.GPIO->MODER &= ~GPIO_MODER_MODER3;
@@ -47,7 +47,7 @@ void ESC_DShotBitbang::init()
 
     _portA.GPIO = GPIOA;
     _portB.GPIO = GPIOB;
- #if !defined(FRAMEWORK_STM32_CUBE_F1)
+ #if defined(FRAMEWORK_STM32_CUBE_F4)
     _portB.GPIO_input = ~(GPIO_MODER_MODER2   | GPIO_MODER_MODER3);
     _portA.GPIO_output =  GPIO_MODER_MODER2_0 | GPIO_MODER_MODER3_0;
     _portA.GPIO_PUPDR =   GPIO_PUPDR_PUPDR2_0 | GPIO_PUPDR_PUPDR3_0;
@@ -69,7 +69,7 @@ void ESC_DShotBitbang::init()
 #if defined(FRAMEWORK_STM32_CUBE_F1)
     _portB.TIM = TIM4;
     setupTimers(_portB.TIM, RCC_APB1ENR_TIM4EN);
-#else
+#elif defined(FRAMEWORK_STM32_CUBE_F4)
     _portB.TIM = TIM8;
     setupTimers(_portB.TIM, RCC_APB2ENR_TIM8EN);
     // Nested Vectored Interrupt Controller
@@ -90,8 +90,7 @@ APB1 max frequency is 42 [MHz], 84 [MHz] only for timers
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
 void ESC_DShotBitbang::setupGPIO(GPIO_TypeDef* GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn)
 {
-#if defined(FRAMEWORK_STM32_CUBE_F1)
-#else
+#if defined(FRAMEWORK_STM32_CUBE_F4)
     // enable GPIOA clock:
     RCC->AHB1ENR |= GPIOxEN;
     // mode (00-input; 01-output; 10-alternate) will be set later
@@ -100,7 +99,7 @@ void ESC_DShotBitbang::setupGPIO(GPIO_TypeDef* GPIO, uint32_t GPIOxEN, uint32_t 
 #endif
 }
 
-#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && !defined(FRAMEWORK_STM32_CUBE_F1)
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && defined(FRAMEWORK_STM32_CUBE_F4)
 void ESC_DShotBitbang::setupDMA(DMA_Stream_TypeDef* DMA_Stream, uint32_t DMAxEN)
 {
     RCC->AHB1ENR |= DMAxEN;
@@ -168,8 +167,9 @@ void ESC_DShotBitbang::outputToMotors(uint16_t m1_value, uint16_t m2_value, uint
     _portA.reception = true;
     _portB.reception = true;
 
-#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && !defined(FRAMEWORK_STM32_CUBE_F1)
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32))
     // set GPIOs as output:
+ #if defined(FRAMEWORK_STM32_CUBE_F4)
     // MODER: GPIO port mode register
     _portA.GPIO->MODER |= _portA.GPIO_output;
     _portB.GPIO->MODER |= _portB.GPIO_output;
@@ -244,6 +244,7 @@ void ESC_DShotBitbang::outputToMotors(uint16_t m1_value, uint16_t m2_value, uint
     _portA.DMA_Stream->CR |= DMA_SxCR_EN;
     _portB.DMA_Stream->CR |= DMA_SxCR_EN;
 #endif
+#endif // FRAMEWORK_STM32_CUBE_F4
 #endif // FRAMEWORK_STM32
 }
 
@@ -289,7 +290,7 @@ This requires smaller buffers, has lower DMA load, has more precise timing, but 
 
 void ESC_DShotBitbang::presetDMA_outputBuffers()
 {
-#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && !defined(FRAMEWORK_STM32_CUBE_F1)
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && defined(FRAMEWORK_STM32_CUBE_F4)
     // this values are constant so they can be set once here
 #if defined(BIT_BANGING_V1)
     _portA.dmaOutputBuffer.fill(0);
@@ -356,7 +357,7 @@ In addition last 2 frame bits are set always high
 // At end of loop we will have 16 frames of form r00s000000s000
 // followed by 2 frames of form 00000000000000 (set in preset) - these two frames will keep output high
 
-#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && !defined(FRAMEWORK_STM32_CUBE_F1)
+#if (defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)) && defined(FRAMEWORK_STM32_CUBE_F4)
 
 #if defined(BIT_BANGING_V1)
     size_t index = DSHOT_BB_0_LENGTH - 1;

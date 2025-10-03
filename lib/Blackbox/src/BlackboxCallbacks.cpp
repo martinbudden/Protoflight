@@ -56,9 +56,9 @@ void BlackboxCallbacks::loadSlowState(blackboxSlowState_t& slowState)
 void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t currentTimeUs)
 {
 
-    xyz_t gyroRPS;
-    xyz_t gyroRPS_unfiltered;
-    xyz_t acc;
+    xyz_t gyroRPS {};
+    xyz_t gyroRPS_unfiltered {};
+    xyz_t acc {};
     Quaternion orientation;
     if (_useMessageQueue) {
         BlackboxMessageQueue::queue_item_t queueItem;

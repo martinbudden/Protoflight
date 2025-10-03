@@ -207,7 +207,7 @@ void ScreenM5::update128x128(const TD_AHRS::data_t& ahrsData) const
     M5.Lcd.print(_flightController.motorsIsOn() ? "ON " : "OFF");
 
     M5.Lcd.setCursor(72, 118);
-    M5.Lcd.printf("%2d  ", _receiver.getTickCountDelta());
+    M5.Lcd.printf("%2d  ", static_cast<int>(_receiver.getTickCountDelta()));
 }
 
 void ScreenM5::updateTemplate320x240() const
@@ -261,10 +261,10 @@ void ScreenM5::updateReceivedData320x240() const
     const uint32_t flipButton =_receiver.getSwitch(ReceiverAtomJoyStick::MOTOR_ON_OFF_SWITCH);
     const uint32_t mode = _receiver.getSwitch(ReceiverAtomJoyStick::MODE_SWITCH);
     const uint32_t altMode = _receiver.getSwitch(ReceiverAtomJoyStick::ALT_MODE_SWITCH);
-    M5.Lcd.printf("M%1d %s A%1d F%1d ", mode, mode == ReceiverAtomJoyStick::MODE_STABLE ? "ST" : "SP", altMode, flipButton);
+    M5.Lcd.printf("M%1d %s A%1d F%1d ", static_cast<int>(mode), mode == ReceiverAtomJoyStick::MODE_STABLE ? "ST" : "SP", static_cast<int>(altMode), static_cast<int>(flipButton));
 
     M5.Lcd.setCursor(255, yPos);
-    M5.Lcd.printf("%4d", _receiver.getTickCountDelta());
+    M5.Lcd.printf("%4d", static_cast<int>(_receiver.getTickCountDelta()));
 }
 
 void ScreenM5::update320x240(const TD_AHRS::data_t& ahrsData) const

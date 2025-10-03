@@ -116,6 +116,12 @@ void FlightController::setPID_I_MSP(pid_index_e pidIndex, uint16_t ki)
     _fcM.pidConstants[pidIndex].ki = _sh.PIDS[pidIndex].getI();
 }
 
+void FlightController::setPID_D(pid_index_e pidIndex, float kd)
+{
+    _sh.PIDS[pidIndex].setD(kd);
+    _fcM.pidConstants[pidIndex].kd = _sh.PIDS[pidIndex].getD();
+}
+
 void FlightController::setPID_D_MSP(pid_index_e pidIndex, uint16_t kd)
 {
     _sh.PIDS[pidIndex].setD(kd * _scaleFactors.kd);

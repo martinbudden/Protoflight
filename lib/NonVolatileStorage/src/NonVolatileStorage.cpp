@@ -31,8 +31,8 @@ static constexpr uint16_t GyroOffsetKey = 0x0201;
 static constexpr uint16_t MacAddressKey = 0x0202;
 // Part of PID profile
 // Note that keys of items in PID profile must go up in jumps of 4, since 1 key is used for each profile
-static constexpr uint16_t DynamicIdleControllerConfigKey = 0x0400;
-static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0404;
+static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0400;
+static constexpr uint16_t DynamicIdleControllerConfigKey = 0x0404;
 static constexpr uint16_t FlightControllerTPA_ConfigKey = 0x408;
 static constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x040C;
 #if defined(USE_D_MAX)

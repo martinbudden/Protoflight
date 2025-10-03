@@ -123,9 +123,24 @@ Including
 2. [Reefwing-MSP](https://github.com/Reefwing-Software/Reefwing-MSP) Reefwing MultiWii Serial Protocol
 3. [Reefwing-SBUS](https://github.com/Reefwing-Software/Reefwing-SBUS) SBUS Library for the Nano 33 BLE
 
-
 ### [ASAC FC](https://github.com/victorhook/asac-fc)
 
 A Simple And Cool Flight Controller (ASAC FC) is a flight controller based on the rp2040 microcontroller, completely open-source.
 
 Victor has also designed an open source RP2040 flight controller PCB and has published schematics.
+
+### [SilverWare](https://github.com/silver13/BoldClash-BWHOOP-B-03)
+
+Flight controller software to re-flash micro quadcopters such as the Eachine H8
+
+[wiki](https://sirdomsen.diskstation.me/dokuwiki/doku.php?id=start)
+
+Also F4 port of [SilverWare](https://github.com/markusgritsch/SilF4ware)
+
+See especially:
+
+[Sliding Discreet Fourier Transform](https://github.com/markusgritsch/SilF4ware/blob/master/SilF4ware/sdft.c)
+
+[Bi-directional DShot](https://github.com/markusgritsch/SilF4ware/blob/master/SilF4ware/drv_dshot_bidir.c)
+
+[Angle Mode Error calculation](https://github.com/markusgritsch/SilF4ware/blob/master/SilF4ware/stick_vector.c)

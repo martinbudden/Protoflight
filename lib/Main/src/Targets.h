@@ -241,6 +241,29 @@ Targets
     //#define USE_MSP
 #endif
 
+#if defined(TARGET_STM32F3_DISCOVERY)
+    #define BOARD_IDENTIFIER    "STM32F3_Discovery"
+    // https://www.st.com/resource/en/user_manual/um1570-discovery-kit-with-stm32f303vc-mcu-stmicroelectronics.pdf
+    // https://www.st.com/resource/en/schematic_pack/mb1035-f303c-e02_schematic.pdf
+    // https://www.st.com/resource/en/datasheet/stm32f303vc.pdf
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+
+    //#define USE_IMU_LSM303AGR
+    #define USE_IMU_MPU6000 // !!TODO:temporary to fix to get to build
+    #define IMU_SPI_INDEX       BUS_INDEX_1
+    #define IMU_SPI_PINS        stm32_spi_pins_t{.cs={PE,3},.sck={PA,5},.cipo={PA,6},.copi={PA,7},.irq={PE,0}}
+
+    #define USE_RECEIVER_SBUS
+    #define RECEIVER_UART_INDEX 0
+    #define RECEIVER_PINS       stm32_rx_pins_t{.rx={PA,0},.tx={PA,0}}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          stm32_motor_pins_t{.m0={PA,0,0,0},.m1={PA,0,0,0},.m2={PA,0,0,0},.m3={PA,0,0,0}}
+
+    // LED3 PE9 // red
+    // LED4 PE8 // blue
+#endif
+
 #if defined(TARGET_AFROFLIGHT_F301CB)
     #define BOARD_IDENTIFIER    "AfroFlight_F301CB"
 

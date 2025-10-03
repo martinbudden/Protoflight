@@ -35,8 +35,8 @@ BackchannelFlightController::BackchannelFlightController(
 #if !defined(ESP_NOW_MAX_DATA_LEN)
 #define ESP_NOW_MAX_DATA_LEN (250)
 #endif
-    static_assert(sizeof(TD_MPC) <= ESP_NOW_MAX_DATA_LEN); // 100
-    static_assert(sizeof(TD_SBR_PIDS) <= ESP_NOW_MAX_DATA_LEN); // 192
+    static_assert(sizeof(TD_MPC) <= ESP_NOW_MAX_DATA_LEN); // 124
+    static_assert(sizeof(TD_SBR_PID) <= ESP_NOW_MAX_DATA_LEN); // 96
 }
 
 bool BackchannelFlightController::packetSetOffset(const CommandPacketSetOffset& packet)
@@ -124,6 +124,19 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
         _flightController.setPID_F_MSP(pidIndex, packet.value);
         transmit = true;
         break;
+    case CommandPacketSetPID::SET_S:
+        _flightController.setPID_S_MSP(pidIndex, packet.value);
+        transmit = true;
+        break;
+    case CommandPacketSetPID::SET_PD: {
+        // Set P and change D to preserve P/D ratio
+        const PIDF pid = _flightController.getPID(pidIndex);
+        const float ratio = pid.getD() / pid.getP();
+        _flightController.setPID_P_MSP(pidIndex, packet.value);
+        _flightController.setPID_D(pidIndex, _flightController.getPID(pidIndex).getP() * ratio);
+        transmit = true;
+        break;
+    }
     case CommandPacketSetPID::SAVE_P: // NOLINT(bugprone-branch-clone) false positive
         [[fallthrough]];
     case CommandPacketSetPID::SAVE_I:
@@ -131,6 +144,10 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
     case CommandPacketSetPID::SAVE_D:
         [[fallthrough]];
     case CommandPacketSetPID::SAVE_F:
+        [[fallthrough]];
+    case CommandPacketSetPID::SAVE_S:
+        [[fallthrough]];
+    case CommandPacketSetPID::SAVE_PD:
         //Serial.printf("Saved PID packetType:%d pidIndex:%d setType:%d\r\n", packet.type, packet.pidIndex, packet.setType);
         // Currently we don't save individual PID constants: if any save request is received we save all the PID constants.
         _nonVolatileStorage.storePID(_flightController.getPID_Constants(pidIndex), pidIndex);

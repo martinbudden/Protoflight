@@ -56,7 +56,6 @@ dma pin A02 1
 
 enum { DSHOT_MODE = 300 };              // 150/300/600/1200
 enum { DSHOT_FRAME_LENGTH = 16 };   // 16 bits of Dshot and 2 for clearing - used when bit-banging dshot used
-enum { DSHOT_BB_BUFFER_LENGTH = DSHOT_FRAME_LENGTH + 2 };   // 16 bits of Dshot and 2 for clearing - used when bit-banging dshot used
 enum { BDSHOT_RESPONSE_BITRATE = DSHOT_MODE * 4 / 3 };    // in SymonB's tests this value was not 5/4 * DSHOT_MODE as documentation suggests but 4/3*DSHOT_MODE
 enum { BDSHOT_RESPONSE_LENGTH = 21 };   // number of bits in ESC response, ie length of GRC21 frame
 enum { DSHOT_BUFFER_LENGTH = 18 };      // 16 bits of Dshot and 2 for clearing
@@ -64,13 +63,19 @@ enum { DSHOT_BUFFER_LENGTH = 18 };      // 16 bits of Dshot and 2 for clearing
 #if defined(BIT_BANGING_V2)
     enum { DSHOT_BB_1_LENGTH = 26 };        // number of sections for 0-bit, BITBANG_0_LENGTH
     enum { DSHOT_BB_0_LENGTH = 13 };        // number of sections for 1-bit, BITBANG_1_LENGTH
-    enum { DSHOT_BB_FRAME_SECTIONS = 3 };   // in how many sections is bit frame divided
+    enum {
+        DSHOT_BB_BUFFER_LENGTH = DSHOT_FRAME_LENGTH + 2,// 16 bits of Dshot and 2 for clearing - used when bit-banging dshot used
+        DSHOT_BB_FRAME_SECTIONS = 3                     // in how many sections is bit frame divided
+    };
     enum { DSHOT_BB_FRAME_LENGTH = 35 };    // how many counts of the timer gives one bit frame
 #else
     enum { DSHOT_BB_1_LENGTH = 10 };        // number of sections for 1-bit, BITBANG_1_LENGTH
     enum { DSHOT_BB_0_LENGTH = 4 };         // number of sections for 0-bit, BITBANG_0_LENGTH
-    enum { DSHOT_BB_FRAME_SECTIONS = 14 };  // in how many sections is bit frame divided
-    enum { DSHOT_BB_FRAME_LENGTH = 140 };   // how many counts of the timer gives one bit frame (must be multiple of DSHOT_BB_FRAME_SECTIONS)
+    enum { 
+        DSHOT_BB_BUFFER_LENGTH = DSHOT_FRAME_LENGTH + 2,// 16 bits of Dshot and 2 for clearing - used when bit-banging dshot used
+        DSHOT_BB_FRAME_SECTIONS = 14                    // in how many sections is bit frame divided
+
+    };    enum { DSHOT_BB_FRAME_LENGTH = 140 };   // how many counts of the timer gives one bit frame (must be multiple of DSHOT_BB_FRAME_SECTIONS)
 #endif
 
 class ESC_DShotBitbang {
@@ -102,7 +107,7 @@ public:
         uint32_t GPIO_input;
         uint32_t GPIO_output;
         uint32_t GPIO_PUPDR;
-#if !defined(FRAMEWORK_STM32_CUBE_F1)
+#if defined(FRAMEWORK_STM32_CUBE_F4)
         DMA_Stream_TypeDef* DMA_Stream;
 #endif
         TIM_TypeDef* TIM;
@@ -122,7 +127,7 @@ private:
     port_t _portB {};
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
     static void setupGPIO(GPIO_TypeDef*GPIO, uint32_t GPIOxEN, uint32_t GPIO_OSPEEDER_OSPEEDRn); // cppcheck-suppress unusedPrivateFunction
-#if !defined(FRAMEWORK_STM32_CUBE_F1)
+#if defined(FRAMEWORK_STM32_CUBE_F4)
     static void setupDMA(DMA_Stream_TypeDef* TIM, uint32_t DMAxEN);
 #endif
     static void setupTimers(TIM_TypeDef* TIM, uint32_t TIMxEN);
