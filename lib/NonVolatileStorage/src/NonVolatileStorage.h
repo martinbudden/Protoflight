@@ -52,7 +52,6 @@ public:
     NonVolatileStorage();
     explicit NonVolatileStorage(uint32_t flashMemorySize);
     void init();
-    static size_t min(size_t a, uint16_t b) { return a > b ? b : a; }
     static void toHexChars(char* charPtr, uint16_t value);
 
     uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }

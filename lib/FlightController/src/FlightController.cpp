@@ -331,9 +331,10 @@ void FlightController::setITermRelaxConfig(const iterm_relax_config_t& iTermRela
 {
     // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
     const_cast<iterm_relax_config_t&>(_iTermRelaxConfig) = iTermRelaxConfig;
-        for (auto& filter : _sh.iTermRelaxFilters) {
-            filter.setToPassthrough();
-        }
+    const_cast<float&>(_iTermRelax.setpointThresholdDPS) = iTermRelaxConfig.iterm_relax_setpoint_threshold;
+    for (auto& filter : _sh.iTermRelaxFilters) {
+        filter.setToPassthrough();
+    }
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 #endif

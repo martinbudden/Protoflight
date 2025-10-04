@@ -14,9 +14,7 @@ NOTE: CALLED FROM WITHIN THE AHRS TASK
 Calculate the dMaxMultipliers.
 
 This are multipliers that are applied to the roll and pitch axis DTerms.
-
 This means DTerms can be low in normal flight but are boosted to a higher value when required.
-
 They are boosted when the DTerm error is small and the setpoint change is also small.
 */
 void FlightController::calculateDMaxMultipliers()
@@ -37,8 +35,8 @@ void FlightController::calculateDMaxMultipliers()
             _ahM.dMaxMultiplier[ii] = std::fminf(_ahM.dMaxMultiplier[ii], _dMax.percent[ii]);
             if (_debug.getMode() == DEBUG_D_MAX) {
                 if (ii == FD_ROLL) {
-                    _debug.set(DEBUG_D_MAX, 0, lrintf(gyroFactor * 100));
-                    _debug.set(DEBUG_D_MAX, 1, lrintf(setpointFactor * 100));
+                    _debug.set(DEBUG_D_MAX, 0, lrintf(gyroFactor * 100.0F));
+                    _debug.set(DEBUG_D_MAX, 1, lrintf(setpointFactor * 100.0F));
                     _debug.set(DEBUG_D_MAX, 2, lrintf(_fcC.pidConstants[ROLL_RATE_DPS].kd * _ahM.dMaxMultiplier[ROLL_RATE_DPS] * 10));
                 } else {
                     _debug.set(DEBUG_D_MAX, 3, lrintf(_fcC.pidConstants[PITCH_RATE_DPS].kd * _ahM.dMaxMultiplier[PITCH_RATE_DPS] * 10));
@@ -108,6 +106,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
     if (_angleModeUseQuaternionSpace) {
         // Runs the angle PIDs in "quaternion space" rather than "angle space",
         // avoiding the computationally expensive Quaternion::calculateRoll and Quaternion::calculatePitch
+        //!!TODO: look at using vector product here
         if (_ahM.angleModeCalculationState == ah_t::STATE_CALCULATE_ROLL) {
             if (!_useAngleModeOnRollAcroModeOnPitch) {
                 // don't advance calculation to pitch axis when in level race mode
@@ -181,17 +180,28 @@ NOTE: CALLED FROM WITHIN THE AHRS TASK
 */
 float FlightController::calculateITermError(size_t axis, float measurement)
 {
+    const float setpoint = _sh.PIDS[axis].getSetpoint();
+    // iTermError is just `setpoint - measurement`, if there is no ITerm relax
+    float iTermError = setpoint - measurement; // NOLINT(misc-const-correctness)
 #if defined(USE_ITERM_RELAX)
     if (_iTermRelaxConfig.iterm_relax == ITERM_RELAX_ON) {
-        const float iTermError = applyDeadband(_rxC.setpointLPs[axis] - measurement, _rxC.setpointHPs[axis]);
+        const float setpointLp = _rxC.setpointLPs[axis];
+        const float setpointHp = fabsf(setpoint - setpointLp);
+        float setpointThresholdDPS = _iTermRelax.setpointThresholdDPS;
+        if (_rxC.useAngleMode) {
+            setpointThresholdDPS *= 0.2F;
+        }
+        const float itermRelaxFactor = std::fmaxf(0.0F, 1.0F - setpointHp/setpointThresholdDPS);
+        iTermError *= itermRelaxFactor;
+
         if (axis == ROLL_RATE_DPS && _debug.getMode() == DEBUG_ITERM_RELAX) {
-            _debug.set(DEBUG_ITERM_RELAX, 0, lrintf(_rxC.setpointHPs[axis]));
+            _debug.set(DEBUG_ITERM_RELAX, 0, lrintf(setpointHp));
+            _debug.set(DEBUG_ITERM_RELAX, 1, lrintf(itermRelaxFactor));
             _debug.set(DEBUG_ITERM_RELAX, 2, lrintf(iTermError));
         }
-        return iTermError;
     }
 #endif
-    return _sh.PIDS[axis].getSetpoint() - measurement; // iTermError is just `setpoint - measurement`, if there is no ITerm relax
+    return iTermError;
 }
 
 /*!
@@ -256,7 +266,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     _ahM.outputs[PITCH_RATE_DPS] = _sh.PIDS[PITCH_RATE_DPS].updateDeltaITerm(
                                                                 pitchRateDPS,
                                                                 pitchRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[PITCH_RATE_DPS],
-                                                                calculateITermError(PITCH_RATE_DPS, rollRateDPS),
+                                                                calculateITermError(PITCH_RATE_DPS, pitchRateDPS),
                                                                 deltaT);
     // filter the output
     _ahM.outputs[PITCH_RATE_DPS] = _sh.outputFilters[PITCH_RATE_DPS].filter(_ahM.outputs[PITCH_RATE_DPS]);
@@ -264,13 +274,13 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     //
     // Yaw axis
     //
-    // DTerm is zero for yawRate, so call updatePIS() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no FeedForward
+    // DTerm is zero for yawRate, so call updatePIS() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no feedforward
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
     _ahM.outputs[YAW_RATE_DPS] = _sh.PIDS[YAW_RATE_DPS].updatePIS(yawRateDPS, deltaT);
     // filter the output
     _ahM.outputs[YAW_RATE_DPS] = _sh.outputFilters[YAW_RATE_DPS].filter(_ahM.outputs[YAW_RATE_DPS]);
 
-    // The FlightControllerTask is waiting on the message queue, so signal it so that there is output data available.
+    // The FlightControllerTask is waiting on the message queue, so signal it that there is output data available.
     // This will result in outputToMixer() being called by the scheduler.
     const VehicleControllerMessageQueue::queue_item_t queueItem {
         .throttle = _sh.outputThrottle,

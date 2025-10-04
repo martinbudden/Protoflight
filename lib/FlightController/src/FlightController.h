@@ -195,7 +195,11 @@ public:
     enum iterm_relax_e { ITERM_RELAX_OFF, ITERM_RELAX_ON };
     struct iterm_relax_config_t {
         uint8_t iterm_relax;        // Enable iterm suppression during stick input
+        uint8_t iterm_relax_setpoint_threshold; // Full iterm suppression once setpoint has exceeded this value (degrees per second)
         uint8_t iterm_relax_cutoff; // Cutoff frequency used by low pass filter which predicts average response of the quad to setpoint
+    };
+    struct iterm_relax_runtime_t {
+        float setpointThresholdDPS;
     };
 #endif
     struct controls_t {
@@ -356,7 +360,8 @@ private:
     const d_max_runtime_t _dMax {};
 #endif
 #if defined(USE_ITERM_RELAX)
-    const iterm_relax_config_t _iTermRelaxConfig = {.iterm_relax=ITERM_RELAX_ON, .iterm_relax_cutoff=15};
+    const iterm_relax_config_t _iTermRelaxConfig = {.iterm_relax=ITERM_RELAX_ON, .iterm_relax_setpoint_threshold = 40, .iterm_relax_cutoff=15};
+    const iterm_relax_runtime_t _iTermRelax = { .setpointThresholdDPS = 40.0F };
 #endif
 #if defined(USE_YAW_SPIN_RECOVERY)
     const yaw_spin_recovery_config_t _yawSpinRecoveryConfig {.yaw_spin_threshold=1950, .yaw_spin_recovery=YAW_SPIN_RECOVERY_OFF};
