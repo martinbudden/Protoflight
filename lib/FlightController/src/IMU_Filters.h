@@ -33,7 +33,7 @@ public:
     RPM_Filters* getRPM_Filters() { return _rpmFilters; }
 public:
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
-    virtual void setFilters() override;
+    virtual void setFilters(const xyz_t& gyroRPS) override;
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
 protected:

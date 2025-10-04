@@ -68,8 +68,9 @@ Does nothing, since `RPM_Filters::setFrequencyHz` is called in the context of th
 
 This is the place to put the Fast Fourier Transform (FFT) if dynamic notch filters are implemented.
 */
-void IMU_Filters::setFilters()
+void IMU_Filters::setFilters(const xyz_t& gyroRPS)
 {
+    (void)gyroRPS;
 }
 
 /*!

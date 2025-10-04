@@ -32,7 +32,7 @@ class IMU_FiltersNull : public IMU_FiltersBase
 public:
     virtual ~IMU_FiltersNull() = default;
     IMU_FiltersNull() = default;
-    void setFilters() override {};
+    void setFilters(const xyz_t& gyroRPS) override { (void)gyroRPS; };
     void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override { (void)gyroRPS; (void)acc; (void)deltaT; }
     // IMU_FiltersNull is not copyable or moveable
     IMU_FiltersNull(const IMU_FiltersNull&) = delete;
