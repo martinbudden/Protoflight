@@ -110,14 +110,14 @@ void NonVolatileStorage::toHexChars(char* charPtr, uint16_t value)
     *charPtr++ = '0';
     *charPtr++ = 'x';
 
-    auto digit = static_cast<uint8_t>(value >> 24U);
-    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A');
-    digit = static_cast<uint8_t>((value >> 16U) & 0x000FU);
-    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A');
+    auto digit = static_cast<uint8_t>(value >> 12U);
+    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A' - 10);
     digit = static_cast<uint8_t>((value >> 8U) & 0x000FU);
-    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A');
+    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A' - 10);
+    digit = static_cast<uint8_t>((value >> 4U) & 0x000FU);
+    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A' - 10);
     digit = static_cast<uint8_t>(value & 0x000FU);
-    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A');
+    *charPtr++ = static_cast<char>((digit <= 9) ? digit +'0' : digit + 'A' - 10);
     *charPtr = 0;
     // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
 }
