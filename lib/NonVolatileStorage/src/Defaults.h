@@ -24,7 +24,7 @@ static constexpr FlightController::pidf_uint16_array_t flightControllerDefaultPI
     { 50, 75, 75,  50, 0 }, // pitch sin angle
 }};
 
-static const DynamicIdleController::config_t dynamicIdleControllerConfig = {
+static constexpr DynamicIdleController::config_t dynamicIdleControllerConfig = {
     .dyn_idle_min_rpm_100 = 0,
     .dyn_idle_p_gain = 50,
     .dyn_idle_i_gain = 50,
@@ -32,7 +32,7 @@ static const DynamicIdleController::config_t dynamicIdleControllerConfig = {
     .dyn_idle_max_increase = 150,
 };
 
-static const FlightController::filters_config_t flightControllerFiltersConfig = {
+static constexpr FlightController::filters_config_t flightControllerFiltersConfig = {
     .dterm_lpf1_hz = 75,
     .dterm_lpf2_hz = 150,
     .dterm_notch_hz = 0,
@@ -46,7 +46,7 @@ static const FlightController::filters_config_t flightControllerFiltersConfig = 
     .rc_smoothing_feedforward_cutoff = 0,
 };
 
-static const FlightController::tpa_config_t flightControllerTPA_Config = {
+static constexpr FlightController::tpa_config_t flightControllerTPA_Config = {
     .tpa_mode = FlightController::TPA_MODE_D,
     .tpa_rate = 65,
     .tpa_breakpoint = 1350,
@@ -55,22 +55,22 @@ static const FlightController::tpa_config_t flightControllerTPA_Config = {
     .tpa_low_breakpoint = 1050,
 };
 
-static const FlightController::anti_gravity_config_t flightControllerAntiGravityConfig = {
+static constexpr FlightController::anti_gravity_config_t flightControllerAntiGravityConfig = {
     .cutoff_hz = 5,
     .p_gain = 100,
-    .i_gain = 80
+    .i_gain = 80,
 };
 
 #if defined(USE_D_MAX)
-static const FlightController::d_max_config_t flightControllerDMaxConfig = {
+static constexpr FlightController::d_max_config_t flightControllerDMaxConfig = {
     .d_max = { 40, 46 },
     .d_max_gain = 37,
-    .d_max_advance = 20
+    .d_max_advance = 20,
 };
 #endif
 
 #if defined(USE_ITERM_RELAX)
-static const FlightController::iterm_relax_config_t flightControllerITermRelaxConfig = {
+static constexpr FlightController::iterm_relax_config_t flightControllerITermRelaxConfig = {
     .iterm_relax = FlightController::ITERM_RELAX_ON,
     .iterm_relax_setpoint_threshold = 40, // degrees per second
     .iterm_relax_cutoff = 15,
@@ -78,14 +78,14 @@ static const FlightController::iterm_relax_config_t flightControllerITermRelaxCo
 #endif
 
 #if defined(USE_YAW_SPIN_RECOVERY)
-static const FlightController::yaw_spin_recovery_config_t flightControllerYawSpinRecoveryConfig = {
+static constexpr FlightController::yaw_spin_recovery_config_t flightControllerYawSpinRecoveryConfig = {
     .yaw_spin_threshold = 1950,
     .yaw_spin_recovery = FlightController::YAW_SPIN_RECOVERY_OFF,
 };
 #endif
 
 #if defined(USE_CRASH_RECOVERY)
-static const FlightController::crash_recovery_config_t flightControllerCrashRecoveryConfig = {
+static constexpr FlightController::crash_recovery_config_t flightControllerCrashRecoveryConfig = {
     .crash_dthreshold = 50,
     .crash_gthreshold = 400,
     .crash_setpoint_threshold = 350,
@@ -98,7 +98,7 @@ static const FlightController::crash_recovery_config_t flightControllerCrashReco
 };
 #endif
 
-static const IMU_Filters::config_t imuFiltersConfig = {
+static constexpr IMU_Filters::config_t imuFiltersConfig = {
     .gyro_notch1_hz = 0,
     .gyro_notch1_cutoff = 0,
     .gyro_notch2_hz = 0,
@@ -111,7 +111,7 @@ static const IMU_Filters::config_t imuFiltersConfig = {
     .gyro_lpf2_type = IMU_Filters::config_t::PT1,
 };
 
-static const RPM_Filters::config_t rpmFiltersConfig = {
+static constexpr RPM_Filters::config_t rpmFiltersConfig = {
     .rpm_filter_harmonics = 3,
     .rpm_filter_weights = { 100, 0, 100 }, // default is not to filter second harmonic
     .rpm_filter_min_hz = 100,
@@ -120,16 +120,16 @@ static const RPM_Filters::config_t rpmFiltersConfig = {
     .rpm_filter_lpf_hz = 150,
 };
 
-static const RadioController::failsafe_t radioControllerFailsafe = {
+static constexpr RadioController::failsafe_t radioControllerFailsafe = {
     .delay = 15,
     .landing_time = 60,
     .switch_mode = 0,
     .procedure = 0,
     .throttle = 1000,
-    .throttle_low_delay = 100
+    .throttle_low_delay = 100,
 };
 
-static const RadioController::rates_t radioControllerRates = {
+static constexpr RadioController::rates_t radioControllerRates = {
     .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },

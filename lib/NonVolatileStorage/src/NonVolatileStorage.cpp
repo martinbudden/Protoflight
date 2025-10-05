@@ -20,38 +20,30 @@ Other keys are invalid and may not be used. In particular keys of 0, 64-255, and
 This gives a total of 16,169 usable keys.
 */
 
-static constexpr uint16_t PID_ProfileIndexKey = 0x0001;
-static constexpr uint16_t RateProfileIndexKey = 0x0002;
+constexpr uint16_t PID_ProfileIndexKey = 0x0001;
+constexpr uint16_t RateProfileIndexKey = 0x0002;
 static const std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
     // note these must go up in jumps of 4, since one key is used for each profile
     0x0100, 0x0104, 0x0108, 0x010C, 0x0110, 0x0114, 0x011C
 };
-static constexpr uint16_t AccOffsetKey = 0x0200;
-static constexpr uint16_t GyroOffsetKey = 0x0201;
-static constexpr uint16_t MacAddressKey = 0x0202;
+constexpr uint16_t AccOffsetKey = 0x0200;
+constexpr uint16_t GyroOffsetKey = 0x0201;
+constexpr uint16_t MacAddressKey = 0x0202;
 // Part of PID profile
 // Note that keys of items in PID profile must go up in jumps of 4, since 1 key is used for each profile
-static constexpr uint16_t FlightControllerFiltersConfigKey = 0x0400;
-static constexpr uint16_t DynamicIdleControllerConfigKey = 0x0404;
-static constexpr uint16_t FlightControllerTPA_ConfigKey = 0x408;
-static constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x040C;
-#if defined(USE_D_MAX)
-static constexpr uint16_t FlightControllerDMaxConfigKey = 0x0410;
-#endif
-#if defined(USE_ITERM_RELAX)
-static constexpr uint16_t FlightControllerITermRelaxConfigKey = 0x0414;
-#endif
-#if defined(USE_YAW_SPIN_RECOVERY)
-static constexpr uint16_t FlightControllerYawSpinRecoveryConfigKey = 0x0418;
-#endif
-#if defined(USE_CRASH_RECOVERY)
-static constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x041C;
-#endif
+constexpr uint16_t FlightControllerFiltersConfigKey = 0x0400;
+constexpr uint16_t DynamicIdleControllerConfigKey = 0x0404;
+constexpr uint16_t FlightControllerTPA_ConfigKey = 0x408;
+constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x040C;
+constexpr uint16_t FlightControllerDMaxConfigKey = 0x0410;
+constexpr uint16_t FlightControllerITermRelaxConfigKey = 0x0414;
+constexpr uint16_t FlightControllerYawSpinRecoveryConfigKey = 0x0418;
+constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x041C;
 
-static constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
-static constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
-static constexpr uint16_t RPM_FiltersConfigKey = 0x0505;
-static constexpr uint16_t RadioControllerFailsafeKey = 0x0506;
+constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
+constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
+constexpr uint16_t RPM_FiltersConfigKey = 0x0505;
+constexpr uint16_t RadioControllerFailsafeKey = 0x0506;
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
