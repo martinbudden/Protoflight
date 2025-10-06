@@ -120,8 +120,10 @@ public:
     IMU_Filters::config_t loadIMU_FiltersConfig() const;
     int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
 
+#if defined(USE_RPM_FILTERS)
     RPM_Filters::config_t loadRPM_FiltersConfig() const;
     int32_t storeRPM_FiltersConfig(const RPM_Filters::config_t& config);
+#endif
 
     RadioController::failsafe_t loadRadioControllerFailsafe();
     int32_t storeRadioControllerFailsafe(const RadioController::failsafe_t& failsafe);

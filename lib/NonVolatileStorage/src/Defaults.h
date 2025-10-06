@@ -111,6 +111,7 @@ static constexpr IMU_Filters::config_t imuFiltersConfig = {
     .gyro_lpf2_type = IMU_Filters::config_t::PT1,
 };
 
+#if defined(USE_RPM_FILTERS)
 static constexpr RPM_Filters::config_t rpmFiltersConfig = {
     .rpm_filter_harmonics = 3,
     .rpm_filter_weights = { 100, 0, 100 }, // default is not to filter second harmonic
@@ -119,6 +120,7 @@ static constexpr RPM_Filters::config_t rpmFiltersConfig = {
     .rpm_filter_q = 500,
     .rpm_filter_lpf_hz = 150,
 };
+#endif
 
 static constexpr RadioController::failsafe_t radioControllerFailsafe = {
     .delay = 15,

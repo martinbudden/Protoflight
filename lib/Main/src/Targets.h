@@ -80,6 +80,7 @@ Targets
 
     #define USE_ITERM_RELAX
     #define USE_YAW_SPIN_RECOVERY
+    #define USE_RPM_FILTERS
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
@@ -102,6 +103,7 @@ Targets
     #define USE_ITERM_RELAX
     #define USE_YAW_SPIN_RECOVERY
     #define USE_CRASH_RECOVERY
+    #define USE_RPM_FILTERS
 
     #define FC_TASK_DENOMINATOR 1
     //#define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
@@ -167,6 +169,7 @@ Targets
 
     #define USE_ITERM_RELAX
     #define USE_YAW_SPIN_RECOVERY
+    #define USE_RPM_FILTERS
 
     #define FC_TASK_DENOMINATOR 1
     #define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
@@ -216,6 +219,7 @@ Targets
     #define USE_ITERM_RELAX
     #define USE_YAW_SPIN_RECOVERY
     #define USE_CRASH_RECOVERY
+    #define USE_RPM_FILTERS
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
@@ -246,6 +250,8 @@ Targets
     // https://www.st.com/resource/en/user_manual/um1570-discovery-kit-with-stm32f303vc-mcu-stmicroelectronics.pdf
     // https://www.st.com/resource/en/schematic_pack/mb1035-f303c-e02_schematic.pdf
     // https://www.st.com/resource/en/datasheet/stm32f303vc.pdf
+    #define USE_RPM_FILTERS
+
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
 
     //#define USE_IMU_LSM303AGR
@@ -270,6 +276,7 @@ Targets
     #define USE_D_MAX
     #define USE_ITERM_RELAX
     #define USE_YAW_SPIN_RECOVERY
+    #define USE_RPM_FILTERS
 
     #define USART_1_PINS        stm32_rx_pins_t{.rx={PA,10},.tx={PA,9}} // TX output is always inverted (for FrSky). Internally connected to USB port via CP2102 IC
     #define USART_2_PINS        stm32_rx_pins_t{.rx={PA,3},.tx={PA,2}}

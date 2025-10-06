@@ -389,6 +389,7 @@ int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& 
 }
 
 
+#if defined(USE_RPM_FILTERS)
 RPM_Filters::config_t NonVolatileStorage::loadRPM_FiltersConfig() const
 {
     RPM_Filters::config_t config {};
@@ -402,6 +403,7 @@ int32_t NonVolatileStorage::storeRPM_FiltersConfig(const RPM_Filters::config_t& 
 {
     return storeItem(RPM_FiltersConfigKey, &config, sizeof(config), &DEFAULTS::rpmFiltersConfig);
 }
+#endif
 
 
 RadioController::failsafe_t NonVolatileStorage::loadRadioControllerFailsafe() // NOLINT(readability-make-member-function-const)
@@ -586,11 +588,13 @@ int32_t NonVolatileStorage::storeAll(const FlightController& flightController, c
     const IMU_Filters::config_t imuFiltersConfig = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()).getConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     storeIMU_FiltersConfig(imuFiltersConfig);
 
+#if defined(USE_RPM_FILTERS)
     const RPM_Filters* rpmFilters = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()).getRPM_Filters(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     if (rpmFilters) {
         const RPM_Filters::config_t rpmFiltersConfig = rpmFilters->getConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         storeRPM_FiltersConfig(rpmFiltersConfig);
     }
+#endif
 
     const RadioController::rates_t& radioControllerRates = radioController.getRates();
     storeRadioControllerRates(radioControllerRates, ratesProfile);
