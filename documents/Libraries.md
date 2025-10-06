@@ -2,7 +2,7 @@
 
 | Library                | On github | tag    | release | platformio | Arduino |
 | ---------------------- | --------- | ------ | ------- | ---------- | ------- |
-| Filters                | yes       | 0.9.2  | 0.9.2   | yes        | no      |
+| Filters                | yes       | 0.9.3  | 0.9.3   | yes        | no      |
 | PIDF                   | yes       | 0.3.4  | 0.3.4   | yes        | no      |
 | VectorQuaternionMatrix | yes       | 0.4.3  | 0.4.3   | yes        | no      |
 | SensorFusion           | yes       | 0.2.5  | 0.2.5   | yes        | no      |
@@ -20,7 +20,7 @@
 
 ```text
 Libraries
-├── Filters @ 0.9.2
+├── Filters @ 0.9.3
 ├── PIDF @ 0.3.4
 ├── TaskBase @ 0.0.7
 ├── VectorQuaternionMatrix @ 0.4.3
@@ -51,7 +51,7 @@ Libraries
 
 └── Protoflight @ 0.0.1
     ├── IMU @ 0.9.7
-    ├── Filters @ 0.9.2
+    ├── Filters @ 0.9.3
     ├── PIDF @ 0.3.4
     ├── StabilizedVehicle @ 0.5.12
     ├── Receiver @ 0.5.8
