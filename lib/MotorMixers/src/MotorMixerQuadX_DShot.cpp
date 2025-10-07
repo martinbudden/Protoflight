@@ -5,10 +5,10 @@
 #include <RPM_Filters.h>
 
 
-MotorMixerQuadX_DShot::MotorMixerQuadX_DShot(Debug& debug, const motor_pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController) :
+MotorMixerQuadX_DShot::MotorMixerQuadX_DShot(uint32_t taskIntervalMicroseconds, Debug& debug, const motor_pins_t& pins, RPM_Filters& rpmFilters) :
     MotorMixerQuadBase(debug),
-    _rpmFilters(rpmFilters),
-    _dynamicIdleController(dynamicIdleController)
+    _dynamicIdleController(taskIntervalMicroseconds, debug),
+    _rpmFilters(rpmFilters)
 {
     _motors[M0].init(pins.m0);
     _motors[M1].init(pins.m1);
@@ -34,9 +34,14 @@ float MotorMixerQuadX_DShot::calculateSlowestMotorHz() const
     return slowestMotorHz;
 }
 
-DynamicIdleController* MotorMixerQuadX_DShot::getDynamicIdleController() const
+const DynamicIdleController* MotorMixerQuadX_DShot::getDynamicIdleController() const
 {
     return &_dynamicIdleController;
+}
+
+void MotorMixerQuadX_DShot::setDynamicIdlerControllerConfig(const DynamicIdleController::config_t& config)
+{
+    _dynamicIdleController.setConfig(config);
 }
 
 void MotorMixerQuadX_DShot::outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount)

@@ -7,10 +7,10 @@
 #include <cmath>
 
 
-MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(Debug& debug, const stm32_motor_pins_t& pins, RPM_Filters& rpmFilters, DynamicIdleController& dynamicIdleController) :
+MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(uint32_t taskIntervalMicroseconds, Debug& debug, const stm32_motor_pins_t& pins, RPM_Filters& rpmFilters) :
     MotorMixerQuadBase(debug),
-    _rpmFilters(rpmFilters),
-    _dynamicIdleController(dynamicIdleController)
+    _dynamicIdleController(taskIntervalMicroseconds, debug),
+    _rpmFilters(rpmFilters)
 {
     (void)pins; // !!TODO: set pins
     constexpr float SECONDS_PER_MINUTE = 60.0F;
@@ -35,9 +35,14 @@ float MotorMixerQuadX_DShotBitbang::calculateSlowestMotorHz() const
     return slowestMotorHz;
 }
 
-DynamicIdleController* MotorMixerQuadX_DShotBitbang::getDynamicIdleController() const
+const DynamicIdleController* MotorMixerQuadX_DShotBitbang::getDynamicIdleController() const
 {
     return &_dynamicIdleController;
+}
+
+void MotorMixerQuadX_DShotBitbang::setDynamicIdlerControllerConfig(const DynamicIdleController::config_t& config)
+{
+    _dynamicIdleController.setConfig(config);
 }
 
 void MotorMixerQuadX_DShotBitbang::outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount)

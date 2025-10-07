@@ -15,7 +15,7 @@ void test_mixer_roll()
 {
     std::array<float, 4> motorOutputs {};
     MotorMixerBase::commands_t commands {};
-    float motorOutputMin = 0.0F;
+    const float motorOutputMin = 0.0F;
     float undershoot = 0.0F;
     float overshoot = 0.0F;
     float throttle = 0.0F;
@@ -57,7 +57,7 @@ void test_mixer_pitch()
 {
     std::array<float, 4> motorOutputs {};
     MotorMixerBase::commands_t commands {};
-    float motorOutputMin = 0.0F;
+    const float motorOutputMin = 0.0F;
     float undershoot = 0.0F;
     float overshoot = 0.0F;
     float throttle = 0.0F;

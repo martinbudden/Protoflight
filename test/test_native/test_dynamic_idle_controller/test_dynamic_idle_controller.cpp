@@ -22,7 +22,8 @@ void test_dynamic_idle_controller()
         .dyn_idle_max_increase = 150,
     };
     static Debug debug;
-    static DynamicIdleController dynamicIdleController(dynamicIdleControllerConfig, TASK_INTERVAL_MICROSECONDS, debug);
+    static DynamicIdleController dynamicIdleController(TASK_INTERVAL_MICROSECONDS, debug);
+    dynamicIdleController.setConfig(dynamicIdleControllerConfig);
     const float deltaT = static_cast<float>(TASK_INTERVAL_MICROSECONDS) * 0.000001F;
 
     TEST_ASSERT_EQUAL(0, dynamicIdleController.getConfig().dyn_idle_min_rpm_100);
@@ -48,7 +49,8 @@ void test_dynamic_idle_controller_p_only()
         .dyn_idle_max_increase = 150,
     };
     static Debug debug;
-    static DynamicIdleController dynamicIdleController(dynamicIdleControllerConfig, TASK_INTERVAL_MICROSECONDS, debug);
+    static DynamicIdleController dynamicIdleController(TASK_INTERVAL_MICROSECONDS, debug);
+    dynamicIdleController.setConfig(dynamicIdleControllerConfig);
     const float deltaT = static_cast<float>(TASK_INTERVAL_MICROSECONDS) * 0.000001F;
 
     TEST_ASSERT_EQUAL(10, dynamicIdleController.getConfig().dyn_idle_min_rpm_100);

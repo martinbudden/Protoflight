@@ -58,7 +58,7 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const motor_pins_t& pins)
 {
 #if defined(FRAMEWORK_RPI_PICO)
 
-    _pwmScale = 65535.0F;
+    _pwmScale = 65535.0F; // NOLINT(cppcoreguidelines-prefer-member-initializer)
     if (pins.m0 != 0xFF) {
         gpio_set_function(pins.m0, GPIO_FUNC_PWM);
     }

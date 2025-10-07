@@ -104,6 +104,7 @@ Targets
     #define USE_ITERM_RELAX
     #define USE_YAW_SPIN_RECOVERY
     #define USE_CRASH_RECOVERY
+    #define USE_DYNAMIC_IDLE
     #define USE_RPM_FILTERS
     #define USE_DYNAMIC_NOTCH_FILTER
 
@@ -222,6 +223,7 @@ Targets
     #define USE_YAW_SPIN_RECOVERY
     #define USE_CRASH_RECOVERY
     #define USE_RPM_FILTERS
+    #define USE_DYNAMIC_IDLE
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
@@ -278,7 +280,6 @@ Targets
     #define USE_D_MAX
     #define USE_ITERM_RELAX
     #define USE_YAW_SPIN_RECOVERY
-    #define USE_RPM_FILTERS
 
     #define USART_1_PINS        stm32_rx_pins_t{.rx={PA,10},.tx={PA,9}} // TX output is always inverted (for FrSky). Internally connected to USB port via CP2102 IC
     #define USART_2_PINS        stm32_rx_pins_t{.rx={PA,3},.tx={PA,2}}

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DynamicIdleController.h"
 #include <cstddef>
 #include <cstdint>
 
@@ -9,6 +10,7 @@ class DynamicIdleController;
 
 class MotorMixerBase {
 public:
+    enum type_e { QUAD_X, HEX_X, OCTO_X };
     struct commands_t {
         float throttle;
         float roll;
@@ -22,6 +24,7 @@ public:
         uint8_t channel;
     };
 public:
+    static uint8_t motorCount(type_e type) { return (type == QUAD_X) ? 4 : (type == HEX_X) ? 6 : 8; }
     MotorMixerBase(uint32_t motorCount, Debug& debug) : _motorCount(motorCount), _debug(debug) {}
     inline size_t getMotorCount() const { return _motorCount; }
     inline bool motorsIsOn() const { return _motorsIsOn; }
@@ -38,7 +41,8 @@ public:
     virtual int32_t getMotorRPM(size_t motorIndex) const { (void)motorIndex; return 0; }
     virtual float getMotorFrequencyHz(size_t motorIndex) const { (void)motorIndex; return 0; }
 
-    virtual DynamicIdleController* getDynamicIdleController() const { return nullptr; }
+    virtual const DynamicIdleController* getDynamicIdleController() const { return nullptr; }
+    virtual void setDynamicIdlerControllerConfig(const DynamicIdleController::config_t& config) { (void)config; }
 public:
     static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
 protected:

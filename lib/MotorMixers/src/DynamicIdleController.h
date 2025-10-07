@@ -29,8 +29,8 @@ public:
         uint8_t dyn_idle_max_increase;
     };
 public:
-    DynamicIdleController(const config_t& config, uint32_t taskIntervalMicroseconds, Debug& debug);
-    void setConfig(const config_t& config, uint32_t taskIntervalMicroseconds);
+    DynamicIdleController(uint32_t taskIntervalMicroseconds, Debug& debug);
+    void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
     void setMinimumAllowedMotorHz(float minimumAllowedMotorHz);
     float getMinimumAllowedMotorHz() const { return _minimumAllowedMotorHz; }
@@ -41,11 +41,12 @@ public:
 public:
     static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
 private:
+    uint32_t _taskIntervalMicroseconds;
+    Debug& _debug;
     float _minimumAllowedMotorHz {}; // minimum motor Hz, dynamically controlled
     float _maxIncrease {};
     //float _dynamicIdleMaxIncreaseDelayK {};
     PIDF _PID {}; // PID to dynamic idle, ie to ensure slowest motor does not go below min RPS
     PowerTransferFilter1 _DTermFilter {};
-    Debug& _debug;
     config_t _config {};
 };
