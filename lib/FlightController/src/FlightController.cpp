@@ -21,7 +21,7 @@
 /*!
 Constructor. Sets member data.
 */
-FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug) :
+FlightController::FlightController(uint32_t taskDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug) :
     VehicleControllerBase(AIRCRAFT, PID_COUNT, ahrs.getTaskIntervalMicroseconds() / taskDenominator, ahrs),
     _mixer(motorMixer),
     _debug(debug),

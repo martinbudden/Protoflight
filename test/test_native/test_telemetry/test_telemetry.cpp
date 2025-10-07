@@ -27,20 +27,6 @@ enum { FC_TASK_DENOMINATOR = 2 };
 enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 #endif
 
-class IMU_FiltersNull : public IMU_FiltersBase
-{
-public:
-    virtual ~IMU_FiltersNull() = default;
-    IMU_FiltersNull() = default;
-    void setFilters(const xyz_t& gyroRPS) override { (void)gyroRPS; };
-    void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override { (void)gyroRPS; (void)acc; (void)deltaT; }
-    // IMU_FiltersNull is not copyable or moveable
-    IMU_FiltersNull(const IMU_FiltersNull&) = delete;
-    IMU_FiltersNull& operator=(const IMU_FiltersNull&) = delete;
-    IMU_FiltersNull(IMU_FiltersNull&&) = delete;
-    IMU_FiltersNull& operator=(IMU_FiltersNull&&) = delete;
-};
-
 static const RadioController::rates_t radioControllerRates {
     .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
@@ -65,7 +51,7 @@ void test_telemetry_msp()
     static NonVolatileStorage nvs;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
-    static IMU_FiltersNull imuFilters;
+    static IMU_FiltersBase imuFilters;
     static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
 

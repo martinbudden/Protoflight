@@ -9,7 +9,7 @@
 | StreamBuf              | yes       | 0.0.1  | 0.0.1   | yes        | no      |
 | IMU                    | yes       | 0.9.7  | 0.9.7   | yes        | no      |
 | TaskBase               | yes       | 0.0.7  | 0.0.7   | yes        | no      |
-| StabilizedVehicle      | yes       | 0.5.12 | 0.5.12  | yes        | no      |
+| StabilizedVehicle      | yes       | 0.5.14 | 0.5.14  | yes        | no      |
 | Receiver               | yes       | 0.5.8  | 0.5.8   | yes        | no      |
 | Backchannel            | yes       | 0.1.7  | 0.1.7   | yes        | no      |
 | MultiWiiSerialProtocol | yes       | 0.0.8  | 0.0.8   | yes        | no      |
@@ -32,7 +32,7 @@ Libraries
 ├── IMU @ 0.9.7
 │   └── VectorQuaternionMatrix @ 0.4.3
 │
-├── StabilizedVehicle @ 0.5.12
+├── StabilizedVehicle @ 0.5.14
 │   ├── TaskBase @ 0.0.7
 │   ├── VectorQuaternionMatrix @ 0.4.3
 │   ├── IMU @ 0.9.7
@@ -53,7 +53,7 @@ Libraries
     ├── IMU @ 0.9.7
     ├── Filters @ 0.9.3
     ├── PIDF @ 0.3.4
-    ├── StabilizedVehicle @ 0.5.12
+    ├── StabilizedVehicle @ 0.5.14
     ├── Receiver @ 0.5.8
     └── Backchannel @ 0.1.6
 

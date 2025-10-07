@@ -87,9 +87,8 @@ Update the Dynamic Notch Filter, this runs the  Sliding Discreet Fourier Transfo
 
 `RPM_Filters::setFrequencyHz` is called in the context of the Flight Controller task.
 */
-void IMU_Filters::setFilters(const xyz_t& gyroRPS)
+void IMU_Filters::setFilters()
 {
-    (void)gyroRPS;
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     if (_dynamicNotchFilter.isActive()) {
         _dynamicNotchFilter.update(); // update performs the Fourier transform
@@ -120,6 +119,7 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
     if (_useGyroNotch2) {
         gyroRPS = _gyroNotch2.filter(gyroRPS);
     }
+#if defined(USE_RPM_FILTERS)
     if (_rpmFilters) {
         // apply the RPM filters, filter one motor each time this function is called
         if (_motorCount == 4) {
@@ -133,6 +133,7 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
             }
         }
     }
+#endif
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     if (_dynamicNotchFilter.isActive()) {
         // push the filtered gyroRPS value to the dynamicNotchFilter after all the other filtration,

@@ -39,7 +39,7 @@ positive yaw is nose right
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug);
+    FlightController(uint32_t taskDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug);
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
