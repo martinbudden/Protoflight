@@ -98,6 +98,16 @@ static constexpr FlightController::crash_recovery_config_t flightControllerCrash
 };
 #endif
 
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+static constexpr DynamicNotchFilter::config_t dynamicNotchFilterConfig = {
+    .dyn_notch_min_hz = 100,
+    .dyn_notch_max_hz = 600,
+    .dyn_notch_q = 300,
+    .dyn_notch_count = 3,
+    .dyn_notch_smoothing = 1,
+};
+#endif
+
 static constexpr IMU_Filters::config_t imuFiltersConfig = {
     .gyro_notch1_hz = 0,
     .gyro_notch1_cutoff = 0,

@@ -54,6 +54,7 @@ Targets
     #define USE_ITERM_RELAX
     #define USE_YAW_SPIN_RECOVERY
     #define USE_CRASH_RECOVERY
+    #define USE_DYNAMIC_NOTCH_FILTER
 
     #define IMU_AXIS_ORDER      IMU_Base::YNEG_XPOS_ZPOS
     #define AHRS_TASK_INTERVAL_MICROSECONDS     5000

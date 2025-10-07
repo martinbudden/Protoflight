@@ -1,4 +1,5 @@
 #include "Debug.h"
+#include "DynamicNotchFilter.h"
 #include "FlightController.h"
 #include <RadioController.h>
 
@@ -138,6 +139,11 @@ void FlightController::updateSetpoints(const controls_t& controls)
     detectCrashOrSpin();
 
     setControlMode(controls.controlMode);
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    if (_dynamicNotchFilter) {
+        _dynamicNotchFilter->setThrottle(controls.throttleStick);
+    }
+#endif
 
     // output throttle may be changed by spin recovery
     _sh.outputThrottle = controls.throttleStick;

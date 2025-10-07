@@ -29,6 +29,9 @@ static const std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
 constexpr uint16_t AccOffsetKey = 0x0200;
 constexpr uint16_t GyroOffsetKey = 0x0201;
 constexpr uint16_t MacAddressKey = 0x0202;
+
+constexpr uint16_t DynamicNotchFilterConfigKey = 0x0300;
+
 // Part of PID profile
 // Note that keys of items in PID profile must go up in jumps of 4, since 1 key is used for each profile
 constexpr uint16_t FlightControllerFiltersConfigKey = 0x0400;
@@ -374,6 +377,22 @@ int32_t NonVolatileStorage::storeFlightControllerCrashRecoveryConfig(const Fligh
 #endif
 
 
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+DynamicNotchFilter::config_t NonVolatileStorage::loadDynamicNotchFilterConfig() const
+{
+    DynamicNotchFilter::config_t config {};
+    if (loadItem(DynamicNotchFilterConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }
+    return DEFAULTS::dynamicNotchFilterConfig;
+}
+
+int32_t NonVolatileStorage::storeDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config)
+{
+    return storeItem(DynamicNotchFilterConfigKey, &config, sizeof(config), &DEFAULTS::dynamicNotchFilterConfig);
+}
+#endif
+
 IMU_Filters::config_t NonVolatileStorage::loadIMU_FiltersConfig() const
 {
     IMU_Filters::config_t config {};
@@ -585,15 +604,21 @@ int32_t NonVolatileStorage::storeAll(const FlightController& flightController, c
     storeFlightControllerCrashRecoveryConfig(flightControllerCrashRecoveryConfig, pidProfile);
 #endif
 
-    const IMU_Filters::config_t imuFiltersConfig = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()).getConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    const IMU_Filters& imuFilters = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
     storeIMU_FiltersConfig(imuFiltersConfig);
 
 #if defined(USE_RPM_FILTERS)
-    const RPM_Filters* rpmFilters = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()).getRPM_Filters(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    const RPM_Filters* rpmFilters = imuFilters.getRPM_Filters(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     if (rpmFilters) {
         const RPM_Filters::config_t rpmFiltersConfig = rpmFilters->getConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         storeRPM_FiltersConfig(rpmFiltersConfig);
     }
+#endif
+
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    const DynamicNotchFilter::config_t dynamicNotchFilterConfig = imuFilters.getDynamicNotchFilterConfig();
+    storeDynamicNotchFilterConfig(dynamicNotchFilterConfig);
 #endif
 
     const RadioController::rates_t& radioControllerRates = radioController.getRates();

@@ -71,12 +71,6 @@ static const char* const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; //
 static const char* const TARGET_BOARD_IDENTIFIER = "A405";
 static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 
-static inline int constrain(int value, int low, int high)
-{
-    return value < low ? low : value > high ? high : value;
-}
-
-
 MSP_ProtoFlight::MSP_ProtoFlight(NonVolatileStorage& nonVolatileStorage, Features& features, AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, Debug& debug) :
     _nonVolatileStorage(nonVolatileStorage),
     _features(features),
@@ -141,7 +135,10 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         // write flightModeFlags header. Lowest 4 bits contain number of bytes that follow
         // header is emmitted even when all bits fit into 32 bits to allow future extension
         size_t byteCount = (flagBits - 32 + 7) / 8;        // 32 already stored, round up
-        byteCount = constrain(static_cast<uint8_t>(byteCount), 0, 15);        // limit to 16 bytes (128 bits)
+        byteCount = static_cast<uint8_t>(byteCount);
+        if (byteCount > 15) {
+            byteCount = 15; // limit to 16 bytes (128 bits)
+        }
         dst.writeU8(static_cast<uint8_t>(byteCount));
         dst.writeData(reinterpret_cast<uint8_t*>(&flightModeFlags) + 4, byteCount); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast)
 

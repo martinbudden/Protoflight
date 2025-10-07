@@ -1,10 +1,12 @@
 #pragma once
 
+#include "DynamicNotchFilter.h"
 #include <FilterTemplates.h>
 #include <IMU_FiltersBase.h>
 #include <cstdint>
 #include <xyz_type.h>
 
+class Debug;
 class MotorMixerBase;
 class RPM_Filters;
 
@@ -27,7 +29,7 @@ public:
         // uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
     };
 public:
-    IMU_Filters(const MotorMixerBase& motorMixer, float looptimeSeconds);
+    IMU_Filters(const MotorMixerBase& motorMixer, Debug& debug, float looptimeMicroseconds);
     void setRPM_Filters(RPM_Filters* rpmFilters) { _rpmFilters = rpmFilters; }
     const RPM_Filters* getRPM_Filters() const { return _rpmFilters; }
     RPM_Filters* getRPM_Filters() { return _rpmFilters; }
@@ -36,8 +38,13 @@ public:
     virtual void setFilters(const xyz_t& gyroRPS) override;
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
+    void setDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config);
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    const DynamicNotchFilter::config_t& getDynamicNotchFilterConfig() const { return _dynamicNotchFilter.getConfig(); }
+#endif
 protected:
     const MotorMixerBase& _motorMixer;
+    Debug& _debug;
     float _looptimeSeconds;
     size_t _motorCount;
     const config_t _config {}; //!< configuration data is const once it has been set in setConfig
@@ -54,4 +61,7 @@ protected:
 
     BiquadFilterT<xyz_t> _gyroNotch1;
     BiquadFilterT<xyz_t> _gyroNotch2;
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    DynamicNotchFilter _dynamicNotchFilter;
+#endif
 };

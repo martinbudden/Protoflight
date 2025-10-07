@@ -16,7 +16,8 @@
 #include <unity.h>
 
 #if !defined(FC_TASK_DENOMINATOR)
-enum { FC_TASK_DENOMINATOR = 1 };
+//enum { FC_TASK_DENOMINATOR = 1 };
+static const uint32_t FC_TASK_DENOMINATOR = 1;
 #endif
 
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)

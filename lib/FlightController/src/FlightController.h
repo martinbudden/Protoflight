@@ -18,6 +18,7 @@
 class AHRS;
 class Blackbox;
 class Debug;
+class DynamicNotchFilter;
 class RadioControllerBase;
 class Quaternion;
 
@@ -333,6 +334,7 @@ private:
     Debug& _debug;
     RadioControllerBase* _radioController {};
     Blackbox* _blackbox {};
+    DynamicNotchFilter* _dynamicNotchFilter {nullptr};
     const uint32_t _taskDenominator;
 
     //!!TODO: some constants below need to be made configurable

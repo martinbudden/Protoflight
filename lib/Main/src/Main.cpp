@@ -107,8 +107,11 @@ void Main::setup()
 #endif // USE_MOTOR_MIXER
 
     // statically allocate the IMU_Filters
-    static IMU_Filters imuFilters(motorMixer, AHRS_taskIntervalMicroseconds);
+    static IMU_Filters imuFilters(motorMixer, debug, AHRS_taskIntervalMicroseconds);
     imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
+#endif
 #if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     imuFilters.setRPM_Filters(&rpmFilters);
 #endif
@@ -362,7 +365,6 @@ void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, Flight
 #if defined(USE_CRASH_RECOVERY)
     flightController.setCrashRecoveryConfig(nvs.loadFlightControllerCrashRecoveryConfig(pidProfile));
 #endif
-
     for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
         const VehicleControllerBase::PIDF_uint16_t pid = nvs.loadPID(ii, pidProfile);
         flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);

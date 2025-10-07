@@ -116,7 +116,10 @@ public:
     FlightController::crash_recovery_config_t loadFlightControllerCrashRecoveryConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& config, uint8_t pidProfileIndex);
 #endif
-
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    DynamicNotchFilter::config_t loadDynamicNotchFilterConfig() const;
+    int32_t storeDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config);
+#endif
     IMU_Filters::config_t loadIMU_FiltersConfig() const;
     int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
 

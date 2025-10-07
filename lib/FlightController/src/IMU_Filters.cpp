@@ -1,15 +1,18 @@
 #include "IMU_Filters.h"
+#include "RPM_Filters.h"
 #include <MotorMixerBase.h>
-#include <RPM_Filters.h>
 
 
-IMU_Filters::IMU_Filters(const MotorMixerBase& motorMixer, float looptimeSeconds) :
+IMU_Filters::IMU_Filters(const MotorMixerBase& motorMixer, Debug& debug, float looptimeMicroseconds) :
     _motorMixer(motorMixer),
-    _looptimeSeconds(looptimeSeconds),
+    _debug(debug),
+    _looptimeSeconds(looptimeMicroseconds * 1.0E-6F),
     _motorCount(motorMixer.getMotorCount())
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    ,_dynamicNotchFilter(debug, looptimeMicroseconds)
+#endif
 {
 }
-
 
 void IMU_Filters::setConfig(const config_t& config)
 {
@@ -68,9 +71,30 @@ Does nothing, since `RPM_Filters::setFrequencyHz` is called in the context of th
 
 This is the place to put the Fast Fourier Transform (FFT) if dynamic notch filters are implemented.
 */
+void IMU_Filters::setDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config)
+{
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    _dynamicNotchFilter.setConfig(config);
+#else
+    (void)config;
+#endif
+}
+
+/*!
+This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
+
+Update the Dynamic Notch Filter, this runs the  Sliding Discreet Fourier Transform (SDFT).
+
+`RPM_Filters::setFrequencyHz` is called in the context of the Flight Controller task.
+*/
 void IMU_Filters::setFilters(const xyz_t& gyroRPS)
 {
     (void)gyroRPS;
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    if (_dynamicNotchFilter.isActive()) {
+        _dynamicNotchFilter.update(); // update performs the Fourier transform
+    }
+#endif
 }
 
 /*!
@@ -109,4 +133,12 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
             }
         }
     }
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    if (_dynamicNotchFilter.isActive()) {
+        // push the filtered gyroRPS value to the dynamicNotchFilter after all the other filtration,
+        // so it can find the remaining noisy frequencies
+        _dynamicNotchFilter.push(gyroRPS);
+        _dynamicNotchFilter.filter(gyroRPS);
+    }
+#endif
 }
