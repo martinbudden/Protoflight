@@ -209,7 +209,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
         auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
         RPM_Filters* rpmFilters = imuFilters.getRPM_Filters();
-        RPM_Filters::config_t rpmFiltersConfig = rpmFilters ? rpmFilters->getConfig() : RPM_Filters::config_t {};
+        RPM_Filters::config_t rpmFiltersConfig = rpmFilters ? rpmFilters->getConfig() : RPM_Filters::config_t {}; // cppcheck-suppress knownConditionTrueFalse
         FlightController::filters_config_t fcFilters = _flightController.getFiltersConfig();
 
         imuFiltersConfig.gyro_lpf1_hz = src.readU8();
@@ -271,7 +271,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             src.readU8();
         }
         imuFilters.setConfig(imuFiltersConfig);
-        if (rpmFilters) {
+        if (rpmFilters) { // cppcheck-suppress knownConditionTrueFalse
             rpmFilters->setConfig(rpmFiltersConfig);
         }
         _flightController.setFiltersConfig(fcFilters);

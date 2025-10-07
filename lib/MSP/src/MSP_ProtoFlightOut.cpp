@@ -323,7 +323,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
         const FlightController::filters_config_t fcFilters = _flightController.getFiltersConfig();
         const RPM_Filters* rpmFilters = imuFilters.getRPM_Filters();
-        const RPM_Filters::config_t rpmFiltersConfig = rpmFilters ? rpmFilters->getConfig() : RPM_Filters::config_t {};
+        const RPM_Filters::config_t rpmFiltersConfig = rpmFilters ? rpmFilters->getConfig() : RPM_Filters::config_t {}; // cppcheck-suppress knownConditionTrueFalse
 
         dst.writeU8(static_cast<uint8_t>(imuFiltersConfig.gyro_lpf1_hz));
         dst.writeU16(fcFilters.dterm_lpf1_hz);

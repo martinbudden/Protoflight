@@ -67,6 +67,7 @@ public:
     const config_t& getConfig() const { return _config; }
     void setFrequencyHz(size_t motorIndex, float frequencyHz); // called from the motor mixer
     void filter(xyz_t& input, size_t motorIndex);
+    bool isActive() const { return _config.rpm_filter_harmonics > 0; }
     size_t getMotorCount() const { return _motorCount; }
 
     static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }

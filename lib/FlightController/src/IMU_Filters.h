@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DynamicNotchFilter.h"
+#include "RPM_Filters.h"
 #include <FilterTemplates.h>
 #include <IMU_FiltersBase.h>
 #include <cstdint>
@@ -29,10 +30,14 @@ public:
         // uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
     };
 public:
-    IMU_Filters(const MotorMixerBase& motorMixer, Debug& debug, float looptimeMicroseconds);
-    void setRPM_Filters(RPM_Filters* rpmFilters) { _rpmFilters = rpmFilters; }
-    const RPM_Filters* getRPM_Filters() const { return _rpmFilters; }
-    RPM_Filters* getRPM_Filters() { return _rpmFilters; }
+    IMU_Filters(size_t motorCount, Debug& debug, float looptimeMicroseconds);
+#if defined(USE_RPM_FILTERS)
+    const RPM_Filters* getRPM_Filters() const { return &_rpmFilters; }
+    RPM_Filters* getRPM_Filters() { return &_rpmFilters; }
+#else
+    const RPM_Filters* getRPM_Filters() const { return nullptr; }
+    RPM_Filters* getRPM_Filters() { return nullptr; }
+#endif
 public:
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
     virtual void setFilters() override;
@@ -42,13 +47,15 @@ public:
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     const DynamicNotchFilter::config_t& getDynamicNotchFilterConfig() const { return _dynamicNotchFilter.getConfig(); }
 #endif
+    void setRPM_FiltersConfig(const RPM_Filters::config_t& config);
+#if defined(USE_RPM_FILTERS)
+    const RPM_Filters::config_t& getRPM_FiltersConfig() const { return _rpmFilters.getConfig(); }
+#endif
 protected:
-    const MotorMixerBase& _motorMixer;
     Debug& _debug;
     float _looptimeSeconds;
     size_t _motorCount;
     const config_t _config {}; //!< configuration data is const once it has been set in setConfig
-    RPM_Filters* _rpmFilters {nullptr};
 
     FilterBaseT<xyz_t>* _gyroLPF1 {nullptr};
     uint32_t  _useGyroNotch1 {false};
@@ -63,5 +70,8 @@ protected:
     BiquadFilterT<xyz_t> _gyroNotch2;
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     DynamicNotchFilter _dynamicNotchFilter;
+#endif
+#if defined(USE_RPM_FILTERS)
+    RPM_Filters _rpmFilters;
 #endif
 };

@@ -609,11 +609,8 @@ int32_t NonVolatileStorage::storeAll(const FlightController& flightController, c
     storeIMU_FiltersConfig(imuFiltersConfig);
 
 #if defined(USE_RPM_FILTERS)
-    const RPM_Filters* rpmFilters = imuFilters.getRPM_Filters(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-    if (rpmFilters) {
-        const RPM_Filters::config_t rpmFiltersConfig = rpmFilters->getConfig(); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-        storeRPM_FiltersConfig(rpmFiltersConfig);
-    }
+    const RPM_Filters::config_t rpmFiltersConfig = imuFilters.getRPM_FiltersConfig();
+    storeRPM_FiltersConfig(rpmFiltersConfig);
 #endif
 
 #if defined(USE_DYNAMIC_NOTCH_FILTER)

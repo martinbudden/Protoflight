@@ -63,13 +63,15 @@ void Main::setup()
     const uint8_t currentPID_Profile = nvs.loadPidProfileIndex();
     nvs.setCurrentPidProfileIndex(currentPID_Profile);
 
-    // create the IMU and get its sample rate
+    // create the IMU and get its sample rate, returned in imuSampleRateHz
 #if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
     int32_t imuSampleRateHz = 3200; // set max sample rate for BMI270
 #else
     int32_t imuSampleRateHz = 1000000 / AHRS_TASK_INTERVAL_MICROSECONDS;
 #endif
     static IMU_Base& imuSensor = createIMU(imuSampleRateHz); // note, the actual set sampleRate is returned in imuSampleRateHz
+
+
 #if defined(USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING)
     // if the AHRS is interrupt driven, then set its task interval based on the IMU sample rate
     const uint32_t AHRS_taskIntervalMicroseconds = 1000000 / imuSampleRateHz;
@@ -84,18 +86,28 @@ void Main::setup()
     Serial.printf("\r\n**** AHRS_taskIntervalMicroseconds:%u, IMU sample rate:%dHz\r\n\r\n", static_cast<unsigned int>(AHRS_taskIntervalMicroseconds), static_cast<int>(imuSampleRateHz));
 #endif
 
+
+    // statically allocate the IMU_Filters
+    enum { MOTOR_COUNT = 4 };
+    static IMU_Filters imuFilters(MOTOR_COUNT, debug, AHRS_taskIntervalMicroseconds);
+    imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
+#if defined(USE_DYNAMIC_NOTCH_FILTER)
+    imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
+#endif
+#if defined(USE_RPM_FILTERS)
+    imuFilters.setRPM_FiltersConfig(nvs.loadRPM_FiltersConfig());
+#endif
+
+
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
-    enum { MOTOR_COUNT = 4 };
-    static RPM_Filters rpmFilters(MOTOR_COUNT, AHRS_TASK_INTERVAL_MICROSECONDS);
-    rpmFilters.setConfig(nvs.loadRPM_FiltersConfig());
     static DynamicIdleController dynamicIdleController(nvs.loadDynamicIdleControllerConfig(currentPID_Profile), AHRS_taskIntervalMicroseconds / FC_TASK_DENOMINATOR, debug);
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS, rpmFilters, dynamicIdleController);
+    static MotorMixerQuadX_DShotBitbang motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS, *imuFilters.getRPM_Filters(), dynamicIdleController);
 #else
-    static MotorMixerQuadX_DShot motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS, rpmFilters, dynamicIdleController);
+    static MotorMixerQuadX_DShot motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS, *imuFilters.getRPM_Filters(), dynamicIdleController);
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
@@ -106,15 +118,6 @@ void Main::setup()
     static_assert(false && "MotorMixer not specified");
 #endif // USE_MOTOR_MIXER
 
-    // statically allocate the IMU_Filters
-    static IMU_Filters imuFilters(motorMixer, debug, AHRS_taskIntervalMicroseconds);
-    imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
-#if defined(USE_DYNAMIC_NOTCH_FILTER)
-    imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
-#endif
-#if defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
-    imuFilters.setRPM_Filters(&rpmFilters);
-#endif
 
     // Statically allocate the AHRS
     AHRS& ahrs = createAHRS(AHRS_taskIntervalMicroseconds, imuSensor, imuFilters);
