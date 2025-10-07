@@ -21,10 +21,9 @@
 /*!
 Constructor. Sets member data.
 */
-FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController, Debug& debug) :
+FlightController::FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug) :
     VehicleControllerBase(AIRCRAFT, PID_COUNT, ahrs.getTaskIntervalMicroseconds() / taskDenominator, ahrs),
     _mixer(motorMixer),
-    _radioController(radioController),
     _debug(debug),
     _taskDenominator(taskDenominator),
     _fcC(_fcM),
@@ -421,7 +420,7 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
     }
     _fcM.taskSignalledCount = 0;
 
-    if (_radioController.getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
+    if (_radioController->getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
         MotorMixerBase::commands_t commands {
             .throttle  = 0.25F,
             .roll   = 0.0F,

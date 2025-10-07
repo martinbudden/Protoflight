@@ -38,7 +38,7 @@ positive yaw is nose right
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, RadioControllerBase& radioController, Debug& debug);
+    FlightController(uint32_t taskDenominator, const AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug);
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
@@ -221,6 +221,7 @@ public:
         return (std::fabs(value) < deadband) ? 0.0F : (value >= 0.0F) ? value - deadband : value + deadband;
     }
 
+    void setRadioController(RadioControllerBase* radioController) { _radioController = radioController; }
     const AHRS& getAHRS() const { return _ahrs; }
 
     inline bool motorsIsOn() const { return _mixer.motorsIsOn(); }
@@ -329,9 +330,9 @@ public:
 private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
     MotorMixerBase& _mixer;
-    RadioControllerBase& _radioController;
     Debug& _debug;
-    Blackbox* _blackbox {nullptr};
+    RadioControllerBase* _radioController {};
+    Blackbox* _blackbox {};
     const uint32_t _taskDenominator;
 
     //!!TODO: some constants below need to be made configurable

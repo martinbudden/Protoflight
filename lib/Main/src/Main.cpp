@@ -3,11 +3,7 @@
 
 #include <AHRS.h>
 #include <AHRS_Task.h>
-#include <BackchannelFlightController.h>
 #include <BackchannelTask.h>
-#if defined(LIBRARY_RECEIVER_USE_ESPNOW)
-#include <BackchannelTransceiverESPNOW.h>
-#endif
 #include <BlackboxCallbacks.h>
 #include <BlackboxMessageQueueAHRS.h>
 #include <BlackboxProtoFlight.h>
@@ -32,18 +28,12 @@
 #include <NonVolatileStorage.h>
 #include <RPM_Filters.h>
 #include <RadioController.h>
-#include <ReceiverAtomJoyStick.h>
-#include <ReceiverNull.h>
-#include <ReceiverSBUS.h>
 #include <ReceiverTask.h>
 #if defined(M5_UNIFIED)
 #include <ScreenM5.h>
 #endif
 #include <TimeMicroseconds.h>
 #include <VehicleControllerTask.h>
-#if defined(LIBRARY_RECEIVER_USE_ESPNOW)
-#include <WiFi.h>
-#endif
 
 
 /*!
@@ -72,29 +62,6 @@ void Main::setup()
     const uint8_t currentRateProfile = nvs.loadRateProfileIndex();
     const uint8_t currentPID_Profile = nvs.loadPidProfileIndex();
     nvs.setCurrentPidProfileIndex(currentPID_Profile);
-
-#if defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    // Set WiFi to station mode
-    WiFi.mode(WIFI_STA);
-    // Disconnect from Access Point if it was previously connected
-    WiFi.disconnect();
-    // get my MAC address
-    uint8_t myMacAddress[ESP_NOW_ETH_ALEN];
-    WiFi.macAddress(&myMacAddress[0]);
-#if !defined(RECEIVER_CHANNEL)
-    enum { RECEIVER_CHANNEL = 3 };
-#endif
-    static ReceiverAtomJoyStick receiver(&myMacAddress[0], RECEIVER_CHANNEL);
-    const esp_err_t espErr = receiver.init();
-    Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
-    assert(espErr == ESP_OK && "Unable to setup receiver.");
-#elif defined(USE_RECEIVER_SBUS)
-    static ReceiverSBUS receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
-#else
-    static ReceiverNull receiver;
-#endif
-
-    static RadioController radioController(receiver, nvs.loadRadioControllerRates(currentRateProfile));
 
     // create the IMU and get its sample rate
 #if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
@@ -150,11 +117,12 @@ void Main::setup()
     AHRS& ahrs = createAHRS(AHRS_taskIntervalMicroseconds, imuSensor, imuFilters);
 
     // Statically allocate the flightController.
-    static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
+    static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
+    ahrs.setVehicleController(&flightController);
     loadPID_ProfileFromNonVolatileStorage(nvs, flightController, currentPID_Profile);
 
-    ahrs.setVehicleController(&flightController);
-    radioController.setFlightController(&flightController);
+    RadioController& radioController = createRadioController(flightController, nvs, currentRateProfile);
+    ReceiverBase& receiver = const_cast<ReceiverBase&>(radioController.getReceiver()); // NOLINT(cppcoreguidelines-pro-type-const-cast,hicpp-use-auto,modernize-use-auto)
 
     // Statically allocate the Blackbox and associated objects
 #if defined(USE_BLACKBOX) || defined(USE_BLACKBOX_DEBUG)
@@ -190,13 +158,13 @@ void Main::setup()
         nvs.clear();
     }
     // Statically allocate the screen.
-    static ScreenM5 screen(ahrs, flightController, receiver);
+    static ScreenM5 screen(ahrs, flightController, radioController.getReceiver());
     ReceiverWatcher* receiverWatcher = &screen;
     _screen = &screen;
     _screen->updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
 
     // Statically allocate the buttons.
-    static ButtonsM5 buttons(flightController, receiver, _screen);
+    static ButtonsM5 buttons(flightController, radioController.getReceiver(), _screen);
     _buttons = &buttons;
 
 #if defined(M5_ATOM)
@@ -211,11 +179,10 @@ void Main::setup()
 
 #else
     // no buttons defined, so always broadcast address for binding on startup
-    receiver.broadcastMyEUI();
+    radioController.getReceiver().broadcastMyEUI();
     ReceiverWatcher* receiverWatcher = nullptr;
 #endif // M5_UNIFIED
 
-    // And finally create the AHRS, FlightController, Receiver, and MSP tasks.
     static MainTask mainTask(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS);
     _tasks.mainTask = &mainTask;
     reportMainTask();
@@ -252,21 +219,7 @@ void Main::setup()
 #endif
 
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    // statically allocate an MSP object
-    // static MSP_ProtoFlight mspProtoFlightBackchannel(features, ahrs, flightController, radioController, receiver);
-    // Statically allocate the backchannel.
-    constexpr uint8_t backchannelMacAddress[ESP_NOW_ETH_ALEN] BACKCHANNEL_MAC_ADDRESS;
-    static BackchannelTransceiverESPNOW backchannelTransceiverESPNOW(receiver.getESPNOW_Transceiver(), &backchannelMacAddress[0]);
-    static BackchannelFlightController backchannel(
-        backchannelTransceiverESPNOW,
-        &backchannelMacAddress[0],
-        &myMacAddress[0],
-        flightController,
-        ahrs,
-        receiver,
-        &mainTask,
-        nvs
-    );
+    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, &mainTask, nvs);
 
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = BACKCHANNEL_TASK_INTERVAL_MICROSECONDS;

@@ -6,7 +6,6 @@
 #include <Defaults.h>
 #include <IMU_FiltersBase.h>
 #include <IMU_Null.h>
-#include <MotorMixerBase.h>
 #include <NonVolatileStorage.h>
 #include <RadioController.h>
 #include <ReceiverNull.h>
@@ -69,8 +68,8 @@ void test_flight_controller()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, radioControllerRates);
-    FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, radioController, debug);
+    FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
+    static RadioController radioController(receiver, fc, radioControllerRates);
     TEST_ASSERT_FALSE(fc.motorsIsOn());
 
     fc.motorsSwitchOn();

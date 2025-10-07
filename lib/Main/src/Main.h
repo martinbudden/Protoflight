@@ -18,6 +18,7 @@
 
 class AHRS;
 class AHRS_Task;
+class BackchannelBase;
 class BackchannelTask;
 class Blackbox;
 class BlackboxTask;
@@ -25,14 +26,12 @@ class ButtonsBase;
 class Debug;
 class FlightController;
 class IMU_Base;
-class IMU_Filters;
 class IMU_FiltersBase;
 class MSP_Task;
 class NonVolatileStorage;
 class RadioController;
 class ReceiverBase;
 class ReceiverTask;
-class ReceiverWatcher;
 class ScreenBase;
 class VehicleControllerTask;
 
@@ -116,9 +115,12 @@ public:
     void setup();
     void loop();
 private:
-    void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
     static IMU_Base& createIMU(int32_t& imuSampleRateHz);
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
+    static RadioController& createRadioController(FlightController& flightController, const NonVolatileStorage& nonVolatileStorage, uint8_t currentRateProfile);
+    BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nonVolatileStorage);
+
+    void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
     static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);
     static void loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController, uint8_t pidProfile);
     static void print(const char* buf);

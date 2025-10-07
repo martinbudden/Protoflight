@@ -44,9 +44,7 @@ public:
         uint16_t throttle_low_delay;
     };
 public:
-    RadioController(ReceiverBase& receiver, const rates_t& rates);
-
-    void setFlightController(FlightController* flightController);
+    RadioController(ReceiverBase& receiver, FlightController& flightController, const rates_t& rates);
 
     virtual void updateControls(const controls_t& controls) override;
     virtual uint32_t getFailsafePhase() const override;
@@ -55,13 +53,13 @@ public:
     const failsafe_t& getFailsafe() const { return _failsafe; }
     void setFailsafe(const failsafe_t& failsafe);
 
-    rates_t getRates() const { return _rates; }
+    const rates_t& getRates() const { return _rates; }
     void setRates(const rates_t& rates) { _rates = rates; }
     void setRatesToPassThrough();
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
 private:
-    FlightController* _flightController {};
+    FlightController& _flightController;
     rates_t _rates;
     int32_t _onOffSwitchPressed {false}; // on/off switch debouncing
     float _maxRollAngleDegrees { 60.0F }; // used for angle mode

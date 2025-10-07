@@ -2,17 +2,13 @@
 #include "RadioController.h"
 #include <cmath>
 
-RadioController::RadioController(ReceiverBase& receiver, const rates_t& rates) :
+RadioController::RadioController(ReceiverBase& receiver, FlightController& flightController, const rates_t& rates) :
     RadioControllerBase(receiver),
+    _flightController(flightController),
     _rates(rates)
 {
-}
-
-void RadioController::setFlightController(FlightController* flightController)
-{
-    _flightController = flightController;
-    // set yaw spin detect threshold at 25% greater than max yaw rate stick input
-    _flightController->setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
+    _flightController.setRadioController(this);
+    _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
 }
 
 void RadioController::setRatesToPassThrough()
@@ -72,7 +68,7 @@ void RadioController::updateControls(const controls_t& controls)
     } else {
         if (_onOffSwitchPressed) {
             // motorOnOff false and _onOffPressed true means the  on/off button is being released, so toggle the motor state
-            _flightController->motorsToggleOnOff();
+            _flightController.motorsToggleOnOff();
             _onOffSwitchPressed = false;
         }
     }
@@ -91,7 +87,7 @@ void RadioController::updateControls(const controls_t& controls)
             _receiver.getSwitch(0) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE
     };
 
-    _flightController->updateSetpoints(flightControls);
+    _flightController.updateSetpoints(flightControls);
 }
 
 uint32_t RadioController::getFailsafePhase() const
@@ -106,7 +102,7 @@ void RadioController::setFailsafe(const failsafe_t& failsafe)
 
 void RadioController::checkFailsafe(uint32_t tickCount)
 {
-    _flightController->detectCrashOrSpin();
+    _flightController.detectCrashOrSpin();
 
     if ((tickCount - _failsafeTickCount > _failsafeTickCountThreshold) && _receiverInUse) {
         // _receiverInUse is initialized to false, so the motors won't turn off it the transmitter hasn't been turned on yet.
@@ -114,7 +110,7 @@ void RadioController::checkFailsafe(uint32_t tickCount)
         // so enter failsafe mode.
         _failsafePhase = FAILSAFE_RX_LOSS_DETECTED;
         if ((tickCount - _failsafeTickCount > _failsafeTickCountSwitchOffThreshold)) {
-            _flightController->motorsSwitchOff();
+            _flightController.motorsSwitchOff();
             _receiverInUse = false; // set to false to allow us to switch the motors on again if we regain a signal
         }
     }

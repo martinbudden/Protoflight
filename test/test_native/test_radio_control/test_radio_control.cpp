@@ -1,9 +1,42 @@
-#include "RadioController.h"
+#include <AHRS.h>
+#include <Debug.h>
+#include <FlightController.h>
+#include <IMU_FiltersBase.h>
+#include <IMU_Null.h>
+#include <RadioController.h>
 #include <ReceiverNull.h>
+#include <SensorFusion.h>
 
 
 #include <unity.h>
 
+// NOLINTBEGIN(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
+
+#if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
+enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
+#endif
+
+class IMU_FiltersNull : public IMU_FiltersBase
+{
+public:
+    virtual ~IMU_FiltersNull() = default;
+    IMU_FiltersNull() = default;
+    void setFilters(const xyz_t& gyroRPS) override { (void)gyroRPS; };
+    void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override { (void)gyroRPS; (void)acc; (void)deltaT; }
+    // IMU_FiltersNull is not copyable or moveable
+    IMU_FiltersNull(const IMU_FiltersNull&) = delete;
+    IMU_FiltersNull& operator=(const IMU_FiltersNull&) = delete;
+    IMU_FiltersNull(IMU_FiltersNull&&) = delete;
+    IMU_FiltersNull& operator=(IMU_FiltersNull&&) = delete;
+};
+
+static MadgwickFilter sensorFusionFilter;
+static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
+static IMU_FiltersNull imuFilters;
+static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
+static Debug debug;
+static MotorMixerBase motorMixer(4, debug);
+static FlightController flightController(1, ahrs, motorMixer, debug);
 
 static const RadioController::rates_t radioControllerRates {
     .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
@@ -23,11 +56,10 @@ void setUp() {
 void tearDown() {
 }
 
-// NOLINTBEGIN(misc-const-correctness)
 void test_radio_controller()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, radioControllerRates);
+    static RadioController radioController(receiver, flightController, radioControllerRates);
 
     RadioController::rates_t rates = radioController.getRates();
 
@@ -69,7 +101,7 @@ void test_radio_controller()
 void test_radio_controller_passthrough()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, radioControllerRates);
+    static RadioController radioController(receiver, flightController, radioControllerRates);
 
     radioController.setRatesToPassThrough();
 
@@ -88,7 +120,7 @@ void test_radio_controller_passthrough()
 void test_radio_controller_defaults()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, radioControllerRates);
+    static RadioController radioController(receiver, flightController, radioControllerRates);
 
     const RadioController::rates_t rates = radioController.getRates();
 
@@ -125,7 +157,7 @@ void test_radio_controller_defaults()
 void test_radio_controller_constrain()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, radioControllerRates);
+    static RadioController radioController(receiver, flightController, radioControllerRates);
 
     RadioController::rates_t rates = radioController.getRates(); // NOLINT(misc-const-correctness)
     rates.rcRates = {200, 200, 200};
@@ -146,7 +178,7 @@ void test_radio_controller_constrain()
 void test_radio_controller_throttle()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, radioControllerRates);
+    static RadioController radioController(receiver, flightController, radioControllerRates);
 
     float throttle = radioController.mapThrottle(0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, throttle);
@@ -190,7 +222,7 @@ void test_radio_controller_throttle()
     throttle = radioController.mapThrottle(1.0F);
     TEST_ASSERT_EQUAL_FLOAT(1.0F, throttle);
 }
-// NOLINTEND(misc-const-correctness)
+// NOLINTEND(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
