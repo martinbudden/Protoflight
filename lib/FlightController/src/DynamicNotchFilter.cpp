@@ -105,7 +105,7 @@ so each filter has its frequency set every 12 calls of this function
 At 8kHz AHRS loop rate this gives 8kHz/12 = 666Hz, that is frequency update every 1.5ms.
 At 4kHz AHRS loop rate this gives 4kHz/12 = 333Hz, that is frequency update every 3ms.
 */
-void DynamicNotchFilter::update() // NOLINT(readability-function-cognitive-complexity)
+void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function-cognitive-complexity)
 {
     const uint32_t startTimeUs = (_debug.getMode() == DEBUG_FFT_TIME) ? timeUs() : 0;
 
@@ -114,7 +114,7 @@ void DynamicNotchFilter::update() // NOLINT(readability-function-cognitive-compl
     // run an iteration of the state machine
     switch (_state.step) {
     case STEP_WINDOW:
-        _sdft[_state.axis].windowSquared(&_sdftData[0]); // calculate power spectral density and put in _sdftData[]
+        _sdft[_state.axis].calculateWindowSquared(&_sdftData[0]); // calculate power spectral density and put it in _sdftData[]
         // Get total vibrational power in dyn notch range for noise floor estimate in STEP_CALC_FREQUENCIES
         _noiseThreshold = 0.0F;
         for (int bin = static_cast<int>(_startBin); bin <= static_cast<int>(_endBin); ++bin) {

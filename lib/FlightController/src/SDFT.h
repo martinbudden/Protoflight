@@ -17,10 +17,10 @@ public:
     SDFT();
     void init(size_t startBin, size_t endBin, size_t batchCount);
     void push(float sample, size_t batchIndex);
-    void windowSquared(float* output);
-    void window(float* output);
-    void magnitudeSquared(float* output);
-    void magnitude(float* output);
+    void calculateWindowSquared(float* output);
+    void calculateWindow(float* output);
+    void calculateMagnitudeSquared(float* output);
+    void calculateMagnitude(float* output);
     static inline size_t clip(size_t value, size_t min, size_t max) { return value < min ? min : value > max ? max : value; }
 // for testing
 #if defined(FRAMEWORK_TEST)
@@ -110,7 +110,7 @@ Get squared magnitude of frequency spectrum with Hanning window applied
 Hanning window in frequency domain: X[k] = -0.25*X[k-1] + 0.5*X[k] - 0.25*X[k+1]
 */
 template<size_t N>
-void SDFT<N>::windowSquared(float* output)
+void SDFT<N>::calculateWindowSquared(float* output)
 {
     // Apply window at the lower edge of active range
     complex_float_t value = _data[_startBin];
@@ -122,7 +122,7 @@ void SDFT<N>::windowSquared(float* output)
     output[_startBin] = std::norm(value);
 
     for (size_t ii = _startBin + 1; ii < _endBin; ++ii) {
-        value = _data[ii] - 0.5F*(_data[ii - 1] + _data[ii + 1]); // multiply by 2 to save one multiplication
+        value = _data[ii] - 0.5F*(_data[ii - 1] + _data[ii + 1]);
         output[ii] = std::norm(value);
     }
 
@@ -140,16 +140,16 @@ void SDFT<N>::windowSquared(float* output)
 Get magnitude of frequency spectrum with Hanning window applied
 */
 template<size_t N>
-void SDFT<N>::window(float* output)
+void SDFT<N>::calculateWindow(float* output)
 {
-    windowSquared(output);
+    calculateWindowSquared(output);
     for (size_t ii = _startBin; ii <= _endBin; ++ii) {
-        _data[ii] = sqrtf(_data[ii]);
+        output[ii] = sqrtf(output[ii]);
     }
 }
 
 template<size_t N>
-void SDFT<N>::magnitudeSquared(float* output)
+void SDFT<N>::calculateMagnitudeSquared(float* output)
 {
     for (size_t ii = _startBin; ii <= _endBin; ++ii) {
         output[ii] = std::norm(_data[ii]);
@@ -157,7 +157,7 @@ void SDFT<N>::magnitudeSquared(float* output)
 }
 
 template<size_t N>
-void SDFT<N>::magnitude(float* output)
+void SDFT<N>::calculateMagnitude(float* output)
 {
     for (size_t ii = _startBin; ii <= _endBin; ++ii) {
         output[ii] = std::abs(_data[ii]);

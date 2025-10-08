@@ -65,7 +65,7 @@ public:
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
     void push(const xyz_t& sample);
-    void update();
+    void updateNotchFrequencies();
     void filter(xyz_t& value);
     bool isActive() const { return _notchCount > 0; }
     float getMaxCenterFrequency() const { return _maxCenterFrequencyHz; }

@@ -109,7 +109,7 @@ void test_dynamic_notch_filter()
     std::copy_n(testSdftData.begin(), testSdftData.size(), sdftData.begin());
 
     dynamicNotchFilter.setState({DynamicNotchFilter::STEP_DETECT_PEAKS, DynamicNotchFilter::X});
-    dynamicNotchFilter.update();
+    dynamicNotchFilter.updateNotchFrequencies();
     DynamicNotchFilter::state_t state = dynamicNotchFilter.getState();
     TEST_ASSERT_EQUAL(DynamicNotchFilter::STEP_CALCULATE_FREQUENCIES, state.step);
     TEST_ASSERT_EQUAL(DynamicNotchFilter::X, state.axis);
@@ -128,7 +128,7 @@ void test_dynamic_notch_filter()
     TEST_ASSERT_EQUAL_FLOAT(0.0F, peaks[4].value);
     TEST_ASSERT_EQUAL(0, peaks[4].bin);
 
-    dynamicNotchFilter.update();
+    dynamicNotchFilter.updateNotchFrequencies();
     state = dynamicNotchFilter.getState();
     TEST_ASSERT_EQUAL(DynamicNotchFilter::STEP_UPDATE_FILTERS, state.step);
     TEST_ASSERT_EQUAL(DynamicNotchFilter::X, state.axis);

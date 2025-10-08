@@ -97,7 +97,7 @@ void IMU_Filters::setFilters()
 {
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     if (_dynamicNotchFilter.isActive()) {
-        _dynamicNotchFilter.update(); // update performs the Fourier transform
+        _dynamicNotchFilter.updateNotchFrequencies(); // update performs the Fourier transform
     }
 #endif
 }
