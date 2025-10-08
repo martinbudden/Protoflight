@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MSP_Base.h"
 #include "MSP_ProtoFlightBox.h"
+#include <MSP_Base.h>
 
 
 class AHRS;
@@ -20,7 +20,7 @@ public:
     enum { SENSOR_NOT_AVAILABLE = 0xFF };
 public:
     virtual ~MSP_ProtoFlight() = default;
-    MSP_ProtoFlight(NonVolatileStorage& nonVolatileStorage, Features& features, AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, Debug& debug);
+    MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nonVolatileStorage, Features& features);
 
     virtual void rebootFn(serialPort_t* serialPort) override;
 
@@ -32,13 +32,12 @@ public:
     result_e processInCommand(int16_t cmdMSP, StreamBuf& src) { return processInCommand(cmdMSP, src, 0, nullptr); }
 private:
     MSP_ProtoFlightBox _mspBox;
-    NonVolatileStorage& _nonVolatileStorage;
-    Features& _features;
     AHRS& _ahrs;
     FlightController& _flightController;
     RadioController& _radioController;
-    ReceiverBase& _receiver;
     Debug& _debug;
+    NonVolatileStorage& _nonVolatileStorage;
+    Features& _features;
     uint8_t _pidProfileIndex {0};
     uint8_t _ratesProfileIndex {0};
 };

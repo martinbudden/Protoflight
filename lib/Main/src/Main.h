@@ -29,6 +29,7 @@ class IMU_Base;
 class IMU_Filters;
 class IMU_FiltersBase;
 class MSP_Task;
+class MSP_SerialBase;
 class NonVolatileStorage;
 class RadioController;
 class ReceiverBase;
@@ -122,6 +123,7 @@ private:
     static RadioController& createRadioController(FlightController& flightController, const NonVolatileStorage& nonVolatileStorage, uint8_t currentRateProfile);
     BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nonVolatileStorage);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, IMU_Filters& imuFilters, Debug& debug);
+    static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nvs);
 
     void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
     static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);

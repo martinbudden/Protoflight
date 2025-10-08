@@ -71,14 +71,13 @@ static const char* const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; //
 static const char* const TARGET_BOARD_IDENTIFIER = "A405";
 static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 
-MSP_ProtoFlight::MSP_ProtoFlight(NonVolatileStorage& nonVolatileStorage, Features& features, AHRS& ahrs, FlightController& flightController, RadioController& radioController, ReceiverBase& receiver, Debug& debug) :
-    _nonVolatileStorage(nonVolatileStorage),
-    _features(features),
+MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nonVolatileStorage, Features& features) :
     _ahrs(ahrs),
     _flightController(flightController),
     _radioController(radioController),
-    _receiver(receiver),
-    _debug(debug)
+    _debug(debug),
+    _nonVolatileStorage(nonVolatileStorage),
+    _features(features)
 {
     //_mspBox.init(features, ahrs, flightController);
     enum { MSP_OVERRIDE_OFF = false, AIRMODE_OFF = false, ANTI_GRAVITY_OFF = false };
@@ -205,13 +204,14 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
 
     case MSP_RC: {
-        const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+        const ReceiverBase& receiver = _radioController.getReceiver();
+        const ReceiverBase::controls_pwm_t controls = receiver.getControlsPWM();
         dst.writeU16(controls.throttle);
         dst.writeU16(controls.roll);
         dst.writeU16(controls.pitch);
         dst.writeU16(controls.yaw);
-        for (size_t ii = 0; ii < _receiver.getAuxiliaryChannelCount(); ++ii) {
-            dst.writeU16(_receiver.getAuxiliaryChannel(ii));
+        for (size_t ii = 0; ii < receiver.getAuxiliaryChannelCount(); ++ii) {
+            dst.writeU16(receiver.getAuxiliaryChannel(ii));
         }
         break;
     }

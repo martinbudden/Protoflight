@@ -10,14 +10,12 @@
 #include <ButtonsM5.h>
 #endif
 #include <Debug.h>
-#include <Features.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #if defined(M5_UNIFIED)
 #include <M5Unified.h>
 #endif
 #include <MSP_ProtoFlight.h>
-#include <MSP_Serial.h>
 #include <MSP_Task.h>
 #include <NonVolatileStorage.h>
 #include <RadioController.h>
@@ -97,8 +95,7 @@ void Main::setup()
     FlightController& flightController = createFlightController(ahrs, imuFilters, debug, nvs, currentRateProfile, mixerType);
 
     RadioController& radioController = createRadioController(flightController, nvs, currentRateProfile);
-    ReceiverBase& receiver = const_cast<ReceiverBase&>(radioController.getReceiver()); // NOLINT(cppcoreguidelines-pro-type-const-cast,hicpp-use-auto,modernize-use-auto)
-    (void)receiver;
+
 #if defined(USE_BLACKBOX)
     Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, imuFilters, debug);
 #endif
@@ -125,11 +122,11 @@ void Main::setup()
 
 #if defined(M5_ATOM)
     // The Atom has no BtnB, so it always broadcasts address for binding on startup.
-    receiver.broadcastMyEUI();
+    radioController.getReceiver().broadcastMyEUI();
 #else
     // Holding BtnB down while switching on initiates binding.
     if (M5.BtnB.wasPressed()) {
-        receiver.broadcastMyEUI();
+        radioController.getReceiver().broadcastMyEUI();
     }
 #endif
 
@@ -159,10 +156,7 @@ void Main::setup()
     printTaskInfo(taskInfo);
 #if defined(USE_MSP)
     // Statically allocate the MSP and associated objects
-    static Features features;
-    static MSP_ProtoFlight mspProtoFlight(nvs, features, ahrs, flightController, radioController, receiver, debug);
-    static MSP_Stream mspStream(mspProtoFlight);
-    static MSP_Serial mspSerial(mspStream);
+    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, debug, nvs);
     _tasks.mspTask = MSP_Task::createTask(taskInfo, mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = MSP_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
@@ -175,7 +169,7 @@ void Main::setup()
 #endif
 
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, &mainTask, nvs);
+    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, const_cast<ReceiverBase&>(radioController.getReceiver()), &mainTask, nvs);
 
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = BACKCHANNEL_TASK_INTERVAL_MICROSECONDS;

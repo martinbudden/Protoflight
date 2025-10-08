@@ -60,7 +60,7 @@ void test_msp_set_failsafe_config()
     static FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
-    static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
     static MSP_Stream mspStream(msp);
 
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
@@ -131,7 +131,7 @@ void test_msp_pid_in()
     static FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
-    static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -176,7 +176,7 @@ void test_msp_features()
     static FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
-    static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -203,7 +203,7 @@ void test_msp_raw_imu()
     static FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
-    static MSP_ProtoFlight msp(nvs, features, ahrs, fc, radioController, receiver, debug);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
     static MSP_Stream mspStream(msp);
     //static const MSP_Serial mspSerial(mspStream, msp);
 

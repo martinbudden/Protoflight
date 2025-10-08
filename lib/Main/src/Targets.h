@@ -70,7 +70,7 @@ Targets
     #define USE_BLACKBOX
     //#define USE_BLACKBOX_DEBUG
     //#define BLACKBOX_IS_EVENT_DRIVEN
-    //#define USE_MSP
+    #define USE_MSP
 
     #define USE_SCREEN
     #define USE_BUTTONS
