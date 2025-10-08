@@ -23,7 +23,7 @@ void DynamicIdleController::setConfig(const config_t& config)
     const float deltaT = static_cast<float>(_taskIntervalMicroseconds) * 0.000001F;
 
     _PID.setI(static_cast<float>(config.dyn_idle_i_gain) * 0.01F * deltaT);
-    // limit I-term to range [0, _MaxIncrease]
+    // limit I-term to range [0, _maxIncrease]
     _PID.setIntegralMax(_maxIncrease);
     _PID.setIntegralMin(0.0F);
 
