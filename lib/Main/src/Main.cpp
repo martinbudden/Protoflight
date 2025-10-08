@@ -4,10 +4,7 @@
 #include <AHRS.h>
 #include <AHRS_Task.h>
 #include <BackchannelTask.h>
-#include <BlackboxCallbacks.h>
-#include <BlackboxMessageQueueAHRS.h>
 #include <BlackboxProtoFlight.h>
-#include <BlackboxSerialDeviceSDCard.h>
 #include <BlackboxTask.h>
 #if defined(M5_UNIFIED)
 #include <ButtonsM5.h>
@@ -102,27 +99,8 @@ void Main::setup()
     RadioController& radioController = createRadioController(flightController, nvs, currentRateProfile);
     ReceiverBase& receiver = const_cast<ReceiverBase&>(radioController.getReceiver()); // NOLINT(cppcoreguidelines-pro-type-const-cast,hicpp-use-auto,modernize-use-auto)
     (void)receiver;
-    // Statically allocate the Blackbox and associated objects
-#if defined(USE_BLACKBOX) || defined(USE_BLACKBOX_DEBUG)
-    static BlackboxMessageQueue         blackboxMessageQueue;
-    static BlackboxCallbacks            blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
-    static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
-    static BlackboxProtoFlight          blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
-
-    static BlackboxMessageQueueAHRS     blackboxMessageQueueAHRS(blackboxMessageQueue);
-    ahrs.setMessageQueue(&blackboxMessageQueueAHRS);
-
-    flightController.setBlackbox(blackbox);
-    blackbox.init({
-        .sample_rate = Blackbox::RATE_ONE,
-        .device = Blackbox::DEVICE_SDCARD,
-        //.device = Blackbox::DEVICE_NONE,
-        .mode = Blackbox::MODE_NORMAL // logging starts on arming, file is saved when disarmed
-        //.mode = Blackbox::MODE_ALWAYS_ON
-    });
-#if defined(USE_BLACKBOX_DEBUG)
-    testBlackbox(blackbox, ahrs, receiver, debug);
-#endif
+#if defined(USE_BLACKBOX)
+    Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, imuFilters, debug);
 #endif
 
 #if defined(M5_UNIFIED)
@@ -190,7 +168,6 @@ void Main::setup()
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BLACKBOX)
-    blackboxCallbacks.setUseMessageQueue(true);
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = BLACKBOX_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);

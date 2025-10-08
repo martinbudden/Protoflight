@@ -121,6 +121,7 @@ private:
     static FlightController& createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, uint8_t currentPID_Profile, uint8_t mixerType);
     static RadioController& createRadioController(FlightController& flightController, const NonVolatileStorage& nonVolatileStorage, uint8_t currentRateProfile);
     BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nonVolatileStorage);
+    static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, IMU_Filters& imuFilters, Debug& debug);
 
     void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
     static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);
