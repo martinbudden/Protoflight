@@ -22,9 +22,6 @@
 #include <MSP_ProtoFlight.h>
 #include <MSP_Serial.h>
 #include <MSP_Task.h>
-#include <MotorMixerQuadX_DShot.h>
-#include <MotorMixerQuadX_DShotBitbang.h>
-#include <MotorMixerQuadX_PWM.h>
 #include <NonVolatileStorage.h>
 #include <RadioController.h>
 #include <ReceiverTask.h>
@@ -63,7 +60,6 @@ void Main::setup()
     nvs.setCurrentPidProfileIndex(currentPID_Profile);
 
     const MotorMixerBase::type_e mixerType = MotorMixerBase::QUAD_X;
-    const size_t motorCount = MotorMixerBase::motorCount(mixerType);
 
     // create the IMU and get its sample rate, returned in imuSampleRateHz
 #if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
@@ -90,7 +86,7 @@ void Main::setup()
 
 
     // statically allocate the IMU_Filters
-    static IMU_Filters imuFilters(motorCount, debug, AHRS_taskIntervalMicroseconds);
+    static IMU_Filters imuFilters(MotorMixerBase::motorCount(mixerType), debug, AHRS_taskIntervalMicroseconds);
     imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
@@ -99,38 +95,13 @@ void Main::setup()
     imuFilters.setRPM_FiltersConfig(nvs.loadRPM_FiltersConfig());
 #endif
 
-    // Statically allocate the AHRS
     AHRS& ahrs = createAHRS(AHRS_taskIntervalMicroseconds, imuSensor, imuFilters);
 
-
-    // Statically allocate the MotorMixer object as defined by the build flags.
-#if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
-    static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
-#elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
-    const uint32_t motorTaskIntervalMicroseconds = ahrs.getTaskIntervalMicroseconds() / FC_TASK_DENOMINATOR;
-#if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(motorTaskIntervalMicroseconds, debug, MotorMixerQuadBase::MOTOR_PINS, *imuFilters.getRPM_Filters());
-#else
-    static MotorMixerQuadX_DShot motorMixer(motorTaskIntervalMicroseconds, debug, MotorMixerQuadBase::MOTOR_PINS, *imuFilters.getRPM_Filters());
-#endif
-#if defined(USE_DYNAMIC_IDLE)
-    motorMixer.setMotorOutputMin(0.0F);
-    motorMixer.setDynamicIdlerControllerConfig(nvs.loadDynamicIdleControllerConfig(currentPID_Profile));
-#else
-    motorMixer.setMotorOutputMin(0.055F); // 5.5%
-#endif
-#else
-    static_assert(false && "MotorMixer not specified");
-#endif // USE_MOTOR_MIXER
-
-    // Statically allocate the flightController.
-    static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
-    ahrs.setVehicleController(&flightController);
-    loadPID_ProfileFromNonVolatileStorage(nvs, flightController, currentPID_Profile);
+    FlightController& flightController = createFlightController(ahrs, imuFilters, debug, nvs, currentRateProfile, mixerType);
 
     RadioController& radioController = createRadioController(flightController, nvs, currentRateProfile);
     ReceiverBase& receiver = const_cast<ReceiverBase&>(radioController.getReceiver()); // NOLINT(cppcoreguidelines-pro-type-const-cast,hicpp-use-auto,modernize-use-auto)
-
+    (void)receiver;
     // Statically allocate the Blackbox and associated objects
 #if defined(USE_BLACKBOX) || defined(USE_BLACKBOX_DEBUG)
     static BlackboxMessageQueue         blackboxMessageQueue;
@@ -204,7 +175,8 @@ void Main::setup()
     taskInfo.taskIntervalMicroseconds = 0;
     printTaskInfo(taskInfo);
 
-    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, receiver, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
+    //!!TODO: remove const_cast below
+    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, const_cast<ReceiverBase&>(radioController.getReceiver()), radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = RECEIVER_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
 #if defined(USE_MSP)

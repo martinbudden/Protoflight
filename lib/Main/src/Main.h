@@ -26,6 +26,7 @@ class ButtonsBase;
 class Debug;
 class FlightController;
 class IMU_Base;
+class IMU_Filters;
 class IMU_FiltersBase;
 class MSP_Task;
 class NonVolatileStorage;
@@ -117,6 +118,7 @@ public:
 private:
     static IMU_Base& createIMU(int32_t& imuSampleRateHz);
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
+    static FlightController& createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, uint8_t currentPID_Profile, uint8_t mixerType);
     static RadioController& createRadioController(FlightController& flightController, const NonVolatileStorage& nonVolatileStorage, uint8_t currentRateProfile);
     BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nonVolatileStorage);
 
