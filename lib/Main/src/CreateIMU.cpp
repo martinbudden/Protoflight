@@ -11,10 +11,11 @@
 #include <M5Unified.h>
 #endif
 
+
 /*!
-Create the AHRS using the IMU specified by the build flags.
+Create the IMU using the specified build flags.
 Set the IMU target output data rate to AHRS_taskIntervalMicroseconds and then
-AHRS_taskIntervalMicroseconds to the actual data rate returned by the IMU.
+set AHRS_taskIntervalMicroseconds to the actual data rate returned by the IMU.
 The actual data rate may be less than the target data rate if the IMU does not support the target data rate.
 */
 IMU_Base& Main::createIMU(int32_t& imuSampleRateHz)

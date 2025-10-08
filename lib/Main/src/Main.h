@@ -121,7 +121,7 @@ private:
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static FlightController& createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, uint8_t currentPID_Profile, uint8_t mixerType);
     static RadioController& createRadioController(FlightController& flightController, const NonVolatileStorage& nonVolatileStorage, uint8_t currentRateProfile);
-    BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nonVolatileStorage);
+    static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nonVolatileStorage);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, IMU_Filters& imuFilters, Debug& debug);
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nvs);
 
