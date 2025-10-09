@@ -8,7 +8,10 @@
 #include <RadioController.h>
 
 
-#if defined(USE_BLACKBOX) || defined(USE_BLACKBOX_DEBUG)
+#if defined(USE_BLACKBOX)
+/*!
+Statically allocate the Blackbox and associated objects.
+*/
 Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, IMU_Filters& imuFilters, Debug& debug)
 {
     ReceiverBase& receiver = const_cast<ReceiverBase&>(radioController.getReceiver()); // NOLINT(cppcoreguidelines-pro-type-const-cast,hicpp-use-auto,modernize-use-auto)

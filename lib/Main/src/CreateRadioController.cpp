@@ -11,7 +11,7 @@
 #endif
 
 
-RadioController& Main::createRadioController(FlightController& flightController, const NonVolatileStorage& nonVolatileStorage, uint8_t currentRateProfile)
+RadioController& Main::createRadioController(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t currentRateProfile)
 {
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
     // Set WiFi to station mode
@@ -34,7 +34,7 @@ RadioController& Main::createRadioController(FlightController& flightController,
     static ReceiverNull receiver;
 #endif
 
-    static RadioController radioController(receiver, flightController, nonVolatileStorage.loadRadioControllerRates(currentRateProfile));
+    static RadioController radioController(receiver, flightController, nvs.loadRadioControllerRates(currentRateProfile));
 
     return radioController;
 }

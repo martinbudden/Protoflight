@@ -20,7 +20,7 @@ public:
     enum { SENSOR_NOT_AVAILABLE = 0xFF };
 public:
     virtual ~MSP_ProtoFlight() = default;
-    MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nonVolatileStorage, Features& features);
+    MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nvs, Features& features);
 
     virtual void rebootFn(serialPort_t* serialPort) override;
 

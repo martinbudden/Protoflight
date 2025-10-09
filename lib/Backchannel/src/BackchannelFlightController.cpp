@@ -18,7 +18,7 @@ BackchannelFlightController::BackchannelFlightController(
         AHRS& ahrs,
         const ReceiverBase& receiver,
         const TaskBase* mainTask,
-        NonVolatileStorage& nonVolatileStorage
+        NonVolatileStorage& nvs
     ) :
     BackchannelStabilizedVehicle(
         backchannelTransceiver,
@@ -30,7 +30,7 @@ BackchannelFlightController::BackchannelFlightController(
         mainTask
     ),
     _flightController(flightController),
-    _nonVolatileStorage(nonVolatileStorage)
+    _nonVolatileStorage(nvs)
 {
 #if !defined(ESP_NOW_MAX_DATA_LEN)
 #define ESP_NOW_MAX_DATA_LEN (250)

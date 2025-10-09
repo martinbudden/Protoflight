@@ -5,6 +5,9 @@
 #include <MSP_Serial.h>
 
 
+/*!
+Statically allocate the MSP and associated objects.
+*/
 MSP_SerialBase& Main::createMSP(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nvs)
 {
     static Features features;

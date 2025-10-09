@@ -70,8 +70,8 @@ enum {
     RECEIVER_TASK_PRIORITY = FC_TASK_PRIORITY,
     MOTORS_TASK_PRIORITY = 4,
     BACKCHANNEL_TASK_PRIORITY = 3,
+    BLACKBOX_TASK_PRIORITY = 3,
     MSP_TASK_PRIORITY = 2,
-    BLACKBOX_TASK_PRIORITY = 3
 };
 
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
@@ -113,6 +113,7 @@ class Main {
 public:
     enum {PA=0, PB=1, PC=2, PD=3, PE=4, PF=5, PG=6, PH=7}; // Note: defining PI=8 will cause conflict with Arduino's #define of PI (3.14..)
     enum {P0=0, P1=1, P2=2, P3=3, P4=4, P5=5, P6=6, P7=7};
+    enum calibration_type_e { CALIBRATE_ACC_AND_GYRO, CALIBRATE_GYRO_ONLY };
 public:
     void setup();
     void loop();
@@ -120,13 +121,17 @@ private:
     static IMU_Base& createIMU(int32_t& imuSampleRateHz);
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static FlightController& createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, uint8_t currentPID_Profile, uint8_t mixerType);
-    static RadioController& createRadioController(FlightController& flightController, const NonVolatileStorage& nonVolatileStorage, uint8_t currentRateProfile);
-    static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nonVolatileStorage);
+    static RadioController& createRadioController(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t currentRateProfile);
+    static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, IMU_Filters& imuFilters, Debug& debug);
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nvs);
 
-    void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
-    static void checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs);
+    static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
+
+    static void checkIMU_Calibration(NonVolatileStorage& nvs, AHRS& ahrs);
+    static void runIMU_Calibration(NonVolatileStorage& nvs, AHRS& ahrs, calibration_type_e calibrationType);
+    static void calibrateIMU(NonVolatileStorage& nvs, AHRS& ahrs, calibration_type_e calibrationType);
+
     static void loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController, uint8_t pidProfile);
     static void print(const char* buf);
     static void reportMainTask();

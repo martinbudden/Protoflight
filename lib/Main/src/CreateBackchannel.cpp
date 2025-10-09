@@ -8,7 +8,7 @@
 
 
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-BackchannelBase& Main::createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nonVolatileStorage)
+BackchannelBase& Main::createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nvs)
 {
     // statically allocate an MSP object
     // static MSP_ProtoFlight mspProtoFlightBackchannel(features, ahrs, flightController, radioController, receiver);
@@ -26,7 +26,7 @@ BackchannelBase& Main::createBackchannel(FlightController& flightController, AHR
         ahrs,
         receiver,
         mainTask,
-        nonVolatileStorage
+        nvs
     );
 
     return backchannel;

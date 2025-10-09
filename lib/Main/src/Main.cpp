@@ -96,16 +96,12 @@ void Main::setup()
 
     RadioController& radioController = createRadioController(flightController, nvs, currentRateProfile);
 
-#if defined(USE_BLACKBOX)
-    Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, imuFilters, debug);
-#endif
-
 #if defined(M5_UNIFIED)
     // Holding BtnA down while switching on enters calibration mode.
-    //if (M5.BtnA.isPressed()) {
-    //    calibrateGyro(*ahrs, nvs, CALIBRATE_ACC_AND_GYRO);
-    //}
-    //!!checkGyroCalibration(nvs, ahrs);
+    if (M5.BtnA.isPressed()) {
+        calibrateIMU(nvs, ahrs, CALIBRATE_ACC_AND_GYRO);
+    }
+    checkIMU_Calibration(nvs, ahrs);
     // Holding BtnC down while switching on resets the nvs.
     if (M5.BtnC.isPressed()) {
         nvs.clear();
@@ -150,18 +146,19 @@ void Main::setup()
     taskInfo.taskIntervalMicroseconds = 0;
     printTaskInfo(taskInfo);
 
-    //!!TODO: remove const_cast below
-    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, const_cast<ReceiverBase&>(radioController.getReceiver()), radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
+    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = RECEIVER_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
 #if defined(USE_MSP)
-    // Statically allocate the MSP and associated objects
     MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, debug, nvs);
+
     _tasks.mspTask = MSP_Task::createTask(taskInfo, mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = MSP_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BLACKBOX)
+    Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, imuFilters, debug);
+
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = BLACKBOX_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
@@ -169,7 +166,7 @@ void Main::setup()
 #endif
 
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, const_cast<ReceiverBase&>(radioController.getReceiver()), &mainTask, nvs);
+    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, radioController.getReceiver(), &mainTask, nvs);
 
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = BACKCHANNEL_TASK_INTERVAL_MICROSECONDS;
@@ -266,30 +263,6 @@ void Main::print(const char* buf)
 #else
         Serial.print(&buf[0]);
 #endif
-}
-
-void Main::checkGyroCalibration(NonVolatileStorage& nvs, AHRS& ahrs) // cppcheck-suppress constParameterReference
-{
-    // Set the gyro offsets from non-volatile storage.
-    IMU_Base::xyz_int32_t offset {};
-    if (nvs.loadGyroOffset(offset.x, offset.y, offset.z)) {
-        ahrs.setGyroOffset(offset);
-#if !defined(FRAMEWORK_STM32_CUBE)
-        std::array<char, 128> buf;
-        sprintf(&buf[0], "**** AHRS gyroOffsets loaded from NVS: gx:%5d, gy:%5d, gz:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
-        print(&buf[0]);
-#endif
-        if (nvs.loadAccOffset(offset.x, offset.y, offset.z)) {
-            ahrs.setAccOffset(offset);
-#if !defined(FRAMEWORK_STM32_CUBE)
-            sprintf(&buf[0], "**** AHRS accOffsets loaded from NVS: ax:%5d, ay:%5d, az:%5d\r\n", static_cast<int>(offset.x), static_cast<int>(offset.y), static_cast<int>(offset.z));
-            print(&buf[0]);
-#endif
-        }
-    } else {
-        // when calibrateGyro called automatically on startup, just calibrate the gyroscope.
-        //calibrateGyro(ahrs, *nvs, CALIBRATE_JUST_GYRO);
-    }
 }
 
 /*!

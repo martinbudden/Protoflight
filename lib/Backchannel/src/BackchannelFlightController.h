@@ -18,7 +18,7 @@ public:
         AHRS& ahrs,
         const ReceiverBase& receiver,
         const TaskBase* mainTask,
-        NonVolatileStorage& nonVolatileStorage
+        NonVolatileStorage& nvs
     );
 public:
     virtual bool sendPacket(uint8_t subCommand) override;
