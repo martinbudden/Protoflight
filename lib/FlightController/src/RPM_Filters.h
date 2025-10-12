@@ -9,7 +9,8 @@
 #include <pico/critical_section.h>
 #include <pico/mutex.h>
 
-#elif defined(FRAMEWORK_USE_FREERTOS)
+//#elif defined(FRAMEWORK_USE_FREERTOS)
+#elif defined(FRAMEWORK_USE_FREERTOS) && (defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32))
 
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
 #include <freertos/FreeRTOS.h>
@@ -101,7 +102,7 @@ private:
     mutable mutex_t _mutex {};
     inline void LOCK_FILTERS() const { mutex_enter_blocking(&_mutex); }
     inline void UNLOCK_FILTERS() const { mutex_exit(&_mutex); }
-#elif defined(FRAMEWORK_USE_FREERTOS)
+#elif defined(FRAMEWORK_USE_FREERTOS) && (defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32))
     // vTaskSuspendAll suspends the scheduler. This prevents a context switch from occurring but leaves interrupts enabled.
     inline void LOCK_FILTERS() const { vTaskSuspendAll(); }
     inline void UNLOCK_FILTERS() const { xTaskResumeAll(); }
