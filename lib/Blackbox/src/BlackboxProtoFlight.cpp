@@ -54,8 +54,11 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
         const char* time;
         const char* version;
     };
-    //const firmware_t firmware = {.date="2025.Jun.28",.time="00:00:00",.version="0.0.1"};
+#if defined(FIRMWARE)
     const firmware_t firmware = FIRMWARE;
+#else
+    const firmware_t firmware = {.date="2025.Jun.28",.time="00:00:00",.version="0.0.1"};
+#endif
 
     switch (_xmitState.headerIndex) {
 // NOLINTBEGIN(cppcoreguidelines-pro-type-vararg,hicpp-vararg)

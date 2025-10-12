@@ -37,6 +37,17 @@ int main()
 
 #elif defined(FRAMEWORK_TEST)
 
+int main(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    static Main mainTask;
+    mainTask.setup();
+
+    return 0;
+}
+
 #else // defaults to FRAMEWORK_ARDUINO
 
 #include <Arduino.h>

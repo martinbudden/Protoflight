@@ -4,6 +4,7 @@
 #include <IMU_BNO085.h>
 #include <IMU_ICM426xx.h>
 #include <IMU_LSM6DS3TR_C.h>
+#include <IMU_Null.h>
 #include <IMU_M5Unified.h>
 #include <IMU_MPU6000.h>
 #include <IMU_MPU6886.h>
@@ -64,6 +65,8 @@ IMU_Base& Main::createIMU(int32_t& imuSampleRateHz)
     static IMU_LSM6DS3TR_C imuSensor(IMU_AXIS_ORDER, BUS_I2C::IMU_I2C_PINS);
 #elif defined(USE_IMU_M5_UNIFIED)
     static IMU_M5_UNIFIED imuSensor(IMU_AXIS_ORDER);
+#elif defined(USE_IMU_NULL)
+    static IMU_Null imuSensor;
 #else
     static_assert(false);
 #endif

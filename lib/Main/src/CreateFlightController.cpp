@@ -29,6 +29,8 @@ FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilte
 #else
     motorMixer.setMotorOutputMin(0.055F); // 5.5%
 #endif
+#elif defined(USE_MOTOR_MIXER_NULL)
+    static MotorMixerBase motorMixer(MotorMixerBase::motorCount(static_cast<MotorMixerBase::type_e>(mixerType)), debug);
 #else
     static_assert(false && "MotorMixer not specified");
 #endif // USE_MOTOR_MIXER

@@ -41,8 +41,9 @@ void Main::setup()
     M5.Power.begin();
 #endif
 
-#if !defined(FRAMEWORK_RPI_PICO) && !defined(FRAMEWORK_ESPIDF) && !defined(FRAMEWORK_STM32_CUBE)
+#if !defined(FRAMEWORK_RPI_PICO) && !defined(FRAMEWORK_ESPIDF) && !defined(FRAMEWORK_STM32_CUBE) && !defined(FRAMEWORK_TEST)
     Serial.begin(115200);
+    Serial.println("****Starting up****");
 #endif
 
     // Statically allocate the debug object
@@ -75,6 +76,7 @@ void Main::setup()
     printf("\r\n**** AHRS_taskIntervalMicroseconds:%u, IMU sample rate:%dHz\r\n\r\n", static_cast<unsigned int>(AHRS_taskIntervalMicroseconds), static_cast<int>(imuSampleRateHz));
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_STM32_CUBE)
+#elif defined(FRAMEWORK_TEST)
 #else
     Serial.printf("\r\n**** AHRS_taskIntervalMicroseconds:%u, IMU sample rate:%dHz\r\n\r\n", static_cast<unsigned int>(AHRS_taskIntervalMicroseconds), static_cast<int>(imuSampleRateHz));
 #endif
@@ -95,6 +97,10 @@ void Main::setup()
     FlightController& flightController = createFlightController(ahrs, imuFilters, debug, nvs, currentRateProfile, mixerType);
 
     RadioController& radioController = createRadioController(flightController, nvs, currentRateProfile);
+
+#if defined(USE_BLACKBOX)
+    Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, imuFilters, debug);
+#endif
 
 #if defined(M5_UNIFIED)
     // Holding BtnA down while switching on enters calibration mode.
@@ -157,8 +163,6 @@ void Main::setup()
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BLACKBOX)
-    Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, imuFilters, debug);
-
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = BLACKBOX_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
@@ -196,6 +200,7 @@ void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, 
 #if defined(FRAMEWORK_RPI_PICO)
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_STM32_CUBE)
+#elif defined(FRAMEWORK_TEST)
 #else
         delay(1);
 #endif
@@ -207,6 +212,7 @@ void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, 
 #if defined(FRAMEWORK_RPI_PICO)
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_STM32_CUBE)
+#elif defined(FRAMEWORK_TEST)
 #else
     delay(5000);
 #endif
@@ -235,7 +241,15 @@ void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
         Serial.printf("task interval:%ums\r\n", static_cast<unsigned int>(taskInfo.taskIntervalMicroseconds / 1000));
     }
 #else
-    (void)taskInfo;
+    std::array<char, 128> buf;
+    sprintf(&buf[0], "**** %s, %.*s core:%d, priority:%d, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", static_cast<int>(taskInfo.core), static_cast<int>(taskInfo.priority));
+    printf(&buf[0]);
+    if (taskInfo.taskIntervalMicroseconds == 0) {
+        printf("interrupt driven\r\n");
+    } else {
+        sprintf(&buf[0], "task interval:%ums\r\n", static_cast<unsigned int>(taskInfo.taskIntervalMicroseconds / 1000));
+        printf(&buf[0]);
+    }
 #endif
 }
 
@@ -260,6 +274,8 @@ void Main::print(const char* buf)
         printf(&buf[0]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_STM32_CUBE)
+#elif defined(FRAMEWORK_TEST)
+        printf(&buf[0]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 #else
         Serial.print(&buf[0]);
 #endif
