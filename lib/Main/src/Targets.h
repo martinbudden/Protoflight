@@ -133,39 +133,59 @@ Targets
     //#define MOTOR_PINS          motor_pins_t{.m0=2,.m1=3,.m2=4,.m3=5}
 #endif
 
-#if defined(MADFLIGHT_FC2)
+#if defined(TARGET_MADFLIGHT_FC2)
     #define BOARD_IDENTIFIER    "Madflight_FC2"
+    // ESP32 S3
     // see https://madflight.com/Board-ESP-FC2/
     // pins: https://github.com/qqqlab/madflight/blob/main/src/brd/madflight_FC3.h
     // schematic: https://madflight.com/img/madflight-ESP-FC2.pdf
-
-    #define USE_ITERM_RELAX
-    #define USE_YAW_SPIN_RECOVERY
 
     #define FC_TASK_DENOMINATOR 1
     #define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
     //#define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
 
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define SPI_0_PINS                  spi_pins_t{.cs=17,.sck=16,.cipo=14,.copi=15,.irq=13}
+    #define UART_0_PINS                 rx_pins_t{.rx=7,.tx=21}
+    #define UART_1_PINS                 rx_pins_t{.rx=6,.tx=9}
+    #define I2C_0_PINS                  i2c_pins_t{.sda=11,.scl=10,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define I2C_1_PINS                  i2c_pins_t{.sda=33,.scl=39,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define SD_MMC_PINS                 mmc_pins_t{.dat=37,.clk=36,.cmd=35}
+    #define MOTOR_PINS                  motor_pins_t{.m0=1,.m1=2,.m2=3,.m3=4}
+    // other output pins are: 45, 42, 41, 5
+
+    #define IMU_AXIS_ORDER              IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_ICM426XX
-    #define IMU_SPI_INDEX       BUS_INDEX_0
-    #define IMU_SPI_PINS        spi_pins_t{.cs=0x17,.sck=16,.cipo=15,.copi=15,.irq=13}
+    #define IMU_SPI_INDEX               BUS_INDEX_0
+    #define IMU_SPI_PINS                SPI_0_PINS
 
-    #define USE_RECEIVER_SBUS
-    #define RECEIVER_UART_INDEX 0
-    #define RECEIVER_PINS       rx_pins_t{.rx=7,.tx=21} // UART0_RX and UART0_TX //!!TODO:need to cross check these with schematic
-
-    #define UART_1_PINS         rx_pins_t{.rx=6,.tx=9} // UART1_RX and UART1_TX, for GPS
-
-    #define I2C_0_PINS          i2c_pins_t{.sda=10,.scl=11,.irq=BUS_I2C::IRQ_NOT_SET} // for barometer, battery, and magnetometer
-    #define I2C_1_PINS          i2c_pins_t{.sda=33,.scl=39,.irq=BUS_I2C::IRQ_NOT_SET} // for GPS
+    // LIBRARY_RECEIVER_USE_ESPNOW is defined in platformio.ini
+    //#define USE_RECEIVER_SBUS
+    //#define RECEIVER_UART_INDEX         0
+    //#define RECEIVER_PINS               UART_0_PINS
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          motor_pins_t{.m0=1,.m1=2,.m2=3,.m3=4}
+
+    #define USE_BAROMETER_HP203B
+    #define BAROMETER_I2C_INDEX         0
+    #define BAROMETER_I2C_ADDRESS       0x76
+
+    #define USE_MAGNETOMETER_QMC6309
+    #define MAGNETOMETER_I2C_INDEX      0
+    #define MAGNETOMETER_I2C_ADDRESS    0x7C
+
+    #define USE_BATTERY_MONITOR_INA226
+    #define BATTERY_MONITOR_I2C_INDEX   0
+    #define BATTERY_MONITOR_I2C_ADDRESS 0x40
+
+    #define USE_GPS_NONE
+    #define GPS_UART_INDEX              1
+
+    #define NEO_PIXEL_PIN               12
 #endif
 
-#if defined(MADFLIGHT_FC3)
+#if defined(TARGET_MADFLIGHT_FC3)
     #define BOARD_IDENTIFIER    "Madflight_FC3"
+    // RPI PICO RP2350
     // see https://madflight.com/Board-FC3/
     // pins: https://github.com/qqqlab/madflight/blob/main/src/brd/madflight_FC3.h
     // schematic: https://madflight.com/img/madflight-FC3.pdf
@@ -178,24 +198,45 @@ Targets
     #define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
     //#define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
 
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define SPI_1_PINS                  spi_pins_t{.cs=29,.sck=30,.cipo=28,.copi=31,.irq=27}
+    #define UART_0_PINS                 rx_pins_t{.rx=1,.tx=0}
+    #define UART_1_PINS                 rx_pins_t{.rx=5,.tx=4}
+    #define I2C_0_PINS                  i2c_pins_t{.sda=32,.scl=33,.irq=BUS_I2C::IRQ_NOT_SET} // for barometer, battery, and magnetometer
+    #define I2C_1_PINS                  i2c_pins_t{.sda=2,.scl=3,.irq=BUS_I2C::IRQ_NOT_SET} // for GPS
+    #define SD_MMC_PINS                 mmc_pins_t{.dat=36,.clk=34,.cmd=35}
+    #define MOTOR_PINS                  motor_pins_t{.m0=6,.m1=7,.m2=8,.m3=9}
+
+    #define IMU_AXIS_ORDER              IMU_Base::XNEG_YNEG_ZPOS
     #define USE_IMU_ICM426XX
-    #define IMU_SPI_INDEX       BUS_INDEX_1
-    #define IMU_SPI_PINS        spi_pins_t{.cs=0x29,.sck=30,.cipo=28,.copi=31,.irq=0x27}
+    #define IMU_SPI_INDEX               BUS_INDEX_1
+    #define IMU_SPI_PINS                SPI_1_PINS
 
-    #define USE_RECEIVER_SBUS
-    #define RECEIVER_UART_INDEX 0
-    #define RECEIVER_PINS       rx_pins_t{.rx=1,.tx=0} // UART0_RX and UART0_TX
-
-    #define UART_1_PINS         rx_pins_t{.rx=4,.tx=5} // UART1_RX and UART1_TX, for GPS
-
-    #define I2C_0_PINS          i2c_pins_t{.sda=32,.scl=33,.irq=BUS_I2C::IRQ_NOT_SET} // for barometer, battery, and magnetometer
-    #define I2C_1_PINS          i2c_pins_t{.sda=2,.scl=3,.irq=BUS_I2C::IRQ_NOT_SET} // for GPS
+    //#define USE_RECEIVER_SBUS
+    #define RECEIVER_UART_INDEX         0
+    #define RECEIVER_PINS               UART_0_PINS
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     //#define USE_MOTOR_MIXER_QUAD_X_DSHOT
     //#define USE_DSHOT_RPI_PICO_PIO
-    #define MOTOR_PINS          motor_pins_t{.m0=6,.m1=7,.m2=8,.m3=9}
+   
+    //#define USE_BLACKBOX
+
+    #define USE_BAROMETER_BMP580
+    #define BAROMETER_I2C_INDEX         0
+    #define BAROMETER_I2C_ADDRESS       0x47
+
+    #define USE_MAGNETOMETER_QMC5883
+    #define MAGNETOMETER_I2C_INDEX      0
+    #define MAGNETOMETER_I2C_ADDRESS    0x2C
+
+    #define USE_BATTERY_MONITOR_INA226
+    #define BATTERY_MONITOR_I2C_INDEX   0
+    #define BATTERY_MONITOR_I2C_ADDRESS 0x40
+
+    #define USE_GPS_NONE
+    #define GPS_UART_INDEX              1
+
+    #define NEO_PIXEL_PIN               46
 #endif
 
 #if defined(TARGET_SEED_XIAO_NRF52840_SENSE)
@@ -299,6 +340,6 @@ Targets
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          stm32_motor_pins_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}}
 
-    #define USE_MSP
+    //#define USE_MSP
     // LED0 PB4, LED1 PB3
 #endif
