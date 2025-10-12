@@ -31,14 +31,13 @@ public:
     size_t getIndex() const { return _index; }
 #endif
 private:
-    static constexpr float SDFT_R = 0.9999F;  // damping factor for guaranteed SDFT stability (r < 1.0f)
-    float _rPowerN {};  // SDFT_R to the power of SAMPLE_COUNT
+    const float _rPowerN {};
     size_t _startBin {};
     size_t _endBin {};
     size_t _batchSize {};
     size_t _batchCountMinusOne {};
-    size_t _index {};// circular buffer index
-    std::array<float, N> _samples {}; // circular buffer of samples
+    size_t _index {}; //!< circular buffer index
+    std::array<float, N> _samples {}; //!< circular buffer of samples
     std::array<complex_float_t, BIN_COUNT> _data {};
     const std::array<complex_float_t, BIN_COUNT> _twiddles {};
 };
@@ -46,11 +45,12 @@ private:
 template<size_t N>
 SDFT<N>::SDFT()
 {
-    _rPowerN = powf(SDFT_R, SAMPLE_COUNT);
+    static constexpr float R = 0.9999F;  // damping factor for SDFT stability (R < 1.0F)
+    const_cast<float&>(_rPowerN) = powf(R, SAMPLE_COUNT);
     const float m = 2.0F*static_cast<float>(M_PI) / static_cast<float>(SAMPLE_COUNT);
     for (size_t ii = 0; ii < BIN_COUNT; ++ii) {
         const float phi = m*static_cast<float>(ii);
-        const_cast<complex_float_t&>(_twiddles[ii]) = complex_float_t(SDFT_R*cosf(phi), SDFT_R*sinf(phi));
+        const_cast<complex_float_t&>(_twiddles[ii]) = complex_float_t(R*cosf(phi), R*sinf(phi));
     }
 }
 
