@@ -57,6 +57,9 @@ public:
     uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
     void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) { _currentPidProfileIndex = currentPidProfileIndex; }
 
+    uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
+    void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex) { _currentRateProfileIndex = currentRateProfileIndex; }
+
     int32_t clear();
     int32_t remove(uint16_t key);
 
@@ -70,6 +73,9 @@ public:
 
     void loadMacAddress(uint8_t* macAddress) const;
     int32_t storeMacAddress(const uint8_t* macAddress);
+
+    MotorMixerBase::type_e loadMotorMixerType() const;
+    int32_t storeMotorMixerType(MotorMixerBase::type_e motorMixerType);
 
     uint8_t loadPidProfileIndex() const;
     int32_t storePidProfileIndex(uint8_t pidProfileIndex);
@@ -141,4 +147,5 @@ private:
     mutable Preferences _preferences {};
 #endif
     uint8_t _currentPidProfileIndex {0};
+    uint8_t _currentRateProfileIndex {0};
 };

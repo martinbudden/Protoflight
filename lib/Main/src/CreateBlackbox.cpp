@@ -5,7 +5,9 @@
 #include <BlackboxMessageQueueAHRS.h>
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
+#include <Debug.h>
 #include <RadioController.h>
+#include <TimeMicroseconds.h>
 
 
 #if defined(USE_BLACKBOX)
@@ -39,5 +41,46 @@ Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, R
     blackboxCallbacks.setUseMessageQueue(true);
 #endif
     return blackbox;
+}
+
+
+void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug)
+{
+    static uint32_t timeMicrosecondsPrevious = 0;
+
+    print("***StartLog\r\n");
+    blackbox.start(Blackbox::start_t{.debugMode = static_cast<uint16_t>(debug.getMode()), .motorCount = 4, .servoCount = 0});
+
+    for (size_t ii = 0; ii < 1500; ++ii) {
+        const uint32_t timeMicroseconds = timeUs();
+
+        static const uint32_t timeMicrosecondsDelta = timeMicroseconds - timeMicrosecondsPrevious;
+        timeMicrosecondsPrevious = timeMicroseconds;
+
+        const uint32_t state = blackbox.update(timeMicroseconds);
+        (void)state;
+        // Serial.printf("ii:%3d, s:%2d\r\n", ii, state);
+
+        ahrs.readIMUandUpdateOrientation(timeMicroseconds, timeMicrosecondsDelta);
+        receiver.update(timeMicrosecondsDelta / 1000);
+#if defined(FRAMEWORK_RPI_PICO)
+#elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
+#elif defined(FRAMEWORK_TEST)
+#else
+        delay(1);
+#endif
+    }
+
+    //blackboxSerialDevice.endLog(true);
+    blackbox.finish();
+    print("***EndLog\r\n");
+#if defined(FRAMEWORK_RPI_PICO)
+#elif defined(FRAMEWORK_ESPIDF)
+#elif defined(FRAMEWORK_STM32_CUBE)
+#elif defined(FRAMEWORK_TEST)
+#else
+    delay(5000);
+#endif
 }
 #endif

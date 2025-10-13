@@ -23,7 +23,6 @@
 #if defined(M5_UNIFIED)
 #include <ScreenM5.h>
 #endif
-#include <TimeMicroseconds.h>
 #include <VehicleControllerTask.h>
 
 
@@ -51,11 +50,8 @@ void Main::setup()
     // Statically allocate and initialize nonvolatile storage
     static NonVolatileStorage nvs;
     nvs.init();
-    const uint8_t currentRateProfile = nvs.loadRateProfileIndex();
-    const uint8_t currentPID_Profile = nvs.loadPidProfileIndex();
-    nvs.setCurrentPidProfileIndex(currentPID_Profile);
-
-    const MotorMixerBase::type_e mixerType = MotorMixerBase::QUAD_X;
+    nvs.setCurrentPidProfileIndex(nvs.loadPidProfileIndex());
+    nvs.setCurrentRateProfileIndex(nvs.loadRateProfileIndex());
 
     // create the IMU and get its sample rate, returned in imuSampleRateHz
 #if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
@@ -83,7 +79,7 @@ void Main::setup()
 
 
     // statically allocate the IMU_Filters
-    static IMU_Filters imuFilters(MotorMixerBase::motorCount(mixerType), debug, AHRS_taskIntervalMicroseconds);
+    static IMU_Filters imuFilters(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug, AHRS_taskIntervalMicroseconds);
     imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
@@ -94,9 +90,12 @@ void Main::setup()
 
     AHRS& ahrs = createAHRS(AHRS_taskIntervalMicroseconds, imuSensor, imuFilters);
 
-    FlightController& flightController = createFlightController(ahrs, imuFilters, debug, nvs, currentRateProfile, mixerType);
+    FlightController& flightController = createFlightController(ahrs, imuFilters, debug, nvs);
 
-    RadioController& radioController = createRadioController(flightController, nvs, currentRateProfile);
+    ReceiverBase& receiver = createReceiver();
+
+    static RadioController radioController(receiver, flightController, nvs.loadRadioControllerRates(nvs.getCurrentRateProfileIndex()));
+
 
 #if defined(USE_BLACKBOX)
     Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, imuFilters, debug);
@@ -113,28 +112,28 @@ void Main::setup()
         nvs.clear();
     }
     // Statically allocate the screen.
-    static ScreenM5 screen(ahrs, flightController, radioController.getReceiver());
+    static ScreenM5 screen(ahrs, flightController, receiver);
     ReceiverWatcher* receiverWatcher = &screen;
     _screen = &screen;
     _screen->updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
 
     // Statically allocate the buttons.
-    static ButtonsM5 buttons(flightController, radioController.getReceiver(), _screen);
+    static ButtonsM5 buttons(flightController, receiver, _screen);
     _buttons = &buttons;
 
 #if defined(M5_ATOM)
     // The Atom has no BtnB, so it always broadcasts address for binding on startup.
-    radioController.getReceiver().broadcastMyEUI();
+    receiver.broadcastMyEUI();
 #else
     // Holding BtnB down while switching on initiates binding.
     if (M5.BtnB.wasPressed()) {
-        radioController.getReceiver().broadcastMyEUI();
+        receiver.broadcastMyEUI();
     }
 #endif
 
 #else
     // no buttons defined, so always broadcast address for binding on startup
-    radioController.getReceiver().broadcastMyEUI();
+    receiver.broadcastMyEUI();
     ReceiverWatcher* receiverWatcher = nullptr;
 #endif // M5_UNIFIED
 
@@ -170,7 +169,7 @@ void Main::setup()
 #endif
 
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, radioController.getReceiver(), &mainTask, nvs);
+    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, &mainTask, nvs);
 
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
     taskInfo.taskIntervalMicroseconds = BACKCHANNEL_TASK_INTERVAL_MICROSECONDS;
@@ -178,45 +177,6 @@ void Main::setup()
 #endif
 }
 
-void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug)
-{
-    static uint32_t timeMicrosecondsPrevious = 0;
-
-    print("***StartLog\r\n");
-    blackbox.start(Blackbox::start_t{.debugMode = static_cast<uint16_t>(debug.getMode()), .motorCount = 4, .servoCount = 0});
-
-    for (size_t ii = 0; ii < 1500; ++ii) {
-        const uint32_t timeMicroseconds = timeUs();
-
-        static const uint32_t timeMicrosecondsDelta = timeMicroseconds - timeMicrosecondsPrevious;
-        timeMicrosecondsPrevious = timeMicroseconds;
-
-        const uint32_t state = blackbox.update(timeMicroseconds);
-        (void)state;
-        // Serial.printf("ii:%3d, s:%2d\r\n", ii, state);
-
-        ahrs.readIMUandUpdateOrientation(timeMicroseconds, timeMicrosecondsDelta);
-        receiver.update(timeMicrosecondsDelta / 1000);
-#if defined(FRAMEWORK_RPI_PICO)
-#elif defined(FRAMEWORK_ESPIDF)
-#elif defined(FRAMEWORK_STM32_CUBE)
-#elif defined(FRAMEWORK_TEST)
-#else
-        delay(1);
-#endif
-    }
-
-    //blackboxSerialDevice.endLog(true);
-    blackbox.finish();
-    print("***EndLog\r\n");
-#if defined(FRAMEWORK_RPI_PICO)
-#elif defined(FRAMEWORK_ESPIDF)
-#elif defined(FRAMEWORK_STM32_CUBE)
-#elif defined(FRAMEWORK_TEST)
-#else
-    delay(5000);
-#endif
-}
 // NOLINTEND(misc-const-correctness)
 
 void Main::reportMainTask()
@@ -279,40 +239,6 @@ void Main::print(const char* buf)
 #else
         Serial.print(&buf[0]);
 #endif
-}
-
-/*!
-Loads the PID profile for the FlightController. Must be called *after* the FlightController is created.
-*/
-void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController, uint8_t pidProfile)
-{
-    flightController.setFiltersConfig(nvs.loadFlightControllerFiltersConfig(pidProfile));
-    flightController.setTPA_Config(nvs.loadFlightControllerTPA_Config(pidProfile));
-    flightController.setAntiGravityConfig(nvs.loadFlightControllerAntiGravityConfig(pidProfile));
-#if defined(USE_D_MAX)
-    flightController.setDMaxConfig(nvs.loadFlightControllerDMaxConfig(pidProfile));
-#endif
-#if defined(USE_ITERM_RELAX)
-    flightController.setITermRelaxConfig(nvs.loadFlightControllerITermRelaxConfig(pidProfile));
-#endif
-#if defined(USE_YAW_SPIN_RECOVERY)
-    flightController.setYawSpinRecoveryConfig(nvs.loadFlightControllerYawSpinRecoveryConfig(pidProfile));
-#endif
-#if defined(USE_CRASH_RECOVERY)
-    flightController.setCrashRecoveryConfig(nvs.loadFlightControllerCrashRecoveryConfig(pidProfile));
-#endif
-    for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
-        const VehicleControllerBase::PIDF_uint16_t pid = nvs.loadPID(ii, pidProfile);
-        flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
-        const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
-#if !defined(FRAMEWORK_STM32_CUBE)
-        std::array<char, 128> buf;
-        sprintf(&buf[0], "**** %15s PID loaded from NVS: p:%d, i:%d, d:%d, f:%d, s:%d\r\n", pidName.c_str(), pid.kp, pid.ki, pid.kd, pid.kf, pid.ks);
-        print(&buf[0]);
-#else
-        (void)pidName;
-#endif
-    }
 }
 
 /*!

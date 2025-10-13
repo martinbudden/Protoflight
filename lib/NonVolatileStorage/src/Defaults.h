@@ -9,12 +9,13 @@
 
 namespace DEFAULTS {
 
+static constexpr MotorMixerBase::type_e motorMixerType = MotorMixerBase::QUAD_X;
 
 /*!
 Default PIDs.
 Same values as used by Betaflight.
 */
-static constexpr FlightController::pidf_uint16_array_t flightControllerDefaultPIDs = {{
+static constexpr FlightController::pidf_uint16_array_t flightControllerPIDs = {{
     { 45, 80, 30, 120, 0 }, // roll rate
     { 47, 84, 34, 125, 0 }, // pitch rate
     { 45, 80,  0, 120, 0 }, // yaw rate

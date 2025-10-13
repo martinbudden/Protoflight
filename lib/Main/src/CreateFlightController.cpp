@@ -8,10 +8,8 @@
 #include <NonVolatileStorage.h>
 
 
-FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, uint8_t currentPID_Profile, uint8_t mixerType)
+FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs)
 {
-    (void)mixerType;
-
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS); // NOLINT(misc-const-correctness)
@@ -25,12 +23,13 @@ FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilte
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
-    motorMixer.setDynamicIdlerControllerConfig(nvs.loadDynamicIdleControllerConfig(currentPID_Profile));
+    motorMixer.setDynamicIdlerControllerConfig(nvs.loadDynamicIdleControllerConfig(nvs.getCurrentPidProfileIndex()));
 #else
     motorMixer.setMotorOutputMin(0.055F); // 5.5%
 #endif
 #elif defined(USE_MOTOR_MIXER_NULL)
-    static MotorMixerBase motorMixer(MotorMixerBase::motorCount(static_cast<MotorMixerBase::type_e>(mixerType)), debug);
+    const MotorMixerBase::type_e mixerType = nvs.loadMotorMixerType();
+    static MotorMixerBase motorMixer(MotorMixerBase::motorCount(mixerType), debug);
 #else
     static_assert(false && "MotorMixer not specified");
 #endif // USE_MOTOR_MIXER
@@ -38,7 +37,41 @@ FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilte
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
     ahrs.setVehicleController(&flightController);
-    loadPID_ProfileFromNonVolatileStorage(nvs, flightController, currentPID_Profile);
+    loadPID_ProfileFromNonVolatileStorage(nvs, flightController, nvs.getCurrentPidProfileIndex());
 
     return flightController;
+}
+
+/*!
+Loads the PID profile for the FlightController. Must be called *after* the FlightController is created.
+*/
+void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController, uint8_t pidProfile)
+{
+    flightController.setFiltersConfig(nvs.loadFlightControllerFiltersConfig(pidProfile));
+    flightController.setTPA_Config(nvs.loadFlightControllerTPA_Config(pidProfile));
+    flightController.setAntiGravityConfig(nvs.loadFlightControllerAntiGravityConfig(pidProfile));
+#if defined(USE_D_MAX)
+    flightController.setDMaxConfig(nvs.loadFlightControllerDMaxConfig(pidProfile));
+#endif
+#if defined(USE_ITERM_RELAX)
+    flightController.setITermRelaxConfig(nvs.loadFlightControllerITermRelaxConfig(pidProfile));
+#endif
+#if defined(USE_YAW_SPIN_RECOVERY)
+    flightController.setYawSpinRecoveryConfig(nvs.loadFlightControllerYawSpinRecoveryConfig(pidProfile));
+#endif
+#if defined(USE_CRASH_RECOVERY)
+    flightController.setCrashRecoveryConfig(nvs.loadFlightControllerCrashRecoveryConfig(pidProfile));
+#endif
+    for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
+        const VehicleControllerBase::PIDF_uint16_t pid = nvs.loadPID(ii, pidProfile);
+        flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
+        const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
+#if !defined(FRAMEWORK_STM32_CUBE)
+        std::array<char, 128> buf;
+        sprintf(&buf[0], "**** %15s PID loaded from NVS: p:%d, i:%d, d:%d, f:%d, s:%d\r\n", pidName.c_str(), pid.kp, pid.ki, pid.kd, pid.kf, pid.ks);
+        print(&buf[0]);
+#else
+        (void)pidName;
+#endif
+    }
 }

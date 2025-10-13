@@ -74,6 +74,49 @@ void test_sdft()
     TEST_ASSERT_EQUAL(1, sdft.getIndex());
     sdft.push(1008, 8);
     TEST_ASSERT_EQUAL(1, sdft.getIndex());
+
+
+    // 100Hz to 600Hz
+    sdft.init(startBin, endBin, sampleCount);
+
+    const float signalFrequency = 140.0F;
+    static constexpr float M_PI_F = static_cast<float>(M_PI);
+
+    static std::array<float, SDFT_SAMPLE_COUNT> samples;
+
+    const float ratio = 2.0F * M_PI_F * signalFrequency / looprateHz; // Fraction of a complete cycle stored at each sample (in radians)
+    for (int ii = 0; ii < SDFT_SAMPLE_COUNT; ++ii) {
+        const float x = static_cast<float>(ii) * ratio;
+        samples[ii] = 2*sinf(x) + 2*sinf(2*x) + 2*sinf(3*x) + 0*sin(4*x);
+    }
+
+    size_t sampleIndex = 0;
+    for (int ii = 0; ii < SDFT_SAMPLE_COUNT; ++ii) {
+        sdft.push(samples[ii], sampleIndex);
+        ++sampleIndex;
+        if (sampleIndex == sampleCount) {
+            sampleIndex = 0;
+        }
+    }
+    static std::array<float, SDFT_BIN_COUNT> sdftData;
+    sdftData.fill(0.0F);
+    sdft.calculateWindowSquared(&sdftData[0]);
+
+
+#if false
+    std::array<char, 256> buf;
+    for (int ii = 0; ii < 36; ++ii) {
+        sprintf(&buf[0], "%2d=%3.1f, ", ii, static_cast<double>(sdftData[ii])); UnityPrint(&buf[0]);
+    }
+#endif
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[0]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[1]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[2]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[3]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[4]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[33]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[34]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[35]);
 }
 
 void test_dynamic_notch_filter()

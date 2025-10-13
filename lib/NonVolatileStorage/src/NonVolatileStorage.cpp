@@ -26,6 +26,8 @@ static const std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
     // note these must go up in jumps of 4, since one key is used for each profile
     0x0100, 0x0104, 0x0108, 0x010C, 0x0110, 0x0114, 0x011C
 };
+constexpr uint16_t MotorMixerTypeKey = 0x0003;
+
 constexpr uint16_t AccOffsetKey = 0x0200;
 constexpr uint16_t GyroOffsetKey = 0x0201;
 constexpr uint16_t MacAddressKey = 0x0202;
@@ -208,6 +210,22 @@ int32_t NonVolatileStorage::storeItem(uint16_t key, uint8_t pidProfileIndex, con
         return ERROR_INVALID_PROFILE;
     }
     return storeItem(key + pidProfileIndex, item, length, defaults);
+}
+
+
+MotorMixerBase::type_e NonVolatileStorage::loadMotorMixerType() const
+{
+    MotorMixerBase::type_e motorMixerType;
+    if (loadItem(MotorMixerTypeKey, &motorMixerType, sizeof(motorMixerType))) { // cppcheck-suppress knownConditionTrueFalse
+        return motorMixerType;
+    }
+    return DEFAULTS::motorMixerType;
+}
+
+int32_t NonVolatileStorage::storeMotorMixerType(MotorMixerBase::type_e motorMixerType)
+{
+    MotorMixerBase::type_e defaultMotorMixerType = DEFAULTS::motorMixerType;
+    return storeItem(PID_ProfileIndexKey, &motorMixerType, sizeof(motorMixerType), &defaultMotorMixerType);
 }
 
 
@@ -464,14 +482,14 @@ VehicleControllerBase::PIDF_uint16_t NonVolatileStorage::loadPID(uint8_t pidInde
 {
     assert(pidIndex <= FlightController::PID_COUNT);
     if (pidProfileIndex >= PID_PROFILE_COUNT) {
-        return DEFAULTS::flightControllerDefaultPIDs[pidIndex];
+        return DEFAULTS::flightControllerPIDs[pidIndex];
     }
     const uint16_t key = PID_Keys[pidIndex] + pidProfileIndex;
     VehicleControllerBase::PIDF_uint16_t pid {};
     if (loadItem(key, &pid, sizeof(pid))) { // cppcheck-suppress knownConditionTrueFalse
         return pid;
     }
-    return DEFAULTS::flightControllerDefaultPIDs[pidIndex];
+    return DEFAULTS::flightControllerPIDs[pidIndex];
 }
 
 int32_t NonVolatileStorage::storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex, uint8_t pidProfileIndex)
@@ -481,7 +499,7 @@ int32_t NonVolatileStorage::storePID(const VehicleControllerBase::PIDF_uint16_t&
         return ERROR_INVALID_PROFILE;
     }
     const uint16_t key = PID_Keys[pidIndex] + pidProfileIndex;
-    return storeItem(key, &key, sizeof(pid), &DEFAULTS::flightControllerDefaultPIDs[pidIndex]);
+    return storeItem(key, &key, sizeof(pid), &DEFAULTS::flightControllerPIDs[pidIndex]);
 }
 
 void NonVolatileStorage::resetPID(uint8_t pidIndex, uint8_t pidProfileIndex)

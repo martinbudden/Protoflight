@@ -1,7 +1,5 @@
 #include "Main.h"
 
-#include <NonVolatileStorage.h>
-#include <RadioController.h>
 #include <ReceiverAtomJoyStick.h>
 #include <ReceiverBase.h>
 #include <ReceiverNull.h>
@@ -11,7 +9,7 @@
 #endif
 
 
-RadioController& Main::createRadioController(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t currentRateProfile)
+ReceiverBase& Main::createReceiver()
 {
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
     // Set WiFi to station mode
@@ -34,7 +32,5 @@ RadioController& Main::createRadioController(FlightController& flightController,
     static ReceiverNull receiver;
 #endif
 
-    static RadioController radioController(receiver, flightController, nvs.loadRadioControllerRates(currentRateProfile));
-
-    return radioController;
+    return receiver;
 }
