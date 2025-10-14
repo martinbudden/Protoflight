@@ -10,6 +10,8 @@ Targets
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_BNO085
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
     #define IMU_I2C_PINS        i2c_pins_t{.sda=8,.scl=9,.irq=BUS_I2C::IRQ_NOT_SET}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
@@ -23,6 +25,8 @@ Targets
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_MPU6886
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
     #define IMU_I2C_PINS        i2c_pins_t{.sda=38,.scl=39,.irq=16}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
@@ -32,12 +36,11 @@ Targets
 #if defined(TARGET_M5STACK_ATOMS3R)
     #define BOARD_IDENTIFIER    "M5Stack_AtomS3"
 
-    //#define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
-    //#define AHRS_TASK_INTERVAL_MICROSECONDS 312  // 3200Hz, exact value is 312.5
-    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_BMI270
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 312.5F // use time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 3200
     #define IMU_I2C_PINS        i2c_pins_t{.sda=45,.scl=0,.irq=16}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
@@ -57,10 +60,11 @@ Targets
     #define USE_DYNAMIC_NOTCH_FILTER
 
     #define IMU_AXIS_ORDER      IMU_Base::YNEG_XPOS_ZPOS
-    #define AHRS_TASK_INTERVAL_MICROSECONDS     5000
     #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
     //#define USE_IMU_MPU6886
     #define USE_IMU_M5_UNIFIED
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 5000.0F // use time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 200 // 5000us looptime
     #define IMU_I2C_PINS        i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
@@ -85,6 +89,8 @@ Targets
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
 #if defined(LIBRARY_IMU_USE_SPI_BUS)
     #define IMU_SPI_INDEX       BUS_INDEX_0
     #define IMU_SPI_PINS        spi_pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
@@ -109,11 +115,11 @@ Targets
     #define USE_DYNAMIC_NOTCH_FILTER
 
     #define FC_TASK_DENOMINATOR 1
-    //#define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
-    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
 #if defined(LIBRARY_IMU_USE_SPI_BUS)
     #define IMU_SPI_INDEX       BUS_INDEX_0
     #define IMU_SPI_PINS        spi_pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
@@ -141,8 +147,6 @@ Targets
     // schematic: https://madflight.com/img/madflight-ESP-FC2.pdf
 
     #define FC_TASK_DENOMINATOR 1
-    #define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
-    //#define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
 
     #define SPI_0_PINS                  spi_pins_t{.cs=17,.sck=16,.cipo=14,.copi=15,.irq=13}
     #define UART_0_PINS                 rx_pins_t{.rx=7,.tx=21}
@@ -155,6 +159,8 @@ Targets
 
     #define IMU_AXIS_ORDER              IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_ICM426XX
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
     #define IMU_SPI_INDEX               BUS_INDEX_0
     #define IMU_SPI_PINS                SPI_0_PINS
 
@@ -195,8 +201,8 @@ Targets
     #define USE_RPM_FILTERS
 
     #define FC_TASK_DENOMINATOR 1
-    #define USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING
-    //#define AHRS_TASK_INTERVAL_MICROSECONDS 1000  // 1000Hz
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
 
     #define SPI_1_PINS                  spi_pins_t{.cs=29,.sck=30,.cipo=28,.copi=31,.irq=27}
     #define UART_0_PINS                 rx_pins_t{.rx=1,.tx=0}
@@ -246,6 +252,8 @@ Targets
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
     #define IMU_I2C_PINS        i2c_pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
 
     #define USE_RECEIVER_SBUS
@@ -268,6 +276,8 @@ Targets
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
     //#define USE_IMU_ICM426XX
     //#define USE_IMU_MPU6000
 #if defined(LIBRARY_IMU_USE_SPI_BUS)
@@ -301,6 +311,8 @@ Targets
 
     //#define USE_IMU_LSM303AGR
     #define USE_IMU_MPU6000 // !!TODO:temporary to fix to get to build
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
     #define IMU_SPI_INDEX       BUS_INDEX_1
     #define IMU_SPI_PINS        stm32_spi_pins_t{.cs={PE,3},.sck={PA,5},.cipo={PA,6},.copi={PA,7},.irq={PE,0}}
 
@@ -331,6 +343,8 @@ Targets
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     // On afroflight Rev 5 MPU6050 is connected to IC2 index 2
     #define USE_IMU_MPU6000
+    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ 1000
     #define IMU_I2C_PINS        stm32_i2c_pins_t{.sda={PB,7},.scl={PB,6},.irq={PB,13}}
 
     #define USE_RECEIVER_SBUS

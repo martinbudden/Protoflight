@@ -15,11 +15,9 @@
 
 /*!
 Create the IMU using the specified build flags.
-Set the IMU target output data rate to AHRS_taskIntervalMicroseconds and then
-set AHRS_taskIntervalMicroseconds to the actual data rate returned by the IMU.
-The actual data rate may be less than the target data rate if the IMU does not support the target data rate.
+Set the IMU target gyro sample rate to GYRO_SAMPLE_RATE_HZ.
 */
-IMU_Base& Main::createIMU(int32_t& imuSampleRateHz)
+IMU_Base& Main::createIMU()
 {
     // Statically allocate the IMU according the the build flags
 // NOLINTBEGIN(misc-const-correctness) false positive
@@ -74,7 +72,7 @@ IMU_Base& Main::createIMU(int32_t& imuSampleRateHz)
 #endif // LIBRARY_IMU_USE_SPI_BUS
 // NOLINTEND(misc-const-correctness) false positive
 
-    imuSampleRateHz = static_cast<IMU_Base&>(imuSensor).init(imuSampleRateHz);
+    static_cast<IMU_Base&>(imuSensor).init(GYRO_SAMPLE_RATE_HZ);
 
     return imuSensor;
 }

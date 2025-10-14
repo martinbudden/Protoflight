@@ -39,8 +39,8 @@ class VehicleControllerTask;
 
 enum { MAIN_LOOP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
 
-#if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
-enum { AHRS_TASK_INTERVAL_MICROSECONDS = 1000 }; // 1000 Hz
+#if !defined(GYRO_SAMPLE_RATE_HZ)
+enum { GYRO_SAMPLE_RATE_HZ = 2000 }; // 2000 Hz, 500 microseconds looptime
 #endif
 
 #if !defined(FC_TASK_DENOMINATOR)
@@ -118,7 +118,7 @@ public:
     void setup();
     void loop();
 private:
-    static IMU_Base& createIMU(int32_t& imuSampleRateHz);
+    static IMU_Base& createIMU();
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static FlightController& createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs);
     static ReceiverBase& createReceiver();

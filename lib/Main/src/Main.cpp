@@ -4,7 +4,6 @@
 #include <AHRS.h>
 #include <AHRS_Task.h>
 #include <BackchannelTask.h>
-#include <BlackboxProtoFlight.h>
 #include <BlackboxTask.h>
 #if defined(M5_UNIFIED)
 #include <ButtonsM5.h>
@@ -27,7 +26,8 @@
 
 
 /*!
-Setup for the main loop, motor control task, and AHRS(Attitude and Heading Reference System) task.
+Protoflight setup.
+This consists of creating all the Protoflight objects and then creating all the tasks.
 */
 void Main::setup()
 {
@@ -42,8 +42,11 @@ void Main::setup()
 
 #if !defined(FRAMEWORK_RPI_PICO) && !defined(FRAMEWORK_ESPIDF) && !defined(FRAMEWORK_STM32_CUBE) && !defined(FRAMEWORK_TEST)
     Serial.begin(115200);
-    Serial.println("****Starting up****");
 #endif
+
+    //
+    // Statically allocate all the Protoflight objects
+    //
 
     // Statically allocate the debug object
     static Debug debug;
@@ -53,30 +56,20 @@ void Main::setup()
     nvs.setCurrentPidProfileIndex(nvs.loadPidProfileIndex());
     nvs.setCurrentRateProfileIndex(nvs.loadRateProfileIndex());
 
-    // create the IMU and get its sample rate, returned in imuSampleRateHz
-#if defined(USE_IMU_BMI270_I2C) || defined(USE_IMU_BMI270_SPI)
-    int32_t imuSampleRateHz = 3200; // set max sample rate for BMI270
+    // create the IMU and get its sample rate
+    static IMU_Base& imuSensor = createIMU();
+    const uint32_t imuSampleRateHz = imuSensor.getGyroSampleRateHz();
+#if defined(AHRS_TASK_INTERVAL_MICROSECONDS)
+    // we are using time-driven scheduling for the AHRS
+    const float AHRS_taskIntervalMicroseconds = AHRS_TASK_INTERVAL_MICROSECONDS;
 #else
-    int32_t imuSampleRateHz = 1000000 / AHRS_TASK_INTERVAL_MICROSECONDS;
-#endif
-    static IMU_Base& imuSensor = createIMU(imuSampleRateHz); // note, the actual set sampleRate is returned in imuSampleRateHz
-
-
-#if defined(USE_AHRS_TASK_INTERRUPT_DRIVEN_SCHEDULING)
-    // if the AHRS is interrupt driven, then set its task interval based on the IMU sample rate
-    const uint32_t AHRS_taskIntervalMicroseconds = 1000000 / imuSampleRateHz;
-#else
-    const uint32_t AHRS_taskIntervalMicroseconds = AHRS_TASK_INTERVAL_MICROSECONDS;
-#endif
-#if defined(FRAMEWORK_RPI_PICO)
-    printf("\r\n**** AHRS_taskIntervalMicroseconds:%u, IMU sample rate:%dHz\r\n\r\n", static_cast<unsigned int>(AHRS_taskIntervalMicroseconds), static_cast<int>(imuSampleRateHz));
-#elif defined(FRAMEWORK_ESPIDF)
-#elif defined(FRAMEWORK_STM32_CUBE)
-#elif defined(FRAMEWORK_TEST)
-#else
-    Serial.printf("\r\n**** AHRS_taskIntervalMicroseconds:%u, IMU sample rate:%dHz\r\n\r\n", static_cast<unsigned int>(AHRS_taskIntervalMicroseconds), static_cast<int>(imuSampleRateHz));
+    // we are using interrupt-driven scheduling for the AHRS
+    const float AHRS_taskIntervalMicroseconds = 1000000.0F / static_cast<float>(imuSampleRateHz);
 #endif
 
+    std::array<char, 128> buf;
+    sprintf(&buf[0], "\r\n**** AHRS_taskIntervalMicroseconds:%f, IMU sample rate:%dHz\r\n\r\n", static_cast<double>(AHRS_taskIntervalMicroseconds), static_cast<int>(imuSampleRateHz));
+    print(&buf[0]);
 
     // statically allocate the IMU_Filters
     static IMU_Filters imuFilters(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug, AHRS_taskIntervalMicroseconds);
@@ -88,15 +81,16 @@ void Main::setup()
     imuFilters.setRPM_FiltersConfig(nvs.loadRPM_FiltersConfig());
 #endif
 
-    AHRS& ahrs = createAHRS(AHRS_taskIntervalMicroseconds, imuSensor, imuFilters);
+    AHRS& ahrs = createAHRS(static_cast<uint32_t>(AHRS_taskIntervalMicroseconds), imuSensor, imuFilters);
 
     FlightController& flightController = createFlightController(ahrs, imuFilters, debug, nvs);
 
     ReceiverBase& receiver = createReceiver();
 
     static RadioController radioController(receiver, flightController, nvs.loadRadioControllerRates(nvs.getCurrentRateProfileIndex()));
-
-
+#if defined(USE_MSP)
+    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, debug, nvs);
+#endif
 #if defined(USE_BLACKBOX)
     Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, imuFilters, debug);
 #endif
@@ -116,26 +110,24 @@ void Main::setup()
     ReceiverWatcher* receiverWatcher = &screen;
     _screen = &screen;
     _screen->updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
-
     // Statically allocate the buttons.
     static ButtonsM5 buttons(flightController, receiver, _screen);
     _buttons = &buttons;
-
-#if defined(M5_ATOM)
-    // The Atom has no BtnB, so it always broadcasts address for binding on startup.
-    receiver.broadcastMyEUI();
-#else
     // Holding BtnB down while switching on initiates binding.
-    if (M5.BtnB.wasPressed()) {
+    // The Atom has no BtnB, so it always broadcasts address for binding on startup.
+    if (M5.getBoard() ==lgfx::board_M5AtomS3 || M5.BtnB.wasPressed()) {
         receiver.broadcastMyEUI();
     }
-#endif
-
 #else
     // no buttons defined, so always broadcast address for binding on startup
     receiver.broadcastMyEUI();
     ReceiverWatcher* receiverWatcher = nullptr;
 #endif // M5_UNIFIED
+
+
+    //
+    // Create all the tasks
+    //
 
     static MainTask mainTask(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS);
     _tasks.mainTask = &mainTask;
@@ -143,36 +135,25 @@ void Main::setup()
 
     TaskBase::task_info_t taskInfo {};
 
-    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroseconds);
-    taskInfo.taskIntervalMicroseconds = AHRS_taskIntervalMicroseconds;
+    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, static_cast<uint32_t>(AHRS_taskIntervalMicroseconds));
     printTaskInfo(taskInfo);
 
     _tasks.flightControllerTask = VehicleControllerTask::createTask(taskInfo, flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
-    taskInfo.taskIntervalMicroseconds = 0;
     printTaskInfo(taskInfo);
 
     _tasks.receiverTask = ReceiverTask::createTask(taskInfo, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
-    taskInfo.taskIntervalMicroseconds = RECEIVER_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
 #if defined(USE_MSP)
-    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, debug, nvs);
-
     _tasks.mspTask = MSP_Task::createTask(taskInfo, mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
-    taskInfo.taskIntervalMicroseconds = MSP_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BLACKBOX)
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
-    taskInfo.taskIntervalMicroseconds = BLACKBOX_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
-    //vTaskResume(taskInfo.taskHandle);
 #endif
-
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
     BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, &mainTask, nvs);
-
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
-    taskInfo.taskIntervalMicroseconds = BACKCHANNEL_TASK_INTERVAL_MICROSECONDS;
     printTaskInfo(taskInfo);
 #endif
 }

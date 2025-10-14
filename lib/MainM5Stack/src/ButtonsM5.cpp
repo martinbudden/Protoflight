@@ -24,13 +24,10 @@ Handle any button presses.
 void ButtonsM5::update()
 {
     M5.update();
-#if defined(M5_ATOM) // M5 Atom has only BtnA
-    if (M5.BtnA.wasDoubleClicked()) {
-        // Only one button
-        // Use double click of BtnA for cycling through screen modes
+    // M5 Atom has only BtnA so use double click of BtnA for cycling through screen modes
+    if (M5.getBoard() ==lgfx::board_M5AtomS3 && M5.BtnA.wasDoubleClicked()) {
         _screen->nextScreenMode();
     }
-#endif
     if (M5.BtnA.wasPressed()) {
         // BtnA turns the motors on or off
         _flightController.motorsToggleOnOff();
