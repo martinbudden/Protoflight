@@ -182,7 +182,7 @@ float FlightController::calculateITermError(size_t axis, float measurement)
 {
     const float setpoint = _sh.PIDS[axis].getSetpoint();
     // iTermError is just `setpoint - measurement`, if there is no ITerm relax
-    float iTermError = setpoint - measurement; // NOLINT(misc-const-correctness)
+    float iTermError = setpoint - measurement;
 #if defined(USE_ITERM_RELAX)
     if (_iTermRelaxConfig.iterm_relax == ITERM_RELAX_ON) {
         const float setpointLp = _rxC.setpointLPs[axis];

@@ -199,21 +199,24 @@ uint32_t DShotCodec::decodeSamples(const uint32_t* samples, uint32_t count, tele
 
 uint16_t DShotCodec::GCR20_to_eRPM(uint32_t value)
 {
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     uint32_t ret = quintetToNibble[value & 0x1F];
     ret |= quintetToNibble[(value >> 5) & 0x1F] << 4;
     ret |= quintetToNibble[(value >> 10) & 0x1F] << 8;
     ret |= quintetToNibble[(value >> 15) & 0x1F] << 12;
-
     return static_cast<uint16_t>(ret);
+    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 }
 
 uint32_t DShotCodec::eRPM_to_GCR20(uint16_t value)
 {
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     uint32_t ret = nibbleToQuintet[value & 0x1F];
     ret |= nibbleToQuintet[(value >> 4) & 0x1F] << 5;
     ret |= nibbleToQuintet[(value >> 8) & 0x1F] << 10;
     ret |= nibbleToQuintet[(value >> 12) & 0x1F] << 15;
     return ret;
+    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 }
 
 uint32_t DShotCodec::GR20_to_GCR21(uint32_t value)

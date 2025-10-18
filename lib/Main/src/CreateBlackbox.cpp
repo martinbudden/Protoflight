@@ -21,7 +21,7 @@ Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, R
     // Statically allocate the Blackbox and associated objects
     static BlackboxMessageQueue         blackboxMessageQueue;
     static BlackboxCallbacks            blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
-    static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS); // NOLINT(misc-const-correctness)
+    static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
     static BlackboxProtoFlight          blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
 
     static BlackboxMessageQueueAHRS     blackboxMessageQueueAHRS(blackboxMessageQueue);

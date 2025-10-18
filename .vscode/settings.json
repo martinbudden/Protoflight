@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "ACRO",
+        "adafruit",
         "ADXL",
         "AFROFLIGHT",
         "afruitnrf",
@@ -10,6 +11,7 @@
         "ALTHOLD",
         "Ardu",
         "arduinoespressif",
+        "arduinopico",
         "ardupilot",
         "ARPE",
         "ASAC",
@@ -42,6 +44,7 @@
         "Cleanflight",
         "CLFL",
         "clkdiv",
+        "cppcheck",
         "codecell",
         "configurator",
         "Connor",
@@ -175,6 +178,7 @@
         "peformant",
         "PHASELOCK",
         "picotool",
+        "PIDF",
         "PIDFS",
         "pids",
         "pidsum",

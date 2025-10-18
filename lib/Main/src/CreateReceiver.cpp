@@ -27,7 +27,7 @@ ReceiverBase& Main::createReceiver()
     Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
     assert(espErr == ESP_OK && "Unable to setup receiver.");
 #elif defined(USE_RECEIVER_SBUS)
-    static ReceiverSBUS receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE); // NOLINT(misc-const-correctness)
+    static ReceiverSBUS receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
 #else
     static ReceiverNull receiver;
 #endif

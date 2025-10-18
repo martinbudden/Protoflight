@@ -12,7 +12,7 @@ FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilte
 {
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
-    static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS); // NOLINT(misc-const-correctness)
+    static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
     (void)imuFilters;
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
     const uint32_t motorTaskIntervalMicroseconds = ahrs.getTaskIntervalMicroseconds() / FC_TASK_DENOMINATOR;

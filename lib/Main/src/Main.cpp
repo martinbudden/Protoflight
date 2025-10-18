@@ -31,7 +31,6 @@ This consists of creating all the Protoflight objects and then creating all the 
 */
 void Main::setup()
 {
-// NOLINTBEGIN(misc-const-correctness)
 #if defined(M5_UNIFIED)
     // Initialize the M5Stack object
     auto cfg = M5.config(); // NOLINT(readability-static-accessed-through-instance)
@@ -158,7 +157,6 @@ void Main::setup()
 #endif
 }
 
-// NOLINTEND(misc-const-correctness)
 
 void Main::reportMainTask()
 {

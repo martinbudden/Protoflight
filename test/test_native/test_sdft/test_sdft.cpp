@@ -87,7 +87,7 @@ void test_sdft()
     const float ratio = 2.0F * M_PI_F * signalFrequency / looprateHz; // Fraction of a complete cycle stored at each sample (in radians)
     for (int ii = 0; ii < SDFT_SAMPLE_COUNT; ++ii) {
         const float x = static_cast<float>(ii) * ratio;
-        samples[ii] = 2*sinf(x) + 2*sinf(2*x) + 2*sinf(3*x) + 0*sin(4*x);
+        samples[ii] = 2*sinf(x) + 2*sinf(2*x) + 2*sinf(3*x) + 0*sinf(4*x);
     }
 
     size_t sampleIndex = 0;

@@ -243,7 +243,7 @@ void ESC_DShot::write(uint16_t value) // NOLINT(readability-make-member-function
     // set up a unidirectional DShot frame for sending via DMA
     const uint16_t frame = DShotCodec::frameUnidirectional(value);
 
-    uint16_t maskBit = 1U << (DSHOT_BIT_COUNT - 1); // NOLINT(misc-const-correctness,hicpp-signed-bitwise)
+    uint16_t maskBit = 1U << (DSHOT_BIT_COUNT - 1); // NOLINT(hicpp-signed-bitwise)
     if (_useHighOrderBits) {
         for (auto& item : _dmaBuffer) {
             item = ((frame & maskBit) ? _dataHighPulseWidth : _dataLowPulseWidth) << 16;
@@ -272,7 +272,7 @@ void ESC_DShot::write(uint16_t value) // NOLINT(readability-make-member-function
 bool ESC_DShot::read()
 {
     DShotCodec::telemetry_type_e telemetryType {};
-    uint32_t value {}; // NOLINT(misc-const-correctness) false positive
+    uint32_t value {};
 
 #if defined(USE_DSHOT_RPI_PICO_PIO)
     const int32_t fifoCount = pio_sm_get_rx_fifo_level(_pio, _pioStateMachine);

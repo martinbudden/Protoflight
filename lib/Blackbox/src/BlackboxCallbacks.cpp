@@ -107,11 +107,11 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
         const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
         const PIDF& pid = _flightController.getPID(pidIndex);
         const PIDF::error_t pidError = pid.getError();
-        mainState.axisPID_P[ii] = std::lroundf(pidError.P);
-        mainState.axisPID_I[ii] = std::lroundf(pidError.I);
-        mainState.axisPID_D[ii] = std::lroundf(pidError.D);
-        mainState.axisPID_F[ii] = std::lroundf(pidError.F);
-        //mainState.axisPID_S[ii] = std::lroundf(pidError.S);
+        mainState.axisPID_P[ii] = static_cast<int32_t>(std::lroundf(pidError.P));
+        mainState.axisPID_I[ii] = static_cast<int32_t>(std::lroundf(pidError.I));
+        mainState.axisPID_D[ii] = static_cast<int32_t>(std::lroundf(pidError.D));
+        mainState.axisPID_F[ii] = static_cast<int32_t>(std::lroundf(pidError.F));
+        //mainState.axisPID_S[ii] = static_cast<int32_t>(std::lroundf(pidError.S));
         mainState.setpoint[ii] = static_cast<int16_t>(std::lroundf(pid.getSetpoint()));
 #if defined(USE_MAGNETOMETER)
         mainState.magADC[ii] = static_cast<int16_t>(mag.magADC.v[ii]);
@@ -125,7 +125,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     mainState.rcCommand[0] = static_cast<int16_t>(controls.roll - ReceiverBase::CHANNEL_MIDDLE);
     mainState.rcCommand[1] = static_cast<int16_t>(controls.pitch - ReceiverBase::CHANNEL_MIDDLE);
     mainState.rcCommand[2] = static_cast<int16_t>(controls.yaw - ReceiverBase::CHANNEL_MIDDLE);
-    mainState.rcCommand[3] = controls.throttle;
+    mainState.rcCommand[3] = static_cast<int16_t>(controls.throttle);
 
     static_assert(static_cast<int>(blackboxMainState_t::DEBUG_VALUE_COUNT) == static_cast<int>(Debug::VALUE_COUNT));
     for (int ii = 0; ii < blackboxMainState_t::DEBUG_VALUE_COUNT; ++ii) {

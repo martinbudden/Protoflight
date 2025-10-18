@@ -42,7 +42,7 @@ void setUp() {
 void tearDown() {
 }
 
-// NOLINTBEGIN(misc-const-correctness)
+// NOLINTBEGIN(hicpp-signed-bitwise,misc-const-correctness)
 void test_flight_controller()
 {
     static MadgwickFilter sensorFusionFilter;
@@ -120,7 +120,6 @@ void test_flight_controller_pid_indexes()
 
 void test_flight_controller_flight_mode_flags()
 {
-    // NOLINTBEGIN(hicpp-signed-bitwise)
     TEST_ASSERT_EQUAL(FlightController::ANGLE_MODE, 1U << FlightController::LOG2_ANGLE_MODE);
     TEST_ASSERT_EQUAL(FlightController::HORIZON_MODE, 1U << FlightController::LOG2_HORIZON_MODE);
     TEST_ASSERT_EQUAL(FlightController::MAG_MODE, 1U << FlightController::LOG2_MAG_MODE);
@@ -132,9 +131,8 @@ void test_flight_controller_flight_mode_flags()
     TEST_ASSERT_EQUAL(FlightController::RANGEFINDER_MODE, 1U << FlightController::LOG2_RANGEFINDER_MODE);
     TEST_ASSERT_EQUAL(FlightController::FAILSAFE_MODE, 1U << FlightController::LOG2_FAILSAFE_MODE);
     TEST_ASSERT_EQUAL(FlightController::GPS_RESCUE_MODE, 1U << FlightController::LOG2_GPS_RESCUE_MODE);
-    // NOLINTEND(hicpp-signed-bitwise)
 }
-// NOLINTEND(misc-const-correctness)
+// NOLINTEND(hicpp-signed-bitwise,misc-const-correctness)
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
