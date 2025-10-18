@@ -1,7 +1,4 @@
-#include "MSP_Box.h"
 #include "MSP_ProtoFlight.h"
-#include "MSP_Protocol.h"
-#include "features.h"
 #include "version.h"
 
 #include <AHRS.h>
@@ -9,7 +6,7 @@
 #include <Features.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
-#include <MSP_protocol.h>
+#include <MSP_Protocol.h>
 #include <RPM_Filters.h>
 #include <RadioController.h>
 #include <ReceiverBase.h>

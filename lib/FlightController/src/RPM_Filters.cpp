@@ -41,6 +41,7 @@ This is called from withing MotorMixerQuadX_DShot::outputToMotors and so needs t
 */
 void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
 {
+    // use state machine so that on harmonic is set each time this function is called
     switch (_state.state) {
     case STATE_FUNDAMENTAL: {
         frequencyHz = _motorRPM_Filters[motorIndex].filter(frequencyHz);

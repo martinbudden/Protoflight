@@ -109,17 +109,17 @@ enum debug_mode_e {
 
 class Debug {
 public:
-    // debug types match Betaflight debug types, so they can be displayed in Betaflight Blackbox Explorer
+    // debug modes match Betaflight debug modes, so they can be displayed in Betaflight Blackbox Explorer
     enum { VALUE_COUNT = 8 };
 public:
     Debug() = default;
-    inline void set(debug_mode_e mode, size_t index, int32_t value) {
+    inline void set(debug_mode_e mode, size_t index, long value) {
         if (_mode == mode) {
             _debug[index] = static_cast<int16_t>(value);
         }
     }
     inline void set(size_t index, int16_t value) { _debug[index] = value; }
-    inline void set(size_t index, int32_t value) { _debug[index] = static_cast<int16_t>(value); }
+    inline void set(size_t index, long value) { _debug[index] = static_cast<int16_t>(value); }
     inline int16_t get(size_t index) const { return _debug[index]; }
 
     void setMode(debug_mode_e mode) { _mode = mode; }
