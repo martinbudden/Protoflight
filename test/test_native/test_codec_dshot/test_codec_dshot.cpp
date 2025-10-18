@@ -10,7 +10,7 @@ void tearDown()
 {
 }
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-constant-array-index,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)
 void test_dshot_quintets()
 {
     static_assert(DShotCodec::quintetToNibble[DShotCodec::nibbleToQuintet[0]] == 0);
@@ -91,7 +91,7 @@ void test_dshot_codec()
     //TEST_ASSERT_EQUAL(69, DShotCodec::frameUnidirectional(2050));
 }
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-constant-array-index,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)
 
 // See for example for testing GCR encoding https://github.com/betaflight/betaflight/pull/8554#issuecomment-512507625
 // see also https://elmagnifico.tech/2023/04/07/bi-directional-DSHOT/

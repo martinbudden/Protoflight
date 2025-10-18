@@ -88,7 +88,7 @@ uint32_t DShotCodec::decodeSamples(uint64_t value, telemetry_type_e& telemetryTy
 
     uint32_t consecutiveBitCount = 1;  // we always start with the MSB
     uint32_t currentBit = 0;
-    int bitCount = 0;
+    uint32_t bitCount = 0;
     uint32_t gcr_result = 0;
     // starting at 2nd bit since we know our data starts with a 0
     // 56 samples @ 0.917us sample rate = 51.33us sampled
@@ -97,12 +97,12 @@ uint32_t DShotCodec::decodeSamples(uint64_t value, telemetry_type_e& telemetryTy
         if (((value & mask) != 0) != currentBit) {
             // if the masked bit doesn't match the current string of bits then end the current string and flip currentBit
             // bitshift gcr_result by N, and
-            gcr_result = gcr_result << gcrBitLengths[consecutiveBitCount];
+            gcr_result = gcr_result << gcrBitLengths[consecutiveBitCount]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
             // then set N bits in gcr_result, if currentBit is 1
             if (currentBit) {
-                gcr_result |= gcrSetBits[gcrBitLengths[consecutiveBitCount]];
+                gcr_result |= gcrSetBits[gcrBitLengths[consecutiveBitCount]]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
             }
-            bitCount += gcrBitLengths[consecutiveBitCount];
+            bitCount += gcrBitLengths[consecutiveBitCount]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
             // invert currentBit, and reset consecutiveBitCount
             currentBit = !currentBit;
             consecutiveBitCount = 1;  // first bit found in the string is the one we just processed
@@ -119,13 +119,13 @@ uint32_t DShotCodec::decodeSamples(uint64_t value, telemetry_type_e& telemetryTy
 
     // outside the loop, we still need to account for the final bits if the string ends with 1s
     // bitshift gcr_result by N, and
-    gcr_result <<= gcrBitLengths[consecutiveBitCount];
+    gcr_result <<= gcrBitLengths[consecutiveBitCount]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     // then set set N bits in gcr_result, if currentBit is 1
     if (currentBit) {
-        gcr_result |= gcrSetBits[gcrBitLengths[consecutiveBitCount]];
+        gcr_result |= gcrSetBits[gcrBitLengths[consecutiveBitCount]]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     }
     // count bitCount (for debugging)
-    bitCount += gcrBitLengths[consecutiveBitCount];
+    bitCount += gcrBitLengths[consecutiveBitCount]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 
     // GCR data should be 21 bits
     if (bitCount < 21) {

@@ -281,7 +281,7 @@ void FlightController::setTPA_Config(const tpa_config_t& tpaConfig)
     const_cast<float&>(_tpa.multiplier) = (static_cast<float>(tpaConfig.tpa_rate) / 100.0F) / (1.0F - _tpa.breakpoint);
 
     // ensure tpaLowBreakpoint is always <= tpaBreakpoint
-    const_cast<float&>(_tpa.lowBreakpoint) = std::fminf(clip((tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpa.breakpoint);
+    const_cast<float&>(_tpa.lowBreakpoint) = std::fminf(clip(static_cast<float>(tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpa.breakpoint);
     // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 

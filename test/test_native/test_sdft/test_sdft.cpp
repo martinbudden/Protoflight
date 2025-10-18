@@ -80,7 +80,7 @@ void test_sdft()
     sdft.init(startBin, endBin, sampleCount);
 
     const float signalFrequency = 140.0F;
-    static constexpr float M_PI_F = static_cast<float>(M_PI);
+    static constexpr auto M_PI_F = static_cast<float>(M_PI);
 
     static std::array<float, SDFT_SAMPLE_COUNT> samples;
 
