@@ -87,22 +87,6 @@ void IMU_Filters::setRPM_FiltersConfig(const RPM_Filters::config_t& config)
 }
 
 /*!
-This is called from within AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
-
-Update the Dynamic Notch Filter, this runs the  Sliding Discreet Fourier Transform (SDFT).
-
-`RPM_Filters::setFrequencyHz` is called in the context of the Flight Controller task.
-*/
-void IMU_Filters::setFilters()
-{
-#if defined(USE_DYNAMIC_NOTCH_FILTER)
-    if (_dynamicNotchFilter.isActive()) {
-        _dynamicNotchFilter.updateNotchFrequencies(); // update performs the Fourier transform
-    }
-#endif
-}
-
-/*!
 This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */
 void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
@@ -127,7 +111,7 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
     }
 #if defined(USE_RPM_FILTERS)
     if (_rpmFilters.isActive()) {
-        // apply the RPM filters, filter one motor each time this function is called
+        // apply the RPM filters
         if (_motorCount == 4) {
             _rpmFilters.filter(gyroRPS, 0);
             _rpmFilters.filter(gyroRPS, 1);
@@ -142,9 +126,13 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
 #endif
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     if (_dynamicNotchFilter.isActive()) {
+        // update the notch frequencies using a Fourier transform
+        // uses a state machine to perform one iteration each time it is called
+        _dynamicNotchFilter.updateNotchFrequencies();
         // push the filtered gyroRPS value to the dynamicNotchFilter after all the other filtration,
         // so it can find the remaining noisy frequencies
         _dynamicNotchFilter.push(gyroRPS);
+        // filter uses a state machine to perform one iteration each time it is called
         _dynamicNotchFilter.filter(gyroRPS);
     }
 #endif

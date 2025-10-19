@@ -240,6 +240,9 @@ public:
     flight_mode_flag_e getFlightModeFlags() const { return ANGLE_MODE; } //!!TODO
     bool isRcModeActive(uint8_t rcMode) const;
 
+    float getPitchAngleDegreesRaw() const;
+    float getRollAngleDegreesRaw() const;
+    float getYawAngleDegreesRaw() const;
     float getBatteryVoltage() const;
     float getAmperage() const;
 
@@ -405,6 +408,9 @@ private:
 #endif
     };
     struct ah_t {
+        float rollAngleDegreesRaw {0.0F};
+        float pitchAngleDegreesRaw {0.0F};
+        float yawAngleDegreesRaw {0.0F};
         float rollStickSinAngle {0.0F};
         float rollRateSetpointDPS {0.0F};
         float rollSinAngle {0.0F};

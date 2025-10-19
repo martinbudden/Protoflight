@@ -7,6 +7,20 @@
 #define _rxM "error not modifiable in this task"
 // NOLINTEND(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 
+float FlightController::getPitchAngleDegreesRaw() const
+{
+    return _ahM.pitchAngleDegreesRaw;
+}
+
+float FlightController::getRollAngleDegreesRaw() const
+{
+    return _ahM.rollAngleDegreesRaw;
+}
+
+float FlightController::getYawAngleDegreesRaw() const
+{
+    return _ahM.yawAngleDegreesRaw;
+}
 
 /*!
 NOTE: CALLED FROM WITHIN THE AHRS TASK
@@ -92,14 +106,14 @@ NOTE: CALLED FROM WITHIN THE AHRS TASK
 In angle mode, the roll and pitch angles are used to set the setpoints for the rollRate and pitchRate PIDs.
 In NFE(Not Fast Enough) Racer mode (aka level race mode) is equivalent to angle mode on roll and acro mode on pitch.
 */
-void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT)
+void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT) // NOLINT(readability-make-member-function-const)
 {
 
     // convert orientationENU from the ENU coordinate frame to the NED coordinate frame
     //static const Quaternion qENUtoNED(0.0F, sqrtf(0.5F), sqrtf(0.5F), 0.0F);
     //const Quaternion orientationNED = qENUtoNED * orientationENU;
-    //_rollAngleDegreesRaw = orientationNED.calculateRollDegrees();
-    //_pitchAngleDegreesRaw = orientationNED.calculatePitchDegrees();
+    //_ahM.rollAngleDegreesRaw = orientationNED.calculateRollDegrees();
+    //_ahM.pitchAngleDegreesRaw = orientationNED.calculatePitchDegrees();
 
     const float yawRateSetpointDPS = _sh.PIDS[YAW_RATE_DPS].getSetpoint();
 
@@ -138,17 +152,17 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
                 _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_PITCH;
             }
             _ahM.rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
-            _rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
-            const float rollAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_rollAngleDegreesRaw - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
-            _ahM.outputs[ROLL_ANGLE_DEGREES] = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(_rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
+            _ahM.rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
+            const float rollAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_ahM.rollAngleDegreesRaw - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
+            _ahM.outputs[ROLL_ANGLE_DEGREES] = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(_ahM.rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
             _ahM.rollRateSetpointDPS = _ahM.outputs[ROLL_ANGLE_DEGREES];
             _ahM.rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.rollSinAngle;
         } else {
             _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_ROLL;
             _ahM.pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
-            _pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
-            const float pitchAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_pitchAngleDegreesRaw - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
-            _ahM.outputs[PITCH_ANGLE_DEGREES] = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(_pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
+            _ahM.pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
+            const float pitchAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_ahM.pitchAngleDegreesRaw - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
+            _ahM.outputs[PITCH_ANGLE_DEGREES] = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(_ahM.pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
             _ahM.pitchRateSetpointDPS = _ahM.outputs[PITCH_ANGLE_DEGREES];
             _ahM.pitchRateSetpointDPS += yawRateSetpointDPS * _ahM.pitchSinAngle;
         }

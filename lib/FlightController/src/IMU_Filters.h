@@ -40,7 +40,6 @@ public:
 #endif
 public:
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
-    virtual void setFilters() override;
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
     void setDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config);
@@ -56,10 +55,10 @@ protected:
     float _looptimeSeconds;
     size_t _motorCount;
     const config_t _config {}; //!< configuration data is const once it has been set in setConfig
+    bool  _useGyroNotch1 {false};
+    bool  _useGyroNotch2 {false};
 
     FilterBaseT<xyz_t>* _gyroLPF1 {nullptr};
-    uint32_t  _useGyroNotch1 {false};
-    uint32_t  _useGyroNotch2 {false};
 
     PowerTransferFilter1T<xyz_t> _gyroLPF1PT1;
     PowerTransferFilter2T<xyz_t> _gyroLPF1PT2;
