@@ -132,7 +132,7 @@ private:
     static void runIMU_Calibration(NonVolatileStorage& nvs, AHRS& ahrs, calibration_type_e calibrationType);
     static void calibrateIMU(NonVolatileStorage& nvs, AHRS& ahrs, calibration_type_e calibrationType);
 
-    static void loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController, uint8_t pidProfile);
+    static void loadPID_ProfileFromNonVolatileStorage(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t pidProfile);
     static void print(const char* buf);
     static void reportMainTask();
     static void printTaskInfo(TaskBase::task_info_t& taskInfo);

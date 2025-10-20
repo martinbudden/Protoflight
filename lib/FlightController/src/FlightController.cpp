@@ -270,6 +270,13 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
     }
 }
 
+void FlightController::setFlightModeConfig(const flight_mode_config_t& flightModeConfig)
+{
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+    const_cast<flight_mode_config_t&>(_flightModeConfig) = flightModeConfig;
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+}
+
 void FlightController::setTPA_Config(const tpa_config_t& tpaConfig)
 {
     // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)

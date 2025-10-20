@@ -36,8 +36,7 @@ FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilte
 
     // Statically allocate the flightController.
     static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
-    ahrs.setVehicleController(&flightController);
-    loadPID_ProfileFromNonVolatileStorage(nvs, flightController, nvs.getCurrentPidProfileIndex());
+    loadPID_ProfileFromNonVolatileStorage(flightController, nvs, nvs.getCurrentPidProfileIndex());
 
     return flightController;
 }
@@ -45,9 +44,10 @@ FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilte
 /*!
 Loads the PID profile for the FlightController. Must be called *after* the FlightController is created.
 */
-void Main::loadPID_ProfileFromNonVolatileStorage(NonVolatileStorage& nvs, FlightController& flightController, uint8_t pidProfile)
+void Main::loadPID_ProfileFromNonVolatileStorage(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t pidProfile)
 {
     flightController.setFiltersConfig(nvs.loadFlightControllerFiltersConfig(pidProfile));
+    flightController.setFlightModeConfig(nvs.loadFlightControllerFlightModeConfig(pidProfile));
     flightController.setTPA_Config(nvs.loadFlightControllerTPA_Config(pidProfile));
     flightController.setAntiGravityConfig(nvs.loadFlightControllerAntiGravityConfig(pidProfile));
 #if defined(USE_D_MAX)

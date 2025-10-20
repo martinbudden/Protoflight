@@ -47,6 +47,10 @@ static constexpr FlightController::filters_config_t flightControllerFiltersConfi
     .rc_smoothing_feedforward_cutoff = 0,
 };
 
+static constexpr FlightController::flight_mode_config_t flightControllerFlightModeConfig = {
+    .level_race_mode = false,
+};
+
 static constexpr FlightController::tpa_config_t flightControllerTPA_Config = {
     .tpa_mode = FlightController::TPA_MODE_D,
     .tpa_rate = 65,

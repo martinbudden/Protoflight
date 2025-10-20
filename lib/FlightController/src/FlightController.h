@@ -117,6 +117,9 @@ public:
         uint8_t dterm_lpf2_type;
         uint8_t rc_smoothing_feedforward_cutoff;
     };
+    struct flight_mode_config_t {
+        uint8_t level_race_mode; // aka "NFE race mode" - angle mode on roll, acro mode on pitch
+    };
     enum tpa_mode_e { TPA_MODE_PD, TPA_MODE_D, TPA_MODE_PDS };
     struct tpa_config_t {
         uint8_t tpa_mode;
@@ -289,6 +292,9 @@ public:
     void setFiltersConfig(const filters_config_t& filtersConfig);
     const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
 
+    void setFlightModeConfig(const flight_mode_config_t& flightModeConfig);
+    const flight_mode_config_t& getFlightModeConfig() const { return _flightModeConfig; }
+
     void setTPA_Config(const tpa_config_t& tpaConfig);
     const tpa_config_t& getTPA_Config() const { return _tpaConfig; }
 
@@ -341,7 +347,6 @@ private:
     const uint32_t _taskDenominator;
 
     //!!TODO: some constants below need to be made configurable
-    const bool _useLevelRaceMode {false}; // aka "NFE race mode" - angle mode on roll, acro mode on pitch
     const bool _useQuaternionSpaceForAngleMode {false};
     // ground mode handling
     const float _takeOffThrottleThreshold {0.2F};
@@ -357,6 +362,7 @@ private:
     // configuration and runtime data is const once it has been set in set*Config()
     //
     const filters_config_t _filtersConfig {};
+    const flight_mode_config_t _flightModeConfig {};
     const tpa_config_t _tpaConfig {};
     const tpa_runtime_t _tpa { 0.0F, 1.0F, 0.0F, 1.0F };
     const anti_gravity_config_t _antiGravityConfig {};

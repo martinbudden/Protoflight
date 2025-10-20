@@ -38,12 +38,13 @@ constexpr uint16_t DynamicNotchFilterConfigKey = 0x0300;
 // Note that keys of items in PID profile must go up in jumps of 4, since 1 key is used for each profile
 constexpr uint16_t FlightControllerFiltersConfigKey = 0x0400;
 constexpr uint16_t DynamicIdleControllerConfigKey = 0x0404;
-constexpr uint16_t FlightControllerTPA_ConfigKey = 0x408;
-constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x040C;
-constexpr uint16_t FlightControllerDMaxConfigKey = 0x0410;
-constexpr uint16_t FlightControllerITermRelaxConfigKey = 0x0414;
-constexpr uint16_t FlightControllerYawSpinRecoveryConfigKey = 0x0418;
-constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x041C;
+constexpr uint16_t FlightControllerFlightModeConfigKey = 0x408;
+constexpr uint16_t FlightControllerTPA_ConfigKey = 0x40C;
+constexpr uint16_t FlightControllerAntiGravityConfigKey = 0x0410;
+constexpr uint16_t FlightControllerDMaxConfigKey = 0x0414;
+constexpr uint16_t FlightControllerITermRelaxConfigKey = 0x0418;
+constexpr uint16_t FlightControllerYawSpinRecoveryConfigKey = 0x041C;
+constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x0420;
 
 constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
 constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
@@ -294,6 +295,21 @@ FlightController::filters_config_t NonVolatileStorage::loadFlightControllerFilte
 int32_t NonVolatileStorage::storeFlightControllerFiltersConfig(const FlightController::filters_config_t& config, uint8_t pidProfileIndex)
 {
     return storeItem(FlightControllerFiltersConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerFiltersConfig);
+}
+
+
+FlightController::flight_mode_config_t NonVolatileStorage::loadFlightControllerFlightModeConfig(uint8_t pidProfileIndex) const
+{
+    FlightController::flight_mode_config_t config {};
+    if (loadItem(FlightControllerFlightModeConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }
+    return DEFAULTS::flightControllerFlightModeConfig;
+}
+
+int32_t NonVolatileStorage::storeFlightControllerFlightModeConfig(const FlightController::flight_mode_config_t& config, uint8_t pidProfileIndex)
+{
+    return storeItem(FlightControllerFlightModeConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerFlightModeConfig);
 }
 
 
@@ -586,58 +602,48 @@ int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
 
 int32_t NonVolatileStorage::storeAll(const FlightController& flightController, const RadioController& radioController, uint8_t pidProfile, uint8_t ratesProfile)
 {
-    const AHRS& ahrs = flightController.getAHRS();
-    const ReceiverBase& receiver = radioController.getReceiver();
-    (void)receiver;
-
+#if defined(USE_DYNAMIC_IDLE)
     const DynamicIdleController* dynamicIdleController = flightController.getMixer().getDynamicIdleController();
     if (dynamicIdleController) {
         const DynamicIdleController::config_t dynamicIdleControllerConfig = dynamicIdleController->getConfig();
         storeDynamicIdleControllerConfig(dynamicIdleControllerConfig, pidProfile);
     }
+#endif
 
-    const FlightController::filters_config_t flightControllerFiltersConfig = flightController.getFiltersConfig();
-    storeFlightControllerFiltersConfig(flightControllerFiltersConfig, pidProfile);
+    storeFlightControllerFiltersConfig(flightController.getFiltersConfig(), pidProfile);
 
-    const FlightController::anti_gravity_config_t flightControllerAntiGravityConfig = flightController.getAntiGravityConfig();
-    storeFlightControllerAntiGravityConfig(flightControllerAntiGravityConfig, pidProfile);
+    storeFlightControllerFlightModeConfig(flightController.getFlightModeConfig(), pidProfile);
+
+    storeFlightControllerTPA_Config(flightController.getTPA_Config(), pidProfile);
+
+    storeFlightControllerAntiGravityConfig(flightController.getAntiGravityConfig(), pidProfile);
 
 #if defined(USE_D_MAX)
-    const FlightController::d_max_config_t flightControllerDMaxConfig = flightController.getDMaxConfig();
-    storeFlightControllerDMaxConfig(flightControllerDMaxConfig, pidProfile);
+    storeFlightControllerDMaxConfig(flightController.getDMaxConfig(), pidProfile);
 #endif
-
 #if defined(USE_ITERM_RELAX)
-    const FlightController::iterm_relax_config_t flightControllerITermRelaxConfig = flightController.getITermRelaxConfig();
-    storeFlightControllerITermRelaxConfig(flightControllerITermRelaxConfig, pidProfile);
+    storeFlightControllerITermRelaxConfig(flightController.getITermRelaxConfig(), pidProfile);
 #endif
-
 #if defined(USE_YAW_SPIN_RECOVERY)
-    const FlightController::yaw_spin_recovery_config_t flightControllerYawSpinRecoveryConfig = flightController.getYawSpinRecoveryConfig();
-    storeFlightControllerYawSpinRecoveryConfig(flightControllerYawSpinRecoveryConfig, pidProfile);
+    storeFlightControllerYawSpinRecoveryConfig(flightController.getYawSpinRecoveryConfig(), pidProfile);
 #endif
-
 #if defined(USE_CRASH_RECOVERY)
-    const FlightController::crash_recovery_config_t flightControllerCrashRecoveryConfig = flightController.getCrashRecoveryConfig();
-    storeFlightControllerCrashRecoveryConfig(flightControllerCrashRecoveryConfig, pidProfile);
+    storeFlightControllerCrashRecoveryConfig(flightController.getCrashRecoveryConfig(), pidProfile);
 #endif
 
+    const AHRS& ahrs = flightController.getAHRS();
     const IMU_Filters& imuFilters = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
     storeIMU_FiltersConfig(imuFiltersConfig);
 
 #if defined(USE_RPM_FILTERS)
-    const RPM_Filters::config_t rpmFiltersConfig = imuFilters.getRPM_FiltersConfig();
-    storeRPM_FiltersConfig(rpmFiltersConfig);
+    storeRPM_FiltersConfig(imuFilters.getRPM_FiltersConfig());
 #endif
-
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
-    const DynamicNotchFilter::config_t dynamicNotchFilterConfig = imuFilters.getDynamicNotchFilterConfig();
-    storeDynamicNotchFilterConfig(dynamicNotchFilterConfig);
+    storeDynamicNotchFilterConfig(imuFilters.getDynamicNotchFilterConfig());
 #endif
 
-    const RadioController::rates_t& radioControllerRates = radioController.getRates();
-    storeRadioControllerRates(radioControllerRates, ratesProfile);
+    storeRadioControllerRates(radioController.getRates(), ratesProfile);
 
     return OK;
 }
