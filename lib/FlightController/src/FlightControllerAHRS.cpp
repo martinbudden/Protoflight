@@ -117,13 +117,14 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
 
     const float yawRateSetpointDPS = _sh.PIDS[YAW_RATE_DPS].getSetpoint();
 
-    if (_angleModeUseQuaternionSpace) {
+    if (_useQuaternionSpaceForAngleMode) {
         // Runs the angle PIDs in "quaternion space" rather than "angle space",
         // avoiding the computationally expensive Quaternion::calculateRoll and Quaternion::calculatePitch
         //!!TODO: look at using vector product here
         if (_ahM.angleModeCalculationState == ah_t::STATE_CALCULATE_ROLL) {
-            if (!_useAngleModeOnRollAcroModeOnPitch) {
-                // don't advance calculation to pitch axis when in level race mode
+            if (!_useLevelRaceMode) {
+                // in level race mode we use angle mode on roll, acro mode on pitch
+                // so we don't advance calculation to pitch
                 _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_PITCH;
             }
             _ahM.rollSinAngle = -orientationENU.sinRollClipped(); // sin(x-180) = -sin(x)
@@ -147,8 +148,9 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
         // calculate roll rate and pitch rate setpoints in the NED coordinate frame
         // this is a computationally expensive calculation, so alternate between roll and pitch each time this function is called
         if (_ahM.angleModeCalculationState == ah_t::STATE_CALCULATE_ROLL) {
-            if (!_useAngleModeOnRollAcroModeOnPitch) {
-                // don't advance calculation to pitch axis when in level race mode
+            if (!_useLevelRaceMode) {
+                // in level race mode we use angle mode on roll, acro mode on pitch
+                // so we don't advance calculation to pitch
                 _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_PITCH;
             }
             _ahM.rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)

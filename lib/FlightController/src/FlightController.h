@@ -341,11 +341,11 @@ private:
     const uint32_t _taskDenominator;
 
     //!!TODO: some constants below need to be made configurable
-    const uint32_t _useAngleModeOnRollAcroModeOnPitch {false}; // used for "level race mode" aka "NFE race mode"
+    const bool _useLevelRaceMode {false}; // aka "NFE race mode" - angle mode on roll, acro mode on pitch
+    const bool _useQuaternionSpaceForAngleMode {false};
     // ground mode handling
     const float _takeOffThrottleThreshold {0.2F};
     const uint32_t _takeOffTickThreshold {1000};
-    const uint32_t _angleModeUseQuaternionSpace {false};
     // other constants
     const float _maxRollRateDPS {500.0F};
     const float _maxPitchRateDPS {500.0F};

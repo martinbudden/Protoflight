@@ -3,7 +3,7 @@
 | Library                | On github | tag    | release | platformio | Arduino |
 | ---------------------- | --------- | ------ | ------- | ---------- | ------- |
 | Filters                | yes       | 0.9.3  | 0.9.3   | yes        | no      |
-| PIDF                   | yes       | 0.3.5  | 0.3.5   | yes        | no      |
+| PIDF                   | yes       | 0.3.6  | 0.3.6   | yes        | no      |
 | VectorQuaternionMatrix | yes       | 0.4.3  | 0.4.3   | yes        | no      |
 | SensorFusion           | yes       | 0.2.5  | 0.2.5   | yes        | no      |
 | StreamBuf              | yes       | 0.0.1  | 0.0.1   | yes        | no      |
@@ -21,7 +21,7 @@
 ```text
 Libraries
 ├── Filters @ 0.9.3
-├── PIDF @ 0.3.5
+├── PIDF @ 0.3.6
 ├── TaskBase @ 0.0.7
 ├── VectorQuaternionMatrix @ 0.4.3
 ├── FlashKLV @ 0.0.3
