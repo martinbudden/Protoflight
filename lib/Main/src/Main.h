@@ -120,7 +120,7 @@ public:
 private:
     static IMU_Base& createIMU();
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
-    static FlightController& createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs);
+    static FlightController& createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs);
     static ReceiverBase& createReceiver();
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, IMU_Filters& imuFilters, Debug& debug);

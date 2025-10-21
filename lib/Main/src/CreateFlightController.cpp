@@ -8,7 +8,7 @@
 #include <NonVolatileStorage.h>
 
 
-FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs)
+FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
 {
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)

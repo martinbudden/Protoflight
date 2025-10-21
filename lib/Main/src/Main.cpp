@@ -181,7 +181,7 @@ void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
     }
 #else
     std::array<char, 128> buf;
-    sprintf(&buf[0], "**** %s, %.*s core:%d, priority:%d, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", static_cast<int>(taskInfo.core), static_cast<int>(taskInfo.priority));
+    sprintf(&buf[0], "**** %s, %.*s core:%d, priority:%d, ", taskInfo.name, static_cast<int>(18 - strlen(taskInfo.name)), "                ", static_cast<int>(taskInfo.core), static_cast<int>(taskInfo.priority));
     printf(&buf[0]);
     if (taskInfo.taskIntervalMicroseconds == 0) {
         printf("interrupt driven\r\n");
