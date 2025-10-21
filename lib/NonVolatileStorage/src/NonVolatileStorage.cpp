@@ -270,10 +270,10 @@ int32_t NonVolatileStorage::storeRateProfileIndex(uint8_t profileIndex)
 
 DynamicIdleController::config_t NonVolatileStorage::loadDynamicIdleControllerConfig(uint8_t pidProfileIndex) const
 {
-    DynamicIdleController::config_t config {};
+    {DynamicIdleController::config_t config {};
     if (loadItem(DynamicIdleControllerConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::dynamicIdleControllerConfig;
 }
 
@@ -285,10 +285,10 @@ int32_t NonVolatileStorage::storeDynamicIdleControllerConfig(const DynamicIdleCo
 
 FlightController::filters_config_t NonVolatileStorage::loadFlightControllerFiltersConfig(uint8_t pidProfileIndex) const
 {
-    FlightController::filters_config_t config {};
+    {FlightController::filters_config_t config {};
     if (loadItem(FlightControllerFiltersConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::flightControllerFiltersConfig;
 }
 
@@ -300,10 +300,10 @@ int32_t NonVolatileStorage::storeFlightControllerFiltersConfig(const FlightContr
 
 FlightController::flight_mode_config_t NonVolatileStorage::loadFlightControllerFlightModeConfig(uint8_t pidProfileIndex) const
 {
-    FlightController::flight_mode_config_t config {};
+    {FlightController::flight_mode_config_t config {};
     if (loadItem(FlightControllerFlightModeConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::flightControllerFlightModeConfig;
 }
 
@@ -315,10 +315,10 @@ int32_t NonVolatileStorage::storeFlightControllerFlightModeConfig(const FlightCo
 
 FlightController::tpa_config_t NonVolatileStorage::loadFlightControllerTPA_Config(uint8_t pidProfileIndex) const
 {
-    FlightController::tpa_config_t config {};
+    {FlightController::tpa_config_t config {};
     if (loadItem(FlightControllerTPA_ConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::flightControllerTPA_Config;
 }
 
@@ -330,10 +330,10 @@ int32_t NonVolatileStorage::storeFlightControllerTPA_Config(const FlightControll
 
 FlightController::anti_gravity_config_t NonVolatileStorage::loadFlightControllerAntiGravityConfig(uint8_t pidProfileIndex) const
 {
-    FlightController::anti_gravity_config_t config {};
+    {FlightController::anti_gravity_config_t config {};
     if (loadItem(FlightControllerAntiGravityConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::flightControllerAntiGravityConfig;
 }
 
@@ -346,10 +346,10 @@ int32_t NonVolatileStorage::storeFlightControllerAntiGravityConfig(const FlightC
 #if defined(USE_D_MAX)
 FlightController::d_max_config_t NonVolatileStorage::loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const
 {
-    FlightController::d_max_config_t config {};
+    {FlightController::d_max_config_t config {};
     if (loadItem(FlightControllerDMaxConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::flightControllerDMaxConfig;
 }
 
@@ -363,10 +363,10 @@ int32_t NonVolatileStorage::storeFlightControllerDMaxConfig(const FlightControll
 #if defined(USE_ITERM_RELAX)
 FlightController::iterm_relax_config_t NonVolatileStorage::loadFlightControllerITermRelaxConfig(uint8_t pidProfileIndex) const
 {
-    FlightController::iterm_relax_config_t config {};
+    {FlightController::iterm_relax_config_t config {};
     if (loadItem(FlightControllerITermRelaxConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::flightControllerITermRelaxConfig;
 }
 
@@ -380,10 +380,10 @@ int32_t NonVolatileStorage::storeFlightControllerITermRelaxConfig(const FlightCo
 #if defined(USE_YAW_SPIN_RECOVERY)
 FlightController::yaw_spin_recovery_config_t NonVolatileStorage::loadFlightControllerYawSpinRecoveryConfig(uint8_t pidProfileIndex) const
 {
-    FlightController::yaw_spin_recovery_config_t config {};
+    {FlightController::yaw_spin_recovery_config_t config {};
     if (loadItem(FlightControllerYawSpinRecoveryConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::flightControllerYawSpinRecoveryConfig;
 }
 
@@ -397,10 +397,10 @@ int32_t NonVolatileStorage::storeFlightControllerYawSpinRecoveryConfig(const Fli
 #if defined(USE_CRASH_RECOVERY)
 FlightController::crash_recovery_config_t NonVolatileStorage::loadFlightControllerCrashRecoveryConfig(uint8_t pidProfileIndex) const
 {
-    FlightController::crash_recovery_config_t config {};
+    {FlightController::crash_recovery_config_t config {};
     if (loadItem(FlightControllerCrashRecoveryConfigKey, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::flightControllerCrashRecoveryConfig;
 }
 
@@ -414,10 +414,10 @@ int32_t NonVolatileStorage::storeFlightControllerCrashRecoveryConfig(const Fligh
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
 DynamicNotchFilter::config_t NonVolatileStorage::loadDynamicNotchFilterConfig() const
 {
-    DynamicNotchFilter::config_t config {};
+    {DynamicNotchFilter::config_t config {};
     if (loadItem(DynamicNotchFilterConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::dynamicNotchFilterConfig;
 }
 
@@ -429,10 +429,10 @@ int32_t NonVolatileStorage::storeDynamicNotchFilterConfig(const DynamicNotchFilt
 
 IMU_Filters::config_t NonVolatileStorage::loadIMU_FiltersConfig() const
 {
-    IMU_Filters::config_t config {};
+    {IMU_Filters::config_t config {};
     if (loadItem(IMU_FiltersConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::imuFiltersConfig;
 }
 
@@ -445,10 +445,10 @@ int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& 
 #if defined(USE_RPM_FILTERS)
 RPM_Filters::config_t NonVolatileStorage::loadRPM_FiltersConfig() const
 {
-    RPM_Filters::config_t config {};
+    {RPM_Filters::config_t config {};
     if (loadItem(RPM_FiltersConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
-    }
+    }}
     return DEFAULTS::rpmFiltersConfig;
 }
 
@@ -461,9 +461,9 @@ int32_t NonVolatileStorage::storeRPM_FiltersConfig(const RPM_Filters::config_t& 
 
 RadioController::failsafe_t NonVolatileStorage::loadRadioControllerFailsafe() // NOLINT(readability-make-member-function-const)
 {
-    RadioController::failsafe_t failsafe {};
+    {RadioController::failsafe_t failsafe {};
     if (loadItem(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe))) { // cppcheck-suppress knownConditionTrueFalse
-    }
+    }}
     return DEFAULTS::radioControllerFailsafe;
 }
 
@@ -474,14 +474,10 @@ int32_t NonVolatileStorage::storeRadioControllerFailsafe(const RadioController::
 
 RadioController::rates_t NonVolatileStorage::loadRadioControllerRates(uint8_t rateProfileIndex) const
 {
-    if (rateProfileIndex >= RATE_PROFILE_COUNT) {
-        return DEFAULTS::radioControllerRates;
-    }
-    RadioController::rates_t rates {};
-    const uint16_t key = RadioControllerRatesKey + rateProfileIndex;
-    if (loadItem(key, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
+    {RadioController::rates_t rates {};
+    if (rateProfileIndex < RATE_PROFILE_COUNT && loadItem(RadioControllerRatesKey + rateProfileIndex, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
         return rates;
-    }
+    }}
     return DEFAULTS::radioControllerRates;
 }
 
@@ -497,14 +493,10 @@ int32_t NonVolatileStorage::storeRadioControllerRates(const RadioController::rat
 VehicleControllerBase::PIDF_uint16_t NonVolatileStorage::loadPID(uint8_t pidIndex, uint8_t pidProfileIndex) const
 {
     assert(pidIndex <= FlightController::PID_COUNT);
-    if (pidProfileIndex >= PID_PROFILE_COUNT) {
-        return DEFAULTS::flightControllerPIDs[pidIndex];
-    }
-    const uint16_t key = PID_Keys[pidIndex] + pidProfileIndex;
-    VehicleControllerBase::PIDF_uint16_t pid {};
-    if (loadItem(key, &pid, sizeof(pid))) { // cppcheck-suppress knownConditionTrueFalse
+    {VehicleControllerBase::PIDF_uint16_t pid {};
+    if (pidProfileIndex < PID_PROFILE_COUNT && loadItem(PID_Keys[pidIndex] + pidProfileIndex, &pid, sizeof(pid))) { // cppcheck-suppress knownConditionTrueFalse
         return pid;
-    }
+    }}
     return DEFAULTS::flightControllerPIDs[pidIndex];
 }
 
