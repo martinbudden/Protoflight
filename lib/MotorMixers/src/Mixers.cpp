@@ -34,7 +34,7 @@ float mixQuadX(std::array<float, 4>& motorOutputs, const MotorMixerBase::command
     // High values of yaw can cause motor outputs to go outside range [motorOutputMin, motorOutputMax]
     // If this happens, we reduce the magnitude of the yaw command.
     // This reduces yaw authority, but avoids "yaw jumps"
-    constexpr float motorOutputMax = 1.0F;
+    static constexpr float motorOutputMax = 1.0F;
     overshoot = 0.0F;
     undershoot = 0.0F;
     float commandYaw = commands.yaw;
@@ -136,7 +136,7 @@ float mixHexX(std::array<float, 6>& motorOutputs, const MotorMixerBase::commands
     // High values of yaw can cause motor outputs to go outside range [motorOutputMin, motorOutputMax]
     // If this happens, we reduce the magnitude of the yaw command.
     // This reduces yaw authority, but avoids "yaw jumps"
-    constexpr float motorOutputMax = 1.0F;
+    static constexpr float motorOutputMax = 1.0F;
     float overshoot = 0.0F;
     float undershoot = 0.0F;
     float commandYaw = commands.yaw;
@@ -248,7 +248,7 @@ float mixOctoX(std::array<float, 8>& motorOutputs, const MotorMixerBase::command
     motorOutputs[6] = throttle + commands.roll + commands.pitch;// + commands.yaw; // under back left
     motorOutputs[7] = throttle + commands.roll - commands.pitch;// - commands.yaw; // under front left
 
-    constexpr float motorOutputMax = 1.0F;
+    static constexpr float motorOutputMax = 1.0F;
     float overshoot = 0.0F;
     float undershoot = 0.0F;
     float commandYaw = commands.yaw;

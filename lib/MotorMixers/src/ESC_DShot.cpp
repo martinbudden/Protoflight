@@ -43,7 +43,7 @@ ESC_DShot::ESC_DShot(protocol_e protocol, uint16_t motorPoleCount) :
     _motorPoleCount(motorPoleCount)
 {
     setProtocol(protocol);
-    constexpr float SECONDS_PER_MINUTE = 60.0F;
+    static constexpr float SECONDS_PER_MINUTE = 60.0F;
     _eRPMtoHz = 2.0F * (100.0F / SECONDS_PER_MINUTE) / static_cast<float>(_motorPoleCount);
 }
 

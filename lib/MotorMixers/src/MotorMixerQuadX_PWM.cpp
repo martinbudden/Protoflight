@@ -83,9 +83,9 @@ MotorMixerQuadX_PWM::MotorMixerQuadX_PWM(Debug& debug, const motor_pins_t& pins)
 #else // defaults to FRAMEWORK_ARDUINO
 #if defined(FRAMEWORK_ARDUINO_ESP32)
     // Motor PWM Frequency
-    constexpr int frequency = 150000;
+    static constexpr int frequency = 150000;
     // PWM Resolution
-    constexpr int resolution = 8;
+    static constexpr int resolution = 8;
 #if defined(ESPRESSIF32_6_11_0)
     if (pins.m0 != 0xFF) {
         ledcSetup(M0, frequency, resolution);

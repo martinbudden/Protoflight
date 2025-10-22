@@ -13,7 +13,7 @@ MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(uint32_t taskInterval
     _rpmFilters(rpmFilters)
 {
     (void)pins; // !!TODO: set pins
-    constexpr float SECONDS_PER_MINUTE = 60.0F;
+    static constexpr float SECONDS_PER_MINUTE = 60.0F;
     _eRPMtoHz = 2.0F * (100.0F / SECONDS_PER_MINUTE) / static_cast<float>(_motorPoleCount);
 }
 
