@@ -120,12 +120,12 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
         _flightController.setPID_D_MSP(pidIndex, packet.value);
         transmit = true;
         break;
-    case CommandPacketSetPID::SET_F:
-        _flightController.setPID_F_MSP(pidIndex, packet.value);
-        transmit = true;
-        break;
     case CommandPacketSetPID::SET_S:
         _flightController.setPID_S_MSP(pidIndex, packet.value);
+        transmit = true;
+        break;
+    case CommandPacketSetPID::SET_K:
+        _flightController.setPID_K_MSP(pidIndex, packet.value);
         transmit = true;
         break;
     case CommandPacketSetPID::SET_PD: {
@@ -143,9 +143,9 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
         [[fallthrough]];
     case CommandPacketSetPID::SAVE_D:
         [[fallthrough]];
-    case CommandPacketSetPID::SAVE_F:
-        [[fallthrough]];
     case CommandPacketSetPID::SAVE_S:
+        [[fallthrough]];
+    case CommandPacketSetPID::SAVE_K:
         [[fallthrough]];
     case CommandPacketSetPID::SAVE_PD:
         //Serial.printf("Saved PID packetType:%d pidIndex:%d setType:%d\r\n", packet.type, packet.pidIndex, packet.setType);

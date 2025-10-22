@@ -292,7 +292,7 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     //
     // DTerm is zero for yawRate, so call updatePIS() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no feedforward
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
-    _ahM.outputs[YAW_RATE_DPS] = _sh.PIDS[YAW_RATE_DPS].updatePIS(yawRateDPS, deltaT);
+    _ahM.outputs[YAW_RATE_DPS] = _sh.PIDS[YAW_RATE_DPS].updateSPI(yawRateDPS, deltaT);
     // filter the output
     _ahM.outputs[YAW_RATE_DPS] = _sh.outputFilters[YAW_RATE_DPS].filter(_ahM.outputs[YAW_RATE_DPS]);
 

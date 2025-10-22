@@ -191,9 +191,12 @@ H anti_gravity_gain:1000
 #if defined(USE_INTEGRATED_YAW_CONTROL)
         BLACKBOX_PRINT_HEADER_LINE("use_integrated_yaw", "%d",              currentPidProfile.use_integrated_yaw);
 #endif
-        BLACKBOX_PRINT_HEADER_LINE("ff_weight", "%d,%d,%d",                 _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kf,
-                                                                            _flightController.getPID_MSP(FlightController::PITCH_RATE_DPS).kf,
-                                                                            _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kf);
+        BLACKBOX_PRINT_HEADER_LINE("s_roll", "%d",                          _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).ks)
+        BLACKBOX_PRINT_HEADER_LINE("s_pitch", "%d",                         _flightController.getPID_MSP(FlightController::PITCH_RATE_DPS).ks)
+        BLACKBOX_PRINT_HEADER_LINE("s_yaw", "%d",                           _flightController.getPID_MSP(FlightController::YAW_RATE_DPS).ks)
+        BLACKBOX_PRINT_HEADER_LINE("ff_weight", "%d,%d,%d",                 _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kk,
+                                                                            _flightController.getPID_MSP(FlightController::PITCH_RATE_DPS).kk,
+                                                                            _flightController.getPID_MSP(FlightController::YAW_RATE_DPS).kk);
 
 
         // End of Betaflight controller parameters

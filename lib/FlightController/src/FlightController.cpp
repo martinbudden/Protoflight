@@ -63,8 +63,8 @@ VehicleControllerBase::PIDF_uint16_t FlightController::getPID_MSP(size_t index) 
         .kp = static_cast<uint16_t>(_sh.PIDS[pidIndex].getP() / _scaleFactors.kp),
         .ki = static_cast<uint16_t>(_sh.PIDS[pidIndex].getI() / _scaleFactors.ki),
         .kd = static_cast<uint16_t>(_sh.PIDS[pidIndex].getD() / _scaleFactors.kd),
-        .kf = static_cast<uint16_t>(_sh.PIDS[pidIndex].getF() / _scaleFactors.kf),
         .ks = static_cast<uint16_t>(_sh.PIDS[pidIndex].getS() / _scaleFactors.ks),
+        .kk = static_cast<uint16_t>(_sh.PIDS[pidIndex].getK() / _scaleFactors.kk),
     };
     return ret;
 }
@@ -76,8 +76,8 @@ VehicleControllerBase::PIDF_uint16_t FlightController::getPID_Constants(pid_inde
         static_cast<uint16_t>(std::lroundf(pid.kp / _scaleFactors.kp)),
         static_cast<uint16_t>(std::lroundf(pid.ki / _scaleFactors.ki)),
         static_cast<uint16_t>(std::lroundf(pid.kd / _scaleFactors.kd)),
-        static_cast<uint16_t>(std::lroundf(pid.kf / _scaleFactors.kf)),
-        static_cast<uint16_t>(std::lroundf(pid.ks / _scaleFactors.ks))
+        static_cast<uint16_t>(std::lroundf(pid.ks / _scaleFactors.ks)),
+        static_cast<uint16_t>(std::lroundf(pid.kk / _scaleFactors.kk))
     };
 
     return pid16;
@@ -94,8 +94,8 @@ void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_
         static_cast<float>(pid16.kp) * _scaleFactors.kp,
         static_cast<float>(pid16.ki) * _scaleFactors.ki,
         static_cast<float>(pid16.kd) * _scaleFactors.kd,
-        static_cast<float>(pid16.kf) * _scaleFactors.kf,
-        static_cast<float>(pid16.ks) * _scaleFactors.ks
+        static_cast<float>(pid16.ks) * _scaleFactors.ks,
+        static_cast<float>(pid16.kk) * _scaleFactors.kk
     };
 
     _sh.PIDS[pidIndex].setPID(pid);
@@ -128,16 +128,16 @@ void FlightController::setPID_D_MSP(pid_index_e pidIndex, uint16_t kd)
     _fcM.pidConstants[pidIndex].kd = _sh.PIDS[pidIndex].getD();
 }
 
-void FlightController::setPID_F_MSP(pid_index_e pidIndex, uint16_t kf)
-{
-    _sh.PIDS[pidIndex].setF(kf * _scaleFactors.kf);
-    _fcM.pidConstants[pidIndex].kf = _sh.PIDS[pidIndex].getF();
-}
-
 void FlightController::setPID_S_MSP(pid_index_e pidIndex, uint16_t ks)
 {
-    _sh.PIDS[pidIndex].setF(ks * _scaleFactors.ks);
+    _sh.PIDS[pidIndex].setS(ks * _scaleFactors.ks);
     _fcM.pidConstants[pidIndex].ks = _sh.PIDS[pidIndex].getS();
+}
+
+void FlightController::setPID_K_MSP(pid_index_e pidIndex, uint16_t kk)
+{
+    _sh.PIDS[pidIndex].setK(kk * _scaleFactors.kk);
+    _fcM.pidConstants[pidIndex].kk = _sh.PIDS[pidIndex].getK();
 }
 
 uint32_t FlightController::getOutputPowerTimeMicroseconds() const
@@ -393,19 +393,19 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
     }
     if (motorsIsOn()) {
         const PIDF::error_t rollRateError = _sh.PIDS[ROLL_RATE_DPS].getError();
-        telemetry.rollRateError = { rollRateError.P, rollRateError.I, rollRateError.D, rollRateError.F, rollRateError.S };
+        telemetry.rollRateError = { rollRateError.P, rollRateError.I, rollRateError.D, rollRateError.S, rollRateError.K };
 
         const PIDF::error_t pitchRateError = _sh.PIDS[PITCH_RATE_DPS].getError();
-        telemetry.pitchRateError = { pitchRateError.P, pitchRateError.I, pitchRateError.D, pitchRateError.F, pitchRateError.S };
+        telemetry.pitchRateError = { pitchRateError.P, pitchRateError.I, pitchRateError.D, pitchRateError.S, pitchRateError.K };
 
         const PIDF::error_t yawRateError = _sh.PIDS[YAW_RATE_DPS].getError();
-        telemetry.yawRateError = { yawRateError.P, yawRateError.I, yawRateError.D, yawRateError.F, yawRateError.S };
+        telemetry.yawRateError = { yawRateError.P, yawRateError.I, yawRateError.D, yawRateError.S, yawRateError.K };
 
         const PIDF::error_t rollAngleError = _sh.PIDS[ROLL_ANGLE_DEGREES].getError();
-        telemetry.rollAngleError = { rollAngleError.P, rollAngleError.I, rollAngleError.D, rollAngleError.F, rollAngleError.S };
+        telemetry.rollAngleError = { rollAngleError.P, rollAngleError.I, rollAngleError.D, rollAngleError.S, rollAngleError.K };
 
         const PIDF::error_t pitchAngleError = _sh.PIDS[PITCH_ANGLE_DEGREES].getError();
-        telemetry.pitchAngleError = { pitchAngleError.P, pitchAngleError.I, pitchAngleError.D, pitchAngleError.F, pitchAngleError.S };
+        telemetry.pitchAngleError = { pitchAngleError.P, pitchAngleError.I, pitchAngleError.D, pitchAngleError.S, pitchAngleError.K };
     } else {
         telemetry.rollRateError =  { 0.0F, 0.0F, 0.0F, 0.0F, 0.0F };
         telemetry.pitchRateError = { 0.0F, 0.0F, 0.0F, 0.0F, 0.0F };

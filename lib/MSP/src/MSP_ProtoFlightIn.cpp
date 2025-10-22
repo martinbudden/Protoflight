@@ -110,10 +110,10 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             src.readU8(); // !!TODO: abs_control_gain
             src.readU8(); // !!TODO: throttle_boost
             src.readU8(); // !!TODO: acro_trainer_angle_limit
-            // PID controller feedforward terms
-            _flightController.setPID_F_MSP(FlightController::ROLL_RATE_DPS, src.readU16());
-            _flightController.setPID_F_MSP(FlightController::PITCH_RATE_DPS, src.readU16());
-            _flightController.setPID_F_MSP(FlightController::YAW_RATE_DPS, src.readU16());
+            // PID controller kick terms
+            _flightController.setPID_K_MSP(FlightController::ROLL_RATE_DPS, src.readU16());
+            _flightController.setPID_K_MSP(FlightController::PITCH_RATE_DPS, src.readU16());
+            _flightController.setPID_K_MSP(FlightController::YAW_RATE_DPS, src.readU16());
             src.readU8(); // was currentPidProfile->antiGravityMode
         }
         break;

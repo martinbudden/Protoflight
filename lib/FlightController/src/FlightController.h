@@ -267,8 +267,8 @@ public:
     void setPID_P_MSP(pid_index_e pidIndex, uint16_t kp);
     void setPID_I_MSP(pid_index_e pidIndex, uint16_t ki);
     void setPID_D_MSP(pid_index_e pidIndex, uint16_t kd);
-    void setPID_F_MSP(pid_index_e pidIndex, uint16_t kf);
     void setPID_S_MSP(pid_index_e pidIndex, uint16_t ks);
+    void setPID_K_MSP(pid_index_e pidIndex, uint16_t kk);
 
     inline float getPID_Setpoint(pid_index_e pidIndex) const { return _sh.PIDS[pidIndex].getSetpoint(); }
     void setPID_Setpoint(pid_index_e pidIndex, float setpoint) { _sh.PIDS[pidIndex].setSetpoint(setpoint); }
@@ -466,7 +466,7 @@ private:
         0.032029F,
         0.244381F,
         0.000529F,
-        0.013754F,
-        0.01F // !!TODO: provisional value
+        0.01F, // !!TODO: provisional value
+        0.013754F
     };
 };

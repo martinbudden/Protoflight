@@ -68,7 +68,7 @@ void Main::loadPID_ProfileFromNonVolatileStorage(FlightController& flightControl
         const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
 #if !defined(FRAMEWORK_STM32_CUBE)
         std::array<char, 128> buf;
-        sprintf(&buf[0], "**** %15s PID loaded from NVS: p:%d, i:%d, d:%d, f:%d, s:%d\r\n", pidName.c_str(), pid.kp, pid.ki, pid.kd, pid.kf, pid.ks);
+        sprintf(&buf[0], "**** %15s PID loaded from NVS: p:%d, i:%d, d:%d, s:%d, k:%d\r\n", pidName.c_str(), pid.kp, pid.ki, pid.kd, pid.ks, pid.kk);
         print(&buf[0]);
 #else
         (void)pidName;

@@ -110,8 +110,8 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
         mainState.axisPID_P[ii] = static_cast<int32_t>(std::lroundf(pidError.P));
         mainState.axisPID_I[ii] = static_cast<int32_t>(std::lroundf(pidError.I));
         mainState.axisPID_D[ii] = static_cast<int32_t>(std::lroundf(pidError.D));
-        mainState.axisPID_F[ii] = static_cast<int32_t>(std::lroundf(pidError.F));
-        //mainState.axisPID_S[ii] = static_cast<int32_t>(std::lroundf(pidError.S));
+        mainState.axisPID_S[ii] = static_cast<int32_t>(std::lroundf(pidError.S));
+        mainState.axisPID_K[ii] = static_cast<int32_t>(std::lroundf(pidError.K));
         mainState.setpoint[ii] = static_cast<int16_t>(std::lroundf(pid.getSetpoint()));
 #if defined(USE_MAGNETOMETER)
         mainState.magADC[ii] = static_cast<int16_t>(mag.magADC.v[ii]);

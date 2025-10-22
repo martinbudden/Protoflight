@@ -8,8 +8,8 @@ struct flight_controller_quadcopter_telemetry_t {
         float P;
         float I;
         float D;
-        float F;
         float S;
+        float K;
     };
     pidf_error_t rollRateError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
     pidf_error_t pitchRateError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
