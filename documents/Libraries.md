@@ -5,11 +5,11 @@
 | Filters                | yes       | 0.9.3  | 0.9.3   | yes        | no      |
 | PIDF                   | yes       | 0.3.6  | 0.3.6   | yes        | no      |
 | VectorQuaternionMatrix | yes       | 0.4.3  | 0.4.3   | yes        | no      |
-| SensorFusion           | yes       | 0.2.5  | 0.2.5   | yes        | no      |
+| SensorFusion           | yes       | 0.2.6  | 0.2.6   | yes        | no      |
 | StreamBuf              | yes       | 0.0.1  | 0.0.1   | yes        | no      |
 | IMU                    | yes       | 0.9.7  | 0.9.7   | yes        | no      |
 | TaskBase               | yes       | 0.0.7  | 0.0.7   | yes        | no      |
-| StabilizedVehicle      | yes       | 0.5.15 | 0.5.15  | yes        | no      |
+| StabilizedVehicle      | yes       | 0.5.16 | 0.5.16  | yes        | no      |
 | Receiver               | yes       | 0.5.10 | 0.5.10   | yes        | no      |
 | Backchannel            | yes       | 0.1.8  | 0.1.8   | yes        | no      |
 | MultiWiiSerialProtocol | yes       | 0.0.8  | 0.0.8   | yes        | no      |
@@ -26,13 +26,13 @@ Libraries
 ├── VectorQuaternionMatrix @ 0.4.3
 ├── FlashKLV @ 0.0.3
 │
-├── SensorFusion @ 0.2.5
+├── SensorFusion @ 0.2.6
 │   └── VectorQuaternionMatrix @ 0.4.3
 │
 ├── IMU @ 0.9.7
 │   └── VectorQuaternionMatrix @ 0.4.3
 │
-├── StabilizedVehicle @ 0.5.15
+├── StabilizedVehicle @ 0.5.16
 │   ├── TaskBase @ 0.0.7
 │   ├── VectorQuaternionMatrix @ 0.4.3
 │   ├── IMU @ 0.9.7
