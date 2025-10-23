@@ -87,7 +87,7 @@ void IMU_Filters::setRPM_FiltersConfig(const RPM_Filters::config_t& config)
 }
 
 /*!
-This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
+This is called from within AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */
 void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
 {

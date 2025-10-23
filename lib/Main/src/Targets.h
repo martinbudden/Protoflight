@@ -287,7 +287,7 @@ Targets
     #define IMU_I2C_PINS        stm32_i2c_pins_t{.sda={PB,7},.scl={PB,6},.irq={0,0xFF}}
 #endif
 
-    #define USE_RECEIVER_SBUS
+    #define USE_RECEIVER_CRSF
     #define RECEIVER_UART_INDEX 0
     #define RECEIVER_PINS       stm32_rx_pins_t{.rx={PB,7},.tx={PB,6}}
 
@@ -316,7 +316,7 @@ Targets
     #define IMU_SPI_INDEX       BUS_INDEX_1
     #define IMU_SPI_PINS        stm32_spi_pins_t{.cs={PE,3},.sck={PA,5},.cipo={PA,6},.copi={PA,7},.irq={PE,0}}
 
-    #define USE_RECEIVER_SBUS
+    #define USE_RECEIVER_IBUS
     #define RECEIVER_UART_INDEX 0
     #define RECEIVER_PINS       stm32_rx_pins_t{.rx={PA,0},.tx={PA,0}}
 
@@ -330,9 +330,9 @@ Targets
 #if defined(TARGET_AFROFLIGHT_F301CB)
     #define BOARD_IDENTIFIER    "AfroFlight_F301CB"
 
-    #define USE_D_MAX
-    #define USE_ITERM_RELAX
-    #define USE_YAW_SPIN_RECOVERY
+    //#define USE_D_MAX
+    //#define USE_ITERM_RELAX
+    //#define USE_YAW_SPIN_RECOVERY
 
     #define USART_1_PINS        stm32_rx_pins_t{.rx={PA,10},.tx={PA,9}} // TX output is always inverted (for FrSky). Internally connected to USB port via CP2102 IC
     #define USART_2_PINS        stm32_rx_pins_t{.rx={PA,3},.tx={PA,2}}

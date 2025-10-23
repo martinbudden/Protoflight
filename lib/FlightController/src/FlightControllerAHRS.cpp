@@ -3,24 +3,10 @@
 #include <AHRS.h>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+// #defines to catch inadvertent use of _fcM or _rxM in this file.
 #define _fcM "error not modifiable in this task"
 #define _rxM "error not modifiable in this task"
 // NOLINTEND(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
-
-float FlightController::getPitchAngleDegreesRaw() const
-{
-    return _ahM.pitchAngleDegreesRaw;
-}
-
-float FlightController::getRollAngleDegreesRaw() const
-{
-    return _ahM.rollAngleDegreesRaw;
-}
-
-float FlightController::getYawAngleDegreesRaw() const
-{
-    return _ahM.yawAngleDegreesRaw;
-}
 
 /*!
 NOTE: CALLED FROM WITHIN THE AHRS TASK

@@ -1,7 +1,6 @@
 #include "Debug.h"
 #include "FlightController.h"
 
-#include <AHRS.h>
 #include <Blackbox.h> // just needed for //_blackbox->finish() and endlog()
 
 #if !defined(UNIT_TEST_BUILD)
@@ -20,12 +19,18 @@
 
 /*!
 Constructor. Sets member data.
+
+The FlightController task has the same task interval as the AHRS task.
+The FlightController task function FlightController::outputToMixer waits on a message queue that is signalled once every time
+the AHRS task function AHRS::readIMUandUpdateOrientation runs.
+
+MotorMixer::outputToMotors is called every _outputToMotorsDenominator times FlightController::outputToMixer is called
 */
-FlightController::FlightController(uint32_t taskDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug) :
-    VehicleControllerBase(AIRCRAFT, PID_COUNT, ahrs.getTaskIntervalMicroseconds() / taskDenominator, ahrs),
+FlightController::FlightController(uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug) :
+    VehicleControllerBase(AIRCRAFT, PID_COUNT, ahrs.getTaskIntervalMicroseconds(), ahrs),
     _mixer(motorMixer),
     _debug(debug),
-    _taskDenominator(taskDenominator),
+    _outputToMotorsDenominator(outputToMotorsDenominator),
     _fcC(_fcM),
     _rxC(_rxM)
 {
@@ -33,6 +38,7 @@ FlightController::FlightController(uint32_t taskDenominator, AHRS& ahrs, MotorMi
 }
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+// #defines to catch inadvertent use of _rxM or _ahM in this file.
 #define _rxM "error not modifiable in this task"
 #define _ahM "error not modifiable in this task"
 // NOLINTEND(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
@@ -230,10 +236,11 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
     // always used PT1 filters for DTerm filters.
     const_cast<uint8_t&>(filtersConfig.dterm_lpf1_type) = FlightController::filters_config_t::PT1;
     const_cast<uint8_t&>(filtersConfig.dterm_lpf2_type) = FlightController::filters_config_t::PT1;
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+
     //!!TODO: check dT value for filters config
     const float deltaT = static_cast<float>(_taskIntervalMicroseconds) * 0.000001F;
-    //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_taskDenominator);
-    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+    //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_outputToMotorsDenominator);
 
     // DTerm filters
     if (filtersConfig.dterm_lpf1_hz == 0) {
@@ -417,18 +424,21 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
 }
 
 /*!
+NOTE: CALLED FROM WITHIN THE FlightController TASK
+
 Called by the scheduler when signalled by the AHRS task that output data is available.
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {
-    //!!TODO: move taskDenominator handling into mixer.outputToMotors, since we want to set RPM filter frequencies even if we are not outputing to motors
-    ++_fcM.taskSignalledCount;
-    if (_fcM.taskSignalledCount < _taskDenominator) {
-        // update the RPM filter frequencies, even if we do not output to the motors - this will run one iteration of the RPM filter state machine
-        _mixer.setRPM_FilterFrequencies();
+    // perform and RPM filter iteration step, even if we do not output to the motors
+    _mixer.rpmFilterIterationStep();
+
+    // output to motors every _outputToMotorsDenominator times outputToMixer is called
+    ++_fcM.outputToMixerCount;
+    if (_fcM.outputToMixerCount < _outputToMotorsDenominator) {
         return;
     }
-    _fcM.taskSignalledCount = 0;
+    _fcM.outputToMixerCount = 0;
 
     if (_radioController->getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
         MotorMixerBase::commands_t commands {

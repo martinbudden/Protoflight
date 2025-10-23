@@ -39,7 +39,7 @@ positive yaw is nose right
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug);
+    FlightController(uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug);
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
@@ -243,15 +243,12 @@ public:
     flight_mode_flag_e getFlightModeFlags() const { return ANGLE_MODE; } //!!TODO
     bool isRcModeActive(uint8_t rcMode) const;
 
-    float getPitchAngleDegreesRaw() const;
-    float getRollAngleDegreesRaw() const;
-    float getYawAngleDegreesRaw() const;
+    float getPitchAngleDegreesRaw() const { return _ahM.pitchAngleDegreesRaw; }
+    float getRollAngleDegreesRaw() const { return _ahM.rollAngleDegreesRaw; }
+    float getYawAngleDegreesRaw() const { return _ahM.yawAngleDegreesRaw; }
+
     float getBatteryVoltage() const;
     float getAmperage() const;
-
-    uint8_t getCurrentPidProfileIndex() const { return 0; }
-    uint8_t getPidProfileCount() const { return 1; }
-    uint8_t getCurrentControlRateProfileIndex() const { return 0; }
 
     virtual uint32_t getOutputPowerTimeMicroseconds() const override;
 
@@ -344,7 +341,7 @@ private:
     RadioControllerBase* _radioController {};
     Blackbox* _blackbox {};
     DynamicNotchFilter* _dynamicNotchFilter {nullptr};
-    const uint32_t _taskDenominator;
+    const uint32_t _outputToMotorsDenominator;
 
     //!!TODO: some constants below need to be made configurable
     const bool _useQuaternionSpaceForAngleMode {false};
@@ -391,7 +388,7 @@ private:
     // data that can be set by more than one task is in the shared_t struct
     //
     struct fc_t {
-        uint32_t taskSignalledCount {0};
+        uint32_t outputToMixerCount {0};
         control_mode_e controlMode {CONTROL_MODE_RATE};
         float mixerAdjustedThrottle {0.0F};
         std::array<PIDF::PIDF_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning

@@ -100,6 +100,8 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
 {
     //Serial.printf("SetPID packet type:%d, len:%d, pidIndex:%d setType:%d value:%3d f0:%f\r\n", packet.type, packet.len, packet.pidIndex, packet.setType, packet.value, packet.f0);
 
+    static_assert(static_cast<int>(TD_PID::MAX_PID_COUNT) >= static_cast<int>(FlightController::PID_COUNT));
+
     const auto pidIndex = static_cast<FlightController::pid_index_e>(packet.pidIndex);
     if (pidIndex >= FlightController::PID_COUNT) {
         //Serial.printf("Backchannel::packetSetPID invalid pidIndex:%d\r\n", packet.pidIndex);

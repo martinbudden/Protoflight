@@ -13,7 +13,7 @@
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, RadioController& radioController, IMU_Filters& imuFilters, Debug& debug)
+Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters, const Debug& debug)
 {
     // Statically allocate the Blackbox and associated objects
     static BlackboxMessageQueue         blackboxMessageQueue;

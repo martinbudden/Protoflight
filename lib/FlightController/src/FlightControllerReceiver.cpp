@@ -4,10 +4,23 @@
 #include <RadioController.h>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
+// #defines to catch inadvertent use of _fcM or _ahM in this file.
 #define _fcM "error not modifiable in this task"
 #define _ahM "error not modifiable in this task"
 // NOLINTEND(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 
+
+/*!
+NOTE: CALLED FROM INITIALIZATION
+*/
+void FlightController::setYawSpinThresholdDPS(float yawSpinThresholdDPS)
+{
+#if defined(USE_YAW_SPIN)
+    _sh.yawSpinThresholdDPS = yawSpinThresholdDPS;
+#else
+    (void)yawSpinThresholdDPS;
+#endif
+}
 
 /*!
 NOTE: CALLED FROM WITHIN THE RECEIVER TASK
@@ -114,14 +127,6 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     _debug.set(DEBUG_ANTI_GRAVITY, 3, lrintf(PTermBoostPitch * 1000.0F));
 }
 
-void FlightController::setYawSpinThresholdDPS(float yawSpinThresholdDPS)
-{
-#if defined(USE_YAW_SPIN)
-    _sh.yawSpinThresholdDPS = yawSpinThresholdDPS;
-#else
-    (void)yawSpinThresholdDPS;
-#endif
-}
 /*!
 NOTE: CALLED FROM WITHIN THE RECEIVER TASK
 

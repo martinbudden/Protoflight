@@ -67,6 +67,7 @@ public:
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
     void setFrequencyHz(size_t motorIndex, float frequencyHz); // called from the motor mixer
+    void iterationStep(); // called from the motor mixer
     void filter(xyz_t& input, size_t motorIndex);
     bool isActive() const { return _config.rpm_filter_harmonics > 0; }
     size_t getMotorCount() const { return _motorCount; }
@@ -78,15 +79,20 @@ private:
     size_t _motorCount;
     float _looptimeSeconds;
     // computation data so setFrequencyHz() can be run as a state machine
-    enum state_e { STATE_FUNDAMENTAL, STATE_SECOND_HARMONIC, STATE_THIRD_HARMONIC };
-    struct state_t {
-        state_e state;
+    enum state_e { STATE_STOPPED, STATE_FUNDAMENTAL, STATE_SECOND_HARMONIC, STATE_THIRD_HARMONIC };
+    struct motor_state_t {
         float frequencyHzUnclipped;
         float weightMultiplier;
+        float omega;
         float sinOmega;
         float two_cosOmega;
     };
-    state_t _state  { STATE_FUNDAMENTAL, 0.0F, 0.0F, 0.0F, 0.0F };
+    struct state_t {
+        state_e state;
+        size_t motorIndex;
+        motor_state_t motorStates[MAX_MOTOR_COUNT];
+    };
+    state_t _state {};
 
     std::array<float, RPM_FILTER_HARMONICS_COUNT> _weights {};
     float _minFrequencyHz { 100.0F };

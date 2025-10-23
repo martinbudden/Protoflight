@@ -7,6 +7,7 @@ void RPM_Filters::setConfig(const config_t& config)
     const_cast<config_t&>(_config) = config; // NOLINT(cppcoreguidelines-pro-type-const-cast)
     _Q = static_cast<float>(_config.rpm_filter_q) * 0.01F;
 
+    _state.state = STATE_STOPPED;
     // just under  Nyquist frequency (ie just under half sampling rate)
     // for 8kHz loop this is 3840Hz
     _maxFrequencyHz = 480000.0F / static_cast<float>(_looptimeSeconds);
@@ -37,95 +38,136 @@ void RPM_Filters::setConfig(const config_t& config)
 /*!
 NOTE: CALLED FROM WITHIN THE FLIGHT CONTROLLER TASK
 
-This is called from withing MotorMixerQuadX_DShot::outputToMotors and so needs to be FAST.
+This is called from MotorMixer::outputToMotors and so needs to be FAST.
 */
 void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
 {
-    // use state machine so that on harmonic is set each time this function is called
+    if (_config.rpm_filter_lpf_hz == 0) {
+        return;
+    }
+    if (_state.state == STATE_STOPPED) {
+        _state.state = STATE_FUNDAMENTAL;
+        _state.motorIndex = 0;
+    }
+    motor_state_t& motorState = _state.motorStates[motorIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+
+    frequencyHz = _motorRPM_Filters[motorIndex].filter(frequencyHz);
+    motorState.frequencyHzUnclipped = frequencyHz;
+    frequencyHz = clip(frequencyHz, _minFrequencyHz, _maxFrequencyHz);
+
+    const float marginFrequencyHz = frequencyHz - _minFrequencyHz;
+    motorState.weightMultiplier = (marginFrequencyHz < _fadeRangeHz) ? marginFrequencyHz / _fadeRangeHz : 1.0F;
+
+    const BiquadFilterT<xyz_t>& rpmFilter = _filters[motorIndex][FUNDAMENTAL]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    motorState.omega = rpmFilter.calculateOmega(frequencyHz);
+}
+
+/*!
+NOTE: CALLED FROM WITHIN THE FLIGHT CONTROLLER TASK
+
+This is called from MotorMixer::rpmFilterIterationStep and so needs to be FAST.
+*/
+void RPM_Filters::iterationStep() // NOLINT(readability-function-cognitive-complexity)
+{
+    // state machine sets notch filter for one harmonic of one motor on each iteration.
+
     switch (_state.state) {
+    case STATE_STOPPED:
+        return;
     case STATE_FUNDAMENTAL: {
-        frequencyHz = _motorRPM_Filters[motorIndex].filter(frequencyHz);
-
-        _state.frequencyHzUnclipped = frequencyHz;
-        frequencyHz = clip(frequencyHz, _minFrequencyHz, _maxFrequencyHz);
-
-        const float marginFrequencyHz = frequencyHz - _minFrequencyHz;
-        _state.weightMultiplier = (marginFrequencyHz < _fadeRangeHz) ? marginFrequencyHz / _fadeRangeHz : 1.0F;
-
-        BiquadFilterT<xyz_t>& rpmFilter = _filters[motorIndex][FUNDAMENTAL]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-        const float omega = rpmFilter.calculateOmega(frequencyHz);
+        BiquadFilterT<xyz_t>& rpmFilter = _filters[_state.motorIndex][FUNDAMENTAL]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
         // omega = frequency * _2PiLoopTimeSeconds
         // maxFrequency < 0.5 / looptimeSeconds
         // maxOmega = (0.5 / looptimeSeconds) * 2PiLooptimeSeconds = 0.5 * 2PI = PI;
         // so omega is in range [0, PI]
-        FastTrigonometry::sincos(omega, _state.sinOmega, _state.two_cosOmega);
-        _state.two_cosOmega *= 2.0F;
+        motor_state_t& motorState = _state.motorStates[_state.motorIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        FastTrigonometry::sincos(motorState.omega, motorState.sinOmega, motorState.two_cosOmega);
+        motorState.two_cosOmega *= 2.0F;
         LOCK_FILTERS();
-        rpmFilter.setNotchFrequencyWeighted(_state.sinOmega, _state.two_cosOmega, _weights[FUNDAMENTAL]*_state.weightMultiplier);
+        rpmFilter.setNotchFrequencyWeighted(motorState.sinOmega, motorState.two_cosOmega, _weights[FUNDAMENTAL]*motorState.weightMultiplier);
         UNLOCK_FILTERS();
-        if (_config.rpm_filter_harmonics >= 2) {
-            if (_config.rpm_filter_weights[SECOND_HARMONIC] != 0) {
-                _state.state = STATE_SECOND_HARMONIC;
-            } else if (_config.rpm_filter_harmonics >= 3 && _config.rpm_filter_weights[THIRD_HARMONIC] != 0) {
-                _state.state = STATE_THIRD_HARMONIC;
+        // advance to next harmonic if we have dealt with all motors
+        ++_state.motorIndex;
+        if (_state.motorIndex == _motorCount) {
+            _state.motorIndex = 0;
+            if (_config.rpm_filter_harmonics >= 2) {
+                if (_config.rpm_filter_weights[SECOND_HARMONIC] != 0) {
+                    _state.state = STATE_SECOND_HARMONIC;
+                } else if (_config.rpm_filter_harmonics >= 3 && _config.rpm_filter_weights[THIRD_HARMONIC] != 0) {
+                    _state.state = STATE_THIRD_HARMONIC;
+                } else {
+                    _state.state = STATE_STOPPED;
+                }
             } else {
-                _state.state = STATE_FUNDAMENTAL;
+                _state.state = STATE_STOPPED;
             }
-        } else {
-            _state.state = STATE_FUNDAMENTAL;
         }
         break;
     }
-    case STATE_SECOND_HARMONIC:
-        if (_state.frequencyHzUnclipped > _halfOfMaxFrequencyHz) { // ie 2.0F * frequencyHzUnclipped > _maxFrequencyHz
+    case STATE_SECOND_HARMONIC: {
+        const motor_state_t& motorState = _state.motorStates[_state.motorIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        if (motorState.frequencyHzUnclipped > _halfOfMaxFrequencyHz) { // ie 2.0F * frequencyHzUnclipped > _maxFrequencyHz
             // no point filtering the second harmonic if it is above the Nyquist frequency
             _weights[SECOND_HARMONIC] = 0.0F;
         } else {
             _weights[SECOND_HARMONIC] = _config.rpm_filter_weights[SECOND_HARMONIC] * 0.01F;
-            BiquadFilterT<xyz_t>& rpmFilter = _filters[motorIndex][SECOND_HARMONIC]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+            BiquadFilterT<xyz_t>& rpmFilter = _filters[_state.motorIndex][SECOND_HARMONIC]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
             // sin(2θ) = 2 * sin(θ) * cos(θ)
             // cos(2θ) = 2 * cos^2(θ) - 1
-            const float sin_2Omega = _state.sinOmega * _state.two_cosOmega;
-            const float two_cos_2Omega = _state.two_cosOmega * _state.two_cosOmega - 2.0F;
+            const float sin_2Omega = motorState.sinOmega * motorState.two_cosOmega;
+            const float two_cos_2Omega = motorState.two_cosOmega * motorState.two_cosOmega - 2.0F;
             LOCK_FILTERS();
-            rpmFilter.setNotchFrequencyWeighted(sin_2Omega, two_cos_2Omega, _weights[SECOND_HARMONIC]*_state.weightMultiplier);
+            rpmFilter.setNotchFrequencyWeighted(sin_2Omega, two_cos_2Omega, _weights[SECOND_HARMONIC]*motorState.weightMultiplier);
             UNLOCK_FILTERS();
         }
-        if (_config.rpm_filter_harmonics >= 3 && _config.rpm_filter_weights[THIRD_HARMONIC] != 0) {
-            _state.state = STATE_THIRD_HARMONIC;
-        } else {
-            _state.state = STATE_FUNDAMENTAL;
+        // advance to next harmonic if we have dealt with all motors
+        ++_state.motorIndex;
+        if (_state.motorIndex == _motorCount) {
+            _state.motorIndex = 0;
+            if (_config.rpm_filter_harmonics >= 3 && _config.rpm_filter_weights[THIRD_HARMONIC] != 0) {
+                _state.state = STATE_THIRD_HARMONIC;
+            } else {
+                _state.state = STATE_STOPPED;
+            }
         }
         break;
-    case STATE_THIRD_HARMONIC:
-        if (_state.frequencyHzUnclipped > _thirdOfMaxFrequencyHz) { // ie 3.0F * frequencyHzUnclipped > _maxFrequencyHz
+    }
+    case STATE_THIRD_HARMONIC: {
+        const motor_state_t& motorState = _state.motorStates[_state.motorIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        if (motorState.frequencyHzUnclipped > _thirdOfMaxFrequencyHz) { // ie 3.0F * frequencyHzUnclipped > _maxFrequencyHz
             // no point filtering the third harmonic if it is above the Nyquist frequency
             _weights[THIRD_HARMONIC] = 0.0F;
         } else {
             _weights[THIRD_HARMONIC] = _config.rpm_filter_weights[THIRD_HARMONIC] * 0.01F;
-            BiquadFilterT<xyz_t>& rpmFilter = _filters[motorIndex][THIRD_HARMONIC]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+            BiquadFilterT<xyz_t>& rpmFilter = _filters[_state.motorIndex][THIRD_HARMONIC]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
             // sin(3θ) = 3 * sin(θ)   - 4 * sin^3(θ)
             //         = sin(θ) * ( 3 - 4 * sin^2(θ) )
             //         = sin(θ) * ( 3 - 4 * (1 - cos^2(θ)) )
             //         = sin(θ) * ( 4 * cos^2(θ) - 1)
             // cos(3θ) = 4 * cos^3(θ) - 3 * cos(θ)
             //         = cos(θ) * ( 4 * cos^2(θ) - 3 )
-            const float four_cosSquaredOmega = _state.two_cosOmega * _state.two_cosOmega;
-            const float sin_3Omega = _state.sinOmega * (four_cosSquaredOmega - 1.0F);
-            const float two_cos_3Omega = _state.two_cosOmega * (four_cosSquaredOmega - 3.0F);
+            const float four_cosSquaredOmega = motorState.two_cosOmega * motorState.two_cosOmega;
+            const float sin_3Omega = motorState.sinOmega * (four_cosSquaredOmega - 1.0F);
+            const float two_cos_3Omega = motorState.two_cosOmega * (four_cosSquaredOmega - 3.0F);
             LOCK_FILTERS();
-            rpmFilter.setNotchFrequencyWeighted(sin_3Omega, two_cos_3Omega, _weights[THIRD_HARMONIC]*_state.weightMultiplier);
+            rpmFilter.setNotchFrequencyWeighted(sin_3Omega, two_cos_3Omega, _weights[THIRD_HARMONIC]*motorState.weightMultiplier);
             UNLOCK_FILTERS();
         }
-        _state.state = STATE_FUNDAMENTAL;
+        // advance to next harmonic if we have dealt with all motors
+        ++_state.motorIndex;
+        if (_state.motorIndex == _motorCount) {
+            _state.motorIndex = 0;
+            _state.state = STATE_STOPPED;
+        }
         break;
-    } // END SWITCH
     }
+    } // END SWITCH
+}
 
 /*!
 NOTE: CALLED FROM WITHIN THE AHRS TASK
 
-This is called from withing AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
+This is called from within AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */
 void RPM_Filters::filter(xyz_t& input, size_t motorIndex) // NOLINT(readability-make-member-function-const) false positive
 {

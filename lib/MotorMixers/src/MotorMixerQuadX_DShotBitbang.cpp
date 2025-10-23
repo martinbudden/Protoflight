@@ -72,15 +72,20 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(commands_t& commands, float de
     _motorFrequenciesHz[M2] = static_cast<float>(_escDShot.getMotorERPM(M2))*_eRPMtoHz;
     _motorFrequenciesHz[M3] = static_cast<float>(_escDShot.getMotorERPM(M3))*_eRPMtoHz;
 
-}
-
-void MotorMixerQuadX_DShotBitbang::setRPM_FilterFrequencies()
-{
-    // set the RPM filter frequencies.
-    // note that _rpmFilters.setFrequencyHz is an expensive calculation and runs off a state machine, setting one harmonic per iteration,
-    // so we want to call it even if we do not write to the motors
     _rpmFilters.setFrequencyHz(M0, _motorFrequenciesHz[M0]);
     _rpmFilters.setFrequencyHz(M1, _motorFrequenciesHz[M1]);
-    _rpmFilters.setFrequencyHz(M2, _motorFrequenciesHz[M2]);
+    _rpmFilters.setFrequencyHz(M1, _motorFrequenciesHz[M2]);
     _rpmFilters.setFrequencyHz(M3, _motorFrequenciesHz[M3]);
+
+}
+
+void MotorMixerQuadX_DShotBitbang::rpmFilterIterationStep()
+{
+    // Perform an rpmFilter iteration step for each motor
+    // Note that _rpmFilters.iterationStep is an expensive calculation and runs off a state machine, setting one motor harmonic per iteration
+    // so we want to call it even if we do not write to the motors
+    _rpmFilters.iterationStep();
+    _rpmFilters.iterationStep();
+    _rpmFilters.iterationStep();
+    _rpmFilters.iterationStep();
 }

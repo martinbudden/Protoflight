@@ -7,6 +7,7 @@
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #include <MSP_Protocol.h>
+#include <NonVolatileStorage.h>
 #include <RPM_Filters.h>
 #include <RadioController.h>
 #include <ReceiverBase.h>
@@ -119,11 +120,11 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         std::bitset<MSP_Box::BOX_COUNT> flightModeFlags;
         const size_t flagBits = _mspBox.packFlightModeFlags(flightModeFlags, _flightController);
         dst.writeData(&flightModeFlags, 4); // unconditional part of flags, first 32 bits
-        dst.writeU8(_flightController.getCurrentPidProfileIndex());
+        dst.writeU8(_nonVolatileStorage.getCurrentPidProfileIndex());
         dst.writeU16(10); //constrain(getAverageSystemLoadPercent(), 0, LOAD_PERCENTAGE_ONE))
         if (cmdMSP == MSP_STATUS_EX) {
-            dst.writeU8(_flightController.getPidProfileCount());
-            dst.writeU8(_flightController.getCurrentControlRateProfileIndex());
+            dst.writeU8(NonVolatileStorage::PID_PROFILE_COUNT);
+            dst.writeU8(_nonVolatileStorage.getCurrentRateProfileIndex());
         } else { // MSP_STATUS
             dst.writeU16(0); // gyro cycle time
         }
