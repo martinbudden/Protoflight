@@ -425,6 +425,7 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
 
 /*!
 NOTE: CALLED FROM WITHIN THE FlightController TASK
+It is typically called at frequency of between 1000Hz and 8000Hz, so it has to be FAST.
 
 Called by the scheduler when signalled by the AHRS task that output data is available.
 */

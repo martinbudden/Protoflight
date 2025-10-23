@@ -208,12 +208,10 @@ float FlightController::calculateITermError(size_t axis, float measurement)
 
 /*!
 NOTE: CALLED FROM WITHIN THE AHRS TASK
+It is typically called at frequency of between 1000Hz and 8000Hz, so it has to be FAST.
 
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyroRPS, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
-
-NOTE: this function is called in the context of the AHRS task.
-It is typically called at frequency of between 1000Hz and 8000Hz, so it has to be FAST.
 */
 void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT)
 {
