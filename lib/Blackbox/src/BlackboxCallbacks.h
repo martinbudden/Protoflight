@@ -1,23 +1,22 @@
 #pragma once
 
 #include "BlackboxCallbacksBase.h"
+#include <RadioController.h>
 
 class AHRS;
 class BlackboxMessageQueue;
 class Debug;
 class FlightController;
-class RadioControllerBase;
-class ReceiverBase;
 
 
 class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioControllerBase& radioController, const ReceiverBase& receiver, const Debug& debug) :
+    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioControllerBase& radioController, const Debug& debug) :
         _messageQueue(messageQueue),
         _ahrs(ahrs),
         _flightController(flightController),
         _radioController(radioController),
-        _receiver(receiver),
+        _receiver(radioController.getReceiver()),
         _debug(debug)
         {}
 public:

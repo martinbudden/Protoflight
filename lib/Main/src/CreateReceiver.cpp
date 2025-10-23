@@ -1,8 +1,9 @@
 #include "Main.h"
 
 #include <ReceiverAtomJoyStick.h>
-#include <ReceiverBase.h>
 #include <ReceiverNull.h>
+#include <ReceiverCRSF.h>
+#include <ReceiverIBUS.h>
 #include <ReceiverSBUS.h>
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
 #include <WiFi.h>

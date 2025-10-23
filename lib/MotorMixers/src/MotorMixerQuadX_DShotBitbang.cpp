@@ -66,12 +66,19 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(commands_t& commands, float de
         static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M3], _motorOutputMin, 1.0F)) + 47)
     );
 
-    // read the motor RPMs, and set the RPM filters
+    // read the motor RPMs
     _motorFrequenciesHz[M0] = static_cast<float>(_escDShot.getMotorERPM(M0))*_eRPMtoHz;
     _motorFrequenciesHz[M1] = static_cast<float>(_escDShot.getMotorERPM(M1))*_eRPMtoHz;
     _motorFrequenciesHz[M2] = static_cast<float>(_escDShot.getMotorERPM(M2))*_eRPMtoHz;
     _motorFrequenciesHz[M3] = static_cast<float>(_escDShot.getMotorERPM(M3))*_eRPMtoHz;
 
+}
+
+void MotorMixerQuadX_DShotBitbang::setRPM_FilterFrequencies()
+{
+    // set the RPM filter frequencies.
+    // note that _rpmFilters.setFrequencyHz is an expensive calculation and runs off a state machine, setting one harmonic per iteration,
+    // so we want to call it even if we do not write to the motors
     _rpmFilters.setFrequencyHz(M0, _motorFrequenciesHz[M0]);
     _rpmFilters.setFrequencyHz(M1, _motorFrequenciesHz[M1]);
     _rpmFilters.setFrequencyHz(M2, _motorFrequenciesHz[M2]);

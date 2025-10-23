@@ -52,12 +52,12 @@ class RPM_Filters {
 public:
     enum { RPM_FILTER_HARMONICS_COUNT = 3 };
     struct config_t {
-        uint8_t  rpm_filter_harmonics;      // number of harmonics, zero means filters off
-        uint8_t  rpm_filter_weights[RPM_FILTER_HARMONICS_COUNT];    // weight as a percentage for each harmonic
-        uint8_t  rpm_filter_min_hz;         // minimum notch frequency for fundamental harmonic
         uint16_t rpm_filter_fade_range_hz;  // range in which notch filters fade down to minHz
         uint16_t rpm_filter_q;              // q of the notch filters
         uint16_t rpm_filter_lpf_hz;         // LPF cutoff (from motor rpm converted to Hz)
+        uint8_t  rpm_filter_weights[RPM_FILTER_HARMONICS_COUNT];    // weight as a percentage for each harmonic
+        uint8_t  rpm_filter_harmonics;      // number of harmonics, zero means filters off
+        uint8_t  rpm_filter_min_hz;         // minimum notch frequency for fundamental harmonic
     };
 public:
     enum { FUNDAMENTAL = 0, SECOND_HARMONIC = 1, THIRD_HARMONIC = 2 };

@@ -16,9 +16,9 @@ void RPM_Filters::setConfig(const config_t& config)
     _fadeRangeHz = _config.rpm_filter_fade_range_hz;
 
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
-    for (size_t ii = 0; ii < _config.rpm_filter_harmonics; ++ii) {
-        for (size_t motorIndex = 0; motorIndex < _motorCount; ++motorIndex) {
-            _filters[motorIndex][ii].initNotch(_minFrequencyHz * static_cast<float>(ii + 1), _looptimeSeconds, _Q);
+    for (size_t harmonic = 0; harmonic < _config.rpm_filter_harmonics; ++harmonic) {
+        for (size_t motor = 0; motor < _motorCount; ++motor) {
+            _filters[motor][harmonic].initNotch(_minFrequencyHz * static_cast<float>(harmonic + 1), _looptimeSeconds, _Q);
         }
     }
     // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)

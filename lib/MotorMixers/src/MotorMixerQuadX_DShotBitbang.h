@@ -15,6 +15,7 @@ public:
     MotorMixerQuadX_DShotBitbang(uint32_t taskIntervalMicroseconds, Debug& debug, const stm32_motor_pins_t& pins, RPM_Filters& rpmFilters);
 public:
     virtual void outputToMotors(commands_t& commands, float deltaT, uint32_t tickCount) override;
+    virtual void setRPM_FilterFrequencies() override;
     virtual const DynamicIdleController* getDynamicIdleController() const override;
     virtual void setDynamicIdlerControllerConfig(const DynamicIdleController::config_t& config) override;
     float calculateSlowestMotorHz() const;

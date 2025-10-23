@@ -57,21 +57,28 @@ void MotorMixerQuadX_DShot::outputToMotors(commands_t& commands, float deltaT, u
         _motorOutputs = { 0.0F, 0.0F, 0.0F, 0.0F };
     }
 
-    // and finally output to the motors, reading the motor RPM to set the RPM filters
-    // motor outputs are converted to DShot range [47,2047]
+    // Output to the motors, reading the motor RPM
+    // Motor outputs are converted to DShot range [47,2047]
     _motors[M0].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M0], _motorOutputMin, 1.0F)) + 47)),
     _motors[M0].read();
-    _rpmFilters.setFrequencyHz(M0, _motors[M0].getMotorHz());
 
     _motors[M1].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M1], _motorOutputMin, 1.0F)) + 47)),
     _motors[M1].read();
-    _rpmFilters.setFrequencyHz(M1, _motors[M1].getMotorHz());
 
     _motors[M2].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M2], _motorOutputMin, 1.0F)) + 47)),
     _motors[M2].read();
-    _rpmFilters.setFrequencyHz(M2, _motors[M2].getMotorHz());
 
     _motors[M3].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M3], _motorOutputMin, 1.0F)) + 47)),
     _motors[M3].read();
+}
+
+void MotorMixerQuadX_DShot::setRPM_FilterFrequencies()
+{
+    // Set the RPM filter frequencies.
+    // Note that _rpmFilters.setFrequencyHz is an expensive calculation and runs off a state machine, setting one harmonic per iteration
+    // so we want to call it even if we do not write to the motors
+    _rpmFilters.setFrequencyHz(M0, _motors[M0].getMotorHz());
+    _rpmFilters.setFrequencyHz(M1, _motors[M1].getMotorHz());
+    _rpmFilters.setFrequencyHz(M2, _motors[M2].getMotorHz());
     _rpmFilters.setFrequencyHz(M3, _motors[M3].getMotorHz());
 }

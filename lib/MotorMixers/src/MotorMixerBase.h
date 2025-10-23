@@ -40,6 +40,7 @@ public:
 
     virtual int32_t getMotorRPM(size_t motorIndex) const { (void)motorIndex; return 0; }
     virtual float getMotorFrequencyHz(size_t motorIndex) const { (void)motorIndex; return 0; }
+    virtual void setRPM_FilterFrequencies() {};
 
     virtual const DynamicIdleController* getDynamicIdleController() const { return nullptr; }
     virtual void setDynamicIdlerControllerConfig(const DynamicIdleController::config_t& config) { (void)config; }
@@ -48,7 +49,7 @@ public:
 protected:
     const size_t _motorCount;
     Debug& _debug;
-    int32_t _motorsIsOn {false};
-    int32_t _motorsIsDisabled {false};
     float _motorOutputMin {0.0F}; //!< minimum motor output, typically set to 5.5% to avoid ESC desynchronization, may be set to zero if using dynamic idle control
+    bool _motorsIsOn {false};
+    bool _motorsIsDisabled {false};
 };
