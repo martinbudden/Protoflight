@@ -101,65 +101,55 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
     //_ahM.rollAngleDegreesRaw = orientationNED.calculateRollDegrees();
     //_ahM.pitchAngleDegreesRaw = orientationNED.calculatePitchDegrees();
 
+    // use the outputs from the "ANGLE" PIDS as the setpoints for the "RATE" PIDs.
+    //!!TODO: need to mix in YAW to roll and pitch changes to coordinate turn
+
     const float yawRateSetpointDPS = _sh.PIDS[YAW_RATE_DPS].getSetpoint();
 
-    if (_useQuaternionSpaceForAngleMode) {
-        // Runs the angle PIDs in "quaternion space" rather than "angle space",
-        // avoiding the computationally expensive Quaternion::calculateRoll and Quaternion::calculatePitch
-        //!!TODO: look at using vector product here
-        if (_ahM.angleModeCalculationState == ah_t::STATE_CALCULATE_ROLL) {
-            if (!_flightModeConfig.level_race_mode) {
-                // in level race mode we use angle mode on roll, acro mode on pitch
-                // so we don't advance calculation to pitch
-                _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_PITCH;
-            }
-            _ahM.rollSinAngle = -orientationENU.sinRollClipped(); // sin(x-180) = -sin(x)
+    // Running the angle PIDs in "quaternion space" rather than "angle space",
+    // avoids the computationally expensive Quaternion::calculateRoll and Quaternion::calculatePitch
+
+    //!!TODO: look at using vector product here
+    if (_ahM.angleModeCalculationState == ah_t::STATE_CALCULATE_ROLL) {
+        if (!_flightModeConfig.level_race_mode) {
+            // in level race mode we use angle mode on roll, acro mode on pitch
+            // so we only advance calculation to pitch if not in level race mode
+            _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_PITCH;
+        }
+
+        _ahM.rollSinAngle = -orientationENU.sinRollClipped(); // sin(x-180) = -sin(x)
+        if (_useQuaternionSpaceForAngleMode) {
             const float rollSinAngleDelta = _sh.dTermFilters1[ROLL_SIN_ANGLE].filter(_ahM.rollSinAngle - _sh.PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
             _ahM.outputs[ROLL_SIN_ANGLE] = _sh.PIDS[ROLL_SIN_ANGLE].updateDelta(_ahM.rollSinAngle, rollSinAngleDelta, deltaT);
             _ahM.rollRateSetpointDPS = _ahM.outputs[ROLL_SIN_ANGLE];
-            // a component of YAW changes roll, so update accordingly !!TODO:check sign
-            _ahM.rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.rollSinAngle;
         } else {
-            _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_ROLL;
-            _ahM.pitchSinAngle = -orientationENU.sinPitchClipped(); // this is cheaper to calculate than sinRoll
-            const float pitchSinAngleDelta = _sh.dTermFilters1[PITCH_SIN_ANGLE].filter(_ahM.pitchSinAngle - _sh.PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
-            _ahM.outputs[PITCH_SIN_ANGLE] = _sh.PIDS[PITCH_SIN_ANGLE].updateDelta(_ahM.pitchSinAngle, pitchSinAngleDelta, deltaT);
-            _ahM.pitchRateSetpointDPS = _ahM.outputs[PITCH_SIN_ANGLE];
-            // a component of YAW changes roll, so update accordingly !!TODO:check sign
-            _ahM.pitchRateSetpointDPS += yawRateSetpointDPS * _ahM.pitchSinAngle;
-        }
-    } else {
-        //!!TODO: this all needs checking, especially for scale
-        //!!TODO: PID constants need to be scaled so these outputs are in the range [-1, 1]
-        // calculate roll rate and pitch rate setpoints in the NED coordinate frame
-        // this is a computationally expensive calculation, so alternate between roll and pitch each time this function is called
-        if (_ahM.angleModeCalculationState == ah_t::STATE_CALCULATE_ROLL) {
-            if (!_flightModeConfig.level_race_mode) {
-                // in level race mode we use angle mode on roll, acro mode on pitch
-                // so we don't advance calculation to pitch
-                _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_PITCH;
-            }
-            _ahM.rollSinAngle = -orientationENU.sinRoll(); // sin(x-180) = -sin(x)
             _ahM.rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
             const float rollAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_ahM.rollAngleDegreesRaw - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
             _ahM.outputs[ROLL_ANGLE_DEGREES] = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(_ahM.rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
             _ahM.rollRateSetpointDPS = _ahM.outputs[ROLL_ANGLE_DEGREES];
-            _ahM.rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.rollSinAngle;
+        }
+        // a component of YAW changes roll, so update accordingly !!TODO:check sign
+        _ahM.rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.rollSinAngle;
+        _sh.PIDS[ROLL_RATE_DPS].setSetpoint(_ahM.rollRateSetpointDPS);
+    } else {
+        _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_ROLL;
+
+        _ahM.pitchSinAngle = -orientationENU.sinPitchClipped(); // this is cheaper to calculate than sinRoll
+        if (_useQuaternionSpaceForAngleMode) {
+            const float pitchSinAngleDelta = _sh.dTermFilters1[PITCH_SIN_ANGLE].filter(_ahM.pitchSinAngle - _sh.PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
+            _ahM.outputs[PITCH_SIN_ANGLE] = _sh.PIDS[PITCH_SIN_ANGLE].updateDelta(_ahM.pitchSinAngle, pitchSinAngleDelta, deltaT);
+            _ahM.pitchRateSetpointDPS = _ahM.outputs[PITCH_SIN_ANGLE];
         } else {
-            _ahM.angleModeCalculationState = ah_t::STATE_CALCULATE_ROLL;
-            _ahM.pitchSinAngle = -orientationENU.sinPitch(); // this is cheaper to calculate than sinRoll
             _ahM.pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
             const float pitchAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_ahM.pitchAngleDegreesRaw - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
             _ahM.outputs[PITCH_ANGLE_DEGREES] = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(_ahM.pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
             _ahM.pitchRateSetpointDPS = _ahM.outputs[PITCH_ANGLE_DEGREES];
-            _ahM.pitchRateSetpointDPS += yawRateSetpointDPS * _ahM.pitchSinAngle;
         }
+        // a component of YAW changes roll, so update accordingly !!TODO:check sign
+        _ahM.pitchRateSetpointDPS += yawRateSetpointDPS * _ahM.pitchSinAngle;
+        _sh.PIDS[PITCH_RATE_DPS].setSetpoint(_ahM.pitchRateSetpointDPS);
     }
 
-    // use the outputs from the "ANGLE" PIDS as the setpoints for the "RATE" PIDs.
-    //!!TODO: need to mix in YAW to roll and pitch changes to coordinate turn
-    _sh.PIDS[ROLL_RATE_DPS].setSetpoint(_ahM.rollRateSetpointDPS);
-    _sh.PIDS[PITCH_RATE_DPS].setSetpoint(_ahM.pitchRateSetpointDPS);
 
     // the cosRoll and cosPitch functions are reasonably cheap, they both involve taking a square root
     // both are positive in ANGLE mode, since absolute values of both roll and pitch angles are less than 90 degrees
