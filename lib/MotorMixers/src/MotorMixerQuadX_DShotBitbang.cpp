@@ -15,6 +15,18 @@ MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(uint32_t taskInterval
     (void)pins; // !!TODO: set pins
     static constexpr float SECONDS_PER_MINUTE = 60.0F;
     _eRPMtoHz = 2.0F * (100.0F / SECONDS_PER_MINUTE) / static_cast<float>(_motorPoleCount);
+
+    // There are a maximum of 12 rpmFilter iterations: 4 motors and up to 3 harmonics for each motor.
+    // We want to complete all 12 iterations in less than 1000 microseconds.
+    if (taskIntervalMicroseconds >= 1000) {
+        _rpmFilterIterationCount =  12;
+    } else if (taskIntervalMicroseconds >= 500) {
+        _rpmFilterIterationCount =  6;
+    } else if (taskIntervalMicroseconds >= 250) {
+        _rpmFilterIterationCount =  3;
+    } else {
+        _rpmFilterIterationCount =  2;
+    }
 }
 
 float MotorMixerQuadX_DShotBitbang::calculateSlowestMotorHz() const
@@ -72,20 +84,19 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(commands_t& commands, float de
     _motorFrequenciesHz[M2] = static_cast<float>(_escDShot.getMotorERPM(M2))*_eRPMtoHz;
     _motorFrequenciesHz[M3] = static_cast<float>(_escDShot.getMotorERPM(M3))*_eRPMtoHz;
 
-    _rpmFilters.setFrequencyHz(M0, _motorFrequenciesHz[M0]);
-    _rpmFilters.setFrequencyHz(M1, _motorFrequenciesHz[M1]);
-    _rpmFilters.setFrequencyHz(M1, _motorFrequenciesHz[M2]);
-    _rpmFilters.setFrequencyHz(M3, _motorFrequenciesHz[M3]);
+    _rpmFilters.setFrequencyHzInterationStart(M0, _motorFrequenciesHz[M0]);
+    _rpmFilters.setFrequencyHzInterationStart(M1, _motorFrequenciesHz[M1]);
+    _rpmFilters.setFrequencyHzInterationStart(M1, _motorFrequenciesHz[M2]);
+    _rpmFilters.setFrequencyHzInterationStart(M3, _motorFrequenciesHz[M3]);
 
 }
 
-void MotorMixerQuadX_DShotBitbang::rpmFilterIterationStep()
+void MotorMixerQuadX_DShotBitbang::rpmFilterSetFrequencyHzInterationStep()
 {
     // Perform an rpmFilter iteration step for each motor
-    // Note that _rpmFilters.iterationStep is an expensive calculation and runs off a state machine, setting one motor harmonic per iteration
+    // Note that _rpmFilters.setFrequencyHzInterationStep is an expensive calculation and runs off a state machine, setting one motor harmonic per iteration
     // so we want to call it even if we do not write to the motors
-    _rpmFilters.iterationStep();
-    _rpmFilters.iterationStep();
-    _rpmFilters.iterationStep();
-    _rpmFilters.iterationStep();
+    for (size_t ii = 0; ii < _rpmFilterIterationCount; ++ii) {
+        _rpmFilters.setFrequencyHzInterationStep();
+    }
 }

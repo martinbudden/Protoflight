@@ -40,7 +40,7 @@ NOTE: CALLED FROM WITHIN THE FLIGHT CONTROLLER TASK
 
 This is called from MotorMixer::outputToMotors and so needs to be FAST.
 */
-void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
+void RPM_Filters::setFrequencyHzInterationStart(size_t motorIndex, float frequencyHz)
 {
     if (_config.rpm_filter_lpf_hz == 0) {
         return;
@@ -65,9 +65,9 @@ void RPM_Filters::setFrequencyHz(size_t motorIndex, float frequencyHz)
 /*!
 NOTE: CALLED FROM WITHIN THE FLIGHT CONTROLLER TASK
 
-This is called from MotorMixer::rpmFilterIterationStep and so needs to be FAST.
+This is called from MotorMixer::rpmFilterSetFrequencyHzInterationStep and so needs to be FAST.
 */
-void RPM_Filters::iterationStep() // NOLINT(readability-function-cognitive-complexity)
+void RPM_Filters::setFrequencyHzInterationStep() // NOLINT(readability-function-cognitive-complexity)
 {
     // state machine sets notch filter for one harmonic of one motor on each iteration.
 
@@ -86,9 +86,9 @@ void RPM_Filters::iterationStep() // NOLINT(readability-function-cognitive-compl
         LOCK_FILTERS();
         rpmFilter.setNotchFrequencyWeighted(motorState.sinOmega, motorState.two_cosOmega, _weights[FUNDAMENTAL]*motorState.weightMultiplier);
         UNLOCK_FILTERS();
-        // advance to next harmonic if we have dealt with all motors
         ++_state.motorIndex;
         if (_state.motorIndex == _motorCount) {
+            // we have set the notch frequency for all motors, so move onto the next harmonic if there is one, otherwise we are finished
             _state.motorIndex = 0;
             if (_config.rpm_filter_harmonics >= 2) {
                 if (_config.rpm_filter_weights[SECOND_HARMONIC] != 0) {
@@ -120,9 +120,9 @@ void RPM_Filters::iterationStep() // NOLINT(readability-function-cognitive-compl
             rpmFilter.setNotchFrequencyWeighted(sin_2Omega, two_cos_2Omega, _weights[SECOND_HARMONIC]*motorState.weightMultiplier);
             UNLOCK_FILTERS();
         }
-        // advance to next harmonic if we have dealt with all motors
         ++_state.motorIndex;
         if (_state.motorIndex == _motorCount) {
+            // we have set the notch frequency for all motors, so move onto the next harmonic if there is one, otherwise we are finished
             _state.motorIndex = 0;
             if (_config.rpm_filter_harmonics >= 3 && _config.rpm_filter_weights[THIRD_HARMONIC] != 0) {
                 _state.state = STATE_THIRD_HARMONIC;
@@ -153,9 +153,9 @@ void RPM_Filters::iterationStep() // NOLINT(readability-function-cognitive-compl
             rpmFilter.setNotchFrequencyWeighted(sin_3Omega, two_cos_3Omega, _weights[THIRD_HARMONIC]*motorState.weightMultiplier);
             UNLOCK_FILTERS();
         }
-        // advance to next harmonic if we have dealt with all motors
         ++_state.motorIndex;
         if (_state.motorIndex == _motorCount) {
+            // we have set the notch frequency for all motors, so we are finished
             _state.motorIndex = 0;
             _state.state = STATE_STOPPED;
         }

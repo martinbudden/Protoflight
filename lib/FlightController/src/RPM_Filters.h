@@ -66,8 +66,8 @@ public:
     RPM_Filters(size_t motorCount, float looptimeSeconds) : _motorCount(motorCount), _looptimeSeconds(looptimeSeconds) {}
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
-    void setFrequencyHz(size_t motorIndex, float frequencyHz); // called from the motor mixer
-    void iterationStep(); // called from the motor mixer
+    void setFrequencyHzInterationStart(size_t motorIndex, float frequencyHz); // called from the motor mixer
+    void setFrequencyHzInterationStep(); // called from the motor mixer
     void filter(xyz_t& input, size_t motorIndex);
     bool isActive() const { return _config.rpm_filter_harmonics > 0; }
     size_t getMotorCount() const { return _motorCount; }
@@ -78,7 +78,7 @@ public:
 private:
     size_t _motorCount;
     float _looptimeSeconds;
-    // computation data so setFrequencyHz() can be run as a state machine
+    // computation data so setFrequencyHzInterationStart() can be run as a state machine
     enum state_e { STATE_STOPPED, STATE_FUNDAMENTAL, STATE_SECOND_HARMONIC, STATE_THIRD_HARMONIC };
     struct motor_state_t {
         float frequencyHzUnclipped;

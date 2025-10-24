@@ -431,8 +431,8 @@ Called by the scheduler when signalled by the AHRS task that output data is avai
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {
-    // perform and RPM filter iteration step, even if we do not output to the motors
-    _mixer.rpmFilterIterationStep();
+    // perform an RPM filter iteration step, even if we do not output to the motors
+    _mixer.rpmFilterSetFrequencyHzInterationStep();
 
     // output to motors every _outputToMotorsDenominator times outputToMixer is called
     ++_fcM.outputToMixerCount;
