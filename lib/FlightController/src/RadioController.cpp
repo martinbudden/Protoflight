@@ -7,7 +7,6 @@ RadioController::RadioController(ReceiverBase& receiver, FlightController& fligh
     _flightController(flightController),
     _rates(rates)
 {
-    _flightController.setRadioController(this);
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
 }
 
@@ -61,6 +60,7 @@ void RadioController::updateControls(const controls_t& controls)
     // failsafe handling
     _receiverInUse = true;
     _failsafePhase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
+    _failsafeTickCount = controls.tickCount;
 
     // handle the on/off switch
     if (_receiver.getSwitch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
@@ -82,17 +82,10 @@ void RadioController::updateControls(const controls_t& controls)
         .yawStickDPS = applyRates(RadioController::YAW, controls.yawStick),
         .rollStickDegrees = controls.rollStick * _maxRollAngleDegrees,
         .pitchStickDegrees = controls.pitchStick * _maxPitchAngleDegrees,
-        .controlMode =
-            _receiver.getSwitch(1) ? FlightController::CONTROL_MODE_ALTITUDE_HOLD :
-            _receiver.getSwitch(0) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE
+        .controlMode = _receiver.getSwitch(0) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE
     };
 
     _flightController.updateSetpoints(flightControls);
-}
-
-uint32_t RadioController::getFailsafePhase() const
-{
-    return _failsafePhase;
 }
 
 void RadioController::setFailsafe(const failsafe_t& failsafe)
@@ -112,6 +105,19 @@ void RadioController::checkFailsafe(uint32_t tickCount)
         if ((tickCount - _failsafeTickCount > _failsafeTickCountSwitchOffThreshold)) {
             _flightController.motorsSwitchOff();
             _receiverInUse = false; // set to false to allow us to switch the motors on again if we regain a signal
+        } else {
+            // failsafe detected, so zero all sticks and set throttle to 25%
+            const FlightController::controls_t flightControls = {
+                .tickCount = tickCount,
+                .throttleStick = 0.25F,
+                .rollStickDPS = 0.0F,
+                .pitchStickDPS = 0.0F,
+                .yawStickDPS = 0.0F,
+                .rollStickDegrees = 0.0F,
+                .pitchStickDegrees = 0.0F,
+                .controlMode = FlightController::CONTROL_MODE_ANGLE
+            };
+            _flightController.updateSetpoints(flightControls);
         }
     }
 }

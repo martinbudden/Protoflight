@@ -47,11 +47,11 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
             _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
             // Feedforward filters
             if (_filtersConfig.rc_smoothing_feedforward_cutoff == 0) {
-                for (auto& filter : _sh.feedforwardFilters) {
+                for (auto& filter : _sh.setpointDerivativeFilters) {
                     filter.setToPassthrough();
                 }
             } else {
-                for (auto& filter : _sh.feedforwardFilters) {
+                for (auto& filter : _sh.setpointDerivativeFilters) {
                     filter.setCutoffFrequencyAndReset(_filtersConfig.rc_smoothing_feedforward_cutoff, _rxM.setpointDeltaT);
                 }
             }
@@ -164,7 +164,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
     _sh.PIDS[ROLL_RATE_DPS].setSetpoint(controls.rollStickDPS);
     if (_rxM.setpointDeltaT != 0) {
         float setpointDerivative = _sh.PIDS[ROLL_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
-        setpointDerivative = _sh.feedforwardFilters[ROLL_RATE_DPS].filter(setpointDerivative);
+        setpointDerivative = _sh.setpointDerivativeFilters[ROLL_RATE_DPS].filter(setpointDerivative);
         _sh.PIDS[ROLL_RATE_DPS].setSetpointDerivative(setpointDerivative);
     }
 #if defined(USE_ITERM_RELAX)
@@ -183,7 +183,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
     _sh.PIDS[PITCH_RATE_DPS].setSetpoint(-controls.pitchStickDPS);
     if (_rxM.setpointDeltaT != 0) {
         float setpointDerivative = _sh.PIDS[PITCH_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
-        setpointDerivative = _sh.feedforwardFilters[PITCH_RATE_DPS].filter(setpointDerivative);
+        setpointDerivative = _sh.setpointDerivativeFilters[PITCH_RATE_DPS].filter(setpointDerivative);
         _sh.PIDS[PITCH_RATE_DPS].setSetpointDerivative(setpointDerivative);
     }
 #if defined(USE_ITERM_RELAX)
@@ -225,7 +225,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // Angle Mode is used if the controlMode is set to angle mode, or failsafe is on.
     // Angle Mode is prevented when in Ground Mode, so the aircraft doesn't try and self-level while it is still on the ground.
     // This value is cached here, to avoid evaluating a reasonably complex condition in updateOutputsUsingPIDs()
-    _rxM.useAngleMode = (_fcC.controlMode == CONTROL_MODE_ANGLE || (_radioController->getFailsafePhase() != RadioController::FAILSAFE_IDLE)) && !_sh.groundMode;
+    _rxM.useAngleMode = (_fcC.controlMode == CONTROL_MODE_ANGLE) && !_sh.groundMode;
 }
 
 /*!

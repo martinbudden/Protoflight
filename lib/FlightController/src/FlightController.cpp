@@ -170,16 +170,6 @@ bool FlightController::isRcModeActive(uint8_t rcMode) const
     return true; // !!TODO rcMode
 }
 
-float FlightController::getBatteryVoltage() const
-{
-    return 11.6F;
-}
-
-float FlightController::getAmperage() const
-{
-    return 0.67F;
-}
-
 void FlightController::motorsSwitchOff()
 {
     _mixer.motorsSwitchOff();
@@ -266,12 +256,12 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 
     // Output filters
     if (filtersConfig.output_lpf_hz == 0) {
-        for (auto& filter : _sh.outputFilters) {
+        for (auto& filter : _fcM.outputFilters) {
             filter.setToPassthrough();
         }
     } else {
         const float ahrsDeltaT = static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F;
-        for (auto& filter : _sh.outputFilters) {
+        for (auto& filter : _fcM.outputFilters) {
             filter.setCutoffFrequencyAndReset(filtersConfig.output_lpf_hz, ahrsDeltaT);
         }
     }
@@ -316,7 +306,7 @@ void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig) // NOLINT
 {
     // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
     const_cast<d_max_config_t&>(_dMaxConfig) = dMaxConfig;
-    for (size_t axis = 0; axis < AXIS_COUNT; ++axis) {
+    for (size_t axis = 0; axis < RPY_AXIS_COUNT; ++axis) {
         const uint8_t dMax = dMaxConfig.d_max[axis];
         const PIDF_uint16_t pid16 = getPID_Constants(static_cast<pid_index_e>(axis));
         if (pid16.kd > 0 && dMax > pid16.kd) {
@@ -431,38 +421,32 @@ Called by the scheduler when signalled by the AHRS task that output data is avai
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {
-    // perform an RPM filter iteration step, even if we do not output to the motors
-    _mixer.rpmFilterSetFrequencyHzInterationStep();
+    // filter the output
+    _fcM.outputs[FD_ROLL] = _fcM.outputFilters[FD_ROLL].filter(queueItem.roll);
+    _fcM.outputs[FD_PITCH] = _fcM.outputFilters[FD_PITCH].filter(queueItem.pitch);
+    _fcM.outputs[FD_YAW] = _fcM.outputFilters[FD_YAW].filter(queueItem.yaw);
 
     // output to motors every _outputToMotorsDenominator times outputToMixer is called
     ++_fcM.outputToMixerCount;
-    if (_fcM.outputToMixerCount < _outputToMotorsDenominator) {
-        return;
-    }
-    _fcM.outputToMixerCount = 0;
+    if (_fcM.outputToMixerCount >= _outputToMotorsDenominator) {
+        _fcM.outputToMixerCount = 0;
 
-    if (_radioController->getFailsafePhase() == RadioController::FAILSAFE_RX_LOSS_DETECTED) {
         MotorMixerBase::commands_t commands {
-            .throttle  = 0.25F,
-            .roll   = 0.0F,
-            .pitch  = 0.0F,
-            .yaw    = 0.0F
+            .throttle  = queueItem.throttle,
+            // scale roll, pitch, and yaw to range [0.0F, 1.0F]
+            .roll   = _fcM.outputs[FD_ROLL] / _rollRateAtMaxPowerDPS,
+            .pitch  = _fcM.outputs[FD_PITCH] / _pitchRateAtMaxPowerDPS,
+            .yaw    = _fcM.outputs[FD_YAW] / _yawRateAtMaxPowerDPS
         };
+
         _mixer.outputToMotors(commands, deltaT, tickCount);
         // the mixer may adjust the throttle value, so save this value for the blackbox record
         _fcM.mixerAdjustedThrottle= commands.throttle;
-        return;
     }
 
-    MotorMixerBase::commands_t commands {
-        .throttle  = queueItem.throttle,
-        // scale roll, pitch, and yaw to range [0.0F, 1.0F]
-        .roll   = queueItem.roll / _rollRateAtMaxPowerDPS,
-        .pitch  = queueItem.pitch / _pitchRateAtMaxPowerDPS,
-        .yaw    = queueItem.yaw / _yawRateAtMaxPowerDPS
-    };
+#if defined(USE_RPM_FILTERS)
+    // perform an RPM filter iteration step, even if we do not output to the motors
+    _mixer.rpmFilterSetFrequencyHzInterationStep();
+#endif
 
-    _mixer.outputToMotors(commands, deltaT, tickCount);
-    // the mixer may adjust the throttle value, so save this value for the blackbox record
-    _fcM.mixerAdjustedThrottle= commands.throttle;
 }

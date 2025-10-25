@@ -244,8 +244,6 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
                                                                 rollRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[ROLL_RATE_DPS], 
                                                                 calculateITermError(ROLL_RATE_DPS, rollRateDPS),
                                                                 deltaT);
-    // filter the output
-    _ahM.outputs[ROLL_RATE_DPS] = _sh.outputFilters[ROLL_RATE_DPS].filter(_ahM.outputs[ROLL_RATE_DPS]);
 
     //
     // Pitch axis
@@ -258,8 +256,6 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
                                                                 pitchRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[PITCH_RATE_DPS],
                                                                 calculateITermError(PITCH_RATE_DPS, pitchRateDPS),
                                                                 deltaT);
-    // filter the output
-    _ahM.outputs[PITCH_RATE_DPS] = _sh.outputFilters[PITCH_RATE_DPS].filter(_ahM.outputs[PITCH_RATE_DPS]);
 
     //
     // Yaw axis
@@ -267,8 +263,6 @@ void FlightController::updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xy
     // DTerm is zero for yawRate, so call updatePIS() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no KTerm
     const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
     _ahM.outputs[YAW_RATE_DPS] = _sh.PIDS[YAW_RATE_DPS].updateSPI(yawRateDPS, deltaT);
-    // filter the output
-    _ahM.outputs[YAW_RATE_DPS] = _sh.outputFilters[YAW_RATE_DPS].filter(_ahM.outputs[YAW_RATE_DPS]);
 
     // The FlightControllerTask is waiting on the message queue, so signal it that there is output data available.
     // This will result in outputToMixer() being called by the scheduler.

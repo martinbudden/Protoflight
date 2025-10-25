@@ -15,9 +15,9 @@
 
 #include <unity.h>
 
-#if !defined(FC_TASK_DENOMINATOR)
-//enum { FC_TASK_DENOMINATOR = 1 };
-static const uint32_t FC_TASK_DENOMINATOR = 1;
+#if !defined(OUTPUT_TO_MOTORS_DENOMINATOR)
+//enum { OUTPUT_TO_MOTORS_DENOMINATOR = 1 };
+static const uint32_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
 #endif
 
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
@@ -55,7 +55,7 @@ void test_flight_controller()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    FlightController fc(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
+    FlightController fc(OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
     TEST_ASSERT_FALSE(fc.motorsIsOn());
 

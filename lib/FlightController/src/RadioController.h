@@ -47,11 +47,11 @@ public:
     RadioController(ReceiverBase& receiver, FlightController& flightController, const rates_t& rates);
 
     virtual void updateControls(const controls_t& controls) override;
-    virtual uint32_t getFailsafePhase() const override;
 
     virtual void checkFailsafe(uint32_t tickCount) override;
     const failsafe_t& getFailsafe() const { return _failsafe; }
     void setFailsafe(const failsafe_t& failsafe);
+    failsafe_phase_e getFailsafePhase() const { return _failsafePhase; }
 
     const rates_t& getRates() const { return _rates; }
     void setRates(const rates_t& rates) { _rates = rates; }

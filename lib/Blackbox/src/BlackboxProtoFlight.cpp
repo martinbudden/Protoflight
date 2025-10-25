@@ -42,8 +42,10 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
 
     const IMU_Filters::config_t imuFiltersConfig = _imuFilters.getConfig();
 
+#if defined(USE_DYNAMIC_IDLE)
     const DynamicIdleController* dynamicIdleController = _flightController.getMixer().getDynamicIdleController();
     const DynamicIdleController::config_t* dynamicIdleControllerConfig = dynamicIdleController ? &dynamicIdleController->getConfig() : nullptr;
+#endif
 
     //const BlackboxCallbacksBase::rates_t& currentControlRateProfile = _callbacks.currentControlRateProfile();
     //const pidProfile_t& currentPidProfile = _callbacks.getCurrentPidProfile();
@@ -249,11 +251,13 @@ H features:541130760
         BLACKBOX_PRINT_HEADER_LINE("debug_mode", "%d",                      getDebugMode());
         BLACKBOX_PRINT_HEADER_LINE("features", "%d",                        541130760); //0x2041'0008
 
+#if defined(USE_DYNAMIC_IDLE)
         BLACKBOX_PRINT_HEADER_LINE("dyn_idle_min_rpm_100", "%d",            dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_min_rpm_100 : 0);
         BLACKBOX_PRINT_HEADER_LINE("dyn_idle_p_gain", "%d",                 dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_p_gain : 0);
         BLACKBOX_PRINT_HEADER_LINE("dyn_idle_i_gain", "%d",                 dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_i_gain : 0);
         BLACKBOX_PRINT_HEADER_LINE("dyn_idle_d_gain", "%d",                 dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_d_gain : 0);
         BLACKBOX_PRINT_HEADER_LINE("dyn_idle_max_increase", "%d",           dynamicIdleControllerConfig ? dynamicIdleControllerConfig->dyn_idle_max_increase : 0);
+#endif
 
 // NOLINTEND(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         default:

@@ -31,6 +31,7 @@ class IMU_FiltersBase;
 class MSP_Task;
 class MSP_SerialBase;
 class NonVolatileStorage;
+class RPM_Filters;
 class RadioController;
 class ReceiverBase;
 class ReceiverTask;
@@ -43,8 +44,8 @@ enum { MAIN_LOOP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
 enum { GYRO_SAMPLE_RATE_HZ = 2000 }; // 2000 Hz, 500 microseconds looptime
 #endif
 
-#if !defined(FC_TASK_DENOMINATOR)
-enum { FC_TASK_DENOMINATOR = 2 }; // runs at half rate of AHRS_TASK
+#if !defined(OUTPUT_TO_MOTORS_DENOMINATOR)
+enum { OUTPUT_TO_MOTORS_DENOMINATOR = 2 }; // runs at half rate of AHRS_TASK
 #endif
 
 #if !defined(RECEIVER_TASK_INTERVAL_MICROSECONDS)
@@ -120,7 +121,7 @@ public:
 private:
     static IMU_Base& createIMU();
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
-    static FlightController& createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs);
+    static FlightController& createFlightController(AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs);
     static ReceiverBase& createReceiver();
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters, const Debug& debug);

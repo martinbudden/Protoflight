@@ -35,6 +35,10 @@ For NED
 positive pitch is nose up
 positive roll is left side up
 positive yaw is nose right
+
+The FlightController has methods that may be called at startup, and in the context of the VehicleController Task,
+the Receiver Task, and the AHRs task. This means there is the possibility of race conditions. A number of measures
+have been put in place to help avoid race conditions. In particular:
 */
 class FlightController : public VehicleControllerBase {
 public:
@@ -52,11 +56,10 @@ public:
         CONTROL_MODE_RATE = 0,
         CONTROL_MODE_ANGLE = 1,
         CONTROL_MODE_HORIZON = 2,
-        CONTROL_MODE_ALTITUDE_HOLD = 3
     };
-    enum { AXIS_COUNT = 3 }; //!< roll, pitch, and yaw axis count
+    //enum { AXIS_COUNT = 3 }; //!< roll, pitch, and yaw axis count
     enum { RP_AXIS_COUNT = 2 }; //!< roll and pitch axis count
-    enum flight_dynamics_index_e { FD_ROLL = 0, FD_PITCH = 1, FD_YAW = 2, FD_AXIS_COUNT = 3 };
+    enum flight_dynamics_index_e { FD_ROLL = 0, FD_PITCH = 1, FD_YAW = 2, RPY_AXIS_COUNT = 3 };
     enum pid_index_e {
         ROLL_RATE_DPS = 0,
         PITCH_RATE_DPS = 1,
@@ -225,7 +228,6 @@ public:
         return (std::fabs(value) < deadband) ? 0.0F : (value >= 0.0F) ? value - deadband : value + deadband;
     }
 
-    void setRadioController(RadioControllerBase* radioController) { _radioController = radioController; }
     const AHRS& getAHRS() const { return _ahrs; }
 
     inline bool motorsIsOn() const { return _mixer.motorsIsOn(); }
@@ -246,9 +248,6 @@ public:
     float getPitchAngleDegreesRaw() const { return _ahM.pitchAngleDegreesRaw; }
     float getRollAngleDegreesRaw() const { return _ahM.rollAngleDegreesRaw; }
     float getYawAngleDegreesRaw() const { return _ahM.yawAngleDegreesRaw; }
-
-    float getBatteryVoltage() const;
-    float getAmperage() const;
 
     virtual uint32_t getOutputPowerTimeMicroseconds() const override;
 
@@ -338,7 +337,6 @@ private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
     MotorMixerBase& _mixer;
     Debug& _debug;
-    RadioControllerBase* _radioController {};
     Blackbox* _blackbox {};
     DynamicNotchFilter* _dynamicNotchFilter {nullptr};
     const uint32_t _outputToMotorsDenominator;
@@ -392,6 +390,8 @@ private:
         control_mode_e controlMode {CONTROL_MODE_RATE};
         float mixerAdjustedThrottle {0.0F};
         std::array<PIDF::PIDF_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning
+        std::array<float, RPY_AXIS_COUNT> outputs;
+        std::array<PowerTransferFilter1, RPY_AXIS_COUNT> outputFilters;
     };
     struct rx_t {
         // setpoint timing
@@ -426,21 +426,19 @@ private:
         std::array<float, RP_AXIS_COUNT> dMaxMultiplier {1.0F, 1.0F}; // used even if USE_D_MAX not defined
     };
     struct shared_t {
+        uint32_t takeOffCountStart {0};
         bool groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
         bool crashDetected {false};
-        uint32_t takeOffCountStart {0};
 #if defined(USE_YAW_SPIN_RECOVERY)
+        bool yawSpinRecovery {false};
         float yawSpinThresholdDPS {0.0F};
-        uint32_t yawSpinRecovery {false};
 #endif
-        // throttle value is scaled to the range [-1,0, 1.0]
-        float outputThrottle {0.0F};
-        std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID values
-        std::array<PowerTransferFilter1, YAW_RATE_DPS + 1> outputFilters;
+        float outputThrottle {0.0F}; // throttle value is scaled to the range [-1,0, 1.0]
+        std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID constants
         PowerTransferFilter2 antiGravityThrottleFilter {};
         std::array<PowerTransferFilter1, PID_COUNT> dTermFilters1;
         std::array<PowerTransferFilter1, PID_COUNT> dTermFilters2;
-        std::array<PowerTransferFilter3, RP_AXIS_COUNT> feedforwardFilters;
+        std::array<PowerTransferFilter3, RP_AXIS_COUNT> setpointDerivativeFilters;
 #if defined(USE_D_MAX)
         std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilters {};
         std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxLowpassFilters {};

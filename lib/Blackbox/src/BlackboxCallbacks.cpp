@@ -139,8 +139,8 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
         mainState.erpm[ii] = static_cast<int16_t>(mixer.getMotorRPM(ii));
 #endif
     }
-    mainState.vbatLatest = static_cast<uint16_t>(_flightController.getBatteryVoltage()*10.0F);
-    mainState.amperageLatest = static_cast<uint16_t>(_flightController.getAmperage()*10.0F);
+    mainState.vbatLatest = static_cast<uint16_t>(11.6F * 10.0F);
+    mainState.amperageLatest = static_cast<uint16_t>(0.67F * 10.0F);
 
 #if defined(USE_BAROMETER)
     mainState.baroAlt = baro.altitude;

@@ -8,18 +8,18 @@
 #include <NonVolatileStorage.h>
 
 
-FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
+FlightController& Main::createFlightController(AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs)
 {
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
-    (void)imuFilters;
+    (void)rpmFilters;
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
-    const uint32_t motorTaskIntervalMicroseconds = ahrs.getTaskIntervalMicroseconds() / FC_TASK_DENOMINATOR;
+    const uint32_t motorTaskIntervalMicroseconds = ahrs.getTaskIntervalMicroseconds();
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(motorTaskIntervalMicroseconds, debug, MotorMixerQuadBase::MOTOR_PINS, *imuFilters.getRPM_Filters());
+    static MotorMixerQuadX_DShotBitbang motorMixer(motorTaskIntervalMicroseconds, OUTPUT_TO_MOTORS_DENOMINATOR, debug, MotorMixerQuadBase::MOTOR_PINS, *rpmFilters);
 #else
-    static MotorMixerQuadX_DShot motorMixer(motorTaskIntervalMicroseconds, debug, MotorMixerQuadBase::MOTOR_PINS, *imuFilters.getRPM_Filters());
+    static MotorMixerQuadX_DShot motorMixer(motorTaskIntervalMicroseconds, OUTPUT_TO_MOTORS_DENOMINATOR, debug, MotorMixerQuadBase::MOTOR_PINS, *rpmFilters);
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
@@ -29,13 +29,13 @@ FlightController& Main::createFlightController(AHRS& ahrs, IMU_Filters& imuFilte
 #endif
 #elif defined(USE_MOTOR_MIXER_NULL)
     static MotorMixerBase motorMixer(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug);
-    (void)imuFilters;
+    (void)rpmFilters;
 #else
     static_assert(false && "MotorMixer not specified");
 #endif // USE_MOTOR_MIXER
 
     // Statically allocate the flightController.
-    static FlightController flightController(FC_TASK_DENOMINATOR, ahrs, motorMixer, debug);
+    static FlightController flightController(OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
     loadPID_ProfileFromNonVolatileStorage(flightController, nvs, nvs.getCurrentPidProfileIndex());
 
     return flightController;

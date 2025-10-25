@@ -114,7 +114,7 @@ Targets
     #define USE_RPM_FILTERS
     #define USE_DYNAMIC_NOTCH_FILTER
 
-    #define FC_TASK_DENOMINATOR 1
+    #define OUTPUT_TO_MOTORS_DENOMINATOR 1
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
@@ -146,7 +146,7 @@ Targets
     // pins: https://github.com/qqqlab/madflight/blob/main/src/brd/madflight_FC3.h
     // schematic: https://madflight.com/img/madflight-ESP-FC2.pdf
 
-    #define FC_TASK_DENOMINATOR 1
+    #define OUTPUT_TO_MOTORS_DENOMINATOR 1
 
     #define SPI_0_PINS                  spi_pins_t{.cs=17,.sck=16,.cipo=14,.copi=15,.irq=13}
     #define UART_0_PINS                 rx_pins_t{.rx=7,.tx=21}
@@ -198,11 +198,12 @@ Targets
 
     #define USE_ITERM_RELAX
     #define USE_YAW_SPIN_RECOVERY
+    #define USE_DYNAMIC_IDLE
     #define USE_RPM_FILTERS
 
-    #define FC_TASK_DENOMINATOR 1
-    #define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
-    #define GYRO_SAMPLE_RATE_HZ 1000
+    #define OUTPUT_TO_MOTORS_DENOMINATOR 2
+    //#define AHRS_TASK_INTERVAL_MICROSECONDS 1000.0F // 1000 Hz, time-driven scheduling
+    #define GYRO_SAMPLE_RATE_HZ         8000
 
     #define SPI_1_PINS                  spi_pins_t{.cs=29,.sck=30,.cipo=28,.copi=31,.irq=27}
     #define UART_0_PINS                 rx_pins_t{.rx=1,.tx=0}
@@ -221,9 +222,9 @@ Targets
     #define RECEIVER_UART_INDEX         0
     #define RECEIVER_PINS               UART_0_PINS
 
-    #define USE_MOTOR_MIXER_QUAD_X_PWM
-    //#define USE_MOTOR_MIXER_QUAD_X_DSHOT
-    //#define USE_DSHOT_RPI_PICO_PIO
+    //#define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define USE_MOTOR_MIXER_QUAD_X_DSHOT
+    #define USE_DSHOT_RPI_PICO_PIO
    
     //#define USE_BLACKBOX
 

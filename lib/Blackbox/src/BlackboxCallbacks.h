@@ -11,7 +11,7 @@ class FlightController;
 
 class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioControllerBase& radioController, const Debug& debug) :
+    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const Debug& debug) :
         _messageQueue(messageQueue),
         _ahrs(ahrs),
         _flightController(flightController),
@@ -34,7 +34,7 @@ private:
     BlackboxMessageQueue& _messageQueue;
     const AHRS& _ahrs;
     const FlightController& _flightController;
-    const RadioControllerBase& _radioController;
+    const RadioController& _radioController;
     const ReceiverBase& _receiver;
     const Debug& _debug;
     uint32_t _useMessageQueue {false};

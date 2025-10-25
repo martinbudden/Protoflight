@@ -82,7 +82,7 @@ void Main::setup()
 
     AHRS& ahrs = createAHRS(static_cast<uint32_t>(AHRS_taskIntervalMicroseconds), imuSensor, imuFilters);
 
-    FlightController& flightController = createFlightController(ahrs, imuFilters, debug, nvs);
+    FlightController& flightController = createFlightController(ahrs, imuFilters.getRPM_Filters(), debug, nvs);
 
     ReceiverBase& receiver = createReceiver();
 

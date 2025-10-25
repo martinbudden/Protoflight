@@ -315,8 +315,7 @@ classDiagram
         updateOutputsUsingPIDs() override
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    FlightController o-- RadioControllerBase : calls getFailsafePhase
-    FlightController --o RadioController : calls updateSetpoints
+    RadioController o-- FlightController : calls updateSetpoints
     FlightController o-- MotorMixerBase : calls outputToMotors
 
     class AHRS {
@@ -349,7 +348,6 @@ classDiagram
         <<abstract>>
         updateControls() *
         checkFailsafe() *
-        getFailsafePhase() uint32_t *
     }
     link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
 
@@ -361,7 +359,7 @@ classDiagram
     class RadioController {
         updateControls() override
         checkFailsafe() override
-        getFailsafePhase() uint32_t override
+        getFailsafePhase()
     }
     link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
 
@@ -472,13 +470,12 @@ classDiagram
         <<abstract>>
         updateControls() *
         checkFailsafe() *
-        getFailsafePhase() uint32_t *
     }
     link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
     class RadioController {
         updateControls() override
         checkFailsafe() override
-        getFailsafePhase() uint32_t override
+        getFailsafePhase()
     }
     link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
 
@@ -499,7 +496,6 @@ classDiagram
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     FlightController o-- Blackbox : calls start finish
-    FlightController o-- RadioControllerBase : calls getFailsafePhase
     RadioControllerBase o--ReceiverBase
     RadioControllerBase <|-- RadioController
     RadioController o-- FlightController : calls updateSetpoints
