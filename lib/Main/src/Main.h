@@ -104,9 +104,9 @@ enum {
     BLACKBOX_TASK_CORE = CPU_CORE_0,
 };
 
-class MainTask : public TaskBase {
+class DashboardTask : public TaskBase {
 public:
-    explicit MainTask(uint32_t taskIntervalMicroseconds) : TaskBase(taskIntervalMicroseconds) {}
+    explicit DashboardTask(uint32_t taskIntervalMicroseconds) : TaskBase(taskIntervalMicroseconds) {}
     void loop();
 };
 
@@ -123,7 +123,7 @@ private:
     static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static FlightController& createFlightController(AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs);
     static ReceiverBase& createReceiver();
-    static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* mainTask, NonVolatileStorage& nvs);
+    static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters, const Debug& debug);
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nvs);
 
@@ -135,10 +135,10 @@ private:
 
     static void loadPID_ProfileFromNonVolatileStorage(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t pidProfile);
     static void print(const char* buf);
-    static void reportMainTask();
+    static void reportDashboardTask();
     static void printTaskInfo(TaskBase::task_info_t& taskInfo);
     struct tasks_t {
-        MainTask* mainTask;
+        DashboardTask* dashboardTask;
         AHRS_Task* ahrsTask;
         VehicleControllerTask* flightControllerTask;
         ReceiverTask* receiverTask;

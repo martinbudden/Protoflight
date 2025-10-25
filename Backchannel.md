@@ -44,7 +44,7 @@ classDiagram
         #virtual packetControl() bool
         #virtual packetSetPID() bool
     }
-    BackchannelStabilizedVehicle o-- MainTask
+    BackchannelStabilizedVehicle o-- DashboardTask
     BackchannelStabilizedVehicle *-- AHRS
     BackchannelStabilizedVehicle *-- SV_Preferences
     BackchannelStabilizedVehicle *-- ReceiverBase

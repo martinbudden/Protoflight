@@ -17,7 +17,7 @@ BackchannelFlightController::BackchannelFlightController(
         FlightController& flightController,
         AHRS& ahrs,
         const ReceiverBase& receiver,
-        const TaskBase* mainTask,
+        const TaskBase* dashboardTask,
         NonVolatileStorage& nvs
     ) :
     BackchannelStabilizedVehicle(
@@ -27,7 +27,7 @@ BackchannelFlightController::BackchannelFlightController(
         flightController,
         ahrs,
         receiver,
-        mainTask
+        dashboardTask
     ),
     _flightController(flightController),
     _nonVolatileStorage(nvs)

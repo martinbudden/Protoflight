@@ -17,7 +17,7 @@ public:
         FlightController& flightController,
         AHRS& ahrs,
         const ReceiverBase& receiver,
-        const TaskBase* mainTask,
+        const TaskBase* dashboardTask,
         NonVolatileStorage& nvs
     );
 public:

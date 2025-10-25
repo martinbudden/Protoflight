@@ -13,7 +13,7 @@
 | Receiver               | yes       | 0.5.10 | 0.5.10  | yes        | no      |
 | Backchannel            | yes       | 0.1.8  | 0.1.8   | yes        | no      |
 | MultiWiiSerialProtocol | yes       | 0.0.8  | 0.0.8   | yes        | no      |
-| Blackbox               | yes       | 0.0.16 | 0.0.16  | yes        | no      |
+| Blackbox               | yes       | 0.0.17 | 0.0.17  | yes        | no      |
 | FlashKLV               | yes       | 0.0.3  | 0.0.3   | yes        | no      |
 
 ## Dependencies
@@ -61,7 +61,7 @@ Libraries
     ├── TaskBase @ 0.0.7
     └── StreamBuf @ 0.0.1
 
-└── Blackbox @ 0.0.16
+└── Blackbox @ 0.0.17
     ├── TaskBase @ 0.0.7
     └── StreamBuf @ 0.0.1
 ```

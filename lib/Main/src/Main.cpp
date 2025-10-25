@@ -128,9 +128,9 @@ void Main::setup()
     // Create all the tasks
     //
 
-    static MainTask mainTask(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS);
-    _tasks.mainTask = &mainTask;
-    reportMainTask();
+    static DashboardTask dashboardTask(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS);
+    _tasks.dashboardTask = &dashboardTask;
+    reportDashboardTask();
 
     TaskBase::task_info_t taskInfo {};
 
@@ -151,14 +151,14 @@ void Main::setup()
     printTaskInfo(taskInfo);
 #endif
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, &mainTask, nvs);
+    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, &dashboardTask, nvs);
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 }
 
 
-void Main::reportMainTask()
+void Main::reportDashboardTask()
 {
 #if defined(FRAMEWORK_ARDUINO_ESP32)
     // The main task is set up by the framework, so just print its details.
@@ -221,11 +221,11 @@ void Main::print(const char* buf)
 }
 
 /*!
-The main loop handles:
+The dashboard loop handles:
 1. Output to the screen
 2. Input from the buttons
 */
-void MainTask::loop()
+void DashboardTask::loop()
 {
 #if defined(FRAMEWORK_USE_FREERTOS)
     const TickType_t tickCount = xTaskGetTickCount();
@@ -241,7 +241,7 @@ void Main::loop() // NOLINT(readability-make-member-function-const)
     [[maybe_unused]] const TickType_t tickCount = xTaskGetTickCount();
 #else
     // simple round-robbin scheduling
-    _tasks.mainTask->loop();
+    _tasks.dashboardTask->loop();
     _tasks.ahrsTask->loop();
     _tasks.flightControllerTask->loop();
     _tasks.receiverTask->loop();

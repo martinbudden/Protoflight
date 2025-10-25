@@ -426,10 +426,7 @@ Tasks are statically (build-time) polymorphic, not dynamically (run-time) polymo
 They all have `task` and `loop` functions, but these functions are not virtual.
 This is deliberate.
 
-Despite its name, `MainTask` is only responsible for checking the buttons and updating the screen.
-It is called such because it implements the Arduino main `loop()` function.
-
-`BackchannelTask`, `BlackboxTask`, and `MSP_Task` are optional tasks and are not required for flight.
+`BackchannelTask`, `BlackboxTask`, `DashboardTask`, and `MSP_Task` are optional tasks and are not required for flight.
 
 Task synchronization primitives are shown in CAPITALS, ie WAIT/SIGNAL
 
@@ -458,13 +455,13 @@ classDiagram
     }
     link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
 
-    TaskBase <|-- MainTask
-    class MainTask:::taskClass {
+    TaskBase <|-- DashboardTask
+    class DashboardTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
-    MainTask o-- ButtonsBase : calls update
-    MainTask o-- ScreenBase : calls update
+    DashboardTask o-- ButtonsBase : calls update
+    DashboardTask o-- ScreenBase : calls update
 
     class RadioControllerBase {
         <<abstract>>
@@ -859,7 +856,7 @@ classDiagram
         #virtual packetControl() bool
         #virtual packetSetPID() bool
     }
-    BackchannelStabilizedVehicle o-- MainTask
+    BackchannelStabilizedVehicle o-- DashboardTask
     BackchannelStabilizedVehicle o-- AHRS
     BackchannelStabilizedVehicle o-- ReceiverBase
     BackchannelStabilizedVehicle o-- VehicleControllerBase
