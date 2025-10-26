@@ -31,6 +31,7 @@ public:
     };
 public:
     IMU_Filters(size_t motorCount, Debug& debug, float looptimeSeconds);
+    IMU_Filters(size_t motorCount, Debug& debug, uint32_t looptime) = delete;
 #if defined(USE_RPM_FILTERS)
     const RPM_Filters* getRPM_Filters() const { return &_rpmFilters; }
     RPM_Filters* getRPM_Filters() { return &_rpmFilters; }
@@ -54,7 +55,7 @@ protected:
     Debug& _debug;
     float _looptimeSeconds;
     size_t _motorCount;
-    const config_t _config {}; //!< configuration data is const once it has been set in setConfig
+    config_t _config {}; //!< configuration data is only changed in setConfig
     bool  _useGyroNotch1 {false};
     bool  _useGyroNotch2 {false};
 

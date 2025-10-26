@@ -72,7 +72,7 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
         }
     }
 
-    const float throttleDelta = fabsf(throttle - _rxM.throttlePrevious);
+    const float throttleDelta = std::fabs(throttle - _rxM.throttlePrevious);
     _rxM.throttlePrevious = throttle;
     const float deltaT = static_cast<float>((tickCount - _rxM.setpointTickCountPrevious)) * 0.001F;
     _rxM.setpointTickCountPrevious = tickCount;
@@ -116,12 +116,12 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     // ****
 
     // attenuate roll if setpoint greater than 50 DPS, half at 100 DPS
-    const float attenuatorRoll = std::fmaxf(fabsf(_sh.PIDS[ROLL_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
+    const float attenuatorRoll = std::fmaxf(std::fabs(_sh.PIDS[ROLL_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
     const float PTermBoostRoll = 1.0F + (throttleDerivative *_antiGravity.PGain / attenuatorRoll);
     _sh.PIDS[ROLL_RATE_DPS].setP(_fcC.pidConstants[ROLL_RATE_DPS].kp * PTermBoostRoll * _rxM.TPA);
 
     // attenuate pitch if setpoint greater than 50 DPS, half at 100 DPS
-    const float attenuatorPitch = std::fmaxf(fabsf(_sh.PIDS[PITCH_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
+    const float attenuatorPitch = std::fmaxf(std::fabs(_sh.PIDS[PITCH_RATE_DPS].getSetpoint()) / 50.0F, 1.0F);
     const float PTermBoostPitch = 1.0F + (throttleDerivative *_antiGravity.PGain / attenuatorPitch);
     _sh.PIDS[PITCH_RATE_DPS].setP(_fcC.pidConstants[PITCH_RATE_DPS].kp * PTermBoostPitch * _rxM.TPA);
     _debug.set(DEBUG_ANTI_GRAVITY, 3, lrintf(PTermBoostPitch * 1000.0F));
@@ -236,7 +236,7 @@ Detect crash or yaw spin. Runs in context of Receiver Task.
 void FlightController::detectCrashOrSpin()
 {
 #if defined(USE_YAW_SPIN_RECOVERY)
-    if (_sh.yawSpinThresholdDPS !=0.0F && fabsf(_sh.PIDS[YAW_RATE_DPS].getPreviousMeasurement()) > _sh.yawSpinThresholdDPS) {
+    if (_sh.yawSpinThresholdDPS !=0.0F && std::fabs(_sh.PIDS[YAW_RATE_DPS].getPreviousMeasurement()) > _sh.yawSpinThresholdDPS) {
         // yaw spin detected
         _sh.yawSpinRecovery = true;
         switchPID_integrationOff();

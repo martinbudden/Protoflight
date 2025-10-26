@@ -27,7 +27,7 @@ inline float constrain(float value, int16_t limit)
 float RadioController::applyRates(size_t axis, float rcCommand) const
 {
     const float rcCommand2 = rcCommand * rcCommand;
-    const float rcCommandAbs = fabsf(rcCommand);
+    const float rcCommandAbs = std::fabs(rcCommand);
 
     float expo = _rates.rcExpos[axis] / 100.0F;
     expo = rcCommandAbs*rcCommand*(expo*(rcCommand2*rcCommand2 - 1.0F) + 1.0F);

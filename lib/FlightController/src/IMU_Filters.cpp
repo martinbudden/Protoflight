@@ -18,7 +18,7 @@ IMU_Filters::IMU_Filters(size_t motorCount, Debug& debug, float looptimeSeconds)
 
 void IMU_Filters::setConfig(const config_t& config)
 {
-    const_cast<config_t&>(_config) = config; // NOLINT(cppcoreguidelines-pro-type-const-cast)
+    _config = config;
 
     // set up gyroLPF1.
     const uint16_t gyro_lpf1_hz = config.gyro_lpf1_hz == 0 ? 500 : config.gyro_lpf1_hz;

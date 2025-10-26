@@ -19,6 +19,7 @@ class DynamicNotchFilter {
 public:
     virtual ~DynamicNotchFilter() = default;
     DynamicNotchFilter(Debug& debug, float looptimeSeconds);
+    DynamicNotchFilter(Debug& debug, uint32_t looptime) = delete;
 private:
     // DynamicNotchFilter is not copyable or moveable
     DynamicNotchFilter(const DynamicNotchFilter&) = delete;

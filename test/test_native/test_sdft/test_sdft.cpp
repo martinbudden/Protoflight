@@ -27,6 +27,11 @@ void test_sdft()
     enum { SDFT_SAMPLE_COUNT = 72, SDFT_BIN_COUNT = SDFT_SAMPLE_COUNT/2 };
     SDFT<SDFT_SAMPLE_COUNT> sdft;
 
+    constexpr float R = 0.9999F;
+    const float m = static_cast<float>(M_PI) / static_cast<float>(SDFT_BIN_COUNT);
+    TEST_ASSERT_EQUAL_FLOAT(R*cosf(12.0F*m), sdft.getTwiddle(12).real());
+    TEST_ASSERT_EQUAL_FLOAT(R*sinf(12.0F*m), sdft.getTwiddle(12).imag());
+
     const uint32_t looptimeUs = 125;
 
     const float looptimeSeconds = static_cast<float>(looptimeUs) * 1E-6F;
@@ -121,10 +126,10 @@ void test_sdft()
 
 void test_dynamic_notch_filter()
 {
-    const uint32_t looptimeUs = 125;
+    const float looptimeSeconds = 125.0F / 1000000.0F;
 
     static Debug debug;
-    static DynamicNotchFilter dynamicNotchFilter(debug, looptimeUs);
+    static DynamicNotchFilter dynamicNotchFilter(debug, looptimeSeconds);
 
     dynamicNotchFilter.setConfig(config);
 

@@ -356,27 +356,27 @@ private:
     //
     // configuration and runtime data is const once it has been set in set*Config()
     //
-    const filters_config_t _filtersConfig {};
-    const flight_mode_config_t _flightModeConfig {};
-    const tpa_config_t _tpaConfig {};
-    const tpa_runtime_t _tpa { 0.0F, 1.0F, 0.0F, 1.0F };
-    const anti_gravity_config_t _antiGravityConfig {};
-    const anti_gravity_runtime_t _antiGravity {};
+    filters_config_t _filtersConfig {};
+    flight_mode_config_t _flightModeConfig {};
+    tpa_config_t _tpaConfig {};
+    tpa_runtime_t _tpa { 0.0F, 1.0F, 0.0F, 1.0F };
+    anti_gravity_config_t _antiGravityConfig {};
+    anti_gravity_runtime_t _antiGravity {};
 #if defined(USE_D_MAX)
-    const d_max_config_t _dMaxConfig {};
-    const d_max_runtime_t _dMax {};
+    d_max_config_t _dMaxConfig {};
+    d_max_runtime_t _dMax {};
 #endif
 #if defined(USE_ITERM_RELAX)
-    const iterm_relax_config_t _iTermRelaxConfig = {.iterm_relax=ITERM_RELAX_ON, .iterm_relax_setpoint_threshold = 40, .iterm_relax_cutoff=15};
-    const iterm_relax_runtime_t _iTermRelax = { .setpointThresholdDPS = 40.0F };
+    iterm_relax_config_t _iTermRelaxConfig = {.iterm_relax=ITERM_RELAX_ON, .iterm_relax_setpoint_threshold = 40, .iterm_relax_cutoff=15};
+    iterm_relax_runtime_t _iTermRelax = { .setpointThresholdDPS = 40.0F };
 #endif
 #if defined(USE_YAW_SPIN_RECOVERY)
-    const yaw_spin_recovery_config_t _yawSpinRecoveryConfig {.yaw_spin_threshold=1950, .yaw_spin_recovery=YAW_SPIN_RECOVERY_OFF};
-    const yaw_spin_recovery_runtime_t _yawSpin = {.recoveredRPS=100.0F*degreesToRadians,. partiallyRecoveredRPS=400.F*degreesToRadians};
+    yaw_spin_recovery_config_t _yawSpinRecoveryConfig {.yaw_spin_threshold=1950, .yaw_spin_recovery=YAW_SPIN_RECOVERY_OFF};
+    yaw_spin_recovery_runtime_t _yawSpin = {.recoveredRPS=100.0F*degreesToRadians,. partiallyRecoveredRPS=400.F*degreesToRadians};
 #endif
 #if defined(USE_CRASH_RECOVERY)
-    const crash_recovery_config_t _crashRecoveryConfig {};
-    const crash_recovery_runtime_t _crash {};
+    crash_recovery_config_t _crashRecoveryConfig {};
+    crash_recovery_runtime_t _crash {};
 #endif
 
     //

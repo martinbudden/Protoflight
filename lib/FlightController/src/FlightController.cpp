@@ -221,19 +221,17 @@ void FlightController::setControlMode(control_mode_e controlMode)
 
 void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 {
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-    const_cast<filters_config_t&>(_filtersConfig) = filtersConfig; // NOLINT(cppcoreguidelines-pro-type-const-cast)
+    _filtersConfig = filtersConfig;
     // always used PT1 filters for DTerm filters.
-    const_cast<uint8_t&>(filtersConfig.dterm_lpf1_type) = FlightController::filters_config_t::PT1;
-    const_cast<uint8_t&>(filtersConfig.dterm_lpf2_type) = FlightController::filters_config_t::PT1;
-    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+    _filtersConfig.dterm_lpf1_type = FlightController::filters_config_t::PT1;
+    _filtersConfig.dterm_lpf2_type = FlightController::filters_config_t::PT1;
 
     //!!TODO: check dT value for filters config
     const float deltaT = static_cast<float>(_taskIntervalMicroseconds) * 0.000001F;
     //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_outputToMotorsDenominator);
 
     // DTerm filters
-    if (filtersConfig.dterm_lpf1_hz == 0) {
+    if (_filtersConfig.dterm_lpf1_hz == 0) {
         for (auto& filter : _sh.dTermFilters1) {
             filter.setToPassthrough();
         }
@@ -243,7 +241,7 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
             filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, deltaT);
         }
     }
-    if (filtersConfig.dterm_lpf2_hz == 0) {
+    if (_filtersConfig.dterm_lpf2_hz == 0) {
         for (auto& filter : _sh.dTermFilters2) {
             filter.setToPassthrough();
         }
@@ -255,7 +253,7 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
     }
 
     // Output filters
-    if (filtersConfig.output_lpf_hz == 0) {
+    if (_filtersConfig.output_lpf_hz == 0) {
         for (auto& filter : _fcM.outputFilters) {
             filter.setToPassthrough();
         }
@@ -269,94 +267,80 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
 
 void FlightController::setFlightModeConfig(const flight_mode_config_t& flightModeConfig)
 {
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-    const_cast<flight_mode_config_t&>(_flightModeConfig) = flightModeConfig;
-    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+    _flightModeConfig = flightModeConfig;
 }
 
 void FlightController::setTPA_Config(const tpa_config_t& tpaConfig)
 {
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-    const_cast<tpa_config_t&>(_tpaConfig) = tpaConfig;
+    _tpaConfig = tpaConfig;
 
     // default of 1350 gives 0.35. range is limited to 0 to 0.99
     enum { PWM_RANGE_MIN = 1000 };
-    const_cast<float&>(_tpa.breakpoint) = clip(static_cast<float>(tpaConfig.tpa_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.0F, 0.99F);
-    const_cast<float&>(_tpa.multiplier) = (static_cast<float>(tpaConfig.tpa_rate) / 100.0F) / (1.0F - _tpa.breakpoint);
+    _tpa.breakpoint = clip(static_cast<float>(tpaConfig.tpa_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.0F, 0.99F);
+    _tpa.multiplier = (static_cast<float>(tpaConfig.tpa_rate) / 100.0F) / (1.0F - _tpa.breakpoint);
 
     // ensure tpaLowBreakpoint is always <= tpaBreakpoint
-    const_cast<float&>(_tpa.lowBreakpoint) = std::fminf(clip(static_cast<float>(tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpa.breakpoint);
-    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+    _tpa.lowBreakpoint = std::fminf(clip(static_cast<float>(tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpa.breakpoint);
 }
 
 void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig)
 {
-    // cast away constness to allow otherwise constant data to be set here
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-    const_cast<anti_gravity_config_t&>(_antiGravityConfig) = antiGravityConfig; 
-    const_cast<anti_gravity_runtime_t&>(_antiGravity) = { 
+    _antiGravityConfig = antiGravityConfig; 
+    _antiGravity = { 
         .PGain = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp,
         .IGain = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki
     };
-    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 
 #if defined(USE_D_MAX)
 void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig) // NOLINT(readability-make-member-function-const)
 {
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-    const_cast<d_max_config_t&>(_dMaxConfig) = dMaxConfig;
+    _dMaxConfig = dMaxConfig;
     for (size_t axis = 0; axis < RPY_AXIS_COUNT; ++axis) {
         const uint8_t dMax = dMaxConfig.d_max[axis];
         const PIDF_uint16_t pid16 = getPID_Constants(static_cast<pid_index_e>(axis));
         if (pid16.kd > 0 && dMax > pid16.kd) {
             // ratio of DMax to kd, eg if kd is 8 and DMax is 10 then dMaxPercent is 1.25
-            const_cast<float&>(_dMax.percent[axis]) = static_cast<float>(dMax) / pid16.kd;
+            _dMax.percent[axis] = static_cast<float>(dMax) / pid16.kd;
         } else {
-            const_cast<float&>(_dMax.percent[axis]) = 1.0F;
+            _dMax.percent[axis] = 1.0F;
         }
     }
-    const_cast<float&>(_dMax.gyroGain) = DMAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / DMAX_LOWPASS_HZ;
+    _dMax.gyroGain = DMAX_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain) / DMAX_LOWPASS_HZ;
     // lowpass included inversely in gain since stronger lowpass decreases peak effect
-    const_cast<float&>(_dMax.setpointGain) = DMAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / DMAX_LOWPASS_HZ;
+    _dMax.setpointGain = DMAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / DMAX_LOWPASS_HZ;
     for (auto& filter : _sh.dMaxRangeFilters) {
         filter.setToPassthrough();
     }
     for (auto& filter : _sh.dMaxLowpassFilters) {
         filter.setToPassthrough();
     }
-    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 #endif
 
 #if defined(USE_ITERM_RELAX)
 void FlightController::setITermRelaxConfig(const iterm_relax_config_t& iTermRelaxConfig)
 {
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-    const_cast<iterm_relax_config_t&>(_iTermRelaxConfig) = iTermRelaxConfig;
-    const_cast<float&>(_iTermRelax.setpointThresholdDPS) = iTermRelaxConfig.iterm_relax_setpoint_threshold;
+    _iTermRelaxConfig = iTermRelaxConfig;
+    _iTermRelax.setpointThresholdDPS = iTermRelaxConfig.iterm_relax_setpoint_threshold;
     for (auto& filter : _sh.iTermRelaxFilters) {
         filter.setToPassthrough();
     }
-    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 #endif
 
 #if defined(USE_YAW_SPIN_RECOVERY)
 void FlightController::setYawSpinRecoveryConfig(const yaw_spin_recovery_config_t& yawSpinRecoveryConfig)
 {
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-    const_cast<yaw_spin_recovery_config_t&>(_yawSpinRecoveryConfig) = yawSpinRecoveryConfig;
-    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+    _yawSpinRecoveryConfig = yawSpinRecoveryConfig;
 }
 #endif
 
 #if defined(USE_CRASH_RECOVERY)
 void FlightController::setCrashRecoveryConfig(const crash_recovery_config_t& crashRecoveryConfig)
 {
-    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-    const_cast<crash_recovery_config_t&>(_crashRecoveryConfig) = crashRecoveryConfig;
-    const_cast<crash_recovery_runtime_t&>(_crash) = {
+    _crashRecoveryConfig = crashRecoveryConfig;
+    _crash = {
         .timeLimitUs = static_cast<uint32_t>(crashRecoveryConfig.crash_time * 1000),
         .timeDelayUs = static_cast<uint32_t>(crashRecoveryConfig.crash_delay * 1000),
         .recoveryAngleDeciDegrees = crashRecoveryConfig.crash_recovery_angle * 10,
@@ -366,7 +350,6 @@ void FlightController::setCrashRecoveryConfig(const crash_recovery_config_t& cra
         .setpointThresholdDPS = static_cast<float>(crashRecoveryConfig.crash_setpoint_threshold),
         .limitYaw = static_cast<float>(crashRecoveryConfig.crash_limit_yaw)
     };
-    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
 }
 #endif
 

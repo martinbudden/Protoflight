@@ -1,10 +1,23 @@
 #pragma once
 
 #include <array>
+#include <cmath>
 #include <complex>
 #include <cstddef>
 
 typedef std::complex<float> complex_float_t;
+
+template <size_t N>
+constexpr std::array<complex_float_t, N> sdftGenerateTwiddlesArray() {
+    std::array<complex_float_t, N> twiddles = {};
+    constexpr float R = 0.9999F;
+    const float m = static_cast<float>(M_PI) / static_cast<float>(N);
+    for (size_t ii = 0; ii < N; ++ii) {
+        const float phi = m*static_cast<float>(ii);
+        twiddles[ii] = complex_float_t(R*cosf(phi), R*sinf(phi));
+    }
+    return twiddles;
+}
 
 /*!
 Sliding Discreet Fourier Transform
@@ -14,7 +27,7 @@ class SDFT {
 public:
     enum { SAMPLE_COUNT = N, BIN_COUNT = N/2 };
 public:
-    SDFT();
+    SDFT() = default;
     void init(size_t startBin, size_t endBin, size_t batchCount);
     void push(float sample, size_t batchIndex);
     void calculateWindowSquared(float* output);
@@ -29,9 +42,11 @@ public:
     size_t getStartBin() const { return _startBin; }
     size_t getEndBin() const { return _endBin; }
     size_t getIndex() const { return _index; }
+    complex_float_t getTwiddle(size_t index) const { return _twiddles[index]; }
 #endif
 private:
-    const float _rPowerN {};
+    static constexpr float R = 0.9999F;  // damping factor for SDFT stability (R < 1.0F)
+    static constexpr float _rPowerN = powf(R, SAMPLE_COUNT);
     size_t _startBin {};
     size_t _endBin {};
     size_t _batchSize {};
@@ -39,20 +54,8 @@ private:
     size_t _index {}; //!< circular buffer index
     std::array<float, N> _samples {}; //!< circular buffer of samples
     std::array<complex_float_t, BIN_COUNT> _data {};
-    const std::array<complex_float_t, BIN_COUNT> _twiddles {};
+    static constexpr std::array<complex_float_t, BIN_COUNT> _twiddles = sdftGenerateTwiddlesArray<BIN_COUNT>();
 };
-
-template<size_t N>
-SDFT<N>::SDFT()
-{
-    static constexpr float R = 0.9999F;  // damping factor for SDFT stability (R < 1.0F)
-    const_cast<float&>(_rPowerN) = powf(R, SAMPLE_COUNT);
-    const float m = 2.0F*static_cast<float>(M_PI) / static_cast<float>(SAMPLE_COUNT);
-    for (size_t ii = 0; ii < BIN_COUNT; ++ii) {
-        const float phi = m*static_cast<float>(ii);
-        const_cast<complex_float_t&>(_twiddles[ii]) = complex_float_t(R*cosf(phi), R*sinf(phi));
-    }
-}
 
 template<size_t N>
 void SDFT<N>::init(size_t startBin, size_t endBin, size_t batchCount)

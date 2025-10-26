@@ -53,14 +53,14 @@ NOTE: CALLED FROM WITHIN THE AHRS TASK
 void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT)
 {
 #if defined(USE_YAW_SPIN_RECOVERY)
-    if (fabsf(gyroENU_RPS.z) > _yawSpin.recoveredRPS) {
+    if (std::fabs(gyroENU_RPS.z) > _yawSpin.recoveredRPS) {
         _sh.outputThrottle = 0.5F; // half throttle gives maximum yaw authority, since outputs will have maximum range before being clipped
         // use the YAW_RATE_DPS PID to bring the spin down to zero
         _sh.PIDS[YAW_RATE_DPS].setSetpoint(0.0F);
         const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
         _ahM.outputs[YAW_RATE_DPS] = _sh.PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT);
 
-        if (fabsf(gyroENU_RPS.z) > _yawSpin.partiallyRecoveredRPS) {
+        if (std::fabs(gyroENU_RPS.z) > _yawSpin.partiallyRecoveredRPS) {
             // we are at a high spin rate, so don't yet attempt to recover the roll and pitch spin
             _ahM.outputs[ROLL_RATE_DPS] = 0.0F;
             _ahM.outputs[PITCH_RATE_DPS] = 0.0F;
@@ -178,7 +178,7 @@ float FlightController::calculateITermError(size_t axis, float measurement)
 #if defined(USE_ITERM_RELAX)
     if (_iTermRelaxConfig.iterm_relax == ITERM_RELAX_ON) {
         const float setpointLp = _rxC.setpointLPs[axis];
-        const float setpointHp = fabsf(setpoint - setpointLp);
+        const float setpointHp = std::fabs(setpoint - setpointLp);
         float setpointThresholdDPS = _iTermRelax.setpointThresholdDPS;
         if (_rxC.useAngleMode) {
             setpointThresholdDPS *= 0.2F;

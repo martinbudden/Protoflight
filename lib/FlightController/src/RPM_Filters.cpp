@@ -4,7 +4,7 @@
 
 void RPM_Filters::setConfig(const config_t& config)
 {
-    const_cast<config_t&>(_config) = config; // NOLINT(cppcoreguidelines-pro-type-const-cast)
+    _config = config;
     _Q = static_cast<float>(_config.rpm_filter_q) * 0.01F;
 
     _state.state = STATE_STOPPED;
