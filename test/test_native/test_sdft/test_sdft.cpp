@@ -45,7 +45,7 @@ void test_sdft()
 
     const float sampleCountReciprocal = 1.0F / static_cast<float>(sampleCount);
     const float sampleRateHz = looprateHz * sampleCountReciprocal;
-    const float resolutionHz = sampleRateHz / SDFT_SAMPLE_COUNT; // 18.5hz per bin at 8k and 600Hz maxHz
+    const float resolutionHz = sampleRateHz / static_cast<float>(SDFT_SAMPLE_COUNT); // 18.5hz per bin at 8k and 600Hz maxHz
 
     const size_t startBin = lrintf(minHz / resolutionHz);
     TEST_ASSERT_EQUAL(5, startBin);

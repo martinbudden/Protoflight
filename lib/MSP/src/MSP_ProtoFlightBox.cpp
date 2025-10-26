@@ -28,16 +28,16 @@ return state of given boxId box, handling ARM and FLIGHT_MODE
 */
 bool MSP_ProtoFlightBox::getBoxIdState(const FlightController& flightController, boxId_e boxId)
 {
-    static const uint8_t boxIdToFlightModeMap[BOX_ID_FLIGHTMODE_LAST+1] = { // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        [BOX_ARM]        = 0, // not used
-        [BOX_ANGLE]      = FlightController::LOG2_ANGLE_MODE,
-        [BOX_HORIZON]    = FlightController::LOG2_HORIZON_MODE,
-        [BOX_MAG]        = FlightController::LOG2_MAG_MODE,
-        [BOX_ALTHOLD]    = FlightController::LOG2_ALT_HOLD_MODE,
-        [BOX_HEADFREE]   = FlightController::LOG2_HEADFREE_MODE,
-        [BOX_PASSTHRU]   = FlightController::LOG2_PASSTHRU_MODE,
-        [BOX_FAILSAFE]   = FlightController::LOG2_FAILSAFE_MODE,
-        [BOX_GPS_RESCUE] = FlightController::LOG2_GPS_RESCUE_MODE
+    static constexpr std::array<uint8_t, BOX_ID_FLIGHTMODE_LAST+1> boxIdToFlightModeMap = {
+        /*[BOX_ARM]*/           0, // not used
+        /*[BOX_ANGLE]*/         FlightController::LOG2_ANGLE_MODE,
+        /*[BOX_HORIZON]*/       FlightController::LOG2_HORIZON_MODE,
+        /*[BOX_MAG]*/           FlightController::LOG2_MAG_MODE,
+        /*[BOX_ALTHOLD]*/       FlightController::LOG2_ALT_HOLD_MODE,
+        /*[BOX_HEADFREE]*/      FlightController::LOG2_HEADFREE_MODE,
+        /*[BOX_PASSTHRU]*/      FlightController::LOG2_PASSTHRU_MODE,
+        /*[BOX_FAILSAFE]*/      FlightController::LOG2_FAILSAFE_MODE,
+        /*[BOX_GPS_RESCUE]*/    FlightController::LOG2_GPS_RESCUE_MODE
     };
     // we assume that all boxId below BOXID_FLIGHTMODE_LAST except BOXARM are mapped to flightmode
 

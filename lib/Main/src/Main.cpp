@@ -210,13 +210,15 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) // NOLI
 void Main::print(const char* buf)
 {
 #if defined(FRAMEWORK_RPI_PICO)
-        printf(&buf[0]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    printf(&buf[0]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 #elif defined(FRAMEWORK_ESPIDF)
+    (void)buf;
 #elif defined(FRAMEWORK_STM32_CUBE)
+    (void)buf;
 #elif defined(FRAMEWORK_TEST)
-        printf(&buf[0]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    printf(&buf[0]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 #else
-        Serial.print(&buf[0]);
+    Serial.print(&buf[0]);
 #endif
 }
 

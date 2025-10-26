@@ -62,7 +62,7 @@ void Main::loadPID_ProfileFromNonVolatileStorage(FlightController& flightControl
 #if defined(USE_CRASH_RECOVERY)
     flightController.setCrashRecoveryConfig(nvs.loadFlightControllerCrashRecoveryConfig(pidProfile));
 #endif
-    for (int ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
+    for (uint8_t ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
         const VehicleControllerBase::PIDF_uint16_t pid = nvs.loadPID(ii, pidProfile);
         flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);
         const std::string pidName = flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));

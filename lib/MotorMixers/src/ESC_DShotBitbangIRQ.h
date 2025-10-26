@@ -9,6 +9,7 @@ ESC_DShotBitbang* ESC_DShotBitbang::self; // alias of `this` to be used in ISR
 #define CONCAT(a, b) a##b
 
 #define DMA_STREAM_IRQ_HANDLER(d, s, h, p) \
+void DMA##d##_Stream##s##_IRQHandler(); \
 void DMA##d##_Stream##s##_IRQHandler() { \
     if ( CONCAT(DMA,d)->CONCAT(h,ISR) & CONCAT(DMA_##h##ISR_TCIF,s) ) { \
         CONCAT(DMA,d)->CONCAT(h,IFCR) |= CONCAT(DMA_##h##IFCR_CTCIF,s); \

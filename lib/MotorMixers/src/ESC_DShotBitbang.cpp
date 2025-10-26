@@ -96,6 +96,10 @@ void ESC_DShotBitbang::setupGPIO(GPIO_TypeDef* GPIO, uint32_t GPIOxEN, uint32_t 
     // mode (00-input; 01-output; 10-alternate) will be set later
     // set speed (max speed):
     GPIO->OSPEEDR |= GPIO_OSPEEDER_OSPEEDRn;
+#else
+    (void)GPIO;
+    (void)GPIOxEN;
+    (void)GPIO_OSPEEDER_OSPEEDRn;
 #endif
 }
 

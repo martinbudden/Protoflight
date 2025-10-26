@@ -44,6 +44,9 @@ int main(int argc, char **argv)
 
     static Main mainTask;
     mainTask.setup();
+    while (true) {
+        mainTask.loop();
+    }
 
     return 0;
 }

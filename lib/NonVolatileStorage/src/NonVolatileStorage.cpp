@@ -216,7 +216,7 @@ int32_t NonVolatileStorage::storeItem(uint16_t key, uint8_t pidProfileIndex, con
 
 MotorMixerBase::type_e NonVolatileStorage::loadMotorMixerType() const
 {
-    MotorMixerBase::type_e motorMixerType;
+    MotorMixerBase::type_e motorMixerType {};
     if (loadItem(MotorMixerTypeKey, &motorMixerType, sizeof(motorMixerType))) { // cppcheck-suppress knownConditionTrueFalse
         return motorMixerType;
     }
@@ -515,6 +515,7 @@ void NonVolatileStorage::resetPID(uint8_t pidIndex, uint8_t pidProfileIndex)
     assert(pidIndex <= FlightController::PID_COUNT);
     assert(pidProfileIndex < PID_PROFILE_COUNT);
     remove(PID_Keys[pidIndex]);
+    (void)pidProfileIndex; //!!TODO: check if this is needed
 }
 
 

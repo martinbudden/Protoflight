@@ -26,14 +26,14 @@ void DynamicNotchFilter::setConfig(const config_t& config)
     const float looprateHz = 1.0F / looptimeSeconds;
 
     // Disable dynamic notch filter if update() would run at less than 2kHz
-    enum { DYN_NOTCH_UPDATE_MIN_HZ = 2000 };
+    static constexpr float DYN_NOTCH_UPDATE_MIN_HZ = 2000.F;
     if (looprateHz < DYN_NOTCH_UPDATE_MIN_HZ) {
         _notchCount = 0;
         return;
     }
 
     _maxCenterFrequencyHz = 0.0F;
-    enum { STATE_MACHINE_ITERATION_COUNT = XYZ_AXIS_COUNT * STEP_COUNT };
+    static constexpr int STATE_MACHINE_ITERATION_COUNT = XYZ_AXIS_COUNT * static_cast<int>(STEP_COUNT);
     _filterLooptimeSeconds = STATE_MACHINE_ITERATION_COUNT * looptimeSeconds;
 
     const float nyquistFrequencyHz = looprateHz / 2.0F;
@@ -49,7 +49,7 @@ void DynamicNotchFilter::setConfig(const config_t& config)
 
     _sampleRateHz = looprateHz / static_cast<float>(_sampleCount);
 
-    _binResolutionHz = _sampleRateHz / SDFT_SAMPLE_COUNT; // 18.5Hz per bin at 8kHz looptime and 600Hz maxHz
+    _binResolutionHz = _sampleRateHz / static_cast<float>(SDFT_SAMPLE_COUNT); // 18.5Hz per bin at 8kHz looptime and 600Hz maxHz
     _startBin = lrintf(_minHz / _binResolutionHz); 
     if (_startBin == 0) {
         _startBin = 1; // cannot use bin 0 because it is for DC component
@@ -193,7 +193,7 @@ void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function
                 // PowerTransfer1 style smoothing moves notch center frequencies rapidly towards big peaks and slowly away, up to 10x faster
                 const float cutoffMultiplier = clip(peak.value / _noiseThreshold, 1.0F, 10.0F);
                 if (_config.dyn_notch_smoothing) {
-                    enum { DYN_NOTCH_SMOOTH_HZ = 4 };
+                    static constexpr float DYN_NOTCH_SMOOTH_HZ = 4.0F;
                     // calculate center frequency as filtered value of new and old values
                     const float gain = PowerTransferFilter1::gainFromFrequency(DYN_NOTCH_SMOOTH_HZ * cutoffMultiplier, _filterLooptimeSeconds);
                     //Equivalently
