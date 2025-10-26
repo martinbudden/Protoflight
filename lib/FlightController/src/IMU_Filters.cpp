@@ -3,15 +3,15 @@
 #include <MotorMixerBase.h>
 
 
-IMU_Filters::IMU_Filters(size_t motorCount, Debug& debug, float looptimeMicroseconds) :
+IMU_Filters::IMU_Filters(size_t motorCount, Debug& debug, float looptimeSeconds) :
     _debug(debug),
-    _looptimeSeconds(looptimeMicroseconds * 1.0E-6F),
+    _looptimeSeconds(looptimeSeconds),
     _motorCount(motorCount)
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
-    ,_dynamicNotchFilter(debug, looptimeMicroseconds)
+    ,_dynamicNotchFilter(debug, looptimeSeconds)
 #endif
 #if defined(USE_RPM_FILTERS)
-    ,_rpmFilters(motorCount, looptimeMicroseconds)
+    ,_rpmFilters(motorCount, looptimeSeconds)
 #endif
 {
 }

@@ -30,7 +30,7 @@ public:
         // uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
     };
 public:
-    IMU_Filters(size_t motorCount, Debug& debug, float looptimeMicroseconds);
+    IMU_Filters(size_t motorCount, Debug& debug, float looptimeSeconds);
 #if defined(USE_RPM_FILTERS)
     const RPM_Filters* getRPM_Filters() const { return &_rpmFilters; }
     RPM_Filters* getRPM_Filters() { return &_rpmFilters; }

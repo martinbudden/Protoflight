@@ -120,7 +120,7 @@ public:
     void loop();
 private:
     static IMU_Base& createIMU();
-    static AHRS& createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
+    static AHRS& createAHRS(float AHRS_taskIntervalSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static FlightController& createFlightController(AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs);
     static ReceiverBase& createReceiver();
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);

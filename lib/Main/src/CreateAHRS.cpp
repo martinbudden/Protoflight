@@ -4,7 +4,7 @@
 #include <SensorFusion.h>
 
 
-AHRS& Main::createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters)
+AHRS& Main::createAHRS(float AHRS_taskIntervalSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters)
 {
     // Statically allocate the Sensor Fusion Filter
     // Timings are for 240MHz ESP32-S3
@@ -15,16 +15,16 @@ AHRS& Main::createAHRS(uint32_t AHRS_taskIntervalMicroseconds, IMU_Base& imuSens
     // approx 10 microseconds per update
     static MahonyFilter sensorFusionFilter;
 #elif defined(USE_VQF)
-    const float deltaT = static_cast<float>(AHRS_taskIntervalMicroseconds) / 1000000.0F;
+    const float deltaT = AHRS_taskIntervalSeconds;
     static VQF sensorFusionFilter(deltaT, deltaT, deltaT, true, false, false);
 #elif defined(USE_VQF_BASIC)
-    static BasicVQF sensorFusionFilter(static_cast<float>(AHRS_taskIntervalMicroseconds) / 1000000.0F);
+    static BasicVQF sensorFusionFilter(AHRS_taskIntervalSeconds);
 #else
     // approx 16 microseconds per update
     static MadgwickFilter sensorFusionFilter;
 #endif
 
     // Statically allocate the AHRS object
-    static AHRS ahrs(AHRS_taskIntervalMicroseconds, sensorFusionFilter, imuSensor, imuFilters);
+    static AHRS ahrs(static_cast<uint32_t>(AHRS_taskIntervalSeconds * 1000000.0F), sensorFusionFilter, imuSensor, imuFilters);
     return ahrs;
 }

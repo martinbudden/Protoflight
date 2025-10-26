@@ -6,9 +6,9 @@
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
 
-DynamicNotchFilter::DynamicNotchFilter(Debug& debug, timeUs32_t looptimeUs) :
+DynamicNotchFilter::DynamicNotchFilter(Debug& debug, float looptimeSeconds) :
     _debug(debug),
-    _looptimeUs(looptimeUs)
+    _looptimeSeconds(looptimeSeconds)
 {
 }
 
@@ -22,8 +22,7 @@ void DynamicNotchFilter::setConfig(const config_t& config)
 {
     _config = config;
 
-    const float looptimeSeconds = static_cast<float>(_looptimeUs) * 1E-6F;
-    const float looprateHz = 1.0F / looptimeSeconds;
+    const float looprateHz = 1.0F / _looptimeSeconds;
 
     // Disable dynamic notch filter if update() would run at less than 2kHz
     static constexpr float DYN_NOTCH_UPDATE_MIN_HZ = 2000.F;
@@ -34,7 +33,7 @@ void DynamicNotchFilter::setConfig(const config_t& config)
 
     _maxCenterFrequencyHz = 0.0F;
     static constexpr int STATE_MACHINE_ITERATION_COUNT = XYZ_AXIS_COUNT * static_cast<int>(STEP_COUNT);
-    _filterLooptimeSeconds = STATE_MACHINE_ITERATION_COUNT * looptimeSeconds;
+    _filterLooptimeSeconds = STATE_MACHINE_ITERATION_COUNT * _looptimeSeconds;
 
     const float nyquistFrequencyHz = looprateHz / 2.0F;
     _minHz = config.dyn_notch_min_hz;
@@ -65,7 +64,7 @@ void DynamicNotchFilter::setConfig(const config_t& config)
         for (size_t notchIndex = 0; notchIndex < _notchCount; ++notchIndex) {
             // any init value is fine, but evenly spreading center frequencies across frequency range makes notches stick to peaks quicker
             _centerFrequencyHz[axis][notchIndex] =  _minHz + (static_cast<float>(notchIndex) + 0.5F) * (_maxHz - _minHz) / static_cast<float>(_notchCount);
-            _notchFilters[axis][notchIndex].initNotch(_centerFrequencyHz[axis][notchIndex], looptimeSeconds, _q);
+            _notchFilters[axis][notchIndex].initNotch(_centerFrequencyHz[axis][notchIndex], _looptimeSeconds, _q);
         }
     }
 }
