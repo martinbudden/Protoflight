@@ -422,7 +422,6 @@ private:
         float pitchSinAngle {0.0F};
         enum { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
         uint32_t angleModeCalculationState { STATE_CALCULATE_ROLL };
-        std::array<float, PID_COUNT> outputs {}; //<! PID outputs. These are stored since the output from one PID may be used as the input to another
         std::array<float, RP_AXIS_COUNT> dMaxMultiplier {1.0F, 1.0F}; // used even if USE_D_MAX not defined
     };
     struct shared_t {

@@ -84,7 +84,6 @@ Targets
     #define BOARD_IDENTIFIER "RPI_Pico"
 
     #define USE_ITERM_RELAX
-    #define USE_YAW_SPIN_RECOVERY
     #define USE_RPM_FILTERS
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS

@@ -75,7 +75,7 @@ void Main::setup()
 
     AHRS& ahrs = createAHRS(imuSensor, imuFilters);
 
-    const uint32_t AHRS_taskIntervalMicroSeconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
+    const auto AHRS_taskIntervalMicroSeconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
     FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, imuFilters.getRPM_Filters(), debug, nvs);
 
     ReceiverBase& receiver = createReceiver();
