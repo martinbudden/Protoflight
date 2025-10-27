@@ -52,12 +52,12 @@ void test_msp_set_failsafe_config()
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersBase imuFilters;
-    static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
+    static AHRS ahrs(AHRS::TIMER_DRIVEN, sensorFusionFilter, imu, imuFilters);
     enum { MOTOR_COUNT = 4 };
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static FlightController fc(OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
     static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
@@ -123,12 +123,12 @@ void test_msp_pid_in()
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersBase imuFilters;
-    static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
+    static AHRS ahrs(AHRS::TIMER_DRIVEN, sensorFusionFilter, imu, imuFilters);
     enum { MOTOR_COUNT = 4 };
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static FlightController fc(OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
     static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
@@ -168,12 +168,12 @@ void test_msp_features()
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersBase imuFilters;
-    static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
+    static AHRS ahrs(AHRS::TIMER_DRIVEN, sensorFusionFilter, imu, imuFilters);
     enum { MOTOR_COUNT = 4 };
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static FlightController fc(OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
     static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
@@ -195,12 +195,12 @@ void test_msp_raw_imu()
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersBase imuFilters;
-    static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
+    static AHRS ahrs(AHRS::TIMER_DRIVEN, sensorFusionFilter, imu, imuFilters);
     enum { MOTOR_COUNT = 4 };
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static FlightController fc(OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
     static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);

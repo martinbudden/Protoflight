@@ -8,18 +8,17 @@
 #include <NonVolatileStorage.h>
 
 
-FlightController& Main::createFlightController(AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs)
+FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs)
 {
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
     (void)rpmFilters;
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
-    const uint32_t motorTaskIntervalMicroseconds = ahrs.getTaskIntervalMicroseconds();
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(motorTaskIntervalMicroseconds, OUTPUT_TO_MOTORS_DENOMINATOR, debug, MotorMixerQuadBase::MOTOR_PINS, *rpmFilters);
+    static MotorMixerQuadX_DShotBitbang motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS, *rpmFilters);
 #else
-    static MotorMixerQuadX_DShot motorMixer(motorTaskIntervalMicroseconds, OUTPUT_TO_MOTORS_DENOMINATOR, debug, MotorMixerQuadBase::MOTOR_PINS, *rpmFilters);
+    static MotorMixerQuadX_DShot motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS, *rpmFilters);
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
@@ -35,7 +34,7 @@ FlightController& Main::createFlightController(AHRS& ahrs, RPM_Filters* rpmFilte
 #endif // USE_MOTOR_MIXER
 
     // Statically allocate the flightController.
-    static FlightController flightController(OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, ahrs, motorMixer, debug);
     loadPID_ProfileFromNonVolatileStorage(flightController, nvs, nvs.getCurrentPidProfileIndex());
 
     return flightController;

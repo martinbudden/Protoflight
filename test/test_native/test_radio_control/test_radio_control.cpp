@@ -19,10 +19,10 @@ enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 static MadgwickFilter sensorFusionFilter;
 static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
 static IMU_FiltersBase imuFilters;
-static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
+static AHRS ahrs(AHRS::TIMER_DRIVEN, sensorFusionFilter, imu, imuFilters);
 static Debug debug;
 static MotorMixerBase motorMixer(4, debug);
-static FlightController flightController(1, ahrs, motorMixer, debug);
+static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, ahrs, motorMixer, debug);
 
 static const RadioController::rates_t radioControllerRates {
     .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},

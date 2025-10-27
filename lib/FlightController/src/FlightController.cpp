@@ -26,8 +26,8 @@ the AHRS task function AHRS::readIMUandUpdateOrientation runs.
 
 MotorMixer::outputToMotors is called every _outputToMotorsDenominator times FlightController::outputToMixer is called
 */
-FlightController::FlightController(uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug) :
-    VehicleControllerBase(AIRCRAFT, PID_COUNT, ahrs.getTaskIntervalMicroseconds(), ahrs),
+FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug) :
+    VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroseconds, ahrs),
     _mixer(motorMixer),
     _debug(debug),
     _outputToMotorsDenominator(outputToMotorsDenominator),
@@ -258,9 +258,8 @@ void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
             filter.setToPassthrough();
         }
     } else {
-        const float ahrsDeltaT = static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F;
         for (auto& filter : _fcM.outputFilters) {
-            filter.setCutoffFrequencyAndReset(filtersConfig.output_lpf_hz, ahrsDeltaT);
+            filter.setCutoffFrequencyAndReset(filtersConfig.output_lpf_hz, deltaT);
         }
     }
 }

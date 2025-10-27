@@ -120,8 +120,8 @@ public:
     void loop();
 private:
     static IMU_Base& createIMU();
-    static AHRS& createAHRS(float AHRS_taskIntervalSeconds, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
-    static FlightController& createFlightController(AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs);
+    static AHRS& createAHRS(IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
+    static FlightController& createFlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs);
     static ReceiverBase& createReceiver();
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters, const Debug& debug);

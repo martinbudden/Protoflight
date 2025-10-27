@@ -23,7 +23,7 @@ void FlightController::calculateDMaxMultipliers()
     for (size_t ii = 0; ii <= RP_AXIS_COUNT; ++ii) {
         _ahM.dMaxMultiplier[ii] = 1.0F;
         if (_dMax.percent[ii] > 1.0F) {
-            const float deltaT = _ahrs.getTaskIntervalSeconds();
+            const float deltaT = static_cast<float>(_taskIntervalMicroseconds) * 0.000001F;
             const float gyroDeltaD = deltaT * _sh.PIDS[ii].getErrorD(); //!!TODO: check using PID error in D_MAX, surely this is too easy
             const float gyroFactor = std::fabs(_sh.dMaxRangeFilters[ii].filter(gyroDeltaD)) * _dMax.gyroGain;
             const float setpointFactor = std::fabs(_sh.PIDS[ii].getSetpointDelta()) * _dMax.setpointGain;

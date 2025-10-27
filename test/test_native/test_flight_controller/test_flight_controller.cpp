@@ -48,14 +48,14 @@ void test_flight_controller()
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
     static IMU_FiltersBase imuFilters;
-    static AHRS ahrs(AHRS_TASK_INTERVAL_MICROSECONDS, sensorFusionFilter, imu, imuFilters);
+    static AHRS ahrs(AHRS::TIMER_DRIVEN, sensorFusionFilter, imu, imuFilters);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
 
     enum { MOTOR_COUNT = 4 };
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    FlightController fc(OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
     TEST_ASSERT_FALSE(fc.motorsIsOn());
 

@@ -58,19 +58,12 @@ void Main::setup()
     // create the IMU and get its sample rate
     static IMU_Base& imuSensor = createIMU();
     const uint32_t imuSampleRateHz = imuSensor.getGyroSampleRateHz();
-#if defined(AHRS_TASK_INTERVAL_MICROSECONDS)
-    // we are using time-driven scheduling for the AHRS
-    const float AHRS_taskIntervalSeconds = AHRS_TASK_INTERVAL_MICROSECONDS * 1000000.0F;
-#else
-    // we are using interrupt-driven scheduling for the AHRS
-    const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSampleRateHz);
-#endif
-
     std::array<char, 128> buf;
-    sprintf(&buf[0], "\r\n**** AHRS_taskIntervalMicroseconds:%f, IMU sample rate:%dHz\r\n\r\n", static_cast<double>(AHRS_taskIntervalSeconds*1000000.0F), static_cast<int>(imuSampleRateHz));
+    sprintf(&buf[0], "\r\n**** IMU sample rate:%dHz\r\n\r\n", static_cast<int>(imuSampleRateHz));
     print(&buf[0]);
 
     // statically allocate the IMU_Filters
+    const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSampleRateHz);
     static IMU_Filters imuFilters(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug, AHRS_taskIntervalSeconds);
     imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
@@ -80,9 +73,10 @@ void Main::setup()
     imuFilters.setRPM_FiltersConfig(nvs.loadRPM_FiltersConfig());
 #endif
 
-    AHRS& ahrs = createAHRS(AHRS_taskIntervalSeconds, imuSensor, imuFilters);
+    AHRS& ahrs = createAHRS(imuSensor, imuFilters);
 
-    FlightController& flightController = createFlightController(ahrs, imuFilters.getRPM_Filters(), debug, nvs);
+    const uint32_t AHRS_taskIntervalMicroSeconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
+    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, imuFilters.getRPM_Filters(), debug, nvs);
 
     ReceiverBase& receiver = createReceiver();
 
@@ -134,7 +128,11 @@ void Main::setup()
 
     TaskBase::task_info_t taskInfo {};
 
-    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F));
+#if defined(AHRS_TASK_IS_TIMER_DRIVEN)
+    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroSeconds);
+#else
+    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, 0);
+#endif
     printTaskInfo(taskInfo);
 
     _tasks.flightControllerTask = VehicleControllerTask::createTask(taskInfo, flightController, FC_TASK_PRIORITY, FC_TASK_CORE);

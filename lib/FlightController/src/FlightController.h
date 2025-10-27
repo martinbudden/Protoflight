@@ -43,7 +43,7 @@ have been put in place to help avoid race conditions. In particular:
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug);
+    FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug);
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
