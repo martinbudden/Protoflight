@@ -8,9 +8,8 @@
 typedef std::complex<float> complex_float_t;
 
 template <size_t N>
-constexpr std::array<complex_float_t, N> sdftGenerateTwiddlesArray() {
+constexpr std::array<complex_float_t, N> sdftGenerateTwiddlesArray(float R) {
     std::array<complex_float_t, N> twiddles = {};
-    constexpr float R = 0.9999F;
     const float m = static_cast<float>(M_PI) / static_cast<float>(N);
     for (size_t ii = 0; ii < N; ++ii) {
         const float phi = m*static_cast<float>(ii);
@@ -27,7 +26,7 @@ class SDFT {
 public:
     enum { SAMPLE_COUNT = N, BIN_COUNT = N/2 };
 public:
-    SDFT() = default;
+    SDFT();
     void init(size_t startBin, size_t endBin, size_t batchCount);
     void push(float sample, size_t batchIndex);
     void calculateWindowSquared(float* output);
@@ -54,8 +53,14 @@ private:
     size_t _index {}; //!< circular buffer index
     std::array<float, N> _samples {}; //!< circular buffer of samples
     std::array<complex_float_t, BIN_COUNT> _data {};
-    static constexpr std::array<complex_float_t, BIN_COUNT> _twiddles = sdftGenerateTwiddlesArray<BIN_COUNT>();
+    const std::array<complex_float_t, BIN_COUNT> _twiddles;
 };
+
+template<size_t N>
+SDFT<N>::SDFT()
+    : _twiddles(sdftGenerateTwiddlesArray<BIN_COUNT>(R))
+{
+}
 
 template<size_t N>
 void SDFT<N>::init(size_t startBin, size_t endBin, size_t batchCount)
