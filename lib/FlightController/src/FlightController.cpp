@@ -403,12 +403,14 @@ Called by the scheduler when signalled by the AHRS task that output data is avai
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {
-    // filter the output
+    // Filter the output.
+    // This smooths the output, but also accumulates the output in the filter,
+    // so the values influence the output even when `outputToMotors` is not called.
     _fcM.outputs[FD_ROLL] = _fcM.outputFilters[FD_ROLL].filter(queueItem.roll);
     _fcM.outputs[FD_PITCH] = _fcM.outputFilters[FD_PITCH].filter(queueItem.pitch);
     _fcM.outputs[FD_YAW] = _fcM.outputFilters[FD_YAW].filter(queueItem.yaw);
 
-    // output to motors every _outputToMotorsDenominator times outputToMixer is called
+    // Output to motors every _outputToMotorsDenominator times outputToMixer is called.
     ++_fcM.outputToMixerCount;
     if (_fcM.outputToMixerCount >= _outputToMotorsDenominator) {
         _fcM.outputToMixerCount = 0;
