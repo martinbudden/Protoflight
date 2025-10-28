@@ -7,10 +7,10 @@
 #include <cmath>
 
 
-MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, Debug& debug, const stm32_motor_pins_t& pins, RPM_Filters& rpmFilters) :
+MotorMixerQuadX_DShotBitbang::MotorMixerQuadX_DShotBitbang(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, Debug& debug, const stm32_motor_pins_t& pins) :
     MotorMixerQuadBase(debug),
     _dynamicIdleController(taskIntervalMicroseconds/outputToMotorsDenominator, debug),
-    _rpmFilters(rpmFilters)
+    _rpmFilters(_motorCount, static_cast<float>(taskIntervalMicroseconds) * 0.000001F)
 {
     (void)pins; // !!TODO: set pins
     static constexpr float SECONDS_PER_MINUTE = 60.0F;
@@ -45,6 +45,16 @@ float MotorMixerQuadX_DShotBitbang::calculateSlowestMotorHz() const
         slowestMotorHz = motorHz;
     }
     return slowestMotorHz;
+}
+
+RPM_Filters* MotorMixerQuadX_DShotBitbang::getRPM_Filters()
+{
+    return &_rpmFilters;
+}
+
+const RPM_Filters* MotorMixerQuadX_DShotBitbang::getRPM_Filters() const
+{
+    return &_rpmFilters;
 }
 
 const DynamicIdleController* MotorMixerQuadX_DShotBitbang::getDynamicIdleController() const

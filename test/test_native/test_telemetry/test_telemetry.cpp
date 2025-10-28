@@ -53,15 +53,15 @@ void test_telemetry_msp()
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
     static IMU_FiltersBase imuFilters;
-    static AHRS ahrs(AHRS::TIMER_DRIVEN, sensorFusionFilter, imu, imuFilters);
-    TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
 
     enum { MOTOR_COUNT = 4 };
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static BlackboxMessageQueue blackboxMessageQueue;
-    static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, blackboxMessageQueue, debug);
+    static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, blackboxMessageQueue, debug);
+    static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
+    TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
     static RadioController radioController(receiver, flightController, radioControllerRates);
 
     // statically allocate an MSP object

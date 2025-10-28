@@ -26,8 +26,8 @@ the AHRS task function AHRS::readIMUandUpdateOrientation runs.
 
 MotorMixer::outputToMotors is called every _outputToMotorsDenominator times FlightController::outputToMixer is called
 */
-FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug) :
-    VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroseconds, ahrs),
+FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug) :
+    VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroseconds),
     _mixer(motorMixer),
     _blackboxMessageQueue(blackboxMessageQueue),
     _debug(debug),
@@ -187,7 +187,7 @@ void FlightController::motorsSwitchOff()
 void FlightController::motorsSwitchOn()
 {
     // don't allow motors to be switched on if the sensor fusion has not initialized
-    if (!_ahrs.sensorFusionFilterIsInitializing()) {
+    if (!_sensorFusionFilterIsInitializing) {
         _mixer.motorsSwitchOn();
         // reset the PID integral values when we switch the motors on
         switchPID_integrationOn();

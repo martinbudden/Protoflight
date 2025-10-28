@@ -36,6 +36,7 @@ class RadioController;
 class ReceiverBase;
 class ReceiverTask;
 class ScreenBase;
+class VehicleControllerBase;
 class VehicleControllerTask;
 
 enum { MAIN_LOOP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
@@ -119,9 +120,9 @@ public:
     void setup();
     void loop();
 private:
+    static FlightController& createFlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs);
     static IMU_Base& createIMU();
-    static AHRS& createAHRS(IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
-    static FlightController& createFlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs);
+    static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static ReceiverBase& createReceiver();
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters, const Debug& debug);

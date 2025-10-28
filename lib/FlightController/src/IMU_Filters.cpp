@@ -10,9 +10,6 @@ IMU_Filters::IMU_Filters(size_t motorCount, Debug& debug, float looptimeSeconds)
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     ,_dynamicNotchFilter(debug, looptimeSeconds)
 #endif
-#if defined(USE_RPM_FILTERS)
-    ,_rpmFilters(motorCount, looptimeSeconds)
-#endif
 {
 }
 
@@ -77,15 +74,6 @@ void IMU_Filters::setDynamicNotchFilterConfig(const DynamicNotchFilter::config_t
 #endif
 }
 
-void IMU_Filters::setRPM_FiltersConfig(const RPM_Filters::config_t& config)
-{
-#if defined(USE_RPM_FILTERS)
-    _rpmFilters.setConfig(config);
-#else
-    (void)config;
-#endif
-}
-
 /*!
 This is called from within AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */
@@ -110,16 +98,16 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
         gyroRPS = _gyroNotch2.filter(gyroRPS);
     }
 #if defined(USE_RPM_FILTERS)
-    if (_rpmFilters.isActive()) {
+    if (_rpmFilters->isActive()) {
         // apply the RPM filters
         if (_motorCount == 4) {
-            _rpmFilters.filter(gyroRPS, 0);
-            _rpmFilters.filter(gyroRPS, 1);
-            _rpmFilters.filter(gyroRPS, 2);
-            _rpmFilters.filter(gyroRPS, 3);
+            _rpmFilters->filter(gyroRPS, 0);
+            _rpmFilters->filter(gyroRPS, 1);
+            _rpmFilters->filter(gyroRPS, 2);
+            _rpmFilters->filter(gyroRPS, 3);
         } else {
             for (size_t ii = 0; ii < _motorCount; ++ii) {
-               _rpmFilters.filter(gyroRPS, ii);
+               _rpmFilters->filter(gyroRPS, ii);
             }
         }
     }

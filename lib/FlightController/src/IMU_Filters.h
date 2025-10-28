@@ -32,24 +32,15 @@ public:
 public:
     IMU_Filters(size_t motorCount, Debug& debug, float looptimeSeconds);
     IMU_Filters(size_t motorCount, Debug& debug, uint32_t looptime) = delete;
-#if defined(USE_RPM_FILTERS)
-    const RPM_Filters* getRPM_Filters() const { return &_rpmFilters; }
-    RPM_Filters* getRPM_Filters() { return &_rpmFilters; }
-#else
-    const RPM_Filters* getRPM_Filters() const { return nullptr; }
-    RPM_Filters* getRPM_Filters() { return nullptr; }
-#endif
-public:
+    void setRPM_Filters(RPM_Filters* rpmFilters) { _rpmFilters = rpmFilters; }
+    const RPM_Filters* getRPM_Filters() const { return _rpmFilters; }
+    RPM_Filters* getRPM_Filters() { return _rpmFilters; }
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
     void setDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config);
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     const DynamicNotchFilter::config_t& getDynamicNotchFilterConfig() const { return _dynamicNotchFilter.getConfig(); }
-#endif
-    void setRPM_FiltersConfig(const RPM_Filters::config_t& config);
-#if defined(USE_RPM_FILTERS)
-    const RPM_Filters::config_t& getRPM_FiltersConfig() const { return _rpmFilters.getConfig(); }
 #endif
 protected:
     Debug& _debug;
@@ -71,7 +62,5 @@ protected:
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     DynamicNotchFilter _dynamicNotchFilter;
 #endif
-#if defined(USE_RPM_FILTERS)
-    RPM_Filters _rpmFilters;
-#endif
+    RPM_Filters* _rpmFilters {nullptr};
 };

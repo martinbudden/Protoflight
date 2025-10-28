@@ -69,14 +69,11 @@ void Main::setup()
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
 #endif
-#if defined(USE_RPM_FILTERS)
-    imuFilters.setRPM_FiltersConfig(nvs.loadRPM_FiltersConfig());
-#endif
-
-    AHRS& ahrs = createAHRS(imuSensor, imuFilters);
-
     const auto AHRS_taskIntervalMicroSeconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
-    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, imuFilters.getRPM_Filters(), debug, nvs);
+    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, OUTPUT_TO_MOTORS_DENOMINATOR, imuFilters, debug, nvs);
+
+    AHRS& ahrs = createAHRS(flightController, imuSensor, imuFilters);
+
 
     ReceiverBase& receiver = createReceiver();
 

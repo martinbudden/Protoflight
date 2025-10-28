@@ -13,7 +13,7 @@
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters, const Debug& debug)
+Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters, const Debug& debug) //cppcheck-suppress constParameterReference 
 {
     // Statically allocate the Blackbox and associated objects
     static BlackboxCallbacks            blackboxCallbacks(flightController.getBlackboxMessageQueue(), ahrs, flightController, radioController, debug);

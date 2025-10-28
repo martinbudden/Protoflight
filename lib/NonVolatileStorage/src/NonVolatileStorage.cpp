@@ -593,13 +593,18 @@ int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
 #endif
 }
 
-int32_t NonVolatileStorage::storeAll(const FlightController& flightController, const RadioController& radioController, uint8_t pidProfile, uint8_t ratesProfile)
+int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, uint8_t pidProfile, uint8_t ratesProfile)
 {
 #if defined(USE_DYNAMIC_IDLE)
     const DynamicIdleController* dynamicIdleController = flightController.getMixer().getDynamicIdleController();
     if (dynamicIdleController) {
-        const DynamicIdleController::config_t dynamicIdleControllerConfig = dynamicIdleController->getConfig();
-        storeDynamicIdleControllerConfig(dynamicIdleControllerConfig, pidProfile);
+        storeDynamicIdleControllerConfig(dynamicIdleController->getConfig(), pidProfile);
+    }
+#endif
+#if defined(USE_RPM_FILTERS)
+    const RPM_Filters* rpmFilters = flightController.getMixer().getRPM_Filters();
+    if (rpmFilters) {
+        storeRPM_FiltersConfig(rpmFilters->getConfig());
     }
 #endif
 
@@ -624,14 +629,10 @@ int32_t NonVolatileStorage::storeAll(const FlightController& flightController, c
     storeFlightControllerCrashRecoveryConfig(flightController.getCrashRecoveryConfig(), pidProfile);
 #endif
 
-    const AHRS& ahrs = flightController.getAHRS();
     const IMU_Filters& imuFilters = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
     storeIMU_FiltersConfig(imuFiltersConfig);
 
-#if defined(USE_RPM_FILTERS)
-    storeRPM_FiltersConfig(imuFilters.getRPM_FiltersConfig());
-#endif
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     storeDynamicNotchFilterConfig(imuFilters.getDynamicNotchFilterConfig());
 #endif

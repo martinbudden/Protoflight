@@ -63,7 +63,7 @@ public:
     int32_t clear();
     int32_t remove(uint16_t key);
 
-    int32_t storeAll(const FlightController& flightController, const RadioController& radioController, uint8_t pidProfile, uint8_t ratesProfile);
+    int32_t storeAll(const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, uint8_t pidProfile, uint8_t ratesProfile);
 
     bool loadAccOffset(int32_t& x, int32_t& y, int32_t& z) const;
     int32_t storeAccOffset(int32_t x, int32_t y, int32_t z);

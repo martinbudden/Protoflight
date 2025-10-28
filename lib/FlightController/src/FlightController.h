@@ -43,7 +43,7 @@ have been put in place to help avoid race conditions. In particular:
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug);
+    FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug);
     BlackboxMessageQueue& getBlackboxMessageQueue() { return _blackboxMessageQueue; }
     const BlackboxMessageQueue& getBlackboxMessageQueue() const { return _blackboxMessageQueue; }
 private:
@@ -229,8 +229,6 @@ public:
     static float applyDeadband(float value, float deadband) {
         return (std::fabs(value) < deadband) ? 0.0F : (value >= 0.0F) ? value - deadband : value + deadband;
     }
-
-    const AHRS& getAHRS() const { return _ahrs; }
 
     bool motorsIsOn() const;
     void motorsSwitchOff();

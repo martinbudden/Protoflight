@@ -9,17 +9,26 @@
 #include <NonVolatileStorage.h>
 
 
-FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, RPM_Filters* rpmFilters, Debug& debug, const NonVolatileStorage& nvs)
+FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
 {
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
-    (void)rpmFilters;
+    (void)imuFilters;
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS, *rpmFilters);
+    static MotorMixerQuadX_DShotBitbang motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
 #else
-    static MotorMixerQuadX_DShot motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS, *rpmFilters);
+    static MotorMixerQuadX_DShot motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
+#endif
+#if defined(USE_RPM_FILTERS)
+    RPM_Filters* rpmFilters = motorMixer.getRPM_Filters();
+    if (rpmFilters) {
+        rpmFilters->setConfig(nvs.loadRPM_FiltersConfig());
+        imuFilters.setRPM_Filters(rpmFilters);
+    }
+#else
+    (void)imuFilters;
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
@@ -29,14 +38,14 @@ FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds
 #endif
 #elif defined(USE_MOTOR_MIXER_NULL)
     static MotorMixerBase motorMixer(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug);
-    (void)rpmFilters;
+    (void)imuFilters;
 #else
     static_assert(false && "MotorMixer not specified");
 #endif // USE_MOTOR_MIXER
 
     // Statically allocate the flightController.
     static BlackboxMessageQueue blackboxMessageQueue;
-    static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, ahrs, motorMixer, blackboxMessageQueue, debug);
+    static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, motorMixer, blackboxMessageQueue, debug);
     loadPID_ProfileFromNonVolatileStorage(flightController, nvs, nvs.getCurrentPidProfileIndex());
 
     return flightController;
