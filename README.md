@@ -255,18 +255,6 @@ classDiagram
         getOrientation() Quaternion const
     }
     link SensorFusionFilterBase "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
-    class BlackboxMessageQueueAHRS {
-        append()
-    }
-    link BlackboxMessageQueueAHRS "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueueAHRS.h"
-    class BlackboxMessageQueue {
-        RECEIVE(queue_item_t& queueItem) int32_t
-        SEND(const queue_item_t& queueItem)
-        SEND_IF_NOT_FULL(const queue_item_t& queueItem)
-    }
-    link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
-    BlackboxMessageQueueAHRS o-- BlackboxMessageQueue : calls SEND_IF_NOT_FULL
-
 
     class IMU_Base {
         <<abstract>>
@@ -298,7 +286,14 @@ classDiagram
 
     class VehicleControllerTask:::taskClass {
     }
+    link VehicleControllerTask "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerTask.h"
     VehicleControllerTask o-- VehicleControllerBase : calls WAIT outputToMixer
+
+    class BlackboxMessageQueue {
+        WAIT_IF_EMPTY() override
+        SEND(const queue_item_t& queueItem)
+    }
+    link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
 
     class FlightController {
         array~PIDF~ _pids
@@ -310,6 +305,7 @@ classDiagram
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     RadioController o-- FlightController : calls updateSetpoints
+    FlightController o-- BlackboxMessageQueue : calls SEND
     FlightController o-- MotorMixerBase : calls outputToMotors
 
     class AHRS {
@@ -319,9 +315,9 @@ classDiagram
     AHRS o-- IMU_Base : calls readAccGyroRPS
     AHRS o-- IMU_FiltersBase : calls filter
     AHRS o-- SensorFusionFilterBase : calls update
-    AHRS o-- AHRS_MessageQueueBase : calls append
     class AHRS_Task:::taskClass {
     }
+    link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
     AHRS_Task o-- AHRS : calls updateOutputUsingPIDS
 
     VehicleControllerBase <|-- FlightController : overrides outputToMixer updateOutputsUsingPIDs
@@ -346,6 +342,7 @@ classDiagram
     link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
 
     ReceiverTask o-- RadioControllerBase : calls updateControls
+    link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
     %%RadioControllerBase --o ReceiverTask : calls updateControls
 
     RadioControllerBase o--ReceiverBase : calls getSwitch
@@ -359,7 +356,7 @@ classDiagram
 
     class RPM_Filters {
         array~BiquadFilterT~xyz_t~~ _filters[MOTORS][HARMONICS]
-        setFrequency()
+        setFrequencyHzIterationStep()
         filter()
     }
     link RPM_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RPM_Filters.h"
@@ -388,7 +385,7 @@ classDiagram
     class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
     link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
     MotorMixerQuadX_DShot o-- DynamicIdleController : calls calculateSpeedIncrease
-    MotorMixerQuadX_DShot o-- RPM_Filters : calls setFrequency
+    MotorMixerQuadX_DShot o-- RPM_Filters : calls setFrequencyHzIterationStep
 
     IMU_Base <|-- IMU_BMI270 : overrides readAccGyroRPS
     class IMU_BMI270["IMU_BMI270(eg)"]
@@ -551,16 +548,15 @@ classDiagram
 
 
     class BlackboxMessageQueue {
-        RECEIVE(queue_item_t& queueItem) int32_t
+        WAIT_IF_EMPTY(uint32_t& timeMicroseconds) int32_t
         SEND(const queue_item_t& queueItem)
-        SEND_IF_NOT_FULL(const queue_item_t& queueItem)
     }
     link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
 
     AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs/SIGNAL
     AHRS --o VehicleControllerBase : historical
-    AHRS o-- BlackboxMessageQueue : (indirectly) calls SEND_IF_NOT_FULL
+    AHRS o-- BlackboxMessageQueue : (indirectly) calls SEND
 
     %%note for IMU_Base "SIGNAL_DATA_READY_FROM_ISR"
     AHRS_Task o-- IMU_Base : calls WAIT_IMU_DATA_READY
@@ -648,11 +644,10 @@ classDiagram
     link BlackboxMessageQueueBase "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxMessageQueueBase.h"
     class BlackboxMessageQueue {
         WAIT_IF_EMPTY() override
-        RECEIVE(queue_item_t& queueItem) int32_t
-        SEND_IF_NOT_FULL(const queue_item_t& queueItem) bool
+        SEND(const queue_item_t& queueItem)
     }
     link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
-    AHRS o-- BlackboxMessageQueue : indirectly calls SEND_IF_NOT_FULL
+    AHRS o-- BlackboxMessageQueue : indirectly calls SEND
     class RadioControllerBase {
         <<abstract>>
     }

@@ -40,7 +40,7 @@ public:
 
     virtual int32_t getMotorRPM(size_t motorIndex) const { (void)motorIndex; return 0; }
     virtual float getMotorFrequencyHz(size_t motorIndex) const { (void)motorIndex; return 0; }
-    virtual void rpmFilterSetFrequencyHzInterationStep() {};
+    virtual void rpmFilterSetFrequencyHzIterationStep() {};
 
     virtual const DynamicIdleController* getDynamicIdleController() const { return nullptr; }
     virtual void setDynamicIdlerControllerConfig(const DynamicIdleController::config_t& config) { (void)config; }

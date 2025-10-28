@@ -72,27 +72,27 @@ void MotorMixerQuadX_DShot::outputToMotors(commands_t& commands, float deltaT, u
     // Motor outputs are converted to DShot range [47,2047]
     _motors[M0].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M0], _motorOutputMin, 1.0F)) + 47)),
     _motors[M0].read();
-    _rpmFilters.setFrequencyHzInterationStart(M0, _motors[M0].getMotorHz());
+    _rpmFilters.setFrequencyHzIterationStart(M0, _motors[M0].getMotorHz());
 
     _motors[M1].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M1], _motorOutputMin, 1.0F)) + 47)),
     _motors[M1].read();
-    _rpmFilters.setFrequencyHzInterationStart(M1, _motors[M1].getMotorHz());
+    _rpmFilters.setFrequencyHzIterationStart(M1, _motors[M1].getMotorHz());
 
     _motors[M2].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M2], _motorOutputMin, 1.0F)) + 47)),
     _motors[M2].read();
-    _rpmFilters.setFrequencyHzInterationStart(M2, _motors[M2].getMotorHz());
+    _rpmFilters.setFrequencyHzIterationStart(M2, _motors[M2].getMotorHz());
 
     _motors[M3].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M3], _motorOutputMin, 1.0F)) + 47)),
     _motors[M3].read();
-    _rpmFilters.setFrequencyHzInterationStart(M3, _motors[M3].getMotorHz());
+    _rpmFilters.setFrequencyHzIterationStart(M3, _motors[M3].getMotorHz());
 }
 
-void MotorMixerQuadX_DShot::rpmFilterSetFrequencyHzInterationStep()
+void MotorMixerQuadX_DShot::rpmFilterSetFrequencyHzIterationStep()
 {
     // Perform an rpmFilter iteration step for each motor
-    // Note that _rpmFilters.setFrequencyHzInterationStep is an expensive calculation and runs off a state machine, setting one motor harmonic per iteration
+    // Note that _rpmFilters.setFrequencyHzIterationStep is an expensive calculation and runs off a state machine, setting one motor harmonic per iteration
     // so we want to call it even if we do not write to the motors
     for (size_t ii = 0; ii < _rpmFilterIterationCount; ++ii) {
-        _rpmFilters.setFrequencyHzInterationStep();
+        _rpmFilters.setFrequencyHzIterationStep();
     }
 }

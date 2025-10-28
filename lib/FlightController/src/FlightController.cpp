@@ -442,6 +442,6 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
 
 #if defined(USE_RPM_FILTERS)
     // perform an RPM filter iteration step, even if we do not output to the motors
-    _mixer.rpmFilterSetFrequencyHzInterationStep();
+    _mixer.rpmFilterSetFrequencyHzIterationStep();
 #endif
 }

@@ -40,7 +40,7 @@ NOTE: CALLED FROM WITHIN THE FLIGHT CONTROLLER TASK
 
 This is called from MotorMixer::outputToMotors and so needs to be FAST.
 */
-void RPM_Filters::setFrequencyHzInterationStart(size_t motorIndex, float frequencyHz)
+void RPM_Filters::setFrequencyHzIterationStart(size_t motorIndex, float frequencyHz)
 {
     if (_config.rpm_filter_lpf_hz == 0) {
         return;
@@ -65,9 +65,9 @@ void RPM_Filters::setFrequencyHzInterationStart(size_t motorIndex, float frequen
 /*!
 NOTE: CALLED FROM WITHIN THE FLIGHT CONTROLLER TASK
 
-This is called from MotorMixer::rpmFilterSetFrequencyHzInterationStep and so needs to be FAST.
+This is called from MotorMixer::rpmFilterSetFrequencyHzIterationStep and so needs to be FAST.
 */
-void RPM_Filters::setFrequencyHzInterationStep() // NOLINT(readability-function-cognitive-complexity)
+void RPM_Filters::setFrequencyHzIterationStep() // NOLINT(readability-function-cognitive-complexity)
 {
     // state machine sets notch filter for one harmonic of one motor on each iteration.
 
