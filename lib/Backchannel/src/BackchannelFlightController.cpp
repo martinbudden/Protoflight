@@ -3,6 +3,9 @@
 #include "FC_Telemetry.h"
 
 #include <AHRS.h>
+#if !defined(FRAMEWORK_TEST)
+#include <BlackboxMessageQueue.h>
+#endif
 #include <Debug.h>
 #include <NonVolatileStorage.h>
 #include <ReceiverBase.h>
@@ -181,20 +184,27 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
 
 bool BackchannelFlightController::sendPacket(uint8_t subCommand)
 {
+#if !defined(FRAMEWORK_TEST)
     if (_requestType == CommandPacketRequestData::REQUEST_AHRS_DATA) {
         // intercept an AHRS_DATA request to replace roll and pitch values
-        const Quaternion orientationENU = _ahrs.getOrientationForInstrumentationUsingLock();
-
-        const size_t len = packTelemetryData_AHRS(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _ahrs);
+        const BlackboxMessageQueue::queue_item_t queueItem = _flightController.getBlackboxMessageQueue().getQueueItem();
+        const AHRS::data_t ahrsData {
+            .deltaT = queueItem.deltaT,
+            .gyroRPS = queueItem.gyroRPS,
+            .gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered,
+            .acc = queueItem.acc
+        };
+        const size_t len = packTelemetryData_AHRS(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _ahrs, ahrsData);
         TD_AHRS* td = reinterpret_cast<TD_AHRS*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
         // convert from ENU to NED
+        const Quaternion orientationENU = queueItem.orientation;
         td->data.roll = -orientationENU.calculatePitchDegrees(),
         td->data.pitch = orientationENU.calculateRollDegrees(),
         td->data.yaw = orientationENU.calculateYawDegrees(),
-
         sendData(_transmitDataBufferPtr, len);
         return true;
     }
+#endif
 
     if (BackchannelStabilizedVehicle::sendPacket(subCommand)) {
         // if the base class has sent the packet then we have nothing to do

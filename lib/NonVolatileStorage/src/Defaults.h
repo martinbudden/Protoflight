@@ -3,6 +3,7 @@
 #include <DynamicIdleController.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
+#include <MotorMixerBase.h>
 #include <RPM_Filters.h>
 #include <RadioController.h>
 

@@ -1,3 +1,4 @@
+#include "BlackboxMessageQueue.h"
 #include "FC_TelemetryData.h"
 #include "FlightController.h"
 
@@ -55,7 +56,8 @@ void test_flight_controller()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    BlackboxMessageQueue blackboxMessageQueue;
+    FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, blackboxMessageQueue, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
     TEST_ASSERT_FALSE(fc.motorsIsOn());
 

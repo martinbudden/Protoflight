@@ -155,7 +155,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_FAILSAFE_CONFIG: {
-        const RadioController::failsafe_t failsafe = _radioController.getFailsafe();;
+        const RadioController::failsafe_t failsafe = _radioController.getFailsafe();
         dst.writeU8(failsafe.delay);
         dst.writeU8(failsafe.landing_time);
         dst.writeU16(failsafe.throttle);
@@ -243,7 +243,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_ATTITUDE: {
-        const Quaternion quaternion = _ahrs.getOrientationForInstrumentationUsingLock();
+        const Quaternion quaternion {}; //!!TODO:= _ahrs.getOrientationForInstrumentationUsingLock();
 
         dst.writeU16(static_cast<uint16_t>(quaternion.calculateRollDegrees()*10.0F));
         dst.writeU16(static_cast<uint16_t>(quaternion.calculatePitchDegrees()*10.0F));

@@ -2,7 +2,7 @@
 
 #include <AHRS.h>
 #include <BlackboxCallbacks.h>
-#include <BlackboxMessageQueueAHRS.h>
+#include <BlackboxMessageQueue.h>
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
 #include <Debug.h>
@@ -16,14 +16,10 @@ Statically allocate the Blackbox and associated objects.
 Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters, const Debug& debug)
 {
     // Statically allocate the Blackbox and associated objects
-    static BlackboxMessageQueue         blackboxMessageQueue;
-    static BlackboxMessageQueueAHRS     blackboxMessageQueueAHRS(blackboxMessageQueue);
-    ahrs.setMessageQueue(&blackboxMessageQueueAHRS);
-
-    static BlackboxCallbacks            blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, debug);
+    static BlackboxCallbacks            blackboxCallbacks(flightController.getBlackboxMessageQueue(), ahrs, flightController, radioController, debug);
     static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
-    static BlackboxProtoFlight          blackbox(blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
+    static BlackboxProtoFlight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, flightController.getBlackboxMessageQueue(), blackboxSerialDevice, flightController, radioController, imuFilters);
     flightController.setBlackbox(blackbox);
 
     blackbox.init({

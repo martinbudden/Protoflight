@@ -1,3 +1,4 @@
+#include "BlackboxMessageQueue.h"
 #include "FC_TelemetryData.h"
 #include "Features.h"
 #include "FlightController.h"
@@ -57,7 +58,8 @@ void test_msp_set_failsafe_config()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static BlackboxMessageQueue blackboxMessageQueue;
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, blackboxMessageQueue, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
     static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
@@ -128,7 +130,8 @@ void test_msp_pid_in()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static BlackboxMessageQueue blackboxMessageQueue;
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, blackboxMessageQueue, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
     static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
@@ -173,7 +176,8 @@ void test_msp_features()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static BlackboxMessageQueue blackboxMessageQueue;
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, blackboxMessageQueue, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
     static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
@@ -200,7 +204,8 @@ void test_msp_raw_imu()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static BlackboxMessageQueue blackboxMessageQueue;
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, blackboxMessageQueue, debug);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
     static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);

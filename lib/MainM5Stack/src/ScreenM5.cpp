@@ -3,6 +3,7 @@
 #include "ScreenM5.h"
 
 #include <AHRS.h>
+#include <BlackboxMessageQueue.h>
 #include <FlightController.h>
 #include <M5Unified.h>
 #include <ReceiverAtomJoyStick.h>
@@ -331,9 +332,12 @@ void ScreenM5::updateReceivedData()
 
 void ScreenM5::updateAHRS_Data() const
 {
-    const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();
+    //const AHRS::data_t ahrsData {}; //!!= _ahrs.getAhrsDataForInstrumentationUsingLock();
     // need to get orientation from AHRS since flight controller does not update Euler angles when in rate mode
-    const Quaternion orientationENU = _ahrs.getOrientationForInstrumentationUsingLock();
+    //const Quaternion orientationENU {}; //!!= _ahrs.getOrientationForInstrumentationUsingLock();
+
+    const BlackboxMessageQueue::queue_item_t queueItem = _flightController.getBlackboxMessageQueue().getQueueItem();
+    Quaternion orientationENU = queueItem.orientation;
 
     const TD_AHRS::data_t tdAhrsData {
         //.pitch = _flightController.getPitchAngleDegreesRaw(),
@@ -343,8 +347,8 @@ void ScreenM5::updateAHRS_Data() const
         .roll = orientationENU.calculateRollDegrees(),
         .pitch = -orientationENU.calculatePitchDegrees(),
         .yaw = orientationENU.calculateYawDegrees(),
-        .gyroRPS = ahrsData.gyroRPS,
-        .acc = ahrsData.acc,
+        .gyroRPS = queueItem.gyroRPS,
+        .acc = queueItem.acc,
         .gyroOffset = {},
         .accOffset = {}
     };

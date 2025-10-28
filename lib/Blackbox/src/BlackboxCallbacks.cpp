@@ -4,6 +4,7 @@
 #include <AHRS.h>
 #include <Debug.h>
 #include <FlightController.h>
+#include <MotorMixerBase.h>
 #include <RadioController.h>
 #include <ReceiverBase.h>
 #include <cmath>
@@ -53,45 +54,31 @@ void BlackboxCallbacks::loadSlowState(blackboxSlowState_t& slowState)
     slowState.rxFlightChannelsValid = (slowState.failsafePhase == RadioController::FAILSAFE_IDLE);
 }
 
+/*!
+Called from within Blackbox::logIteration().
+*/
 void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t currentTimeUs)
 {
+    (void)currentTimeUs;
 
-    xyz_t gyroRPS {};
-    xyz_t gyroRPS_unfiltered {};
-    xyz_t acc {};
-    Quaternion orientation;
-    if (_useMessageQueue) {
-        BlackboxMessageQueue::queue_item_t queueItem;
-        _messageQueue.RECEIVE(queueItem);
-        mainState.time = queueItem.timeMicroseconds;
-        gyroRPS = queueItem.gyroRPS;
-        gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered;
-        acc = queueItem.acc;
-        orientation = queueItem.orientation;
-    } else {
-        mainState.time = currentTimeUs;
-        const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();
-        gyroRPS = ahrsData.gyroRPS;
-        gyroRPS_unfiltered = ahrsData.gyroRPS_unfiltered;
-        acc = ahrsData.acc;
-        orientation = _ahrs.getOrientationForInstrumentationUsingLock();
-    }
+    const BlackboxMessageQueue::queue_item_t queueItem = _messageQueue.getQueueItem();
+    Quaternion orientation = queueItem.orientation;
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
 
     static constexpr float radiansToDegrees {180.0F / static_cast<float>(M_PI)};
     static constexpr float gyroScale {radiansToDegrees * 10.0F};
 
-    mainState.gyroADC[0] = static_cast<int16_t>(std::lroundf(gyroRPS.x * gyroScale));
-    mainState.gyroADC[1] = static_cast<int16_t>(std::lroundf(gyroRPS.y * gyroScale));
-    mainState.gyroADC[2] = static_cast<int16_t>(std::lroundf(gyroRPS.z * gyroScale));
-    mainState.gyroUnfiltered[0] = static_cast<int16_t>(std::lroundf(gyroRPS_unfiltered.x * gyroScale));
-    mainState.gyroUnfiltered[1] = static_cast<int16_t>(std::lroundf(gyroRPS_unfiltered.y * gyroScale));
-    mainState.gyroUnfiltered[2] = static_cast<int16_t>(std::lroundf(gyroRPS_unfiltered.z * gyroScale));
+    mainState.gyroADC[0] = static_cast<int16_t>(std::lroundf(queueItem.gyroRPS.x * gyroScale));
+    mainState.gyroADC[1] = static_cast<int16_t>(std::lroundf(queueItem.gyroRPS.y * gyroScale));
+    mainState.gyroADC[2] = static_cast<int16_t>(std::lroundf(queueItem.gyroRPS.z * gyroScale));
+    mainState.gyroUnfiltered[0] = static_cast<int16_t>(std::lroundf(queueItem.gyroRPS_unfiltered.x * gyroScale));
+    mainState.gyroUnfiltered[1] = static_cast<int16_t>(std::lroundf(queueItem.gyroRPS_unfiltered.y * gyroScale));
+    mainState.gyroUnfiltered[2] = static_cast<int16_t>(std::lroundf(queueItem.gyroRPS_unfiltered.z * gyroScale));
     // just truncate for acc
-    mainState.accADC[0] = static_cast<int16_t>(acc.x * 4096);
-    mainState.accADC[1] = static_cast<int16_t>(acc.y * 4096);
-    mainState.accADC[2] = static_cast<int16_t>(acc.z * 4096);
+    mainState.accADC[0] = static_cast<int16_t>(queueItem.acc.x * 4096);
+    mainState.accADC[1] = static_cast<int16_t>(queueItem.acc.y * 4096);
+    mainState.accADC[2] = static_cast<int16_t>(queueItem.acc.z * 4096);
 
     if (orientation.getW() < 0.0F) {
         // negate orientation if W is negative

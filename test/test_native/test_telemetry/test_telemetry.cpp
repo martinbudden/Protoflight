@@ -1,3 +1,4 @@
+#include "BlackboxMessageQueue.h"
 #include "FC_TelemetryData.h"
 
 #include <AHRS.h>
@@ -59,7 +60,8 @@ void test_telemetry_msp()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, debug);
+    static BlackboxMessageQueue blackboxMessageQueue;
+    static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, ahrs, motorMixer, blackboxMessageQueue, debug);
     static RadioController radioController(receiver, flightController, radioControllerRates);
 
     // statically allocate an MSP object

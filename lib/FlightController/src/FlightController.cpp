@@ -1,14 +1,14 @@
 #include "Debug.h"
 #include "FlightController.h"
 
+#if !defined(FRAMEWORK_TEST)
 #include <Blackbox.h> // just needed for //_blackbox->finish() and endlog()
-
-#if !defined(UNIT_TEST_BUILD)
 //#define SERIAL_OUTPUT
 #if defined(SERIAL_OUTPUT)
 #include <HardwareSerial.h>
 #endif
 #endif
+#include <MotorMixerBase.h>
 #include <RadioController.h>
 #include <TimeMicroseconds.h>
 
@@ -26,9 +26,10 @@ the AHRS task function AHRS::readIMUandUpdateOrientation runs.
 
 MotorMixer::outputToMotors is called every _outputToMotorsDenominator times FlightController::outputToMixer is called
 */
-FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug) :
+FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug) :
     VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroseconds, ahrs),
     _mixer(motorMixer),
+    _blackboxMessageQueue(blackboxMessageQueue),
     _debug(debug),
     _outputToMotorsDenominator(outputToMotorsDenominator),
     _fcC(_fcM),
@@ -36,7 +37,6 @@ FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t o
 {
     _sh.antiGravityThrottleFilter.setToPassthrough();
 }
-
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 // #defines to catch inadvertent use of _rxM or _ahM in this file.
 #define _rxM "error not modifiable in this task"
@@ -176,10 +176,12 @@ void FlightController::motorsSwitchOff()
     _sh.takeOffCountStart = 0;
     _sh.groundMode = true;
     switchPID_integrationOff();
+#if !defined(FRAMEWORK_TEST)
     if (_blackbox) {
         _blackbox->endLog();
         //_blackbox->finish();
     }
+#endif
 }
 
 void FlightController::motorsSwitchOn()
@@ -193,6 +195,16 @@ void FlightController::motorsSwitchOn()
         //    _blackbox->start();
         //}
     }
+}
+
+bool FlightController::motorsIsDisabled() const
+{
+    return _mixer.motorsIsDisabled();
+}
+
+bool FlightController::motorsIsOn() const
+{
+    return _mixer.motorsIsOn();
 }
 
 void FlightController::motorsToggleOnOff()
@@ -432,5 +444,4 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
     // perform an RPM filter iteration step, even if we do not output to the motors
     _mixer.rpmFilterSetFrequencyHzInterationStep();
 #endif
-
 }

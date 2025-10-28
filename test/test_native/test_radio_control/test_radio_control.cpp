@@ -1,8 +1,10 @@
 #include <AHRS.h>
+#include <BlackboxMessageQueue.h>
 #include <Debug.h>
 #include <FlightController.h>
 #include <IMU_FiltersBase.h>
 #include <IMU_Null.h>
+#include <MotorMixerBase.h>
 #include <RadioController.h>
 #include <ReceiverNull.h>
 #include <SensorFusion.h>
@@ -22,7 +24,8 @@ static IMU_FiltersBase imuFilters;
 static AHRS ahrs(AHRS::TIMER_DRIVEN, sensorFusionFilter, imu, imuFilters);
 static Debug debug;
 static MotorMixerBase motorMixer(4, debug);
-static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, ahrs, motorMixer, debug);
+static BlackboxMessageQueue blackboxMessageQueue;
+static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, ahrs, motorMixer, blackboxMessageQueue, debug);
 
 static const RadioController::rates_t radioControllerRates {
     .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},

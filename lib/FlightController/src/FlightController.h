@@ -3,9 +3,7 @@
 #include "FlightControllerTelemetry.h"
 
 #include <Filters.h>
-#include <MotorMixerBase.h>
 #include <PIDF.h>
-#include <RadioControllerBase.h>
 #if !defined(FRAMEWORK_TEST)
 #include <Targets.h>
 #endif
@@ -17,8 +15,10 @@
 
 class AHRS;
 class Blackbox;
+class BlackboxMessageQueue;
 class Debug;
 class DynamicNotchFilter;
+class MotorMixerBase;
 class RadioControllerBase;
 class Quaternion;
 
@@ -43,7 +43,9 @@ have been put in place to help avoid race conditions. In particular:
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, Debug& debug);
+    FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, AHRS& ahrs, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug);
+    BlackboxMessageQueue& getBlackboxMessageQueue() { return _blackboxMessageQueue; }
+    const BlackboxMessageQueue& getBlackboxMessageQueue() const { return _blackboxMessageQueue; }
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
@@ -230,11 +232,11 @@ public:
 
     const AHRS& getAHRS() const { return _ahrs; }
 
-    inline bool motorsIsOn() const { return _mixer.motorsIsOn(); }
+    bool motorsIsOn() const;
     void motorsSwitchOff();
     void motorsSwitchOn();
     void motorsToggleOnOff();
-    inline bool motorsIsDisabled() const { return _mixer.motorsIsDisabled(); }
+    bool motorsIsDisabled() const;
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
     inline control_mode_e getControlMode() const { return _fcC.controlMode; }
@@ -330,16 +332,18 @@ public:
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
 
     float calculateITermError(size_t axis, float measurement);
-    virtual void updateOutputsUsingPIDs(const xyz_t& gyroENU_RPS, const xyz_t& accENU, const Quaternion& orientationENU, float deltaT) override;
+    virtual void updateOutputsUsingPIDs(const IMU_Base::accGyroRPS_t& accGyroENU_RPS, const xyz_t& gyroRPS_unfiltered, const Quaternion& orientation, float deltaT, uint32_t timeMicroseconds) override;
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 
 private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
     MotorMixerBase& _mixer;
+    BlackboxMessageQueue& _blackboxMessageQueue;
     Debug& _debug;
-    Blackbox* _blackbox {};
+    Blackbox* _blackbox {nullptr};
     DynamicNotchFilter* _dynamicNotchFilter {nullptr};
     const uint32_t _outputToMotorsDenominator;
+    const uint32_t _sendBlackboxMessageDenominator {8};
 
     //!!TODO: some constants below need to be made configurable
     const bool _useQuaternionSpaceForAngleMode {false};
@@ -410,18 +414,18 @@ private:
         std::array<float, RP_AXIS_COUNT> setpointHPs {};
 #endif
     };
+    enum angle_mode_calculation_state_e { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
+    struct angle_mode_calculation_state_t {
+        angle_mode_calculation_state_e state { STATE_CALCULATE_ROLL };
+        float rollSinAngle {0.0F};
+        float pitchSinAngle {0.0F};
+    };
     struct ah_t {
+        angle_mode_calculation_state_t amcs;
         float rollAngleDegreesRaw {0.0F};
         float pitchAngleDegreesRaw {0.0F};
         float yawAngleDegreesRaw {0.0F};
-        float rollStickSinAngle {0.0F};
-        float rollRateSetpointDPS {0.0F};
-        float rollSinAngle {0.0F};
-        float pitchStickSinAngle {0.0F};
-        float pitchRateSetpointDPS {0.0F};
-        float pitchSinAngle {0.0F};
-        enum { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
-        uint32_t angleModeCalculationState { STATE_CALCULATE_ROLL };
+        uint32_t sendBlackboxMessageCount {0};
         std::array<float, RP_AXIS_COUNT> dMaxMultiplier {1.0F, 1.0F}; // used even if USE_D_MAX not defined
     };
     struct shared_t {

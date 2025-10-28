@@ -255,13 +255,8 @@ classDiagram
         getOrientation() Quaternion const
     }
     link SensorFusionFilterBase "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
-    class AHRS_MessageQueueBase {
-        <<abstract>>
-        append() *
-    }
-    link AHRS_MessageQueueBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_MessageQueueBase.h"
     class BlackboxMessageQueueAHRS {
-        append() override
+        append()
     }
     link BlackboxMessageQueueAHRS "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueueAHRS.h"
     class BlackboxMessageQueue {
@@ -270,7 +265,6 @@ classDiagram
         SEND_IF_NOT_FULL(const queue_item_t& queueItem)
     }
     link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
-    AHRS_MessageQueueBase <-- BlackboxMessageQueueAHRS : overrides append
     BlackboxMessageQueueAHRS o-- BlackboxMessageQueue : calls SEND_IF_NOT_FULL
 
 
@@ -565,7 +559,7 @@ classDiagram
 
     AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs/SIGNAL
-    AHRS o-- VehicleControllerBase : historical
+    AHRS --o VehicleControllerBase : historical
     AHRS o-- BlackboxMessageQueue : (indirectly) calls SEND_IF_NOT_FULL
 
     %%note for IMU_Base "SIGNAL_DATA_READY_FROM_ISR"
