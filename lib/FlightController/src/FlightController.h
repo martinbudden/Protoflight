@@ -332,7 +332,7 @@ public:
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
 
     float calculateITermError(size_t axis, float measurement);
-    virtual void updateOutputsUsingPIDs(const IMU_Base::accGyroRPS_t& accGyroENU_RPS, const xyz_t& gyroRPS_unfiltered, const Quaternion& orientation, float deltaT, uint32_t timeMicroseconds) override;
+    virtual void updateOutputsUsingPIDs(const AHRS::imu_data_t& imuDataNED) override;
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 
 private:

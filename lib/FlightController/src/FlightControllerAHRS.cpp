@@ -202,34 +202,17 @@ It is typically called at frequency of between 1000Hz and 8000Hz, so it has to b
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyroRPS, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
 */
-void FlightController::updateOutputsUsingPIDs(const IMU_Base::accGyroRPS_t& accGyroENU_RPS, const xyz_t& gyroRPS_unfiltered, const Quaternion& orientationENU, float deltaT, uint32_t timeMicroseconds)
+void FlightController::updateOutputsUsingPIDs(const AHRS::imu_data_t& imuDataNED)
 {
-#if false
-    _ahM.orientation = orientationENU;
-    _ahM.ahrsData = {
-        .tickCountDelta = static_cast<uint32_t>(deltaT*1000.0F), // convert deltaT to milliseconds
-        .gyroRPS = accGyroENU_RPS.gyroRPS,
-        .gyroRPS_unfiltered = gyroRPS_unfiltered,
-        .acc = accGyroENU_RPS.acc
-    };
-#endif
     ++_ahM.sendBlackboxMessageCount;
     if (_ahM.sendBlackboxMessageCount >= _sendBlackboxMessageDenominator) {
         _ahM.sendBlackboxMessageCount = 0;
         // Send the data to the message queue
-        const struct BlackboxMessageQueue::queue_item_t queueItem {
-            timeMicroseconds,
-            deltaT,
-            accGyroENU_RPS.gyroRPS,
-            gyroRPS_unfiltered,
-            accGyroENU_RPS.acc,
-            orientationENU
-        };
-        _blackboxMessageQueue.SEND(queueItem);
+        _blackboxMessageQueue.SEND(imuDataNED);
     }
 #if defined(USE_YAW_SPIN_RECOVERY)
     if (_sh.yawSpinRecovery) {
-        recoverFromYawSpin(accGyroENU_RPS.gyroRPS, deltaT);
+        recoverFromYawSpin(imuDataNED.accGyroRPS.gyroRPS, imuDataNED.deltaT);
         return;
     }
 #endif
@@ -239,7 +222,7 @@ void FlightController::updateOutputsUsingPIDs(const IMU_Base::accGyroRPS_t& accG
 #endif
 
     if (_rxC.useAngleMode) {
-        updateRateSetpointsForAngleMode(orientationENU, deltaT);
+        updateRateSetpointsForAngleMode(imuDataNED.orientation, imuDataNED.deltaT);
     }
 
     VehicleControllerMessageQueue::queue_item_t outputs; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
@@ -252,33 +235,33 @@ void FlightController::updateOutputsUsingPIDs(const IMU_Base::accGyroRPS_t& accG
     //
     // Roll axis
     //
-    const float rollRateDPS = rollRateNED_DPS(accGyroENU_RPS.gyroRPS);
+    const float rollRateDPS = rollRateNED_DPS(imuDataNED.accGyroRPS.gyroRPS);
     float rollRateDeltaFilteredDPS = _sh.dTermFilters1[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
     rollRateDeltaFilteredDPS = _sh.dTermFilters2[ROLL_RATE_DPS].filter(rollRateDeltaFilteredDPS);
     outputs.roll = _sh.PIDS[ROLL_RATE_DPS].updateDeltaITerm(
                                                     rollRateDPS, 
                                                     rollRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[ROLL_RATE_DPS], 
                                                     calculateITermError(ROLL_RATE_DPS, rollRateDPS),
-                                                    deltaT);
+                                                    imuDataNED.deltaT);
 
     //
     // Pitch axis
     //
-    const float pitchRateDPS = pitchRateNED_DPS(accGyroENU_RPS.gyroRPS);
+    const float pitchRateDPS = pitchRateNED_DPS(imuDataNED.accGyroRPS.gyroRPS);
     float pitchRateDeltaFilteredDPS = _sh.dTermFilters1[PITCH_RATE_DPS].filter(rollRateDPS - _sh.PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
     pitchRateDeltaFilteredDPS = _sh.dTermFilters2[PITCH_RATE_DPS].filter(pitchRateDeltaFilteredDPS);
     outputs.pitch = _sh.PIDS[PITCH_RATE_DPS].updateDeltaITerm(
                                                     pitchRateDPS,
                                                     pitchRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[PITCH_RATE_DPS],
                                                     calculateITermError(PITCH_RATE_DPS, pitchRateDPS),
-                                                    deltaT);
+                                                    imuDataNED.deltaT);
 
     //
     // Yaw axis
     //
     // DTerm is zero for yawRate, so call updateSPI() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no KTerm
-    const float yawRateDPS = yawRateNED_DPS(accGyroENU_RPS.gyroRPS);
-    outputs.yaw = _sh.PIDS[YAW_RATE_DPS].updateSPI(yawRateDPS, deltaT);
+    const float yawRateDPS = yawRateNED_DPS(imuDataNED.accGyroRPS.gyroRPS);
+    outputs.yaw = _sh.PIDS[YAW_RATE_DPS].updateSPI(yawRateDPS, imuDataNED.deltaT);
 
     // The FlightControllerTask is waiting on the message queue, so signal it that there is output data available.
     // This will result in outputToMixer() being called by the scheduler.

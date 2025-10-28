@@ -187,12 +187,12 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
 #if !defined(FRAMEWORK_TEST)
     if (_requestType == CommandPacketRequestData::REQUEST_AHRS_DATA) {
         // intercept an AHRS_DATA request to replace roll and pitch values
-        const BlackboxMessageQueue::queue_item_t queueItem = _flightController.getBlackboxMessageQueue().getQueueItem();
+        const AHRS::imu_data_t queueItem = _flightController.getBlackboxMessageQueue().getQueueItem();
         const AHRS::data_t ahrsData {
             .deltaT = queueItem.deltaT,
-            .gyroRPS = queueItem.gyroRPS,
+            .gyroRPS = queueItem.accGyroRPS.gyroRPS,
             .gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered,
-            .acc = queueItem.acc
+            .acc = queueItem.accGyroRPS.acc
         };
         const size_t len = packTelemetryData_AHRS(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _ahrs, ahrsData);
         TD_AHRS* td = reinterpret_cast<TD_AHRS*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
