@@ -47,7 +47,7 @@ float DynamicIdleController::calculateSpeedIncrease(float slowestMotorHz, float 
     const float slowestMotorHzDeltaFiltered = _DTermFilter.filter(slowestMotorHz - _PID.getPreviousMeasurement());
     float speedIncrease = _PID.updateDelta(slowestMotorHz, slowestMotorHzDeltaFiltered, deltaT);
 
-    speedIncrease = clip(speedIncrease, 0.0F, _maxIncrease);
+    speedIncrease = std::clamp(speedIncrease, 0.0F, _maxIncrease);
 
     if (_debug.getMode() == DEBUG_DYN_IDLE) {
         const PIDF::error_t error = _PID.getError();

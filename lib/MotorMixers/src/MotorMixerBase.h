@@ -46,8 +46,6 @@ public:
     virtual const RPM_Filters* getRPM_Filters() const { return nullptr; }
     virtual const DynamicIdleController* getDynamicIdleController() const { return nullptr; }
     virtual void setDynamicIdlerControllerConfig(const DynamicIdleController::config_t& config) { (void)config; }
-public:
-    static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
 protected:
     const size_t _motorCount;
     Debug& _debug;

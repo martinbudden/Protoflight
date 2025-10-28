@@ -24,7 +24,8 @@ Sliding Discreet Fourier Transform
 template <size_t N>
 class SDFT {
 public:
-    enum { SAMPLE_COUNT = N, BIN_COUNT = N/2 };
+    static constexpr size_t SAMPLE_COUNT = N;
+    static constexpr size_t BIN_COUNT = N/2;
 public:
     SDFT();
     void init(size_t startBin, size_t endBin, size_t batchCount);
@@ -33,7 +34,6 @@ public:
     void calculateWindow(float* output);
     void calculateMagnitudeSquared(float* output);
     void calculateMagnitude(float* output);
-    static inline size_t clip(size_t value, size_t min, size_t max) { return value < min ? min : value > max ? max : value; }
 // for testing
 #if defined(FRAMEWORK_TEST)
     size_t getBatchSize() const { return _batchSize; }
@@ -67,8 +67,8 @@ void SDFT<N>::init(size_t startBin, size_t endBin, size_t batchCount)
 {
     _index = 0;
 
-    _startBin = clip(startBin, 0, BIN_COUNT - 1);
-    _endBin = clip(endBin, _startBin, BIN_COUNT - 1);
+    _startBin = std::clamp(startBin, static_cast<size_t>(0), BIN_COUNT - 1);
+    _endBin = std::clamp(endBin, _startBin, BIN_COUNT - 1);
 
     batchCount = (batchCount == 0) ? 1 : batchCount;
     _batchSize = (_endBin - _startBin + 1) / batchCount;

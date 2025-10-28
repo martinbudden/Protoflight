@@ -139,7 +139,7 @@ void MotorMixerQuadX_PWM::writeMotor(uint8_t motorIndex, float motorOutput) // N
 {
     const pwm_pin_t& pin = _pins[motorIndex];
     // scale motor output to GPIO range (normally [0,255] or [0, 65535])
-    const auto output = static_cast<uint16_t>(roundf(_pwmScale*clip(motorOutput, 0.0F, 1.0F)));
+    const auto output = static_cast<uint16_t>(roundf(_pwmScale*std::clamp(motorOutput, 0.0F, 1.0F)));
 #if defined(FRAMEWORK_RPI_PICO)
     if (pin.pin != 0xFF) {
         pwm_set_gpio_level(pin.pin, output);

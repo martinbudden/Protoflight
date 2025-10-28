@@ -71,8 +71,6 @@ public:
     void filter(xyz_t& input, size_t motorIndex);
     bool isActive() const { return _config.rpm_filter_harmonics > 0; }
     size_t getMotorCount() const { return _motorCount; }
-
-    static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
 public:
     static constexpr float M_PI_F = 3.141592653589793F;
 private:

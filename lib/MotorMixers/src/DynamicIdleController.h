@@ -38,8 +38,6 @@ public:
     float getMaxIncrease()const { return _maxIncrease; }
     float calculateSpeedIncrease(float slowestMotorHz, float deltaT);
     void resetPID(); //!< for test code
-public:
-    static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
 private:
     uint32_t _taskIntervalMicroseconds;
     Debug& _debug;

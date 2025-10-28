@@ -61,8 +61,6 @@ public:
         size_t axis;
     };
 public:
-    static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
-
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
     void push(const xyz_t& sample);

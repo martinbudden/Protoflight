@@ -287,11 +287,11 @@ void FlightController::setTPA_Config(const tpa_config_t& tpaConfig)
 
     // default of 1350 gives 0.35. range is limited to 0 to 0.99
     enum { PWM_RANGE_MIN = 1000 };
-    _tpa.breakpoint = clip(static_cast<float>(tpaConfig.tpa_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.0F, 0.99F);
+    _tpa.breakpoint = std::clamp(static_cast<float>(tpaConfig.tpa_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.0F, 0.99F);
     _tpa.multiplier = (static_cast<float>(tpaConfig.tpa_rate) / 100.0F) / (1.0F - _tpa.breakpoint);
 
     // ensure tpaLowBreakpoint is always <= tpaBreakpoint
-    _tpa.lowBreakpoint = std::fminf(clip(static_cast<float>(tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpa.breakpoint);
+    _tpa.lowBreakpoint = std::fminf(std::clamp(static_cast<float>(tpaConfig.tpa_low_breakpoint - PWM_RANGE_MIN) / 1000.0F, 0.01F, 1.0F), _tpa.breakpoint);
 }
 
 void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig)

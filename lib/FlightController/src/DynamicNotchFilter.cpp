@@ -188,9 +188,9 @@ void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function
                 }
                 // Convert bin to frequency: frequency = bin * binResolution (bin 0 is 0Hz)
                 // resolution is 18.5Hz per bin at 8kHz looptime and 600Hz maxHz
-                const float centerFrequencyHz = clip(bin*_binResolutionHz, _minHz, _maxHz);
+                const float centerFrequencyHz = std::clamp(bin*_binResolutionHz, _minHz, _maxHz);
                 // PowerTransfer1 style smoothing moves notch center frequencies rapidly towards big peaks and slowly away, up to 10x faster
-                const float cutoffMultiplier = clip(peak.value / _noiseThreshold, 1.0F, 10.0F);
+                const float cutoffMultiplier = std::clamp(peak.value / _noiseThreshold, 1.0F, 10.0F);
                 if (_config.dyn_notch_smoothing) {
                     static constexpr float DYN_NOTCH_SMOOTH_HZ = 4.0F;
                     // calculate center frequency as filtered value of new and old values

@@ -53,7 +53,7 @@ void RPM_Filters::setFrequencyHzIterationStart(size_t motorIndex, float frequenc
 
     frequencyHz = _motorRPM_Filters[motorIndex].filter(frequencyHz);
     motorState.frequencyHzUnclipped = frequencyHz;
-    frequencyHz = clip(frequencyHz, _minFrequencyHz, _maxFrequencyHz);
+    frequencyHz = std::clamp(frequencyHz, _minFrequencyHz, _maxFrequencyHz);
 
     const float marginFrequencyHz = frequencyHz - _minFrequencyHz;
     motorState.weightMultiplier = (marginFrequencyHz < _fadeRangeHz) ? marginFrequencyHz / _fadeRangeHz : 1.0F;

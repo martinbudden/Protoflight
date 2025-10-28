@@ -80,19 +80,19 @@ void MotorMixerQuadX_DShot::outputToMotors(commands_t& commands, float deltaT, u
 
     // Output to the motors, reading the motor RPM
     // Motor outputs are converted to DShot range [47,2047]
-    _motors[M0].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M0], _motorOutputMin, 1.0F)) + 47)),
+    _motors[M0].write(static_cast<uint16_t>(std::lroundf(2000.0F*std::clamp(_motorOutputs[M0], _motorOutputMin, 1.0F)) + 47)),
     _motors[M0].read();
     _rpmFilters.setFrequencyHzIterationStart(M0, _motors[M0].getMotorHz());
 
-    _motors[M1].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M1], _motorOutputMin, 1.0F)) + 47)),
+    _motors[M1].write(static_cast<uint16_t>(std::lroundf(2000.0F*std::clamp(_motorOutputs[M1], _motorOutputMin, 1.0F)) + 47)),
     _motors[M1].read();
     _rpmFilters.setFrequencyHzIterationStart(M1, _motors[M1].getMotorHz());
 
-    _motors[M2].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M2], _motorOutputMin, 1.0F)) + 47)),
+    _motors[M2].write(static_cast<uint16_t>(std::lroundf(2000.0F*std::clamp(_motorOutputs[M2], _motorOutputMin, 1.0F)) + 47)),
     _motors[M2].read();
     _rpmFilters.setFrequencyHzIterationStart(M2, _motors[M2].getMotorHz());
 
-    _motors[M3].write(static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M3], _motorOutputMin, 1.0F)) + 47)),
+    _motors[M3].write(static_cast<uint16_t>(std::lroundf(2000.0F*std::clamp(_motorOutputs[M3], _motorOutputMin, 1.0F)) + 47)),
     _motors[M3].read();
     _rpmFilters.setFrequencyHzIterationStart(M3, _motors[M3].getMotorHz());
 }

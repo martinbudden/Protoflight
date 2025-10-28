@@ -82,10 +82,10 @@ void MotorMixerQuadX_DShotBitbang::outputToMotors(commands_t& commands, float de
 
     // convert motor output to DShot range [47, 2047]
     _escDShot.outputToMotors(
-        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M0], _motorOutputMin, 1.0F)) + 47),
-        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M1], _motorOutputMin, 1.0F)) + 47),
-        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M2], _motorOutputMin, 1.0F)) + 47),
-        static_cast<uint16_t>(std::lroundf(2000.0F*clip(_motorOutputs[M3], _motorOutputMin, 1.0F)) + 47)
+        static_cast<uint16_t>(std::lroundf(2000.0F*std::clamp(_motorOutputs[M0], _motorOutputMin, 1.0F)) + 47),
+        static_cast<uint16_t>(std::lroundf(2000.0F*std::clamp(_motorOutputs[M1], _motorOutputMin, 1.0F)) + 47),
+        static_cast<uint16_t>(std::lroundf(2000.0F*std::clamp(_motorOutputs[M2], _motorOutputMin, 1.0F)) + 47),
+        static_cast<uint16_t>(std::lroundf(2000.0F*std::clamp(_motorOutputs[M3], _motorOutputMin, 1.0F)) + 47)
     );
 
     // read the motor RPMs

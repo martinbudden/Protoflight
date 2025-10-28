@@ -225,7 +225,6 @@ public:
     typedef std::array<PIDF_uint16_t, PID_COUNT> pidf_uint16_array_t;
 
 public:
-    static inline float clip(float value, float min, float max) { return value < min ? min : value > max ? max : value; }
     static float applyDeadband(float value, float deadband) {
         return (std::fabs(value) < deadband) ? 0.0F : (value >= 0.0F) ? value - deadband : value + deadband;
     }
