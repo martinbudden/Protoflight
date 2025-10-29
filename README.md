@@ -40,7 +40,8 @@ I've called it Protoflight because:
 9. [Backchannel](https://github.com/martinbudden/Library-Backchannel.git) - backchannel over ESP-NOW for telemetry, PID tuning, and benchmarking.
 10. [StreamBuf](https://github.com/martinbudden/Library-Filters.git) - simple serializer/deserializer with no bounds checking
 11. [FlashKLV](https://github.com/martinbudden/Library-FlashKLV.git) - Flash Key Length Value (KLV) storage
-12. [Blackbox](https://github.com/martinbudden/Library-Blackbox.git) - ported from Betaflight Blackbox.
+12. [Blackbox](https://github.com/martinbudden/Library-Blackbox.git) - port of [implementation](https://github.com/thenickdude/blackbox) by
+    Nicholas Sherlock (aka thenickdude).
 13. [MultiWiiSerialProtocol](https://github.com/martinbudden/Library-MultiWiiSerialProtocol.git) (MSP) - ported from Betaflight MultiWiiSerialProtocol.
 
 ## Flight Controller design/software framework
