@@ -5,6 +5,7 @@
 | Filters                | yes       | 0.9.3  | 0.9.3   | yes        | no      |
 | PIDF                   | yes       | 0.4.0  | 0.4.0   | yes        | no      |
 | VectorQuaternionMatrix | yes       | 0.4.3  | 0.4.3   | yes        | no      |
+| MotorMixers            | yes       |        |         | no         | no      |
 | SensorFusion           | yes       | 0.2.6  | 0.2.6   | yes        | no      |
 | StreamBuf              | yes       | 0.0.1  | 0.0.1   | yes        | no      |
 | IMU                    | yes       | 0.9.7  | 0.9.7   | yes        | no      |
@@ -32,6 +33,11 @@ Libraries
 ├── IMU @ 0.9.7
 │   └── VectorQuaternionMatrix @ 0.4.3
 │
+├── MotorMixers @ 0.0.1
+│   ├── VectorQuaternionMatrix @ 0.4.3
+│   ├── Filters @ 0.9.3
+│   └── PIDF @ 0.4.0
+│
 ├── StabilizedVehicle @ 0.5.16
 │   ├── TaskBase @ 0.0.7
 │   ├── VectorQuaternionMatrix @ 0.4.3
@@ -53,6 +59,7 @@ Libraries
     ├── IMU @ 0.9.7
     ├── Filters @ 0.9.3
     ├── PIDF @ 0.3.4
+    ├── MotorMixers
     ├── StabilizedVehicle @ 0.5.15
     ├── Receiver @ 0.5.10
     └── Backchannel @ 0.1.8
