@@ -47,8 +47,6 @@ void Main::setup()
     // Statically allocate all the Protoflight objects
     //
 
-    // Statically allocate the debug object
-    static Debug debug;
     // Statically allocate and initialize nonvolatile storage
     static NonVolatileStorage nvs;
     nvs.init();
@@ -62,6 +60,8 @@ void Main::setup()
     sprintf(&buf[0], "\r\n**** IMU sample rate:%dHz\r\n\r\n", static_cast<int>(imuSampleRateHz));
     print(&buf[0]);
 
+    // Statically allocate the debug object
+    static Debug debug;
     // statically allocate the IMU_Filters
     const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSampleRateHz);
     static IMU_Filters imuFilters(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug, AHRS_taskIntervalSeconds);
@@ -70,10 +70,9 @@ void Main::setup()
     imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
 #endif
     const auto AHRS_taskIntervalMicroSeconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
-    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, OUTPUT_TO_MOTORS_DENOMINATOR, imuFilters, debug, nvs);
+    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, imuFilters, debug, nvs);
 
     AHRS& ahrs = createAHRS(flightController, imuSensor, imuFilters);
-
 
     ReceiverBase& receiver = createReceiver();
 
@@ -119,6 +118,7 @@ void Main::setup()
     // Create all the tasks
     //
 
+    // The DashboardTask runs in the main loop
     static DashboardTask dashboardTask(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS);
     _tasks.dashboardTask = &dashboardTask;
     reportDashboardTask();

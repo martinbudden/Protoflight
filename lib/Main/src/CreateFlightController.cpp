@@ -9,8 +9,9 @@
 #include <NonVolatileStorage.h>
 
 
-FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
+FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
 {
+    const uint32_t outputToMotorsDenominator = OUTPUT_TO_MOTORS_DENOMINATOR;
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);

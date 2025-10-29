@@ -120,7 +120,7 @@ public:
     void setup();
     void loop();
 private:
-    static FlightController& createFlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs);
+    static FlightController& createFlightController(uint32_t taskIntervalMicroseconds, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs);
     static IMU_Base& createIMU();
     static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static ReceiverBase& createReceiver();
