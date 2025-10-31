@@ -32,20 +32,19 @@ public:
         }
         return ret;
     }
-    //inline int32_t RECEIVE(queue_item_t& queueItem) const { return xQueueReceive(_queue, &_queueItem, portMAX_DELAY); queueItem = _queueItem; }
+    inline int32_t RECEIVE() const { return xQueueReceive(_queue, &_queueItem, portMAX_DELAY); }
     inline void SEND(const AHRS::imu_data_t& queueItem) const { xQueueOverwrite(_queue, &queueItem); }
 #else
     BlackboxMessageQueue() = default;
     virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroseconds) const override { timeMicroseconds = 0; return 0; }
-    //inline int32_t RECEIVE(AHRS::imu_data_t& queueItem) const { queueItem = {}; return 0; }
-    inline void SEND(const AHRS::imu_data_t& queueItem) const { (void)queueItem; }
-    //inline bool SEND_IF_NOT_FULL(const AHRS::imu_data_t& queueItem) const { (void)queueItem; return false; } // cppcheck-suppress knownConditionTrueFalse
+    inline int32_t RECEIVE() const { return 0; }
+    inline void SEND(const AHRS::imu_data_t& queueItem) const { _queueItem = queueItem; }
 #endif // USE_FREERTOS
 private:
     mutable AHRS::imu_data_t _queueItem {};
+#if defined(FRAMEWORK_USE_FREERTOS)
     enum { QUEUE_LENGTH = 1 };
     std::array<uint8_t, QUEUE_LENGTH * sizeof(_queueItem)> _queueStorageArea {};
-#if defined(FRAMEWORK_USE_FREERTOS)
     StaticQueue_t _queueStatic {};
     QueueHandle_t _queue {};
 #endif

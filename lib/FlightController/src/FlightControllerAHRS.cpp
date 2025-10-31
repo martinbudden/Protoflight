@@ -209,6 +209,10 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::imu_data_t& imuDataNED
         _ahM.sendBlackboxMessageCount = 0;
         // Send the data to the message queue
         _blackboxMessageQueue.SEND(imuDataNED);
+        if (!_blackbox) {
+            // no blackbox task, so receive the IMU data so it is available for the backchannel and telemetry
+            _blackboxMessageQueue.RECEIVE();
+        }
     }
 #if defined(USE_YAW_SPIN_RECOVERY)
     if (_sh.yawSpinRecovery) {
