@@ -21,10 +21,10 @@
 Constructor. Sets member data.
 
 The FlightController task has the same task interval as the AHRS task.
-The FlightController task function FlightController::outputToMixer waits on a message queue that is signalled once every time
+The FlightController task function outputToMixer waits on a message queue that is signalled once every time
 the AHRS task function AHRS::readIMUandUpdateOrientation runs.
 
-MotorMixer::outputToMotors is called every _outputToMotorsDenominator times FlightController::outputToMixer is called
+MotorMixer::outputToMotors is called every _outputToMotorsDenominator times FlightController outputToMixer is called
 */
 FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug) :
     VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroseconds),
