@@ -90,7 +90,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     //mainState.orientation[2] = static_cast<int16_t>(orientation.getZ() * 0x7FFF);
 
     // iterate through roll, pitch, and yaw PIDs
-    for (int ii = 0; ii < blackboxMainState_t::XYZ_AXIS_COUNT; ++ii) {
+    for (size_t ii = 0; ii < blackboxMainState_t::XYZ_AXIS_COUNT; ++ii) {
         const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
         const PIDF& pid = _flightController.getPID(pidIndex);
         const PIDF::error_t pidError = pid.getError();
@@ -115,7 +115,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     mainState.rcCommand[3] = static_cast<int16_t>(controls.throttle);
 
     static_assert(static_cast<int>(blackboxMainState_t::DEBUG_VALUE_COUNT) == static_cast<int>(Debug::VALUE_COUNT));
-    for (int ii = 0; ii < blackboxMainState_t::DEBUG_VALUE_COUNT; ++ii) {
+    for (size_t ii = 0; ii < blackboxMainState_t::DEBUG_VALUE_COUNT; ++ii) {
         mainState.debug[ii] = _debug.get(ii);
     }
 

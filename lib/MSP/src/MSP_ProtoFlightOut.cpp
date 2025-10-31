@@ -449,7 +449,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
 
     case MSP_DEBUG: {
         for (size_t ii = 0; ii < Debug::VALUE_COUNT; ++ii) {
-            dst.writeU16(_debug.get(ii));
+            dst.writeU16(static_cast<uint16_t>(_debug.get(ii)));
         }
         break;
     }
@@ -507,12 +507,12 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
 {
     switch (cmdMSP) {
     case MSP_BOXNAMES: {
-        const int page = src.bytesRemaining() ? src.readU8() : 0;
+        const size_t page = src.bytesRemaining() ? src.readU8() : 0;
         _mspBox.serializeBoxReplyBoxName(dst, page);
         break;
     }
     case MSP_BOXIDS: {
-        const int page = src.bytesRemaining() ? src.readU8() : 0;
+        const size_t page = src.bytesRemaining() ? src.readU8() : 0;
         _mspBox.serializeBoxReplyPermanentId(dst, page);
         break;
     }

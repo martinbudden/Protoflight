@@ -29,9 +29,9 @@ void MSP_Serial::processInput()
 /*!
 Called from  MSP_Stream::serialEncode() which is called from MSP_Stream::processReceivedCommand() which is called from MSP_Stream::putChar()
 */
-int MSP_Serial::sendFrame(const uint8_t* hdr, int hdrLen, const uint8_t* data, int dataLen, const uint8_t* crc, int crcLen)
+size_t MSP_Serial::sendFrame(const uint8_t* hdr, size_t hdrLen, const uint8_t* data, size_t dataLen, const uint8_t* crc, size_t crcLen)
 {
-    const int totalFrameLength = hdrLen + dataLen + crcLen;
+    const size_t totalFrameLength = hdrLen + dataLen + crcLen;
 
     // We are allowed to send out the response if
     //  a) TX buffer is completely empty (we are talking to well-behaving party that follows request-response scheduling;

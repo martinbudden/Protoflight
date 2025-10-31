@@ -18,7 +18,7 @@ void RadioController::setRatesToPassThrough()
     //_rates.ratesType = RATES_TYPE_ACTUAL;
 }
 
-inline float constrain(float value, int16_t limit)
+inline float constrain(float value, uint16_t limit)
 {
     const auto limitF = static_cast<float>(limit);
     return value < -limitF ? -limitF : value > limitF ? limitF : value;

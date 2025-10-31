@@ -10,7 +10,7 @@ class MSP_Serial : public MSP_SerialBase {
 public:
     explicit MSP_Serial(MSP_Stream& mspStream) : _mspStream(mspStream) {}
 
-    virtual int sendFrame(const uint8_t* hdr, int hdrLen, const uint8_t* data, int dataLen, const uint8_t* crc, int crcLen) override;
+    virtual size_t sendFrame(const uint8_t* hdr, size_t hdrLen, const uint8_t* data, size_t dataLen, const uint8_t* crc, size_t crcLen) override;
 
     virtual void processInput() override;
 

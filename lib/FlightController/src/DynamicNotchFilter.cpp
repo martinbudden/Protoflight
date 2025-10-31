@@ -43,18 +43,18 @@ void DynamicNotchFilter::setConfig(const config_t& config)
     _q = static_cast<float>(config.dyn_notch_q) / 100.0F;
     _notchCount = config.dyn_notch_count;
 
-    _sampleCount = std::max(1, static_cast<int>(nyquistFrequencyHz / _maxHz)); // maxHz = 600 & looprateHz = 8000 -> sampleCount = 6
+    _sampleCount = std::max(static_cast<size_t>(1), static_cast<size_t>(nyquistFrequencyHz / _maxHz)); // maxHz = 600 & looprateHz = 8000 -> sampleCount = 6
     _sampleCountReciprocal = 1.0F / static_cast<float>(_sampleCount);
 
     _sampleRateHz = looprateHz / static_cast<float>(_sampleCount);
 
     _binResolutionHz = _sampleRateHz / static_cast<float>(SDFT_SAMPLE_COUNT); // 18.5Hz per bin at 8kHz looptime and 600Hz maxHz
-    _startBin = lrintf(_minHz / _binResolutionHz); 
+    _startBin = static_cast<size_t>(lrintf(_minHz / _binResolutionHz)); 
     if (_startBin == 0) {
         _startBin = 1; // cannot use bin 0 because it is for DC component
     }
 
-    _endBin = lrintf(_maxHz / _binResolutionHz);
+    _endBin = static_cast<size_t>(lrintf(_maxHz / _binResolutionHz));
     if (_endBin > SDFT_BIN_COUNT - 1) {
         _endBin = SDFT_BIN_COUNT - 1; // cannot use more than SDFT_BIN_COUNT bins
     }
@@ -116,7 +116,7 @@ void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function
         _sdft[_state.axis].calculateWindowSquared(&_sdftData[0]); // calculate power spectral density and put it in _sdftData[]
         // Get total vibrational power in dyn notch range for noise floor estimate in STEP_CALC_FREQUENCIES
         _noiseThreshold = 0.0F;
-        for (int bin = static_cast<int>(_startBin); bin <= static_cast<int>(_endBin); ++bin) {
+        for (size_t bin = _startBin; bin <= _endBin; ++bin) {
             _noiseThreshold += _sdftData[bin];
         }
         _debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(timeUs() - startTimeUs));
