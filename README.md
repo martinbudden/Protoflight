@@ -36,13 +36,15 @@ I've called it Protoflight because:
    Mahony Filter, Madgwick Filter, and Versatile Quaternion Filter (VQF).
 7. [Stabilized Vehicle](https://github.com/martinbudden/Library-StabilizedVehicle.git) - AHRS (Attitude and Heading Reference System)
    and VehicleControllerBase (base class for stabilized vehicles).
-8. [Receiver](https://github.com/martinbudden/Library-Receiver.git) - receiver base class and implementations, including implementation using [ESP-NOW](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/network/esp_now.html).
-9. [Backchannel](https://github.com/martinbudden/Library-Backchannel.git) - backchannel over ESP-NOW for telemetry, PID tuning, and benchmarking.
-10. [StreamBuf](https://github.com/martinbudden/Library-Filters.git) - simple serializer/deserializer with no bounds checking
-11. [FlashKLV](https://github.com/martinbudden/Library-FlashKLV.git) - Flash Key Length Value (KLV) storage
-12. [Blackbox](https://github.com/martinbudden/Library-Blackbox.git) - port of [implementation](https://github.com/thenickdude/blackbox) by
+8. [MotorMixers](https://github.com/martinbudden/Library-MotorMixers.git) MotorMixers. Converts desired throttle and roll, pitch, yaw torques into motor commands.
+   Supports PWM and bidirectional DShot protocols. Also includes RPM filters and dynamic idle control.
+9. [Receiver](https://github.com/martinbudden/Library-Receiver.git) - receiver base class and implementations, including implementation using [ESP-NOW](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/network/esp_now.html).
+10. [Backchannel](https://github.com/martinbudden/Library-Backchannel.git) - backchannel over ESP-NOW for telemetry, PID tuning, and benchmarking.
+11. [StreamBuf](https://github.com/martinbudden/Library-Filters.git) - simple serializer/deserializer with no bounds checking
+12. [FlashKLV](https://github.com/martinbudden/Library-FlashKLV.git) - Flash Key Length Value (KLV) storage
+13. [Blackbox](https://github.com/martinbudden/Library-Blackbox.git) - port of [implementation](https://github.com/thenickdude/blackbox) by
     Nicholas Sherlock (aka thenickdude).
-13. [MultiWiiSerialProtocol](https://github.com/martinbudden/Library-MultiWiiSerialProtocol.git) (MSP) - ported from Betaflight MultiWiiSerialProtocol.
+14. [MultiWiiSerialProtocol](https://github.com/martinbudden/Library-MultiWiiSerialProtocol.git) (MSP) - ported from Betaflight MultiWiiSerialProtocol.
 
 ## Flight Controller design/software framework
 
@@ -56,8 +58,6 @@ is still somewhat in flux and I expect there will continue to be changes. In par
   I've thought about other names, including "FlightCommander" and "Pilot".
   I've also thought of renaming the current "FlightController" to "FlightStabilizer", and renaming "RadioController" to "FlightController".
   But none of these options seem satisfactory. Currently I'm leaning towards "Helm" or "Cockpit".
-3. The `SV_Preferences` class was sufficient for storing settings for a Self Balancing Robot, however it's not really adequate for an Aircraft.
-  I will need to look at alternative ways of storing settings.
 
 ## Protoflight Project
 
@@ -65,16 +65,12 @@ The Protoflight project is a "spare time" project: updates will be made when I h
 that I, at some point, would like to tackle. In no particular order:
 
 1. Implement DMA on ESP32 (DMA currently only working on RPI Pico).
-2. Port to STM32 family of processors (this would enable use of many commercially available flight controllers).
-3. Support additional IMUs.
-4. Implement Backchannel over UDP. This would allow Backchannel to be used on RPI Pico2W.
-5. Implement additional receiver protocols, including SBus and ExpressLRS.
-6. Implement DShot on ESP32 (currently only implemented for RPI Pico).
-7. Implement bi-directional DShot.
-8. Implement saving preferences to flash on RPI Pico (currently only works on ESP32)
-9. Implement saving Blackbox to flash (currently only saves to SD-card)
-10. Investigate filtering the output from the PIDs and/or the inputs to the motors.
-11. Investigate new ways of handling PID integral windup.
+2. Implement Backchannel over UDP. This would allow Backchannel to be used on RPI Pico2W.
+3. Implement DShot on ESP32 (currently only implemented for RPI Pico).
+4. Implement saving Blackbox to flash (currently only saves to SD-card)
+5. Investigate filtering the output from the PIDs and/or the inputs to the motors.
+6. Investigate new ways of handling PID integral windup.
+7. Add On-screen display (OSD) with menu system.
 
 ## History of the Project
 
