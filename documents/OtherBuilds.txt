@@ -1,0 +1,34 @@
+
+[env:seeed_xiao_nrf52840_sense]
+platform = https://github.com/Seeed-Studio/platform-seeedboards.git
+board = seeed-xiao-afruitnrf52-nrf52840
+;[env:Seeed-XIAO-nRF52840-Sense-Plus]
+;platform = nordicnrf52
+;board = adafruit_feather_nrf52840
+framework = arduino
+lib_deps =
+    ${env.lib_deps}
+    ;adafruit/Adafruit TinyUSB Library@^3.7.2
+lib_ignore =
+    MainM5Stack
+build_unflags =
+    -std=gnu++11
+    -D AHRS_RECORD_TIMES_CHECKS
+build_flags =
+    ${env.build_flags}
+    -std=gnu++17
+    -D TARGET_SEED_XIAO_NRF52840_SENSE
+    -Wno-cast-align
+    -Wno-conversion
+    -Wno-double-promotion
+    -Wno-float-conversion
+    -Wno-inline
+    -Wno-missing-declarations
+    -Wno-missing-field-initializers
+    -Wno-missing-noreturn
+    -Wno-pedantic
+    -Wno-redundant-decls
+    -Wno-shadow
+    -Wno-unsafe-loop-optimizations
+    -Wno-unused-parameter
+    -D FRAMEWORK_ARDUINO
