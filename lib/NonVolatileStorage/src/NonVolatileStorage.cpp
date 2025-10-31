@@ -22,7 +22,7 @@ This gives a total of 16,169 usable keys.
 
 constexpr uint16_t PID_ProfileIndexKey = 0x0001;
 constexpr uint16_t RateProfileIndexKey = 0x0002;
-static const std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
+static constexpr std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
     // note these must go up in jumps of 4, since one key is used for each profile
     0x0100, 0x0104, 0x0108, 0x010C, 0x0110, 0x0114, 0x011C
 };
