@@ -1,24 +1,18 @@
 #pragma once
 
 #include <BlackboxCallbacksBase.h>
-#include <RadioController.h>
 
 class AHRS;
 class BlackboxMessageQueue;
 class Debug;
 class FlightController;
+class RadioController;
+class ReceiverBase;
 
 
 class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const Debug& debug) :
-        _messageQueue(messageQueue),
-        _ahrs(ahrs),
-        _flightController(flightController),
-        _radioController(radioController),
-        _receiver(radioController.getReceiver()),
-        _debug(debug)
-        {}
+    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const Debug& debug);
 public:
     virtual void loadSlowState(blackboxSlowState_t& blackboxSlowState) override;
     virtual void loadMainState(blackboxMainState_t& blackboxMainState, uint32_t currentTimeUs) override;
@@ -37,5 +31,5 @@ private:
     const RadioController& _radioController;
     const ReceiverBase& _receiver;
     const Debug& _debug;
-    uint32_t _useMessageQueue {false};
+    bool _useMessageQueue {false};
 };

@@ -8,7 +8,6 @@
 #include <IMU_FiltersBase.h>
 #include <IMU_Null.h>
 #include <NonVolatileStorage.h>
-#include <RadioController.h>
 #include <ReceiverNull.h>
 #include <SensorFusion.h>
 
@@ -24,18 +23,6 @@ static const uint32_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
 enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 #endif
-
-static const RadioController::rates_t radioControllerRates {
-    .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
-    .rcRates = { 7, 7, 7 },
-    .rcExpos = { 0, 0, 0 },
-    .rates = { 67, 67, 67 },
-    .throttleMidpoint = 50,
-    .throttleExpo = 0,
-    .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
-    .throttleLimitPercent = 100,
-    //.ratesType = RadioController::RATES_TYPE_ACTUAL
-};
 
 void setUp() {
 }
@@ -58,7 +45,6 @@ void test_flight_controller()
     FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, blackboxMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    static RadioController radioController(receiver, fc, radioControllerRates);
     TEST_ASSERT_FALSE(fc.motorsIsOn());
 
     fc.motorsSwitchOn();

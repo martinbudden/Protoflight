@@ -6,6 +6,7 @@
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
 #include <Debug.h>
+#include <ReceiverBase.h>
 #include <TimeMicroseconds.h>
 
 

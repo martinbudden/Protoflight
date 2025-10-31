@@ -9,7 +9,6 @@
 #endif
 #endif
 #include <MotorMixerBase.h>
-#include <RadioController.h>
 #include <TimeMicroseconds.h>
 
 #if defined(FRAMEWORK_ARDUINO_ESP32)
