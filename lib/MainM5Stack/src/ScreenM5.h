@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ReceiverBase.h>
 #include <SV_TelemetryData.h>
 #include <ScreenBase.h>
 

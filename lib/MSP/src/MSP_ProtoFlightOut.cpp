@@ -69,18 +69,20 @@ static const char* const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; //
 static const char* const TARGET_BOARD_IDENTIFIER = "A405";
 static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 
-MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nvs, Features& features) :
+MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, const ReceiverBase& receiver, Debug& debug, NonVolatileStorage& nvs, Features& features) :
     _ahrs(ahrs),
     _flightController(flightController),
     _radioController(radioController),
+    _receiver(receiver),
     _debug(debug),
     _nonVolatileStorage(nvs),
     _features(features)
 {
     //_mspBox.init(features, ahrs, flightController);
     enum { MSP_OVERRIDE_OFF = false, AIRMODE_OFF = false, ANTI_GRAVITY_OFF = false };
+    enum { ACCELEROMETER_AVAILABLE = true };
     _mspBox.init(
-        ahrs.isSensorAvailable(AHRS::SENSOR_ACCELEROMETER),
+        ACCELEROMETER_AVAILABLE,
         features.featureIsEnabled(Features::FEATURE_INFLIGHT_ACC_CAL),
         MSP_OVERRIDE_OFF,
         AIRMODE_OFF,
@@ -108,15 +110,9 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
     case MSP_STATUS: {
         dst.writeU16(static_cast<uint16_t>(_flightController.getTaskIntervalMicroseconds()));
         dst.writeU16(0); // I2C error counter
-        // NOLINTBEGIN(hicpp-signed-bitwise)
-        dst.writeU16(_ahrs.isSensorAvailable(AHRS::SENSOR_ACCELEROMETER)
-            | _ahrs.isSensorAvailable(AHRS::SENSOR_BAROMETER) << 1
-            | _ahrs.isSensorAvailable(AHRS::SENSOR_MAGNETOMETER) << 2
-            | _ahrs.isSensorAvailable(AHRS::SENSOR_GPS) << 3
-            | _ahrs.isSensorAvailable(AHRS::SENSOR_RANGEFINDER) << 4
-            | _ahrs.isSensorAvailable(AHRS::SENSOR_GYROSCOPE) << 5
-        );
-        // NOLINTEND(hicpp-signed-bitwise)
+        static constexpr uint16_t SENSOR_ACCELEROMETER = 0x01;
+        static constexpr uint16_t SENSOR_GYROSCOPE = 0x01U << 5U;
+        dst.writeU16(SENSOR_ACCELEROMETER | SENSOR_GYROSCOPE);
         std::bitset<MSP_Box::BOX_COUNT> flightModeFlags;
         const size_t flagBits = _mspBox.packFlightModeFlags(flightModeFlags, _flightController);
         dst.writeData(&flightModeFlags, 4); // unconditional part of flags, first 32 bits
@@ -202,14 +198,13 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
 
     case MSP_RC: {
-        const ReceiverBase& receiver = _radioController.getReceiver();
-        const ReceiverBase::controls_pwm_t controls = receiver.getControlsPWM();
+        const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
         dst.writeU16(controls.throttle);
         dst.writeU16(controls.roll);
         dst.writeU16(controls.pitch);
         dst.writeU16(controls.yaw);
-        for (size_t ii = 0; ii < receiver.getAuxiliaryChannelCount(); ++ii) {
-            dst.writeU16(receiver.getAuxiliaryChannel(ii));
+        for (size_t ii = 0; ii < _receiver.getAuxiliaryChannelCount(); ++ii) {
+            dst.writeU16(_receiver.getAuxiliaryChannel(ii));
         }
         break;
     }
@@ -366,9 +361,12 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         const IMU_Base& imu = _ahrs.getIMU();
         //dst.writeU8(ACC_BMI270);
         dst.writeU8(static_cast<uint8_t>(imu.getAccIdMSP()));
-        dst.writeU8(_ahrs.getBarometerID_MSP());
-        dst.writeU8(_ahrs.getMagnetometerID_MSP());
-        dst.writeU8(_ahrs.getRangeFinderID_MSP());
+        enum barometer_e { BAROMETER_DEFAULT = 0, BAROMETER_NONE = 1, BAROMETER_VIRTUAL = 11 };
+        enum magnetometer_e { MAGNETOMETER_DEFAULT = 0, MAGNETOMETER_NONE = 1 };
+        enum rangefinder_e { RANGEFINDER_NONE = 0 };
+        dst.writeU8(BAROMETER_NONE);
+        dst.writeU8(MAGNETOMETER_NONE);
+        dst.writeU8(RANGEFINDER_NONE);
         break;
     }
     // Added in MSP API 1.46

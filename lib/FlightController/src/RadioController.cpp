@@ -1,6 +1,9 @@
 #include "FlightController.h"
 #include "RadioController.h"
+
+#include <ReceiverBase.h>
 #include <cmath>
+
 
 RadioController::RadioController(ReceiverBase& receiver, FlightController& flightController, const rates_t& rates) :
     RadioControllerBase(receiver),

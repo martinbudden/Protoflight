@@ -18,6 +18,7 @@
 #include <MSP_Task.h>
 #include <NonVolatileStorage.h>
 #include <RadioController.h>
+#include <ReceiverBase.h>
 #include <ReceiverTask.h>
 #if defined(M5_UNIFIED)
 #include <ScreenM5.h>
@@ -78,10 +79,10 @@ void Main::setup()
 
     static RadioController radioController(receiver, flightController, nvs.loadRadioControllerRates(nvs.getCurrentRateProfileIndex()));
 #if defined(USE_MSP)
-    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, debug, nvs);
+    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, receiver, debug, nvs);
 #endif
 #if defined(USE_BLACKBOX)
-    Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, imuFilters, debug);
+    Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, receiver, imuFilters, debug);
 #endif
 
 #if defined(M5_UNIFIED)

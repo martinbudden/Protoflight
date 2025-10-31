@@ -10,12 +10,12 @@
 #include <cmath>
 
 
-BlackboxCallbacks::BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const Debug& debug) :
+BlackboxCallbacks::BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const Debug& debug) :
     _messageQueue(messageQueue),
     _ahrs(ahrs),
     _flightController(flightController),
     _radioController(radioController),
-    _receiver(radioController.getReceiver()),
+    _receiver(receiver),
     _debug(debug)
     {}
 

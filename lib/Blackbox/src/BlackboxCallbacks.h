@@ -12,7 +12,7 @@ class ReceiverBase;
 
 class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const Debug& debug);
+    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const Debug& debug);
 public:
     virtual void loadSlowState(blackboxSlowState_t& blackboxSlowState) override;
     virtual void loadMainState(blackboxMainState_t& blackboxMainState, uint32_t currentTimeUs) override;

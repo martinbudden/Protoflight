@@ -62,7 +62,7 @@ void test_msp_set_failsafe_config()
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, debug, nvs, features);
     static MSP_Stream mspStream(msp);
 
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
@@ -134,7 +134,7 @@ void test_msp_pid_in()
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, debug, nvs, features);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -180,7 +180,7 @@ void test_msp_features()
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, debug, nvs, features);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -208,7 +208,7 @@ void test_msp_raw_imu()
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     static RadioController radioController(receiver, fc, radioControllerRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, debug, nvs, features);
     static MSP_Stream mspStream(msp);
     //static const MSP_Serial mspSerial(mspStream, msp);
 

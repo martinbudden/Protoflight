@@ -125,8 +125,8 @@ private:
     static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static ReceiverBase& createReceiver();
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
-    static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters, const Debug& debug);
-    static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, RadioController& radioController, Debug& debug, NonVolatileStorage& nvs);
+    static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
+    static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, RadioController& radioController, const ReceiverBase& receiver, Debug& debug, NonVolatileStorage& nvs);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
 
