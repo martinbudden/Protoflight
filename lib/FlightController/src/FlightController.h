@@ -15,7 +15,7 @@
 
 class AHRS;
 class Blackbox;
-class BlackboxMessageQueue;
+class AHRS_MessageQueue;
 class Debug;
 class DynamicNotchFilter;
 class MotorMixerBase;
@@ -43,8 +43,8 @@ have been put in place to help avoid race conditions. In particular:
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug);
-    const BlackboxMessageQueue& getBlackboxMessageQueue() const { return _blackboxMessageQueue; }
+    FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, AHRS_MessageQueue& ahrsMessageQueue, Debug& debug);
+    const AHRS_MessageQueue& getAHRS_MessageQueue() const { return _ahrsMessageQueue; }
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
@@ -334,7 +334,7 @@ public:
 private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
     MotorMixerBase& _mixer;
-    BlackboxMessageQueue& _blackboxMessageQueue;
+    AHRS_MessageQueue& _ahrsMessageQueue;
     Debug& _debug;
     Blackbox* _blackbox {nullptr};
     DynamicNotchFilter* _dynamicNotchFilter {nullptr};

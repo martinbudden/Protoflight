@@ -1,13 +1,13 @@
 #include "Main.h"
 
 #include <Autopilot.h>
-#include <RadioController.h>
 #include <NonVolatileStorage.h>
+#include <RadioController.h>
 
 
-RadioController& Main::createRadioController(ReceiverBase& receiver, FlightController& flightController, const BlackboxMessageQueue& blackboxMessageQueue, const AHRS& ahrs, NonVolatileStorage& nvs)
+RadioController& Main::createRadioController(ReceiverBase& receiver, FlightController& flightController, const AHRS_MessageQueue& ahrsMessageQueue, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
-    static Autopilot autopilot(blackboxMessageQueue, ahrs);
+    static Autopilot autopilot(ahrsMessageQueue);
 #if defined USE_ALTITUDE_HOLD
     autopilot.setAltitudeHoldConfig(nvs.loadAltitudeHoldConfig());
 #endif

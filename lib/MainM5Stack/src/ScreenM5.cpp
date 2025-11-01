@@ -3,7 +3,7 @@
 #include "ScreenM5.h"
 
 #include <AHRS.h>
-#include <BlackboxMessageQueue.h>
+#include <AHRS_MessageQueue.h>
 #include <FlightController.h>
 #include <M5Unified.h>
 #include <ReceiverAtomJoyStick.h>
@@ -336,7 +336,7 @@ void ScreenM5::updateAHRS_Data() const
     // need to get orientation from AHRS since flight controller does not update Euler angles when in rate mode
     //const Quaternion orientationENU {}; //!!= _ahrs.getOrientationForInstrumentationUsingLock();
 
-    const AHRS::imu_data_t queueItem = _flightController.getBlackboxMessageQueue().getQueueItem();
+    const AHRS::imu_data_t queueItem = _flightController.getAHRS_MessageQueue().getQueueItem();
     const Quaternion orientationENU = queueItem.orientation;
 
     const TD_AHRS::data_t tdAhrsData {

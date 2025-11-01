@@ -1,7 +1,7 @@
 #include "Main.h"
 
 #include <AHRS.h>
-#include <BlackboxMessageQueue.h>
+#include <AHRS_MessageQueue.h>
 #include <FlightController.h>
 #include <MotorMixerQuadX_DShot.h>
 #include <MotorMixerQuadX_DShotBitbang.h>
@@ -9,7 +9,7 @@
 #include <NonVolatileStorage.h>
 
 
-FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, BlackboxMessageQueue& blackboxMessageQueue, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
+FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, AHRS_MessageQueue& ahrsMessageQueue, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
 {
     const uint32_t outputToMotorsDenominator = OUTPUT_TO_MOTORS_DENOMINATOR;
     // Statically allocate the MotorMixer object as defined by the build flags.
@@ -45,7 +45,7 @@ FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds
 #endif // USE_MOTOR_MIXER
 
     // Statically allocate the flightController.
-    static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, motorMixer, blackboxMessageQueue, debug);
+    static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, motorMixer, ahrsMessageQueue, debug);
     loadPID_ProfileFromNonVolatileStorage(flightController, nvs, nvs.getCurrentPidProfileIndex());
 
     return flightController;

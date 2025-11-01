@@ -8,15 +8,27 @@ All writing to the serial device is done via the `BlackboxEncoder`
 
 ```mermaid
 classDiagram
+    TaskBase <|-- BlackboxTask
+    class BlackboxTask {
+        +loop()
+        -task() [[noreturn]]
+    }
+    BlackboxTask o-- MessageQueueBase : calls WAIT_IF_EMPTY
+    BlackboxTask o-- Blackbox : calls update
     class Blackbox {
         <<abstract>>
         virtual writeSystemInformation() write_e *
         virtual update() uint32_t
     }
 
-    class BlackboxMessageQueue {
-        RECEIVE(queue_item_t& queueItem) int32_t
-        SEND(const queue_item_t& queueItem)
+    class MessageQueueBase {
+        <<abstract>>
+        virtual WAIT_IF_EMPTY() const * int32_t
+    }
+    class AHRS_MessageQueue {
+        WAIT_IF_EMPTY() const override
+        RECEIVE(queue_item_t&) int32_t
+        SEND(const queue_item_t&)
     }
     class RadioControllerBase {
         <<abstract>>
@@ -34,13 +46,12 @@ classDiagram
     class BlackboxCallbacksBase {
         <<abstract>>
         _queueItem queue_item_t
-        setQueueItem()
         virtual void loadSlowState() *
         virtual void loadMainState() *
     }
     class BlackboxCallbacksProtoFlight {
-        void loadSlowState() override
-        void loadMainState() override
+        loadSlowState() override
+        loadMainState() override
     }
 
     class ReceiverBase {
@@ -49,25 +60,30 @@ classDiagram
 
     Blackbox o-- BlackboxCallbacksBase : calls loadState
     Blackbox <|-- BlackboxProtoFlight
-    BlackboxEncoder --* Blackbox : calls write
-    BlackboxSerialDevice --o Blackbox : calls open close
+    Blackbox *-- BlackboxEncoder : calls write
+    Blackbox o-- BlackboxSerialDevice : calls open close
+    %%BlackboxEncoder --* Blackbox : calls write
+    %%BlackboxSerialDevice --o Blackbox : calls open close
     BlackboxEncoder o-- BlackboxSerialDevice : calls write
 
 
-    BlackboxCallbacksBase o-- BlackboxMessageQueue
+    FlightController o-- AHRS_MessageQueue : calls SEND
+    BlackboxCallbacksProtoFlight o-- AHRS_MessageQueue : calls getQueueItem
+    MessageQueueBase <|-- AHRS_MessageQueue
+    BlackboxCallbacksProtoFlight o-- FlightController : calls getPID
     BlackboxCallbacksProtoFlight o-- ReceiverBase : calls getControls
     BlackboxCallbacksProtoFlight o-- RadioControllerBase : calls getFailSafePhase
-    BlackboxCallbacksProtoFlight o-- FlightController : calls getPID
     %%FlightController --o BlackboxCallbacksProtoFlight
     %%FlightController o-- Blackbox : calls start finish
-    Blackbox --o FlightController : calls start finish
+    %%Blackbox --o FlightController : calls start finish
     BlackboxCallbacksBase <|-- BlackboxCallbacksProtoFlight
     %%BlackboxCallbacksProtoFlight --|> BlackboxCallbacksBase
 
-    FlightController --o BlackboxProtoFlight
+    %%FlightController --o BlackboxProtoFlight
     %%Blackbox --o FlightController
-    %%BlackboxProtoFlight o-- FlightController
+    BlackboxProtoFlight o-- FlightController
     RadioController --o BlackboxProtoFlight : calls getRates
+    %%BlackboxProtoFlight o-- RadioController : calls getRates
 
     class BlackboxSerialDevice {
         <<abstract>>
@@ -75,13 +91,5 @@ classDiagram
     class BlackboxSerialDeviceSDCard["BlackboxSerialDeviceSDCard(eg)"]
     BlackboxSerialDevice <|-- BlackboxSerialDeviceSDCard
 
-    TaskBase <|-- BlackboxTask
-    class BlackboxTask {
-        +loop()
-        -task() [[noreturn]]
-    }
-    BlackboxTask o-- BlackboxMessageQueue : calls RECEIVE
-    BlackboxTask o-- BlackboxCallbacksBase : calls setQueueItem
-    BlackboxTask o-- Blackbox : calls update
 ```
 

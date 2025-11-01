@@ -69,11 +69,12 @@ static const char* const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; //
 static const char* const TARGET_BOARD_IDENTIFIER = "A405";
 static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 
-MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, const ReceiverBase& receiver, Debug& debug, NonVolatileStorage& nvs, Features& features) :
+MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs, Features& features) :
     _ahrs(ahrs),
     _flightController(flightController),
     _radioController(radioController),
     _receiver(receiver),
+    _autopilot(autopilot),
     _debug(debug),
     _nonVolatileStorage(nvs),
     _features(features)

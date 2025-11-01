@@ -1,6 +1,6 @@
 #pragma once
 
-#include <BlackboxMessageQueue.h>
+#include <AHRS_MessageQueue.h>
 #include <Filters.h>
 #include <PIDF.h>
 
@@ -8,13 +8,13 @@
 #include <cstdint>
 
 class AHRS;
-class BlackboxMessageQueue;
+class AHRS_MessageQueue;
 
 
 class Autopilot {
 public:
     virtual ~Autopilot() = default;
-    Autopilot(const BlackboxMessageQueue& messageQueue, const AHRS& ahrs) : _messageQueue(messageQueue), _ahrs(ahrs) {}
+    Autopilot(const AHRS_MessageQueue& messageQueue) : _messageQueue(messageQueue) {}
 private:
     // Autopilot is not copyable or moveable
     Autopilot(const Autopilot&) = delete;
@@ -73,8 +73,7 @@ public:
     void setAltitudeHoldSetpoint();
     float altitudeHoldCalculateThrottle();
 private:
-    const BlackboxMessageQueue& _messageQueue;
-    const AHRS& _ahrs;
+    const AHRS_MessageQueue& _messageQueue;
     altitude_t _altitude {};
     std::array<earth_frame_t, EARTH_FRAME_AXIS_COUNT> _earthFrames {};
     autopilot_config_t _autopilotConfig;

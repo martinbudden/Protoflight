@@ -1,7 +1,7 @@
 #include "Debug.h"
 #include "FlightController.h"
 #include <AHRS.h>
-#include <BlackboxMessageQueue.h>
+#include <AHRS_MessageQueue.h>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 // #defines to catch inadvertent use of _fcM or _rxM in this file.
@@ -208,10 +208,10 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::imu_data_t& imuDataNED
     if (_ahM.sendBlackboxMessageCount >= _sendBlackboxMessageDenominator) {
         _ahM.sendBlackboxMessageCount = 0;
         // Send the data to the message queue
-        _blackboxMessageQueue.SEND(imuDataNED);
+        _ahrsMessageQueue.SEND(imuDataNED);
         if (!_blackbox) {
             // no blackbox task, so receive the IMU data so it is available for the backchannel and telemetry
-            _blackboxMessageQueue.RECEIVE();
+            _ahrsMessageQueue.RECEIVE();
         }
     }
 #if defined(USE_YAW_SPIN_RECOVERY)

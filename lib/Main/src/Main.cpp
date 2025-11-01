@@ -71,19 +71,19 @@ void Main::setup()
     imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
 #endif
     const auto AHRS_taskIntervalMicroSeconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
-    static BlackboxMessageQueue blackboxMessageQueue;
-    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, blackboxMessageQueue, imuFilters, debug, nvs);
+    static AHRS_MessageQueue AHRS_MessageQueue;
+    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, AHRS_MessageQueue, imuFilters, debug, nvs);
 
     AHRS& ahrs = createAHRS(flightController, imuSensor, imuFilters);
 
     ReceiverBase& receiver = createReceiver();
 
-    RadioController& radioController = createRadioController(receiver, flightController, blackboxMessageQueue, ahrs, nvs);
+    RadioController& radioController = createRadioController(receiver, flightController, AHRS_MessageQueue, nvs);
 #if defined(USE_MSP)
-    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, receiver, debug, nvs);
+    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, receiver, radioController.getAutopilot(), debug, nvs);
 #endif
 #if defined(USE_BLACKBOX)
-    Blackbox& blackbox = createBlackBox(ahrs, flightController, blackboxMessageQueue, radioController, receiver, imuFilters, debug);
+    Blackbox& blackbox = createBlackBox(ahrs, flightController, AHRS_MessageQueue, radioController, receiver, imuFilters, debug);
 #endif
 
 #if defined(M5_UNIFIED)
@@ -144,7 +144,7 @@ void Main::setup()
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BLACKBOX)
-    _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
+    _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, AHRS_MessageQueue, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)

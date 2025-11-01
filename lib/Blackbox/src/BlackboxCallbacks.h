@@ -3,7 +3,7 @@
 #include <BlackboxCallbacksBase.h>
 
 class AHRS;
-class BlackboxMessageQueue;
+class AHRS_MessageQueue;
 class Debug;
 class FlightController;
 class RadioController;
@@ -12,7 +12,7 @@ class ReceiverBase;
 
 class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacks(const BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const Debug& debug);
+    BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const Debug& debug);
 public:
     virtual void loadSlowState(blackboxSlowState_t& blackboxSlowState) override;
     virtual void loadMainState(blackboxMainState_t& blackboxMainState, uint32_t currentTimeUs) override;
@@ -24,7 +24,7 @@ public:
     virtual bool areMotorsRunning() const override;
     virtual uint32_t rcModeActivationMask() const override;
 private:
-    const BlackboxMessageQueue& _messageQueue;
+    const AHRS_MessageQueue& _messageQueue;
     const AHRS& _ahrs;
     const FlightController& _flightController;
     const RadioController& _radioController;

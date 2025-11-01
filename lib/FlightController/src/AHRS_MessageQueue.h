@@ -1,7 +1,7 @@
 #pragma once
 
 #include <AHRS.h>
-#include <BlackboxMessageQueueBase.h>
+#include <MessageQueueBase.h>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
@@ -17,11 +17,11 @@
 #endif
 
 
-class BlackboxMessageQueue : public BlackboxMessageQueueBase {
+class AHRS_MessageQueue : public MessageQueueBase {
 public:
     const AHRS::imu_data_t& getQueueItem() const { return _queueItem; };
 #if defined(FRAMEWORK_USE_FREERTOS)
-    BlackboxMessageQueue()
+    AHRS_MessageQueue()
         : _queue(xQueueCreateStatic(QUEUE_LENGTH, sizeof(_queueItem), &_queueStorageArea[0], &_queueStatic))
     {}
     // Blackbox Task calls WAIT_IF_EMPTY and then `update` when wait completes
@@ -35,7 +35,7 @@ public:
     inline int32_t RECEIVE() const { return xQueueReceive(_queue, &_queueItem, portMAX_DELAY); }
     inline void SEND(const AHRS::imu_data_t& queueItem) const { xQueueOverwrite(_queue, &queueItem); }
 #else
-    BlackboxMessageQueue() = default;
+    AHRS_MessageQueue() = default;
     virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroseconds) const override { timeMicroseconds = 0; return 0; }
     inline int32_t RECEIVE() const { return 0; }
     inline void SEND(const AHRS::imu_data_t& queueItem) const { _queueItem = queueItem; }

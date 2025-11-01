@@ -11,8 +11,8 @@ Class to write out the Blackbox header, written in blackboxWriteSysinfo()
 */
 class BlackboxProtoFlight : public Blackbox {
 public:
-    BlackboxProtoFlight(uint32_t pidLooptimeUs, BlackboxCallbacksBase& callbacks, BlackboxMessageQueueBase& messageQueue, BlackboxSerialDevice& serialDevice, const FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters) :
-        Blackbox(pidLooptimeUs, callbacks, messageQueue, serialDevice),
+    BlackboxProtoFlight(uint32_t pidLooptimeUs, BlackboxCallbacksBase& callbacks, BlackboxSerialDevice& serialDevice, const FlightController& flightController, const RadioController& radioController, const IMU_Filters& imuFilters) :
+        Blackbox(pidLooptimeUs, callbacks, serialDevice),
         _flightController(flightController),
         _radioController(radioController),
         _imuFilters(imuFilters)

@@ -286,11 +286,11 @@ classDiagram
     link VehicleControllerTask "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerTask.h"
     VehicleControllerTask o-- VehicleControllerBase : calls WAIT outputToMixer
 
-    class BlackboxMessageQueue {
+    class AHRS_MessageQueue {
         WAIT_IF_EMPTY() override
         SEND(const queue_item_t& queueItem)
     }
-    link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
+    link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
 
     class FlightController {
         array~PIDF~ _pids
@@ -302,7 +302,7 @@ classDiagram
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     RadioController o-- FlightController : calls updateSetpoints
-    FlightController o-- BlackboxMessageQueue : calls SEND
+    FlightController o-- AHRS_MessageQueue : calls SEND
     FlightController o-- MotorMixerBase : calls outputToMotors
 
     class AHRS {
@@ -424,7 +424,7 @@ In the case where `AHRS_Task` and `ReceiverTask` are interrupt driven, we have:
 2. The `ReceiverTask` waits on the `Receiver` which signals it whenever it receives a data packet (typically this occurs at 20Hz to 200Hz)
 3. The `VehicleControllerTask` waits on the `VehicleController` which is signalled by the `AHRS` every `N` times it calls `updateOutputsUsingPIDs`,
    where `N` is configurable.
-4. The `BlackboxTask` waits on the `BlackboxMessageQueue`, which is signaled by the `AHRS` when it has new data. The `BlackboxTask`
+4. The `BlackboxTask` waits on the `AHRS_MessageQueue`, which is signaled by the `AHRS` when it has new data. The `BlackboxTask`
    will write data to storage every `N` times it is called, where `N` is configurable.
 5. The `BackchannelTask` is called on a timer.
 6. The `MSP_Task` is called on a timer.
@@ -544,16 +544,16 @@ classDiagram
     link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
 
 
-    class BlackboxMessageQueue {
+    class AHRS_MessageQueue {
         WAIT_IF_EMPTY(uint32_t& timeMicroseconds) int32_t
         SEND(const queue_item_t& queueItem)
     }
-    link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
+    link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
 
     AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs/SIGNAL
     AHRS --o VehicleControllerBase : historical
-    AHRS o-- BlackboxMessageQueue : (indirectly) calls SEND
+    AHRS o-- AHRS_MessageQueue : (indirectly) calls SEND
 
     %%note for IMU_Base "SIGNAL_DATA_READY_FROM_ISR"
     AHRS_Task o-- IMU_Base : calls WAIT_IMU_DATA_READY
@@ -578,7 +578,7 @@ classDiagram
         -task() [[noreturn]]
     }
     link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
-    BlackboxTask o-- BlackboxMessageQueue : calls WAIT_IF_EMPTY
+    BlackboxTask o-- AHRS_MessageQueue : calls WAIT_IF_EMPTY
     BlackboxTask o-- Blackbox : calls update
     class Blackbox {
         <<abstract>>
@@ -634,17 +634,17 @@ classDiagram
         void loadMainState() override
     }
     link BlackboxCallbacks "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxCallbacks.h"
-    class BlackboxMessageQueueBase {
+    class MessageQueueBase {
         <<abstract>>
         WAIT_IF_EMPTY() *
     }
-    link BlackboxMessageQueueBase "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxMessageQueueBase.h"
-    class BlackboxMessageQueue {
+    link MessageQueueBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/MessageQueueBase.h"
+    class AHRS_MessageQueue {
         WAIT_IF_EMPTY() override
         SEND(const queue_item_t& queueItem)
     }
-    link BlackboxMessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxMessageQueue.h"
-    AHRS o-- BlackboxMessageQueue : indirectly calls SEND
+    link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
+    AHRS o-- AHRS_MessageQueue : indirectly calls SEND
     class RadioControllerBase {
         <<abstract>>
     }
@@ -694,12 +694,12 @@ classDiagram
     BlackboxSerialDevice <|-- BlackboxSerialDeviceSDCard
 
 
-    BlackboxCallbacksBase o-- BlackboxMessageQueueBase
-    BlackboxMessageQueueBase <|-- BlackboxMessageQueue
-    %%BlackboxMessageQueue --|> BlackboxMessageQueueBase
-    %%BlackboxMessageQueue --o BlackboxCallbacks : calls RECEIVE
+    BlackboxCallbacksBase o-- AHRS_MessageQueue
+    MessageQueueBase <|-- AHRS_MessageQueue
+    %%AHRS_MessageQueue --|> AHRS_MessageQueueBase
+    %%AHRS_MessageQueue --o BlackboxCallbacks : calls RECEIVE
     RadioControllerBase <|-- RadioController
-    BlackboxCallbacks o-- BlackboxMessageQueue : calls RECEIVE
+    BlackboxCallbacks o-- AHRS_MessageQueue : calls RECEIVE
     BlackboxCallbacks o-- ReceiverBase : calls getControls
     BlackboxCallbacks o-- RadioControllerBase : calls getFailSafePhase
     BlackboxCallbacks o-- FlightController : calls getPID
@@ -723,7 +723,7 @@ classDiagram
         -task() [[noreturn]]
     }
     link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
-    BlackboxTask o-- BlackboxMessageQueueBase : calls WAIT_IF_EMPTY
+    BlackboxTask o-- MessageQueueBase : calls WAIT_IF_EMPTY
     BlackboxTask o-- Blackbox : calls update
 
     classDef taskClass fill:#f96

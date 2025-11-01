@@ -9,12 +9,12 @@
 | SensorFusion           | yes       | 0.2.7  | 0.2.7   | yes        | no      |
 | StreamBuf              | yes       | 0.0.2  | 0.0.2   | yes        | no      |
 | IMU                    | yes       | 0.9.7  | 0.9.7   | yes        | no      |
-| TaskBase               | yes       | 0.0.7  | 0.0.7   | yes        | no      |
+| TaskBase               | yes       | 0.0.8  | 0.0.8   | yes        | no      |
 | StabilizedVehicle      | yes       | 0.5.16 | 0.5.16  | yes        | no      |
 | Receiver               | yes       | 0.5.10 | 0.5.10  | yes        | no      |
 | Backchannel            | yes       | 0.1.8  | 0.1.8   | yes        | no      |
-| MultiWiiSerialProtocol | yes       | 0.0.10 | 0.0.10  | yes        | no      |
-| Blackbox               | yes       | 0.0.19 | 0.0.19  | yes        | no      |
+| MultiWiiSerialProtocol | yes       | 0.0.11 | 0.0.11  | yes        | no      |
+| Blackbox               | yes       | 0.0.20 | 0.0.20  | yes        | no      |
 | FlashKLV               | yes       | 0.0.3  | 0.0.3   | yes        | no      |
 
 ## Dependencies
@@ -23,7 +23,7 @@
 Libraries
 ├── Filters @ 0.9.4
 ├── PIDF @ 0.4.1
-├── TaskBase @ 0.0.7
+├── TaskBase @ 0.0.8
 ├── VectorQuaternionMatrix @ 0.4.4
 ├── FlashKLV @ 0.0.3
 │
@@ -64,12 +64,12 @@ Libraries
     ├── Receiver @ 0.5.10
     └── Backchannel @ 0.1.8
 
-└── MultiWiiSerialProtocol @ 0.0.10
-    ├── TaskBase @ 0.0.7
+└── MultiWiiSerialProtocol @ 0.0.11
+    ├── TaskBase @ 0.0.8
     └── StreamBuf @ 0.0.2
 
-└── Blackbox @ 0.0.19
-    ├── TaskBase @ 0.0.7
+└── Blackbox @ 0.0.20
+    ├── TaskBase @ 0.0.8
     └── StreamBuf @ 0.0.2
 ```
 

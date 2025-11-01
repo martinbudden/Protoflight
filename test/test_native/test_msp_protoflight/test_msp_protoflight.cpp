@@ -1,4 +1,4 @@
-#include "BlackboxMessageQueue.h"
+#include "AHRS_MessageQueue.h"
 #include "FC_TelemetryData.h"
 #include "Features.h"
 #include "FlightController.h"
@@ -57,12 +57,13 @@ void test_msp_set_failsafe_config()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static BlackboxMessageQueue blackboxMessageQueue;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, blackboxMessageQueue, debug);
+    static AHRS_MessageQueue ahrsMessageQueue;
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
-    static RadioController radioController(receiver, fc, radioControllerRates);
+    static Autopilot autopilot(ahrsMessageQueue);
+    static RadioController radioController(receiver, fc, autopilot, radioControllerRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, autopilot, debug, nvs, features);
     static MSP_Stream mspStream(msp);
 
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
@@ -129,12 +130,13 @@ void test_msp_pid_in()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static BlackboxMessageQueue blackboxMessageQueue;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, blackboxMessageQueue, debug);
+    static AHRS_MessageQueue ahrsMessageQueue;
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
-    static RadioController radioController(receiver, fc, radioControllerRates);
+    static Autopilot autopilot(ahrsMessageQueue);
+    static RadioController radioController(receiver, fc, autopilot, radioControllerRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, autopilot, debug, nvs, features);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -175,12 +177,13 @@ void test_msp_features()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static BlackboxMessageQueue blackboxMessageQueue;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, blackboxMessageQueue, debug);
+    static AHRS_MessageQueue ahrsMessageQueue;
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
-    static RadioController radioController(receiver, fc, radioControllerRates);
+    static Autopilot autopilot(ahrsMessageQueue);
+    static RadioController radioController(receiver, fc, autopilot, radioControllerRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, autopilot, debug, nvs, features);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -203,12 +206,13 @@ void test_msp_raw_imu()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static BlackboxMessageQueue blackboxMessageQueue;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, blackboxMessageQueue, debug);
+    static AHRS_MessageQueue ahrsMessageQueue;
+    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
-    static RadioController radioController(receiver, fc, radioControllerRates);
+    static Autopilot autopilot(ahrsMessageQueue);
+    static RadioController radioController(receiver, fc, autopilot, radioControllerRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, autopilot, debug, nvs, features);
     static MSP_Stream mspStream(msp);
     //static const MSP_Serial mspSerial(mspStream, msp);
 

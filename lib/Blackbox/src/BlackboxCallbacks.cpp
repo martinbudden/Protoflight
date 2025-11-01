@@ -1,5 +1,5 @@
 #include "BlackboxCallbacks.h"
-#include "BlackboxMessageQueue.h"
+#include "AHRS_MessageQueue.h"
 
 #include <AHRS.h>
 #include <Debug.h>
@@ -10,7 +10,7 @@
 #include <cmath>
 
 
-BlackboxCallbacks::BlackboxCallbacks(const BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const Debug& debug) :
+BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const Debug& debug) :
     _messageQueue(messageQueue),
     _ahrs(ahrs),
     _flightController(flightController),

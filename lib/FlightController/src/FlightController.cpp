@@ -25,10 +25,10 @@ the AHRS task function AHRS::readIMUandUpdateOrientation runs.
 
 MotorMixer::outputToMotors is called every _outputToMotorsDenominator times FlightController outputToMixer is called
 */
-FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug) :
+FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, AHRS_MessageQueue& ahrsMessageQueue, Debug& debug) :
     VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroseconds),
     _mixer(motorMixer),
-    _blackboxMessageQueue(blackboxMessageQueue),
+    _ahrsMessageQueue(ahrsMessageQueue),
     _debug(debug),
     _outputToMotorsDenominator(outputToMotorsDenominator),
     _fcC(_fcM),

@@ -1,4 +1,4 @@
-#include "BlackboxMessageQueue.h"
+#include "AHRS_MessageQueue.h"
 #include "FC_TelemetryData.h"
 
 #include <AHRS.h>
@@ -58,15 +58,16 @@ void test_telemetry_msp()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    static BlackboxMessageQueue blackboxMessageQueue;
-    static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, blackboxMessageQueue, debug);
+    static AHRS_MessageQueue ahrsMessageQueue;
+    static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
+    static Autopilot autopilot(ahrsMessageQueue);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    static RadioController radioController(receiver, flightController, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
 
     // statically allocate an MSP object
     static Features features;
-    static MSP_ProtoFlight msp(ahrs, flightController, radioController, receiver, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, flightController, radioController, receiver, autopilot, debug, nvs, features);
 //size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, MSP_Base& msp, int16_t cmdMSP)
     static std::array<uint8_t, 256> buf;
     enum { ID = 0x11223344 };

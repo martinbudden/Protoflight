@@ -1,5 +1,5 @@
 #include <AHRS.h>
-#include <BlackboxMessageQueue.h>
+#include <AHRS_MessageQueue.h>
 #include <Debug.h>
 #include <FlightController.h>
 #include <IMU_FiltersBase.h>
@@ -23,9 +23,10 @@ static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
 static IMU_FiltersBase imuFilters;
 static Debug debug;
 static MotorMixerBase motorMixer(4, debug);
-static BlackboxMessageQueue blackboxMessageQueue;
-static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, motorMixer, blackboxMessageQueue, debug);
+static AHRS_MessageQueue ahrsMessageQueue;
+static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, motorMixer, ahrsMessageQueue, debug);
 static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
+static Autopilot autopilot(ahrsMessageQueue);
 
 static const RadioController::rates_t radioControllerRates {
     .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
@@ -48,7 +49,7 @@ void tearDown() {
 void test_radio_controller()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
 
     RadioController::rates_t rates = radioController.getRates();
 
@@ -90,7 +91,7 @@ void test_radio_controller()
 void test_radio_controller_passthrough()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
 
     radioController.setRatesToPassThrough();
 
@@ -109,7 +110,7 @@ void test_radio_controller_passthrough()
 void test_radio_controller_defaults()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
 
     const RadioController::rates_t rates = radioController.getRates();
 
@@ -146,7 +147,7 @@ void test_radio_controller_defaults()
 void test_radio_controller_constrain()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
 
     RadioController::rates_t rates = radioController.getRates(); // NOLINT(misc-const-correctness)
     rates.rcRates = {200, 200, 200};
@@ -167,7 +168,7 @@ void test_radio_controller_constrain()
 void test_radio_controller_throttle()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
 
     float throttle = radioController.mapThrottle(0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, throttle);

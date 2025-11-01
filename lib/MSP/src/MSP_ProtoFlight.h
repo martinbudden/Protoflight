@@ -5,6 +5,7 @@
 
 
 class AHRS;
+class Autopilot;
 class Debug;
 class Features;
 class FlightController;
@@ -20,7 +21,7 @@ public:
     enum { SENSOR_NOT_AVAILABLE = 0xFF };
 public:
     virtual ~MSP_ProtoFlight() = default;
-    MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, const ReceiverBase& receiver, Debug& debug, NonVolatileStorage& nvs, Features& features);
+    MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs, Features& features);
 
     virtual void rebootFn(serialPort_t* serialPort) override;
 
@@ -36,6 +37,7 @@ private:
     FlightController& _flightController;
     RadioController& _radioController;
     const ReceiverBase& _receiver;
+    const Autopilot& _autopilot;
     Debug& _debug;
     NonVolatileStorage& _nonVolatileStorage;
     Features& _features;

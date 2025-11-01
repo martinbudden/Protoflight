@@ -1,4 +1,4 @@
-#include "BlackboxMessageQueue.h"
+#include "AHRS_MessageQueue.h"
 #include "FC_TelemetryData.h"
 #include "FlightController.h"
 
@@ -41,8 +41,8 @@ void test_flight_controller()
     static Debug debug;
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
-    BlackboxMessageQueue blackboxMessageQueue;
-    FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, blackboxMessageQueue, debug);
+    AHRS_MessageQueue ahrsMessageQueue;
+    FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
     TEST_ASSERT_FALSE(fc.motorsIsOn());

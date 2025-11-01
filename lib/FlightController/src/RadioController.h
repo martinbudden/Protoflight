@@ -52,6 +52,8 @@ public:
 public:
     RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, const rates_t& rates);
 
+    const Autopilot& getAutopilot() const { return _autopilot; }
+
     virtual void updateControls(const controls_t& controls) override;
 
     virtual void checkFailsafe(uint32_t tickCount) override;
@@ -71,7 +73,7 @@ private:
     int32_t _onOffSwitchPressed {false}; // on/off switch debouncing
     float _maxRollAngleDegrees { 60.0F }; // used for angle mode
     float _maxPitchAngleDegrees { 60.0F }; // used for angle mode
-    uint32_t _flightMode;
+    uint32_t _flightMode {};
     // failsafe handling
     failsafe_phase_e _failsafePhase {FAILSAFE_IDLE};
     failsafe_t _failsafe {};

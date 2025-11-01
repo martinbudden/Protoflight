@@ -1,8 +1,8 @@
 #include "Main.h"
 
 #include <AHRS.h>
+#include <AHRS_MessageQueue.h>
 #include <BlackboxCallbacks.h>
-#include <BlackboxMessageQueue.h>
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
 #include <Debug.h>
@@ -14,12 +14,12 @@
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, BlackboxMessageQueue& blackboxMessageQueue, const RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) //cppcheck-suppress constParameterReference 
+Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, const RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) //cppcheck-suppress constParameterReference 
 {
-    static BlackboxCallbacks            blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
+    static BlackboxCallbacks            blackboxCallbacks(ahrsMessageQueue, ahrs, flightController, radioController, receiver, debug);
     static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
-    static BlackboxProtoFlight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
+    static BlackboxProtoFlight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, blackboxSerialDevice, flightController, radioController, imuFilters);
     flightController.setBlackbox(blackbox);
 
     blackbox.init({
