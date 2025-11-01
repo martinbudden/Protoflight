@@ -129,13 +129,16 @@ public:
     DynamicNotchFilter::config_t loadDynamicNotchFilterConfig() const;
     int32_t storeDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config);
 #endif
-    IMU_Filters::config_t loadIMU_FiltersConfig() const;
-    int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
-
 #if defined(USE_RPM_FILTERS)
     RPM_Filters::config_t loadRPM_FiltersConfig() const;
     int32_t storeRPM_FiltersConfig(const RPM_Filters::config_t& config);
 #endif
+#if defined USE_ALTITUDE_HOLD
+    Autopilot::altitude_hold_config_t loadAltitudeHoldConfig() const;
+    int32_t storeAltitudeHoldConfig(const Autopilot::altitude_hold_config_t& config);
+#endif
+    IMU_Filters::config_t loadIMU_FiltersConfig() const;
+    int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
 
     RadioController::failsafe_t loadRadioControllerFailsafe();
     int32_t storeRadioControllerFailsafe(const RadioController::failsafe_t& failsafe);

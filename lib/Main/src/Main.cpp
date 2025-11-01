@@ -78,6 +78,7 @@ void Main::setup()
     ReceiverBase& receiver = createReceiver();
 
     static RadioController radioController(receiver, flightController, nvs.loadRadioControllerRates(nvs.getCurrentRateProfileIndex()));
+    radioController.getAutopilot().setAltitudeHoldConfig(nvs.loadAltitudeHoldConfig());
 #if defined(USE_MSP)
     MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, receiver, debug, nvs);
 #endif

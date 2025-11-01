@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Autopilot.h>
 #include <DynamicIdleController.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
@@ -157,6 +158,29 @@ static constexpr RadioController::rates_t radioControllerRates = {
     .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
     //.ratesType = RadioController::RATES_TYPE_ACTUAL
+};
+
+static constexpr Autopilot::autopilot_config_t autopilotAutopilotConfig = {
+    .altitudePID = { 15, 15, 15, 0, 15 },
+    .positionPID = { 30, 30, 30, 0, 30 },
+    .landingAltitudeMeters = 4,
+    .throttleHover = 1275,
+    .throttleMin = 1100,
+    .throttleMax = 1700,
+    .position_lpf_hz100 = 80, // cutoff frequency*100 for longitude and latitude position filters
+    .maxAngle = 50,
+};
+
+static constexpr Autopilot::position_config_t autopilotPositionConfig = {
+    .altitude_lpf_hz100 = 300,          // lowpass cutoff Hz*100 for altitude smoothing
+    .altitude_dterm_lpf_hz100 = 100,    // lowpass cutoff Hz*100 for altitude derivative smoothing
+    .altitude_source = Autopilot::DEFAULT,
+    .altitude_prefer_baro = 100,        // percentage trust of barometer data
+};
+
+static constexpr Autopilot::altitude_hold_config_t autopilotAltitudeHoldConfig = {
+    .climbRate = 50,    // max vertical velocity change at full/zero throttle. 50 means 5 m/s
+    .deadband = 20,     // throttle deadband in percent of stick travel
 };
 
 

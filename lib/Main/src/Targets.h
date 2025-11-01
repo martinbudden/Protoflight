@@ -112,6 +112,7 @@ Targets
     #define USE_DYNAMIC_IDLE
     #define USE_RPM_FILTERS
     #define USE_DYNAMIC_NOTCH_FILTER
+    #define USE_ALTITUDE_HOLD
 
     #define OUTPUT_TO_MOTORS_DENOMINATOR 1
 

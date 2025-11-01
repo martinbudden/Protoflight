@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Autopilot.h"
+
 #include <RadioControllerBase.h>
 
 #include <array>
@@ -45,6 +47,8 @@ public:
     };
 public:
     RadioController(ReceiverBase& receiver, FlightController& flightController, const rates_t& rates);
+    const Autopilot& getAutopilot() const { return _autopilot; }
+    Autopilot& getAutopilot() { return _autopilot; }
 
     virtual void updateControls(const controls_t& controls) override;
 
@@ -59,6 +63,7 @@ public:
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
 private:
+    Autopilot _autopilot;
     FlightController& _flightController;
     rates_t _rates;
     int32_t _onOffSwitchPressed {false}; // on/off switch debouncing

@@ -50,6 +50,7 @@ constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow 
 constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
 constexpr uint16_t RPM_FiltersConfigKey = 0x0505;
 constexpr uint16_t RadioControllerFailsafeKey = 0x0506;
+constexpr uint16_t AltitudeHoldConfigKey = 0x507;
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
@@ -427,21 +428,6 @@ int32_t NonVolatileStorage::storeDynamicNotchFilterConfig(const DynamicNotchFilt
 }
 #endif
 
-IMU_Filters::config_t NonVolatileStorage::loadIMU_FiltersConfig() const
-{
-    {IMU_Filters::config_t config {};
-    if (loadItem(IMU_FiltersConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
-        return config;
-    }}
-    return DEFAULTS::imuFiltersConfig;
-}
-
-int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& config)
-{
-    return storeItem(IMU_FiltersConfigKey, &config, sizeof(config), &DEFAULTS::imuFiltersConfig);
-}
-
-
 #if defined(USE_RPM_FILTERS)
 RPM_Filters::config_t NonVolatileStorage::loadRPM_FiltersConfig() const
 {
@@ -457,6 +443,36 @@ int32_t NonVolatileStorage::storeRPM_FiltersConfig(const RPM_Filters::config_t& 
     return storeItem(RPM_FiltersConfigKey, &config, sizeof(config), &DEFAULTS::rpmFiltersConfig);
 }
 #endif
+#if defined USE_ALTITUDE_HOLD
+Autopilot::altitude_hold_config_t NonVolatileStorage::loadAltitudeHoldConfig() const
+{
+    {Autopilot::altitude_hold_config_t config {};
+    if (loadItem(AltitudeHoldConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::autopilotAltitudeHoldConfig;
+}
+
+int32_t NonVolatileStorage::storeAltitudeHoldConfig(const Autopilot::altitude_hold_config_t& config)
+{
+    return storeItem(AltitudeHoldConfigKey, &config, sizeof(config), &DEFAULTS::autopilotAltitudeHoldConfig);
+}
+#endif
+
+
+IMU_Filters::config_t NonVolatileStorage::loadIMU_FiltersConfig() const
+{
+    {IMU_Filters::config_t config {};
+    if (loadItem(IMU_FiltersConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::imuFiltersConfig;
+}
+
+int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& config)
+{
+    return storeItem(IMU_FiltersConfigKey, &config, sizeof(config), &DEFAULTS::imuFiltersConfig);
+}
 
 
 RadioController::failsafe_t NonVolatileStorage::loadRadioControllerFailsafe() // NOLINT(readability-make-member-function-const)
@@ -627,6 +643,9 @@ int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& f
 #endif
 #if defined(USE_CRASH_RECOVERY)
     storeFlightControllerCrashRecoveryConfig(flightController.getCrashRecoveryConfig(), pidProfile);
+#endif
+#if defined USE_ALTITUDE_HOLD
+    storeAltitudeHoldConfig(radioController.getAutopilot().getAltitudeHoldConfig());
 #endif
 
     const IMU_Filters& imuFilters = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
