@@ -237,8 +237,7 @@ It is the place where any intelligence (ie waypointing, return to home, crash de
 RadioController is not really a good name and I am trying to think of a better one.
 
 When the hardware supports it `AHRS_Task` and `Receiver_Task` are interrupt-driven.
-`VehicleController_Task` is driven by a timer, however I am considering the option of allowing to be triggered when
-`AHRS::readIMUandUpdateOrientation` completes.
+`VehicleController_Task` is  triggered when `AHRS::readIMUandUpdateOrientation` completes.
 
 On dual-core processors `AHRS_Task` has the entire second core to itself.
 
@@ -480,10 +479,17 @@ classDiagram
         updateOutputsUsingPIDs() override
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    FlightController o-- Blackbox : calls start finish
+    %%FlightController o-- Blackbox : calls start finish
+    FlightController o-- AHRS_MessageQueue : calls SEND
     RadioControllerBase o--ReceiverBase
     RadioControllerBase <|-- RadioController
+    RadioController o-- Autopilot : calls altitudeHoldCalculateThrottle
     RadioController o-- FlightController : calls updateSetpoints
+    class Autopilot {
+        altitudeHoldCalculateThrottle()
+    }
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/Autopilot.h"
+    Autopilot o-- AHRS_MessageQueue : calls getQueueItem
 
     TaskBase <|-- ReceiverTask
     class ReceiverTask:::taskClass {
@@ -553,7 +559,6 @@ classDiagram
     AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs/SIGNAL
     AHRS --o VehicleControllerBase : historical
-    AHRS o-- AHRS_MessageQueue : (indirectly) calls SEND
 
     %%note for IMU_Base "SIGNAL_DATA_READY_FROM_ISR"
     AHRS_Task o-- IMU_Base : calls WAIT_IMU_DATA_READY
@@ -589,7 +594,9 @@ classDiagram
     }
     link Blackbox "https://github.com/martinbudden/Library-Blackbox/blob/main/src/Blackbox.h"
     Blackbox <|-- BlackboxProtoFlight
-    class BlackboxProtoFlight
+    class BlackboxProtoFlight {
+        writeSystemInformation() override
+    }
     link BlackboxProtoFlight "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxProtoFlight.h"
 
     TaskBase <|-- MSP_Task
