@@ -14,12 +14,12 @@
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) //cppcheck-suppress constParameterReference 
+Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, BlackboxMessageQueue& blackboxMessageQueue, const RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) //cppcheck-suppress constParameterReference 
 {
-    static BlackboxCallbacks            blackboxCallbacks(flightController.getBlackboxMessageQueue(), ahrs, flightController, radioController, receiver, debug);
+    static BlackboxCallbacks            blackboxCallbacks(blackboxMessageQueue, ahrs, flightController, radioController, receiver, debug);
     static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
-    static BlackboxProtoFlight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, flightController.getBlackboxMessageQueue(), blackboxSerialDevice, flightController, radioController, imuFilters);
+    static BlackboxProtoFlight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, blackboxMessageQueue, blackboxSerialDevice, flightController, radioController, imuFilters);
     flightController.setBlackbox(blackbox);
 
     blackbox.init({
@@ -31,8 +31,6 @@ Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, c
     });
 #if defined(USE_BLACKBOX_DEBUG)
     testBlackbox(blackbox, ahrs, receiver, debug);
-#else
-    blackboxCallbacks.setUseMessageQueue(true);
 #endif
     return blackbox;
 }

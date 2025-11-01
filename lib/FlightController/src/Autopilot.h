@@ -1,16 +1,20 @@
 #pragma once
 
+#include <BlackboxMessageQueue.h>
 #include <Filters.h>
 #include <PIDF.h>
 
 #include <array>
 #include <cstdint>
 
+class AHRS;
+class BlackboxMessageQueue;
+
 
 class Autopilot {
 public:
     virtual ~Autopilot() = default;
-    Autopilot() = default;
+    Autopilot(const BlackboxMessageQueue& messageQueue, const AHRS& ahrs) : _messageQueue(messageQueue), _ahrs(ahrs) {}
 private:
     // Autopilot is not copyable or moveable
     Autopilot(const Autopilot&) = delete;
@@ -36,7 +40,7 @@ public:
         uint8_t position_lpf_hz100; // cutoff frequency*100 for longitude and latitude position filters
         uint8_t maxAngle;
     };
-    enum altitude_source_e { DEFAULT = 0, BAROMETER_ONLY, GPS_ONLY };
+    enum altitude_source_e { DEFAULT_SOURCE = 0, BAROMETER_ONLY, GPS_ONLY };
     struct position_config_t {
         uint16_t altitude_lpf_hz100;   // lowpass cutoff Hz*100 for altitude smoothing
         uint16_t altitude_dterm_lpf_hz100; // lowpass cutoff Hz*100 for altitude derivative smoothing
@@ -66,8 +70,11 @@ public:
     void setAltitudeHoldConfig(const altitude_hold_config_t& altitudeHoldConfig);
     const altitude_hold_config_t& getAltitudeHoldConfig() const { return _altitudeHoldConfig; }
 
-    float altitudeHoldCalculateThrottle(float currentAltitudeMeters, float cosTiltAngle, float deltaT);
+    void setAltitudeHoldSetpoint();
+    float altitudeHoldCalculateThrottle();
 private:
+    const BlackboxMessageQueue& _messageQueue;
+    const AHRS& _ahrs;
     altitude_t _altitude {};
     std::array<earth_frame_t, EARTH_FRAME_AXIS_COUNT> _earthFrames {};
     autopilot_config_t _autopilotConfig;

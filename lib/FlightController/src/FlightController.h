@@ -44,7 +44,6 @@ class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
     FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, BlackboxMessageQueue& blackboxMessageQueue, Debug& debug);
-    BlackboxMessageQueue& getBlackboxMessageQueue() { return _blackboxMessageQueue; }
     const BlackboxMessageQueue& getBlackboxMessageQueue() const { return _blackboxMessageQueue; }
 private:
     // FlightController is not copyable or moveable
@@ -248,7 +247,7 @@ public:
     float getRollAngleDegreesRaw() const { return _ahM.rollAngleDegreesRaw; }
     float getYawAngleDegreesRaw() const { return _ahM.yawAngleDegreesRaw; }
 
-    virtual uint32_t getOutputPowerTimeMicroseconds() const override;
+    virtual uint32_t getOutputPowerTimeMicroseconds() const override; //!!TODO: is this still needed
 
     const std::string& getPID_Name(pid_index_e pidIndex) const;
 

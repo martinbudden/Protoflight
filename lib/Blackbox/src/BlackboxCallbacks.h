@@ -12,7 +12,7 @@ class ReceiverBase;
 
 class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacks(BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const Debug& debug);
+    BlackboxCallbacks(const BlackboxMessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const Debug& debug);
 public:
     virtual void loadSlowState(blackboxSlowState_t& blackboxSlowState) override;
     virtual void loadMainState(blackboxMainState_t& blackboxMainState, uint32_t currentTimeUs) override;
@@ -23,13 +23,11 @@ public:
     virtual uint32_t getArmingBeepTimeMicroseconds() const override;
     virtual bool areMotorsRunning() const override;
     virtual uint32_t rcModeActivationMask() const override;
-    void setUseMessageQueue(bool useMessageQueue) { _useMessageQueue = useMessageQueue; }
 private:
-    BlackboxMessageQueue& _messageQueue;
+    const BlackboxMessageQueue& _messageQueue;
     const AHRS& _ahrs;
     const FlightController& _flightController;
     const RadioController& _radioController;
     const ReceiverBase& _receiver;
     const Debug& _debug;
-    bool _useMessageQueue {false};
 };

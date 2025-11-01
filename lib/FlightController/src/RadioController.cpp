@@ -5,9 +5,10 @@
 #include <cmath>
 
 
-RadioController::RadioController(ReceiverBase& receiver, FlightController& flightController, const rates_t& rates) :
+RadioController::RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, const rates_t& rates) :
     RadioControllerBase(receiver),
     _flightController(flightController),
+    _autopilot(autopilot),
     _rates(rates)
 {
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
@@ -76,16 +77,42 @@ void RadioController::updateControls(const controls_t& controls)
         }
     }
 
+    // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
+    enum { CONTROL_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_MODE_CHANNEL = ReceiverBase::AUX3 };
+    if (_receiver.getChannelRaw(CONTROL_MODE_CHANNEL)) {
+        _flightMode |= ANGLE_MODE;
+    } else {
+        _flightMode &= ~ANGLE_MODE;
+    }
+    if (_receiver.getChannelRaw(ALTITUDE_MODE_CHANNEL)) {
+        if ((_flightMode & ALTITUDE_HOLD_MODE) == 0) {
+            // not currently in altitude hold mode, so set the altitude hold setpoint
+            _autopilot.setAltitudeHoldSetpoint();
+        }
+        _flightMode |= ALTITUDE_HOLD_MODE;
+    }
+    const FlightController::control_mode_e controlMode = 
+        (_flightMode & (ANGLE_MODE | ALTITUDE_HOLD_MODE | POSITION_HOLD_MODE)) ?
+        FlightController::CONTROL_MODE_ANGLE : 
+        FlightController::CONTROL_MODE_RATE;
+
+    float throttleStick {};
+    if (_flightMode & ALTITUDE_HOLD_MODE) {
+        throttleStick = _autopilot.altitudeHoldCalculateThrottle();
+    } else {
+        throttleStick = mapThrottle(controls.throttleStick);
+    }
+
     // map the radio controls to FlightController units
     const FlightController::controls_t flightControls = {
         .tickCount = controls.tickCount,
-        .throttleStick = mapThrottle(controls.throttleStick),
+        .throttleStick = throttleStick,
         .rollStickDPS = applyRates(RadioController::ROLL, controls.rollStick),
         .pitchStickDPS = applyRates(RadioController::PITCH, controls.pitchStick),
         .yawStickDPS = applyRates(RadioController::YAW, controls.yawStick),
         .rollStickDegrees = controls.rollStick * _maxRollAngleDegrees,
         .pitchStickDegrees = controls.pitchStick * _maxPitchAngleDegrees,
-        .controlMode = _receiver.getSwitch(0) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE
+        .controlMode = controlMode
     };
 
     _flightController.updateSetpoints(flightControls);

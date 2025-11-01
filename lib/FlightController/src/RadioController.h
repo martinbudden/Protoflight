@@ -45,10 +45,12 @@ public:
         uint16_t throttle;
         uint16_t throttle_low_delay;
     };
+    static constexpr uint32_t ANGLE_MODE         = 0x01;
+    static constexpr uint32_t HORIZON_MODE       = 0x02;
+    static constexpr uint32_t ALTITUDE_HOLD_MODE = 0x04;
+    static constexpr uint32_t POSITION_HOLD_MODE = 0x08;
 public:
-    RadioController(ReceiverBase& receiver, FlightController& flightController, const rates_t& rates);
-    const Autopilot& getAutopilot() const { return _autopilot; }
-    Autopilot& getAutopilot() { return _autopilot; }
+    RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, const rates_t& rates);
 
     virtual void updateControls(const controls_t& controls) override;
 
@@ -63,12 +65,13 @@ public:
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
 private:
-    Autopilot _autopilot;
     FlightController& _flightController;
+    Autopilot& _autopilot;
     rates_t _rates;
     int32_t _onOffSwitchPressed {false}; // on/off switch debouncing
     float _maxRollAngleDegrees { 60.0F }; // used for angle mode
     float _maxPitchAngleDegrees { 60.0F }; // used for angle mode
+    uint32_t _flightMode;
     // failsafe handling
     failsafe_phase_e _failsafePhase {FAILSAFE_IDLE};
     failsafe_t _failsafe {};

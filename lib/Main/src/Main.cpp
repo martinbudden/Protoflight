@@ -71,19 +71,19 @@ void Main::setup()
     imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
 #endif
     const auto AHRS_taskIntervalMicroSeconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
-    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, imuFilters, debug, nvs);
+    static BlackboxMessageQueue blackboxMessageQueue;
+    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, blackboxMessageQueue, imuFilters, debug, nvs);
 
     AHRS& ahrs = createAHRS(flightController, imuSensor, imuFilters);
 
     ReceiverBase& receiver = createReceiver();
 
-    static RadioController radioController(receiver, flightController, nvs.loadRadioControllerRates(nvs.getCurrentRateProfileIndex()));
-    radioController.getAutopilot().setAltitudeHoldConfig(nvs.loadAltitudeHoldConfig());
+    RadioController& radioController = createRadioController(receiver, flightController, blackboxMessageQueue, ahrs, nvs);
 #if defined(USE_MSP)
     MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, receiver, debug, nvs);
 #endif
 #if defined(USE_BLACKBOX)
-    Blackbox& blackbox = createBlackBox(ahrs, flightController, radioController, receiver, imuFilters, debug);
+    Blackbox& blackbox = createBlackBox(ahrs, flightController, blackboxMessageQueue, radioController, receiver, imuFilters, debug);
 #endif
 
 #if defined(M5_UNIFIED)

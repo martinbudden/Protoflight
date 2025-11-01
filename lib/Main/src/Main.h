@@ -21,6 +21,7 @@ class AHRS_Task;
 class BackchannelBase;
 class BackchannelTask;
 class Blackbox;
+class BlackboxMessageQueue;
 class BlackboxTask;
 class ButtonsBase;
 class Debug;
@@ -120,12 +121,13 @@ public:
     void setup();
     void loop();
 private:
-    static FlightController& createFlightController(uint32_t taskIntervalMicroseconds, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs);
+    static FlightController& createFlightController(uint32_t taskIntervalMicroseconds, BlackboxMessageQueue& blackboxMessageQueue, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs);
     static IMU_Base& createIMU();
     static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static ReceiverBase& createReceiver();
+    static RadioController& createRadioController(ReceiverBase& receiver, FlightController& flightController, const BlackboxMessageQueue& blackboxMessageQueue, const AHRS& ahrs, NonVolatileStorage& nvs);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
-    static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
+    static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, BlackboxMessageQueue& blackboxMessageQueue, const RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, RadioController& radioController, const ReceiverBase& receiver, Debug& debug, NonVolatileStorage& nvs);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);

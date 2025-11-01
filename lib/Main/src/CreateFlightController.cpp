@@ -9,7 +9,7 @@
 #include <NonVolatileStorage.h>
 
 
-FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
+FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, BlackboxMessageQueue& blackboxMessageQueue, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
 {
     const uint32_t outputToMotorsDenominator = OUTPUT_TO_MOTORS_DENOMINATOR;
     // Statically allocate the MotorMixer object as defined by the build flags.
@@ -45,7 +45,6 @@ FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds
 #endif // USE_MOTOR_MIXER
 
     // Statically allocate the flightController.
-    static BlackboxMessageQueue blackboxMessageQueue;
     static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, motorMixer, blackboxMessageQueue, debug);
     loadPID_ProfileFromNonVolatileStorage(flightController, nvs, nvs.getCurrentPidProfileIndex());
 

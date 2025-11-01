@@ -174,7 +174,7 @@ static constexpr Autopilot::autopilot_config_t autopilotAutopilotConfig = {
 static constexpr Autopilot::position_config_t autopilotPositionConfig = {
     .altitude_lpf_hz100 = 300,          // lowpass cutoff Hz*100 for altitude smoothing
     .altitude_dterm_lpf_hz100 = 100,    // lowpass cutoff Hz*100 for altitude derivative smoothing
-    .altitude_source = Autopilot::DEFAULT,
+    .altitude_source = Autopilot::DEFAULT_SOURCE,
     .altitude_prefer_baro = 100,        // percentage trust of barometer data
 };
 

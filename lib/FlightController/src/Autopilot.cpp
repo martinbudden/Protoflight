@@ -1,4 +1,5 @@
 #include "Autopilot.h"
+#include <AHRS.h>
 
 
 void Autopilot::setAutopilotConfig(const autopilot_config_t& autopilotConfig)
@@ -17,8 +18,21 @@ void Autopilot::setAltitudeHoldConfig(const altitude_hold_config_t& altitudeHold
     _altitudeHoldConfig = altitudeHoldConfig;
 }
 
-float Autopilot::altitudeHoldCalculateThrottle(float altitudeMeters, float cosTiltAngle, float deltaT)
+void Autopilot::setAltitudeHoldSetpoint()
+{ 
+    const float altitudeMeters = 0.0F;//!!TODO: get from barometer
+    _altitude.pid.setSetpoint(altitudeMeters);
+}
+
+float Autopilot::altitudeHoldCalculateThrottle()
 {
+    //const AHRS::imu_data_t queueItem = _messageQueue.getQueueItem();
+    //const Quaternion orientation = queueItem.orientation;
+
+    const float altitudeMeters = 0.0F; // !!TODO:get from barometer
+    const float cosTiltAngle = 1.0F; //!!TODO:get from AHRS
+    const float deltaT = 0.001F; //!!TODO:set in startup
+
     const float altitudeDeltaFilteredMeters = _altitude.dTermLPF.filter(altitudeMeters - _altitude.pid.getPreviousMeasurement());
     const float altitudeErrorMeters = _altitude.pid.getSetpoint() - altitudeMeters;
     const float iTermRelax = (std::fabs(altitudeErrorMeters) < 2.0F) ? 1.0F : 0.1F;
