@@ -243,12 +243,26 @@ On dual-core processors `AHRS_Task` has the entire second core to itself.
 
 ```mermaid
 classDiagram
+    class AHRS {
+        bool readIMUandUpdateOrientation()
+    }
+    link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
+    AHRS o-- IMU_Base : calls readAccGyroRPS
+    AHRS o-- IMU_FiltersBase : calls filter
+    AHRS o-- SensorFusionFilterBase : calls update
+    class AHRS_Task:::taskClass {
+    }
+    link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
+    AHRS_Task o-- AHRS : calls updateOutputUsingPIDS
+
+    VehicleControllerBase <|-- FlightController : overrides outputToMixer updateOutputsUsingPIDs
+    AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs / SIGNAL
     class ReceiverTask:::taskClass {
     }
     class SensorFusionFilterBase {
+        Quaternion orientation
         <<abstract>>
         update() Quaternion *
-        getOrientation() Quaternion const
     }
     link SensorFusionFilterBase "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
 
@@ -283,9 +297,10 @@ classDiagram
     class VehicleControllerTask:::taskClass {
     }
     link VehicleControllerTask "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerTask.h"
-    VehicleControllerTask o-- VehicleControllerBase : calls WAIT outputToMixer
+    VehicleControllerTask o-- VehicleControllerBase : calls WAIT / outputToMixer
 
     class AHRS_MessageQueue {
+        Quaternion orientation
         WAIT_IF_EMPTY() override
         SEND(const queue_item_t& queueItem)
     }
@@ -301,25 +316,8 @@ classDiagram
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     RadioController o-- FlightController : calls updateSetpoints
-    FlightController o-- AHRS_MessageQueue : calls SEND
     FlightController o-- MotorMixerBase : calls outputToMotors
-
-    class AHRS {
-        bool readIMUandUpdateOrientation()
-    }
-    link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
-    AHRS o-- IMU_Base : calls readAccGyroRPS
-    AHRS o-- IMU_FiltersBase : calls filter
-    AHRS o-- SensorFusionFilterBase : calls update
-    class AHRS_Task:::taskClass {
-    }
-    link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
-    AHRS_Task o-- AHRS : calls updateOutputUsingPIDS
-
-    VehicleControllerBase <|-- FlightController : overrides outputToMixer updateOutputsUsingPIDs
-    AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs/SIGNAL
-    VehicleControllerBase o-- AHRS
-    %%AHRS --o VehicleControllerBase : historical
+    FlightController o-- AHRS_MessageQueue : calls SEND
 
     class ReceiverBase {
         <<abstract>>
@@ -338,17 +336,28 @@ classDiagram
     link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
 
     ReceiverTask o-- RadioControllerBase : calls updateControls
+    ReceiverTask o-- ReceiverBase : calls update / getStickValues
     link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
     %%RadioControllerBase --o ReceiverTask : calls updateControls
 
-    RadioControllerBase o--ReceiverBase : calls getSwitch
     RadioControllerBase <|-- RadioController : overrides updateControls
+    RadioControllerBase o--ReceiverBase : calls getAuxiliaryChannel
     class RadioController {
         updateControls() override
         checkFailsafe() override
         getFailsafePhase()
     }
     link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
+    RadioController o-- Autopilot
+    class Autopilot {
+        altitudeHoldCalculateThrottle()
+    }
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/Autopilot.h"
+    Autopilot o-- AHRS_MessageQueue : calls getQueueItem
+    class BarometerMessageQueue {
+        float altitude
+    }
+    Autopilot o -- BarometerMessageQueue
 
     class RPM_Filters {
         array~BiquadFilterT~xyz_t~~ _filters[MOTORS][HARMONICS]
@@ -359,14 +368,14 @@ classDiagram
 
     IMU_FiltersBase <|-- IMU_Filters : overrides filter
     class IMU_Filters {
-        FilterT~xyz_t~  _gyroLPF;
-        BiquadFilterT~xyz_t~ _gyroNotch;
+        FilterT~xyz_t~  _gyroLPF
+        BiquadFilterT~xyz_t~ _gyroNotch
         setFilters() override
         filter() override
     }
     link IMU_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/IMU_Filters.h"
-    IMU_Filters o-- MotorMixerBase
     IMU_Filters *-- RPM_Filters : calls filter
+    IMU_Filters o-- MotorMixerBase
 
     MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot : overrides getMotorFrequencyHz
     class MotorMixerQuadX_Base {
@@ -380,8 +389,8 @@ classDiagram
     link DynamicIdleController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/DynamicIdleController.h"
     class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
     link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
-    MotorMixerQuadX_DShot o-- DynamicIdleController : calls calculateSpeedIncrease
     MotorMixerQuadX_DShot o-- RPM_Filters : calls setFrequencyHzIterationStep
+    MotorMixerQuadX_DShot o-- DynamicIdleController : calls calculateSpeedIncrease
 
     IMU_Base <|-- IMU_BMI270 : overrides readAccGyroRPS
     class IMU_BMI270["IMU_BMI270(eg)"]
@@ -393,6 +402,9 @@ classDiagram
     }
     link MadgwickFilter "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
 
+    class ReceiverAtomJoyStick {
+        update() override
+    }
     ReceiverBase <|-- ReceiverAtomJoyStick
     class ReceiverAtomJoyStick["ReceiverAtomJoyStick(eg)"]
     link ReceiverAtomJoyStick "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverAtomJoyStick.h"
