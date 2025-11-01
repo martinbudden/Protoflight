@@ -347,12 +347,12 @@ classDiagram
         checkFailsafe() override
         getFailsafePhase()
     }
-    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
+    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/RadioController.h"
     RadioController o-- Autopilot
     class Autopilot {
         altitudeHoldCalculateThrottle()
     }
-    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/Autopilot.h"
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Autopilot.h"
     Autopilot o-- AHRS_MessageQueue : calls getQueueItem
     class BarometerMessageQueue {
         float altitude
@@ -473,7 +473,7 @@ classDiagram
         checkFailsafe() override
         getFailsafePhase()
     }
-    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
+    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/RadioController.h"
 
     class ReceiverBase {
         <<abstract>>
@@ -500,7 +500,7 @@ classDiagram
     class Autopilot {
         altitudeHoldCalculateThrottle()
     }
-    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/Autopilot.h"
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     Autopilot o-- AHRS_MessageQueue : calls getQueueItem
 
     TaskBase <|-- ReceiverTask
@@ -671,7 +671,7 @@ classDiagram
     class RadioController {
         getRates() rates_t  const
     }
-    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RadioController.h"
+    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/RadioController.h"
     class ReceiverBase {
         <<abstract>>
     }
