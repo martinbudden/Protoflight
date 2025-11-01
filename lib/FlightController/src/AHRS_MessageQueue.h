@@ -19,7 +19,7 @@
 
 class AHRS_MessageQueue : public MessageQueueBase {
 public:
-    const AHRS::imu_data_t& getQueueItem() const { return _queueItem; };
+    const AHRS::imu_data_t& getAHRS_Data() const { return _queueItem; };
 #if defined(FRAMEWORK_USE_FREERTOS)
     AHRS_MessageQueue()
         : _queue(xQueueCreateStatic(QUEUE_LENGTH, sizeof(_queueItem), &_queueStorageArea[0], &_queueStatic))

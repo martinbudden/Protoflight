@@ -336,8 +336,8 @@ void ScreenM5::updateAHRS_Data() const
     // need to get orientation from AHRS since flight controller does not update Euler angles when in rate mode
     //const Quaternion orientationENU {}; //!!= _ahrs.getOrientationForInstrumentationUsingLock();
 
-    const AHRS::imu_data_t queueItem = _flightController.getAHRS_MessageQueue().getQueueItem();
-    const Quaternion orientationENU = queueItem.orientation;
+    const AHRS::imu_data_t ahrsData = _flightController.getAHRS_MessageQueue().getAHRS_Data();
+    const Quaternion orientationENU = ahrsData.orientation;
 
     const TD_AHRS::data_t tdAhrsData {
         //.pitch = _flightController.getPitchAngleDegreesRaw(),
@@ -347,8 +347,8 @@ void ScreenM5::updateAHRS_Data() const
         .roll = orientationENU.calculateRollDegrees(),
         .pitch = -orientationENU.calculatePitchDegrees(),
         .yaw = orientationENU.calculateYawDegrees(),
-        .gyroRPS = queueItem.accGyroRPS.gyroRPS,
-        .acc = queueItem.accGyroRPS.acc,
+        .gyroRPS = ahrsData.accGyroRPS.gyroRPS,
+        .acc = ahrsData.accGyroRPS.acc,
         .gyroOffset = {},
         .accOffset = {}
     };

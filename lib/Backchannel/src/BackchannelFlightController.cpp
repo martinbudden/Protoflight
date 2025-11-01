@@ -187,7 +187,7 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
 #if !defined(FRAMEWORK_TEST)
     if (_requestType == CommandPacketRequestData::REQUEST_AHRS_DATA) {
         // intercept an AHRS_DATA request to replace roll and pitch values
-        const AHRS::imu_data_t queueItem = _flightController.getAHRS_MessageQueue().getQueueItem();
+        const AHRS::imu_data_t queueItem = _flightController.getAHRS_MessageQueue().getAHRS_Data();
         const AHRS::data_t ahrsData {
             .deltaT = queueItem.deltaT,
             .gyroRPS = queueItem.accGyroRPS.gyroRPS,
