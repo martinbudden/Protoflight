@@ -19,7 +19,6 @@
 
 class AHRS_MessageQueue : public MessageQueueBase {
 public:
-    const AHRS::imu_data_t& getAHRS_Data() const { return _queueItem; };
 #if defined(FRAMEWORK_USE_FREERTOS)
     AHRS_MessageQueue()
         : _queue(xQueueCreateStatic(QUEUE_LENGTH, sizeof(_queueItem), &_queueStorageArea[0], &_queueStatic))
@@ -32,16 +31,18 @@ public:
         }
         return ret;
     }
-    inline int32_t RECEIVE() const { return xQueueReceive(_queue, &_queueItem, portMAX_DELAY); }
-    inline void SEND(const AHRS::imu_data_t& queueItem) const { xQueueOverwrite(_queue, &queueItem); }
+    //inline int32_t RECEIVE() const { return xQueueReceive(_queue, &_queueItem, portMAX_DELAY); }
+    inline int32_t PEEK(AHRS::ahrs_data_t& ahrsData) const { return xQueuePeek(_queue, &ahrsData, portMAX_DELAY); }
+    inline void SEND(const AHRS::ahrs_data_t& queueItem) const { xQueueOverwrite(_queue, &queueItem); }
 #else
     AHRS_MessageQueue() = default;
     virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroseconds) const override { timeMicroseconds = 0; return 0; }
-    inline int32_t RECEIVE() const { return 0; }
-    inline void SEND(const AHRS::imu_data_t& queueItem) const { _queueItem = queueItem; }
+    //inline int32_t RECEIVE() const { return 0; }
+    inline int32_t PEEK(AHRS::ahrs_data_t& ahrsData) const { ahrsData = _queueItem; return 0; }
+    inline void SEND(const AHRS::ahrs_data_t& queueItem) const { _queueItem = queueItem; }
 #endif // USE_FREERTOS
 private:
-    mutable AHRS::imu_data_t _queueItem {};
+    mutable AHRS::ahrs_data_t _queueItem {};
 #if defined(FRAMEWORK_USE_FREERTOS)
     enum { QUEUE_LENGTH = 1 };
     std::array<uint8_t, QUEUE_LENGTH * sizeof(_queueItem)> _queueStorageArea {};

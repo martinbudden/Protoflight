@@ -328,7 +328,7 @@ public:
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
 
     float calculateITermError(size_t axis, float measurement);
-    virtual void updateOutputsUsingPIDs(const AHRS::imu_data_t& imuDataNED) override;
+    virtual void updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataNED) override;
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 
 private:

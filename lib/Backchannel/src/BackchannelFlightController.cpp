@@ -187,17 +187,12 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
 #if !defined(FRAMEWORK_TEST)
     if (_requestType == CommandPacketRequestData::REQUEST_AHRS_DATA) {
         // intercept an AHRS_DATA request to replace roll and pitch values
-        const AHRS::imu_data_t queueItem = _flightController.getAHRS_MessageQueue().getAHRS_Data();
-        const AHRS::data_t ahrsData {
-            .deltaT = queueItem.deltaT,
-            .gyroRPS = queueItem.accGyroRPS.gyroRPS,
-            .gyroRPS_unfiltered = queueItem.gyroRPS_unfiltered,
-            .acc = queueItem.accGyroRPS.acc
-        };
+        AHRS::ahrs_data_t ahrsData;
+        _flightController.getAHRS_MessageQueue().PEEK(ahrsData);
         const size_t len = packTelemetryData_AHRS(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _ahrs, ahrsData);
         TD_AHRS* td = reinterpret_cast<TD_AHRS*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
         // convert from ENU to NED
-        const Quaternion orientationENU = queueItem.orientation;
+        const Quaternion orientationENU = ahrsData.orientation;
         td->data.roll = -orientationENU.calculatePitchDegrees(),
         td->data.pitch = orientationENU.calculateRollDegrees(),
         td->data.yaw = orientationENU.calculateYawDegrees(),

@@ -202,21 +202,17 @@ It is typically called at frequency of between 1000Hz and 8000Hz, so it has to b
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyroRPS, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
 */
-void FlightController::updateOutputsUsingPIDs(const AHRS::imu_data_t& imuDataNED)
+void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataNED)
 {
     ++_ahM.sendBlackboxMessageCount;
     if (_ahM.sendBlackboxMessageCount >= _sendBlackboxMessageDenominator) {
         _ahM.sendBlackboxMessageCount = 0;
         // Send the data to the message queue
-        _ahrsMessageQueue.SEND(imuDataNED);
-        if (!_blackbox) {
-            // no blackbox task, so receive the IMU data so it is available for the backchannel and telemetry
-            _ahrsMessageQueue.RECEIVE();
-        }
+        _ahrsMessageQueue.SEND(ahrsDataNED);
     }
 #if defined(USE_YAW_SPIN_RECOVERY)
     if (_sh.yawSpinRecovery) {
-        recoverFromYawSpin(imuDataNED.accGyroRPS.gyroRPS, imuDataNED.deltaT);
+        recoverFromYawSpin(ahrsDataNED.accGyroRPS.gyroRPS, ahrsDataNED.deltaT);
         return;
     }
 #endif
@@ -226,7 +222,7 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::imu_data_t& imuDataNED
 #endif
 
     if (_rxC.useAngleMode) {
-        updateRateSetpointsForAngleMode(imuDataNED.orientation, imuDataNED.deltaT);
+        updateRateSetpointsForAngleMode(ahrsDataNED.orientation, ahrsDataNED.deltaT);
     }
 
     VehicleControllerMessageQueue::queue_item_t outputs; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
@@ -239,33 +235,33 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::imu_data_t& imuDataNED
     //
     // Roll axis
     //
-    const float rollRateDPS = rollRateNED_DPS(imuDataNED.accGyroRPS.gyroRPS);
+    const float rollRateDPS = rollRateNED_DPS(ahrsDataNED.accGyroRPS.gyroRPS);
     float rollRateDeltaFilteredDPS = _sh.dTermFilters1[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
     rollRateDeltaFilteredDPS = _sh.dTermFilters2[ROLL_RATE_DPS].filter(rollRateDeltaFilteredDPS);
     outputs.roll = _sh.PIDS[ROLL_RATE_DPS].updateDeltaITerm(
                                                     rollRateDPS, 
                                                     rollRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[ROLL_RATE_DPS], 
                                                     calculateITermError(ROLL_RATE_DPS, rollRateDPS),
-                                                    imuDataNED.deltaT);
+                                                    ahrsDataNED.deltaT);
 
     //
     // Pitch axis
     //
-    const float pitchRateDPS = pitchRateNED_DPS(imuDataNED.accGyroRPS.gyroRPS);
+    const float pitchRateDPS = pitchRateNED_DPS(ahrsDataNED.accGyroRPS.gyroRPS);
     float pitchRateDeltaFilteredDPS = _sh.dTermFilters1[PITCH_RATE_DPS].filter(rollRateDPS - _sh.PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
     pitchRateDeltaFilteredDPS = _sh.dTermFilters2[PITCH_RATE_DPS].filter(pitchRateDeltaFilteredDPS);
     outputs.pitch = _sh.PIDS[PITCH_RATE_DPS].updateDeltaITerm(
                                                     pitchRateDPS,
                                                     pitchRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[PITCH_RATE_DPS],
                                                     calculateITermError(PITCH_RATE_DPS, pitchRateDPS),
-                                                    imuDataNED.deltaT);
+                                                    ahrsDataNED.deltaT);
 
     //
     // Yaw axis
     //
     // DTerm is zero for yawRate, so call updateSPI() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no KTerm
-    const float yawRateDPS = yawRateNED_DPS(imuDataNED.accGyroRPS.gyroRPS);
-    outputs.yaw = _sh.PIDS[YAW_RATE_DPS].updateSPI(yawRateDPS, imuDataNED.deltaT);
+    const float yawRateDPS = yawRateNED_DPS(ahrsDataNED.accGyroRPS.gyroRPS);
+    outputs.yaw = _sh.PIDS[YAW_RATE_DPS].updateSPI(yawRateDPS, ahrsDataNED.deltaT);
 
     // The FlightControllerTask is waiting on the message queue, so signal it that there is output data available.
     // This will result in outputToMixer() being called by the scheduler.

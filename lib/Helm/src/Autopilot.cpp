@@ -26,7 +26,7 @@ void Autopilot::setAltitudeHoldSetpoint()
 
 float Autopilot::altitudeHoldCalculateThrottle()
 {
-    //const AHRS::imu_data_t queueItem = _messageQueue.getQueueItem();
+    //const AHRS::ahrs_data_t queueItem = _messageQueue.getQueueItem();
     //const Quaternion orientation = queueItem.orientation;
 
     const float altitudeMeters = 0.0F; // !!TODO:get from barometer

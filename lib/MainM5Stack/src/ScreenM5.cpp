@@ -336,7 +336,8 @@ void ScreenM5::updateAHRS_Data() const
     // need to get orientation from AHRS since flight controller does not update Euler angles when in rate mode
     //const Quaternion orientationENU {}; //!!= _ahrs.getOrientationForInstrumentationUsingLock();
 
-    const AHRS::imu_data_t ahrsData = _flightController.getAHRS_MessageQueue().getAHRS_Data();
+    AHRS::ahrs_data_t ahrsData;
+    _flightController.getAHRS_MessageQueue().PEEK(ahrsData);
     const Quaternion orientationENU = ahrsData.orientation;
 
     const TD_AHRS::data_t tdAhrsData {

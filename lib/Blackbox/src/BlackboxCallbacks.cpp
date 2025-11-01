@@ -70,7 +70,8 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
 {
     (void)currentTimeUs;
 
-    const AHRS::imu_data_t ahrsData = _messageQueue.getAHRS_Data();
+    AHRS::ahrs_data_t ahrsData;
+    _messageQueue.PEEK(ahrsData);
     Quaternion orientation = ahrsData.orientation;
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
