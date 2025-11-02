@@ -231,9 +231,7 @@ public:
     bool motorsIsOn() const;
     void motorsSwitchOff();
     void motorsSwitchOn();
-    void motorsToggleOnOff();
     bool motorsIsDisabled() const;
-    void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
     inline control_mode_e getControlMode() const { return _fcC.controlMode; }
     void setControlMode(control_mode_e controlMode);
@@ -336,7 +334,6 @@ private:
     MotorMixerBase& _mixer;
     AHRS_MessageQueue& _ahrsMessageQueue;
     Debug& _debug;
-    Blackbox* _blackbox {nullptr};
     DynamicNotchFilter* _dynamicNotchFilter {nullptr};
     const uint32_t _outputToMotorsDenominator;
     const uint32_t _sendBlackboxMessageDenominator {8};

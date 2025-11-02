@@ -2,7 +2,6 @@
 #include "FlightController.h"
 
 #if !defined(FRAMEWORK_TEST)
-#include <Blackbox.h> // just needed for //_blackbox->finish() and endlog()
 //#define SERIAL_OUTPUT
 #if defined(SERIAL_OUTPUT)
 #include <HardwareSerial.h>
@@ -175,12 +174,6 @@ void FlightController::motorsSwitchOff()
     _sh.takeOffCountStart = 0;
     _sh.groundMode = true;
     switchPID_integrationOff();
-#if !defined(FRAMEWORK_TEST)
-    if (_blackbox) {
-        _blackbox->endLog();
-        //_blackbox->finish();
-    }
-#endif
 }
 
 void FlightController::motorsSwitchOn()
@@ -190,9 +183,6 @@ void FlightController::motorsSwitchOn()
         _mixer.motorsSwitchOn();
         // reset the PID integral values when we switch the motors on
         switchPID_integrationOn();
-        //if (_blackbox) {
-        //    _blackbox->start();
-        //}
     }
 }
 
@@ -204,15 +194,6 @@ bool FlightController::motorsIsDisabled() const
 bool FlightController::motorsIsOn() const
 {
     return _mixer.motorsIsOn();
-}
-
-void FlightController::motorsToggleOnOff()
-{
-    if (motorsIsOn()) {
-        motorsSwitchOff();
-    } else {
-        motorsSwitchOn();
-    }
 }
 
 /*!

@@ -63,7 +63,7 @@ void test_telemetry_msp()
     static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, debug, radioControllerRates);
 
     // statically allocate an MSP object
     static Features features;

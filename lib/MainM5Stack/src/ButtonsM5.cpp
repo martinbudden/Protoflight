@@ -30,7 +30,11 @@ void ButtonsM5::update()
     }
     if (M5.BtnA.wasPressed()) {
         // BtnA turns the motors on or off
-        _flightController.motorsToggleOnOff();
+        if (_flightController.motorsIsOn()) {
+            _flightController.motorsSwitchOff();
+        } else {
+            _flightController.motorsSwitchOn();
+        }
         M5.Lcd.setCursor(_drawPosX, _drawPosY);
         M5.Lcd.print('A');
     } else if (M5.BtnA.wasReleased()) {

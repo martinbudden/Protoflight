@@ -6,6 +6,7 @@
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
 #include <Debug.h>
+#include <RadioController.h>
 #include <ReceiverBase.h>
 #include <TimeMicroseconds.h>
 
@@ -14,13 +15,13 @@
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, const RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) //cppcheck-suppress constParameterReference 
+Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) //cppcheck-suppress constParameterReference 
 {
     static BlackboxCallbacks            blackboxCallbacks(ahrsMessageQueue, ahrs, flightController, radioController, receiver, debug);
     static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
     static BlackboxProtoFlight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, blackboxSerialDevice, flightController, radioController, imuFilters);
-    flightController.setBlackbox(blackbox);
+    radioController.setBlackbox(blackbox);
 
     blackbox.init({
         .sample_rate = Blackbox::RATE_ONE,

@@ -1,14 +1,18 @@
 #include "FlightController.h"
 #include "RadioController.h"
 
+#include <Blackbox.h>
+#include <Debug.h>
+#include <MotorMixerBase.h>
 #include <ReceiverBase.h>
 #include <cmath>
 
 
-RadioController::RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, const rates_t& rates) :
+RadioController::RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& debug, const rates_t& rates) :
     RadioControllerBase(receiver),
     _flightController(flightController),
     _autopilot(autopilot),
+    _debug(debug),
     _rates(rates)
 {
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
@@ -72,7 +76,21 @@ void RadioController::updateControls(const controls_t& controls)
     } else {
         if (_onOffSwitchPressed) {
             // motorOnOff false and _onOffPressed true means the  on/off button is being released, so toggle the motor state
-            _flightController.motorsToggleOnOff();
+            if (_flightController.motorsIsOn()) {
+                _flightController.motorsSwitchOff();
+                if (_blackbox) {
+                    _blackbox->finish();
+                }
+            } else {
+                if (_blackbox) {
+                    _blackbox->start(Blackbox::start_t{
+                        .debugMode = static_cast<uint16_t>(_debug.getMode()),
+                        .motorCount = static_cast<uint8_t>(_flightController.getMixer().getMotorCount()),
+                        .servoCount = static_cast<uint8_t>(_flightController.getMixer().getServoCount())
+                    });
+                }
+                _flightController.motorsSwitchOn();
+            }
             _onOffSwitchPressed = false;
         }
     }

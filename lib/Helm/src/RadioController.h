@@ -50,7 +50,8 @@ public:
     static constexpr uint32_t ALTITUDE_HOLD_MODE = 0x04;
     static constexpr uint32_t POSITION_HOLD_MODE = 0x08;
 public:
-    RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, const rates_t& rates);
+    RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& _debug, const rates_t& rates);
+    void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
     const Autopilot& getAutopilot() const { return _autopilot; }
 
@@ -69,7 +70,9 @@ public:
 private:
     FlightController& _flightController;
     Autopilot& _autopilot;
+    Debug& _debug;
     rates_t _rates;
+    Blackbox* _blackbox {nullptr};
     int32_t _onOffSwitchPressed {false}; // on/off switch debouncing
     float _maxRollAngleDegrees { 60.0F }; // used for angle mode
     float _maxPitchAngleDegrees { 60.0F }; // used for angle mode

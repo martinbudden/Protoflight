@@ -300,9 +300,11 @@ classDiagram
     VehicleControllerTask o-- VehicleControllerBase : calls WAIT / outputToMixer
 
     class AHRS_MessageQueue {
-        Quaternion orientation
-        WAIT_IF_EMPTY() override
-        SEND(const queue_item_t& queueItem)
+        ahrs_data_t ahrsData
+        WAIT() override
+        SEND(const ahr_data_t&)
+        PEEK_COPY(const ahr_data_t&)
+        getAHRS_Data()
     }
     link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
 
@@ -563,8 +565,11 @@ classDiagram
 
 
     class AHRS_MessageQueue {
-        WAIT_IF_EMPTY(uint32_t& timeMicroseconds) int32_t
-        SEND(const queue_item_t& queueItem)
+        ahrs_data_t ahrsData
+        WAIT() override
+        SEND(const ahr_data_t&)
+        PEEK_COPY(const ahr_data_t&)
+        getAHRS_Data()
     }
     link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
 
@@ -595,7 +600,7 @@ classDiagram
         -task() [[noreturn]]
     }
     link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
-    BlackboxTask o-- AHRS_MessageQueue : calls WAIT_IF_EMPTY
+    BlackboxTask o-- AHRS_MessageQueue : calls WAIT
     BlackboxTask o-- Blackbox : calls update
     class Blackbox {
         <<abstract>>
@@ -655,12 +660,15 @@ classDiagram
     link BlackboxCallbacks "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxCallbacks.h"
     class MessageQueueBase {
         <<abstract>>
-        WAIT_IF_EMPTY() *
+        WAIT() *
     }
     link MessageQueueBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/MessageQueueBase.h"
     class AHRS_MessageQueue {
-        WAIT_IF_EMPTY() override
-        SEND(const queue_item_t& queueItem)
+        ahrs_data_t ahrsData
+        WAIT() override
+        SEND(const ahr_data_t&)
+        PEEK_COPY(const ahr_data_t&)
+        getAHRS_Data()
     }
     link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
     AHRS o-- AHRS_MessageQueue : indirectly calls SEND
@@ -742,7 +750,7 @@ classDiagram
         -task() [[noreturn]]
     }
     link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
-    BlackboxTask o-- MessageQueueBase : calls WAIT_IF_EMPTY
+    BlackboxTask o-- MessageQueueBase : calls WAIT
     BlackboxTask o-- Blackbox : calls update
 
     classDef taskClass fill:#f96

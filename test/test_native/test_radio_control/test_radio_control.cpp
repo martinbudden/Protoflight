@@ -49,7 +49,7 @@ void tearDown() {
 void test_radio_controller()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, debug, radioControllerRates);
 
     RadioController::rates_t rates = radioController.getRates();
 
@@ -91,7 +91,7 @@ void test_radio_controller()
 void test_radio_controller_passthrough()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, debug, radioControllerRates);
 
     radioController.setRatesToPassThrough();
 
@@ -110,7 +110,7 @@ void test_radio_controller_passthrough()
 void test_radio_controller_defaults()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, debug, radioControllerRates);
 
     const RadioController::rates_t rates = radioController.getRates();
 
@@ -147,7 +147,7 @@ void test_radio_controller_defaults()
 void test_radio_controller_constrain()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, debug, radioControllerRates);
 
     RadioController::rates_t rates = radioController.getRates(); // NOLINT(misc-const-correctness)
     rates.rcRates = {200, 200, 200};
@@ -168,7 +168,7 @@ void test_radio_controller_constrain()
 void test_radio_controller_throttle()
 {
     static ReceiverNull receiver;
-    static RadioController radioController(receiver, flightController, autopilot, radioControllerRates);
+    static RadioController radioController(receiver, flightController, autopilot, debug, radioControllerRates);
 
     float throttle = radioController.mapThrottle(0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, throttle);

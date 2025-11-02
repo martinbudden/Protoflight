@@ -53,11 +53,6 @@ void test_flight_controller()
     fc.motorsSwitchOn();
     TEST_ASSERT_TRUE(fc.motorsIsOn());
 
-    fc.motorsToggleOnOff();
-    TEST_ASSERT_FALSE(fc.motorsIsOn());
-    fc.motorsToggleOnOff();
-    TEST_ASSERT_TRUE(fc.motorsIsOn());
-
     fc.motorsSwitchOff();
     TEST_ASSERT_FALSE(fc.motorsIsOn());
     fc.motorsSwitchOn();

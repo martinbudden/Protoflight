@@ -9,7 +9,7 @@
 | SensorFusion           | yes       | 0.2.7  | 0.2.7   | yes        | no      |
 | StreamBuf              | yes       | 0.0.2  | 0.0.2   | yes        | no      |
 | IMU                    | yes       | 0.9.7  | 0.9.7   | yes        | no      |
-| TaskBase               | yes       | 0.0.8  | 0.0.8   | yes        | no      |
+| TaskBase               | yes       | 0.0.9  | 0.0.9   | yes        | no      |
 | StabilizedVehicle      | yes       | 0.5.16 | 0.5.16  | yes        | no      |
 | Receiver               | yes       | 0.5.10 | 0.5.10  | yes        | no      |
 | Backchannel            | yes       | 0.1.8  | 0.1.8   | yes        | no      |
@@ -23,7 +23,7 @@
 Libraries
 ├── Filters @ 0.9.4
 ├── PIDF @ 0.4.1
-├── TaskBase @ 0.0.8
+├── TaskBase @ 0.0.9
 ├── VectorQuaternionMatrix @ 0.4.4
 ├── FlashKLV @ 0.0.3
 │

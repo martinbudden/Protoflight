@@ -78,7 +78,7 @@ void Main::setup()
 
     ReceiverBase& receiver = createReceiver();
 
-    RadioController& radioController = createRadioController(receiver, flightController, AHRS_MessageQueue, nvs);
+    RadioController& radioController = createRadioController(receiver, flightController, debug, AHRS_MessageQueue, nvs);
 #if defined(USE_MSP)
     MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, receiver, radioController.getAutopilot(), debug, nvs);
 #endif

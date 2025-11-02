@@ -20,33 +20,36 @@
 class AHRS_MessageQueue : public MessageQueueBase {
 public:
 #if defined(FRAMEWORK_USE_FREERTOS)
-    AHRS_MessageQueue()
-        : _queue(xQueueCreateStatic(QUEUE_LENGTH, sizeof(_queueItem), &_queueStorageArea[0], &_queueStatic))
+    AHRS_MessageQueue() :
+        _queueHandle(xQueueCreateStatic(QUEUE_LENGTH, sizeof(_ahrsData), &_queueStorageArea[0], &_queueStatic)),
+        _copyQueueHandle(xQueueCreateStatic(QUEUE_LENGTH, sizeof(_ahrsData), &_copyQueueStorageArea[0], &_copyQueueStatic))
     {}
-    // Blackbox Task calls WAIT_IF_EMPTY and then `update` when wait completes
-    virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroseconds) const override {
-        const int32_t ret = xQueueReceive(_queue, &_queueItem, portMAX_DELAY);
+    // Blackbox Task calls WAIT and then `update` when wait completes
+    virtual int32_t WAIT(uint32_t& timeMicroseconds) const override {
+        const int32_t ret = xQueueReceive(_queueHandle, &_ahrsData, portMAX_DELAY);
         if (ret) {
-            timeMicroseconds = _queueItem.timeMicroseconds;
+            timeMicroseconds = _ahrsData.timeMicroseconds;
         }
         return ret;
     }
-    //inline int32_t RECEIVE() const { return xQueueReceive(_queue, &_queueItem, portMAX_DELAY); }
-    inline int32_t PEEK(AHRS::ahrs_data_t& ahrsData) const { return xQueuePeek(_queue, &ahrsData, portMAX_DELAY); }
-    inline void SEND(const AHRS::ahrs_data_t& queueItem) const { xQueueOverwrite(_queue, &queueItem); }
+    inline void SEND(const AHRS::ahrs_data_t& ahrsData) const { xQueueOverwrite(_queueHandle, &ahrsData); xQueueOverwrite(_copyQueueHandle, &ahrsData);}
+    inline int32_t PEEK_COPY(AHRS::ahrs_data_t& ahrsData) const { return xQueuePeek(_copyQueueHandle, &ahrsData, portMAX_DELAY); }
 #else
     AHRS_MessageQueue() = default;
-    virtual int32_t WAIT_IF_EMPTY(uint32_t& timeMicroseconds) const override { timeMicroseconds = 0; return 0; }
-    //inline int32_t RECEIVE() const { return 0; }
-    inline int32_t PEEK(AHRS::ahrs_data_t& ahrsData) const { ahrsData = _queueItem; return 0; }
-    inline void SEND(const AHRS::ahrs_data_t& queueItem) const { _queueItem = queueItem; }
+    virtual int32_t WAIT(uint32_t& timeMicroseconds) const override { timeMicroseconds = 0; return 0; }
+    inline void SEND(const AHRS::ahrs_data_t& ahrsData) const { _ahrsData = ahrsData; }
+    inline int32_t PEEK_COPY(AHRS::ahrs_data_t& ahrsData) const { ahrsData = _ahrsData; return 0; }
 #endif // USE_FREERTOS
+    const AHRS::ahrs_data_t& getAHRS_Data() const { return _ahrsData; } //!< May only be called within task after WAIT has completed
 private:
-    mutable AHRS::ahrs_data_t _queueItem {};
+    mutable AHRS::ahrs_data_t _ahrsData {};
 #if defined(FRAMEWORK_USE_FREERTOS)
     enum { QUEUE_LENGTH = 1 };
-    std::array<uint8_t, QUEUE_LENGTH * sizeof(_queueItem)> _queueStorageArea {};
+    QueueHandle_t _queueHandle {};
     StaticQueue_t _queueStatic {};
-    QueueHandle_t _queue {};
+    std::array<uint8_t, QUEUE_LENGTH * sizeof(_ahrsData)> _queueStorageArea {};
+    QueueHandle_t _copyQueueHandle {};
+    StaticQueue_t _copyQueueStatic {};
+    std::array<uint8_t, QUEUE_LENGTH * sizeof(_ahrsData)> _copyQueueStorageArea {};
 #endif
 };

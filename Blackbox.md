@@ -13,7 +13,7 @@ classDiagram
         +loop()
         -task() [[noreturn]]
     }
-    BlackboxTask o-- MessageQueueBase : calls WAIT_IF_EMPTY
+    BlackboxTask o-- MessageQueueBase : calls WAIT
     BlackboxTask o-- Blackbox : calls update
     class Blackbox {
         <<abstract>>
@@ -23,12 +23,14 @@ classDiagram
 
     class MessageQueueBase {
         <<abstract>>
-        virtual WAIT_IF_EMPTY() const * int32_t
+        virtual WAIT() const * int32_t
     }
     class AHRS_MessageQueue {
-        WAIT_IF_EMPTY() const override
-        RECEIVE(queue_item_t&) int32_t
-        SEND(const queue_item_t&)
+        ahrs_data_t ahrsData
+        WAIT() override
+        SEND(const ahr_data_t&)
+        PEEK_COPY(const ahr_data_t&)
+        getAHRS_Data()
     }
     class RadioControllerBase {
         <<abstract>>
