@@ -97,7 +97,7 @@ void RadioController::updateControls(const controls_t& controls)
     _failsafePhase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
     _failsafeTickCount = controls.tickCount;
 
-void RadioController::handleOnOffSwitch()
+    handleOnOffSwitch();
     // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
     enum { CONTROL_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_MODE_CHANNEL = ReceiverBase::AUX3 };
     if (_receiver.getChannelRaw(CONTROL_MODE_CHANNEL)) {

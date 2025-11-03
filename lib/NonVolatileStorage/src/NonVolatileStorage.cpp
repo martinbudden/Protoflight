@@ -50,7 +50,9 @@ constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow 
 constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
 constexpr uint16_t RPM_FiltersConfigKey = 0x0505;
 constexpr uint16_t RadioControllerFailsafeKey = 0x0506;
-constexpr uint16_t AltitudeHoldConfigKey = 0x507;
+constexpr uint16_t AutopilotConfigKey = 0x507;
+constexpr uint16_t AutopilotPositionConfigKey = 0x508;
+constexpr uint16_t AltitudeHoldConfigKey = 0x508;
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
@@ -443,7 +445,35 @@ int32_t NonVolatileStorage::storeRPM_FiltersConfig(const RPM_Filters::config_t& 
     return storeItem(RPM_FiltersConfigKey, &config, sizeof(config), &DEFAULTS::rpmFiltersConfig);
 }
 #endif
-#if defined USE_ALTITUDE_HOLD
+#if defined(USE_ALTITUDE_HOLD)
+Autopilot::autopilot_config_t NonVolatileStorage::loadAutopilotConfig() const
+{
+    {Autopilot::autopilot_config_t config {};
+    if (loadItem(AutopilotConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::autopilotConfig;
+}
+
+int32_t NonVolatileStorage::storeAutopilotConfig(const Autopilot::autopilot_config_t& config)
+{
+    return storeItem(AutopilotConfigKey, &config, sizeof(config), &DEFAULTS::autopilotConfig);
+}
+
+Autopilot::position_config_t NonVolatileStorage::loadAutopilotPositionConfig() const
+{
+    {Autopilot::position_config_t config {};
+    if (loadItem(AutopilotPositionConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::autopilotPositionConfig;
+}
+
+int32_t NonVolatileStorage::storeAutopilotPositionConfig(const Autopilot::position_config_t& config)
+{
+    return storeItem(AutopilotPositionConfigKey, &config, sizeof(config), &DEFAULTS::autopilotPositionConfig);
+}
+
 Autopilot::altitude_hold_config_t NonVolatileStorage::loadAltitudeHoldConfig() const
 {
     {Autopilot::altitude_hold_config_t config {};

@@ -160,7 +160,8 @@ static constexpr RadioController::rates_t radioControllerRates = {
     //.ratesType = RadioController::RATES_TYPE_ACTUAL
 };
 
-static constexpr Autopilot::autopilot_config_t autopilotAutopilotConfig = {
+#if defined(USE_ALTITUDE_HOLD)
+static constexpr Autopilot::autopilot_config_t autopilotConfig = {
     .altitudePID = { 15, 15, 15, 0, 15 },
     .positionPID = { 30, 30, 30, 0, 30 },
     .landingAltitudeMeters = 4,
@@ -182,6 +183,6 @@ static constexpr Autopilot::altitude_hold_config_t autopilotAltitudeHoldConfig =
     .climbRate = 50,    // max vertical velocity change at full/zero throttle. 50 means 5 m/s
     .deadband = 20,     // throttle deadband in percent of stick travel
 };
-
+#endif
 
 } // END namespace

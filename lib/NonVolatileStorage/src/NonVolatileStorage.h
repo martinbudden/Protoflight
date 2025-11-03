@@ -134,6 +134,10 @@ public:
     int32_t storeRPM_FiltersConfig(const RPM_Filters::config_t& config);
 #endif
 #if defined USE_ALTITUDE_HOLD
+    Autopilot::autopilot_config_t loadAutopilotConfig() const;
+    int32_t storeAutopilotConfig(const Autopilot::autopilot_config_t& config);
+    Autopilot::position_config_t loadAutopilotPositionConfig() const;
+    int32_t storeAutopilotPositionConfig(const Autopilot::position_config_t& config);
     Autopilot::altitude_hold_config_t loadAltitudeHoldConfig() const;
     int32_t storeAltitudeHoldConfig(const Autopilot::altitude_hold_config_t& config);
 #endif

@@ -18,6 +18,8 @@ RadioController& Main::createRadioController(ReceiverBase& receiver, FlightContr
     static Autopilot autopilot(ahrsMessageQueue);
 #endif
 #if defined USE_ALTITUDE_HOLD
+    autopilot.setAutopilotConfig(nvs.loadAutopilotConfig());
+    autopilot.setPositionConfig(nvs.loadAutopilotPositionConfig());
     autopilot.setAltitudeHoldConfig(nvs.loadAltitudeHoldConfig());
 #endif
 

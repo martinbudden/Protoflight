@@ -7,6 +7,34 @@ void Autopilot::setAutopilotConfig(const autopilot_config_t& autopilotConfig)
 {
     _autopilotConfig = autopilotConfig;
     _altitude.hoverThrottle = (_autopilotConfig.throttleHover - 1000) * 0.001F;
+
+    static constexpr float ALTITUDE_P_SCALE  = 0.01F;
+    static constexpr float ALTITUDE_I_SCALE  = 0.003F;
+    static constexpr float ALTITUDE_D_SCALE  = 0.01F;
+    static constexpr float ALTITUDE_S_SCALE  = 0.01F;
+    static constexpr float ALTITUDE_F_SCALE  = 0.01F;
+    const PIDF::PIDF_t altitudePID = {
+        static_cast<float>(_autopilotConfig.altitudePID.kp) * ALTITUDE_P_SCALE,
+        static_cast<float>(_autopilotConfig.altitudePID.ki) * ALTITUDE_I_SCALE,
+        static_cast<float>(_autopilotConfig.altitudePID.kd) * ALTITUDE_D_SCALE,
+        static_cast<float>(_autopilotConfig.altitudePID.ks) * ALTITUDE_S_SCALE,
+        static_cast<float>(_autopilotConfig.altitudePID.kk) * ALTITUDE_F_SCALE,
+    };
+    _altitude.pid.setPID(altitudePID);
+
+    static constexpr float POSITION_P_SCALE  = 0.0012F;
+    static constexpr float POSITION_I_SCALE  = 0.0001F;
+    static constexpr float POSITION_D_SCALE  = 0.0015F;
+    static constexpr float POSITION_S_SCALE  = 0.0015F;
+    static constexpr float POSITION_F_SCALE  = 0.0008F;
+    const PIDF::PIDF_t positionPID = {
+        static_cast<float>(_autopilotConfig.positionPID.kp) * POSITION_P_SCALE,
+        static_cast<float>(_autopilotConfig.positionPID.ki) * POSITION_I_SCALE,
+        static_cast<float>(_autopilotConfig.positionPID.kd) * POSITION_D_SCALE,
+        static_cast<float>(_autopilotConfig.positionPID.ks) * POSITION_S_SCALE,
+        static_cast<float>(_autopilotConfig.positionPID.kk) * POSITION_F_SCALE,
+    };
+    _altitude.pid.setPID(positionPID);
 }
 
 void Autopilot::setPositionConfig(const position_config_t& positionConfig)
