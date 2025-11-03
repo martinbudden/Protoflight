@@ -66,7 +66,9 @@ Targets
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define GYRO_SAMPLE_RATE_HZ 200 // 5000us looptime
     #define IMU_I2C_PINS        i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
-
+    #define USE_BAROMETER_BMP280
+    #define BAROMETER_I2C_PINS  i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define USE_ALTITUDE_HOLD
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 

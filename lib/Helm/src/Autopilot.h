@@ -9,12 +9,14 @@
 
 class AHRS;
 class AHRS_MessageQueue;
+class BarometerBase;
 
 
 class Autopilot {
 public:
     virtual ~Autopilot() = default;
     Autopilot(const AHRS_MessageQueue& messageQueue) : _messageQueue(messageQueue) {}
+    Autopilot(const AHRS_MessageQueue& messageQueue, BarometerBase& barometer) : _messageQueue(messageQueue), _barometer(&barometer) {}
 private:
     // Autopilot is not copyable or moveable
     Autopilot(const Autopilot&) = delete;
@@ -70,10 +72,11 @@ public:
     void setAltitudeHoldConfig(const altitude_hold_config_t& altitudeHoldConfig);
     const altitude_hold_config_t& getAltitudeHoldConfig() const { return _altitudeHoldConfig; }
 
-    void setAltitudeHoldSetpoint();
-    float altitudeHoldCalculateThrottle();
+    bool setAltitudeHoldSetpoint(); //!< use the current altitude to set the setpoint for altitude hold
+    float altitudeHoldCalculateThrottle(float throttle);
 private:
     const AHRS_MessageQueue& _messageQueue;
+    BarometerBase* _barometer {nullptr};
     altitude_t _altitude {};
     std::array<earth_frame_t, EARTH_FRAME_AXIS_COUNT> _earthFrames {};
     autopilot_config_t _autopilotConfig;

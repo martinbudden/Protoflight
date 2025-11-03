@@ -55,6 +55,7 @@ public:
 
     const Autopilot& getAutopilot() const { return _autopilot; }
 
+    void handleOnOffSwitch();
     virtual void updateControls(const controls_t& controls) override;
 
     virtual void checkFailsafe(uint32_t tickCount) override;

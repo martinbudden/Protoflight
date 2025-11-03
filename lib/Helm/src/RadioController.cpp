@@ -60,17 +60,8 @@ float RadioController::mapThrottle(float throttle) const
     return throttle * static_cast<float>(_rates.throttleLimitPercent) / 100.0F;
 }
 
-/*!
-Called from Receiver Task.
-*/
-void RadioController::updateControls(const controls_t& controls)
+void RadioController::handleOnOffSwitch()
 {
-    // failsafe handling
-    _receiverInUse = true;
-    _failsafePhase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
-    _failsafeTickCount = controls.tickCount;
-
-    // handle the on/off switch
     if (_receiver.getSwitch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
         _onOffSwitchPressed = true;
     } else {
@@ -94,7 +85,19 @@ void RadioController::updateControls(const controls_t& controls)
             _onOffSwitchPressed = false;
         }
     }
+}
 
+/*!
+Called from Receiver Task.
+*/
+void RadioController::updateControls(const controls_t& controls)
+{
+    // failsafe handling
+    _receiverInUse = true;
+    _failsafePhase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
+    _failsafeTickCount = controls.tickCount;
+
+void RadioController::handleOnOffSwitch()
     // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
     enum { CONTROL_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_MODE_CHANNEL = ReceiverBase::AUX3 };
     if (_receiver.getChannelRaw(CONTROL_MODE_CHANNEL)) {
@@ -105,9 +108,11 @@ void RadioController::updateControls(const controls_t& controls)
     if (_receiver.getChannelRaw(ALTITUDE_MODE_CHANNEL)) {
         if ((_flightMode & ALTITUDE_HOLD_MODE) == 0) {
             // not currently in altitude hold mode, so set the altitude hold setpoint
-            _autopilot.setAltitudeHoldSetpoint();
+            if (_autopilot.setAltitudeHoldSetpoint()) {
+                // only switch to altitude hold mode if the autopilot supports it
+                _flightMode |= ALTITUDE_HOLD_MODE;
+            }
         }
-        _flightMode |= ALTITUDE_HOLD_MODE;
     }
     const FlightController::control_mode_e controlMode = 
         (_flightMode & (ANGLE_MODE | ALTITUDE_HOLD_MODE | POSITION_HOLD_MODE)) ?
@@ -116,7 +121,7 @@ void RadioController::updateControls(const controls_t& controls)
 
     float throttleStick {};
     if (_flightMode & ALTITUDE_HOLD_MODE) {
-        throttleStick = _autopilot.altitudeHoldCalculateThrottle();
+        throttleStick = _autopilot.altitudeHoldCalculateThrottle(controls.throttleStick);
     } else {
         throttleStick = mapThrottle(controls.throttleStick);
     }

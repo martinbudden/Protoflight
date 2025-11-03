@@ -1,5 +1,6 @@
 #include "Autopilot.h"
 #include <AHRS.h>
+#include <BarometerBase.h>
 
 
 void Autopilot::setAutopilotConfig(const autopilot_config_t& autopilotConfig)
@@ -18,29 +19,42 @@ void Autopilot::setAltitudeHoldConfig(const altitude_hold_config_t& altitudeHold
     _altitudeHoldConfig = altitudeHoldConfig;
 }
 
-void Autopilot::setAltitudeHoldSetpoint()
-{ 
-    const float altitudeMeters = 0.0F;//!!TODO: get from barometer
+bool Autopilot::setAltitudeHoldSetpoint()
+{
+    if (_barometer == nullptr) {
+        // no barometer, so cannot go into altitude hold mode
+        return false;
+    }
+
+    const float altitudeMeters = _barometer->readAltitudeMeters();
     _altitude.pid.setSetpoint(altitudeMeters);
+    return true;
 }
 
-float Autopilot::altitudeHoldCalculateThrottle()
+float Autopilot::altitudeHoldCalculateThrottle(float throttle)
 {
+    if (_barometer == nullptr) {
+        return throttle;
+    }
+
     //const AHRS::ahrs_data_t queueItem = _messageQueue.getQueueItem();
     //const Quaternion orientation = queueItem.orientation;
 
-    const float altitudeMeters = 0.0F; // !!TODO:get from barometer
+    const float altitudeMeters = _barometer->readAltitudeMeters();
     const float cosTiltAngle = 1.0F; //!!TODO:get from AHRS
     const float deltaT = 0.001F; //!!TODO:set in startup
 
+    const float dBoost = 1.0F;
     const float altitudeDeltaFilteredMeters = _altitude.dTermLPF.filter(altitudeMeters - _altitude.pid.getPreviousMeasurement());
+
+#if defined(USE_ALTITUDE_HOLD_ITERM_RELAX)
     const float altitudeErrorMeters = _altitude.pid.getSetpoint() - altitudeMeters;
     const float iTermRelax = (std::fabs(altitudeErrorMeters) < 2.0F) ? 1.0F : 0.1F;
-    const float dBoost = 1.0F;
+    throttle = _altitude.pid.updateDeltaITerm(altitudeMeters, altitudeDeltaFilteredMeters*dBoost, altitudeErrorMeters*iTermRelax, deltaT);
+#else
+    throttle = _altitude.pid.updateDelta(altitudeMeters, altitudeDeltaFilteredMeters*dBoost, deltaT);
+#endif
 
-    float throttle = _altitude.pid.updateDeltaITerm(altitudeMeters, altitudeDeltaFilteredMeters*dBoost, altitudeErrorMeters*iTermRelax, deltaT);
-
-    //const float hoverThrottle = 0.275F;
     throttle += _altitude.hoverThrottle;
 
     // 1.0 when level, 1.3 at 40 degrees, 1.56 at 50 deg, maximum 2.0 at 60 degrees or higher,
