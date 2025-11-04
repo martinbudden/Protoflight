@@ -303,8 +303,8 @@ classDiagram
         ahrs_data_t ahrsData
         WAIT() override
         SEND(const ahr_data_t&)
-        PEEK_COPY(const ahr_data_t&)
-        getAHRS_Data()
+        PEEK_TELEMETRY(const ahr_data_t&)
+        getReceivedAHRS_Data()
     }
     link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
 
@@ -568,8 +568,8 @@ classDiagram
         ahrs_data_t ahrsData
         WAIT() override
         SEND(const ahr_data_t&)
-        PEEK_COPY(const ahr_data_t&)
-        getAHRS_Data()
+        PEEK_TELEMETRY(const ahr_data_t&)
+        getReceivedAHRS_Data()
     }
     link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
 
@@ -643,51 +643,47 @@ All writing to the serial device is done via the `BlackboxEncoder`
 
 ```mermaid
 classDiagram
-    class AHRS {
+    class TaskBase:::taskClass {
     }
-    link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
+    link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
+    TaskBase <|-- BlackboxTask
+    class BlackboxTask {
+        +loop()
+        -task() [[noreturn]]
+    }
+    link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
+    BlackboxTask o-- MessageQueueBase : calls WAIT
+    BlackboxTask o-- Blackbox : calls update
     class Blackbox {
         <<abstract>>
-        writeSystemInformation() *
-        update() uint32_t
+        virtual writeSystemInformation() write_e *
+        virtual update() uint32_t
     }
     link Blackbox "https://github.com/martinbudden/Library-Blackbox/blob/main/src/Blackbox.h"
 
-    class BlackboxCallbacks {
-        void loadSlowState() override
-        void loadMainState() override
-    }
-    link BlackboxCallbacks "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxCallbacks.h"
     class MessageQueueBase {
         <<abstract>>
-        WAIT() *
+        virtual WAIT() const * int32_t
     }
     link MessageQueueBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/MessageQueueBase.h"
     class AHRS_MessageQueue {
         ahrs_data_t ahrsData
         WAIT() override
         SEND(const ahr_data_t&)
-        PEEK_COPY(const ahr_data_t&)
-        getAHRS_Data()
+        PEEK_TELEMETRY(const ahr_data_t&)
+        getReceivedAHRS_Data()
     }
     link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
-    AHRS o-- AHRS_MessageQueue : indirectly calls SEND
     class RadioControllerBase {
         <<abstract>>
     }
     link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
+    RadioControllerBase <|-- RadioController
     class RadioController {
         getRates() rates_t  const
     }
     link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/RadioController.h"
-    class ReceiverBase {
-        <<abstract>>
-    }
-    link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
-    class FlightController {
-    }
-    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-
+    %%Blackbox <|-- BlackboxProtoFlight
     class BlackboxProtoFlight {
         writeSystemInformation() override
     }
@@ -695,63 +691,54 @@ classDiagram
 
     class BlackboxCallbacksBase {
         <<abstract>>
+        _queueItem queue_item_t
         virtual void loadSlowState() *
         virtual void loadMainState() *
     }
     link BlackboxCallbacksBase "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxCallbacksBase.h"
+    class BlackboxCallbacksProtoFlight {
+        loadSlowState() override
+        loadMainState() override
+    }
+
+    class ReceiverBase {
+        <<abstract>>
+    }
+    link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
+
+    Blackbox o-- BlackboxCallbacksBase : calls loadState
+    Blackbox <|-- BlackboxProtoFlight
+    Blackbox *-- BlackboxEncoder : calls write
+    Blackbox o-- BlackboxSerialDevice : calls open close
+    %%BlackboxEncoder --* Blackbox : calls write
+    %%BlackboxSerialDevice --o Blackbox : calls open close
+    BlackboxEncoder o-- BlackboxSerialDevice : calls write
+
+
+    FlightController o-- AHRS_MessageQueue : calls SEND
+    BlackboxCallbacksProtoFlight o-- AHRS_MessageQueue : calls getQueueItem
+    MessageQueueBase <|-- AHRS_MessageQueue
+    BlackboxCallbacksProtoFlight o-- FlightController : calls getPID
+    BlackboxCallbacksProtoFlight o-- ReceiverBase : calls getControls
+    BlackboxCallbacksProtoFlight o-- RadioControllerBase : calls getFailSafePhase
+    %%FlightController --o BlackboxCallbacksProtoFlight
+    %%FlightController o-- Blackbox : calls start finish
+    %%Blackbox --o FlightController : calls start finish
+    BlackboxCallbacksBase <|-- BlackboxCallbacksProtoFlight
+    %%BlackboxCallbacksProtoFlight --|> BlackboxCallbacksBase
+
+    %%FlightController --o BlackboxProtoFlight
+    %%Blackbox --o FlightController
+    BlackboxProtoFlight o-- FlightController
+    RadioController --o BlackboxProtoFlight : calls getRates
+    %%BlackboxProtoFlight o-- RadioController : calls getRates
+
     class BlackboxSerialDevice {
         <<abstract>>
     }
     link BlackboxSerialDevice "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxSerialDevice.h"
     class BlackboxSerialDeviceSDCard["BlackboxSerialDeviceSDCard(eg)"]
-    link BlackboxSerialDeviceSDCard "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxSerialDeviceSDCard.h"
-    Blackbox o-- BlackboxCallbacksBase : calls loadState
-
-    class BlackboxEncoder {
-    }
-    link BlackboxEncoder "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxEncoder.h"
-
-    %%BlackboxEncoder --* Blackbox : calls write
-    %%BlackboxSerialDevice --o Blackbox : calls open close
-    Blackbox --o FlightController : calls start finish
-    Blackbox <|-- BlackboxProtoFlight
-    Blackbox *-- BlackboxEncoder : calls write
-    Blackbox o-- BlackboxSerialDevice : calls open close
-    BlackboxEncoder o-- BlackboxSerialDevice : calls write
     BlackboxSerialDevice <|-- BlackboxSerialDeviceSDCard
-
-
-    BlackboxCallbacksBase o-- AHRS_MessageQueue
-    MessageQueueBase <|-- AHRS_MessageQueue
-    %%AHRS_MessageQueue --|> AHRS_MessageQueueBase
-    %%AHRS_MessageQueue --o BlackboxCallbacks : calls RECEIVE
-    RadioControllerBase <|-- RadioController
-    BlackboxCallbacks o-- AHRS_MessageQueue : calls RECEIVE
-    BlackboxCallbacks o-- ReceiverBase : calls getControls
-    BlackboxCallbacks o-- RadioControllerBase : calls getFailSafePhase
-    BlackboxCallbacks o-- FlightController : calls getPID
-    %%FlightController --o BlackboxCallbacks
-    %%FlightController o-- Blackbox : calls start finish
-    BlackboxCallbacksBase <|-- BlackboxCallbacks
-    %%BlackboxCallbacks --|> BlackboxCallbacksBase
-
-    FlightController --o BlackboxProtoFlight
-    %%Blackbox --o FlightController
-    %%BlackboxProtoFlight o-- FlightController
-    RadioController --o BlackboxProtoFlight : calls getRates
-
-
-    class TaskBase:::taskClass {
-    }
-    link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
-    TaskBase <|-- BlackboxTask
-    class BlackboxTask:::taskClass {
-        +loop()
-        -task() [[noreturn]]
-    }
-    link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
-    BlackboxTask o-- MessageQueueBase : calls WAIT
-    BlackboxTask o-- Blackbox : calls update
 
     classDef taskClass fill:#f96
 ```
