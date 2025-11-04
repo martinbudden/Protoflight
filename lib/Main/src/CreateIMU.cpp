@@ -20,7 +20,7 @@ Set the IMU target gyro sample rate to GYRO_SAMPLE_RATE_HZ.
 IMU_Base& Main::createIMU()
 {
     // Statically allocate the IMU according the the build flags
-#if defined(LIBRARY_IMU_USE_SPI_BUS)
+#if defined(LIBRARY_SENSORS_IMU_USE_SPI_BUS)
     enum { SPI_8_MEGAHERTZ = 8000000, SPI_10_MEGAHERTZ = 10000000, SPI_20_MEGAHERTZ = 20000000 };
 #if defined(USE_IMU_MPU6886)
     static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, SPI_10_MEGAHERTZ, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
@@ -68,7 +68,7 @@ IMU_Base& Main::createIMU()
     static_assert(false);
 #endif
 
-#endif // LIBRARY_IMU_USE_SPI_BUS
+#endif // LIBRARY_SENSORS_IMU_USE_SPI_BUS
 
     static_cast<IMU_Base&>(imuSensor).init(GYRO_SAMPLE_RATE_HZ);
 

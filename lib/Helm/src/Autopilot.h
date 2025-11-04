@@ -1,15 +1,17 @@
 #pragma once
 
 #include <AHRS_MessageQueue.h>
-#include <FlightController.h>
 #include <Filters.h>
-#include <RadioControllerBase.h>
+#include <FlightController.h>
+#include <Geodetic.h>
 #include <PIDF.h>
-
-#include <array>
-#include <cstdint>
+#include <RadioControllerBase.h>
 
 class BarometerBase;
+
+#if !defined(MAX_WAYPOINT_COUNT)
+enum { MAX_WAYPOINT_COUNT = 16 };
+#endif
 
 
 class Autopilot {
@@ -83,4 +85,9 @@ private:
     autopilot_config_t _autopilotConfig;
     position_config_t _positionConfig;
     altitude_hold_config_t _altitudeHoldConfig;
+    // all positions are specified in meters from home position
+    xyz_t _currentPositionMeters {};
+    xyz_t _targetPositionMeters {};
+    // waypoints are specified as latitude/longitude/altitude coordinates
+    std::array<Geodetic, MAX_WAYPOINT_COUNT> _waypoints;
 };
