@@ -656,14 +656,14 @@ classDiagram
     BlackboxTask o-- Blackbox : calls update
     class Blackbox {
         <<abstract>>
-        virtual writeSystemInformation() write_e *
-        virtual update() uint32_t
+        virtual writeSystemInformation() *
+        update()
     }
     link Blackbox "https://github.com/martinbudden/Library-Blackbox/blob/main/src/Blackbox.h"
 
     class MessageQueueBase {
         <<abstract>>
-        virtual WAIT() const * int32_t
+        virtual WAIT() *
     }
     link MessageQueueBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/MessageQueueBase.h"
     class AHRS_MessageQueue {
@@ -683,6 +683,7 @@ classDiagram
         getRates() rates_t  const
     }
     link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/RadioController.h"
+
     %%Blackbox <|-- BlackboxProtoFlight
     class BlackboxProtoFlight {
         writeSystemInformation() override
@@ -691,9 +692,8 @@ classDiagram
 
     class BlackboxCallbacksBase {
         <<abstract>>
-        _queueItem queue_item_t
-        virtual void loadSlowState() *
-        virtual void loadMainState() *
+        virtual loadSlowState() *
+        virtual loadMainState() *
     }
     link BlackboxCallbacksBase "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxCallbacksBase.h"
     class BlackboxCallbacksProtoFlight {
@@ -706,8 +706,8 @@ classDiagram
     }
     link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
 
-    Blackbox o-- BlackboxCallbacksBase : calls loadState
-    Blackbox <|-- BlackboxProtoFlight
+    Blackbox o-- BlackboxCallbacksBase : calls loadSlow/MainState
+    Blackbox <|-- BlackboxProtoFlight : overrides writeSystemInformation
     Blackbox *-- BlackboxEncoder : calls write
     Blackbox o-- BlackboxSerialDevice : calls open close
     %%BlackboxEncoder --* Blackbox : calls write
@@ -715,8 +715,11 @@ classDiagram
     BlackboxEncoder o-- BlackboxSerialDevice : calls write
 
 
+    class FlightController {
+    }
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     FlightController o-- AHRS_MessageQueue : calls SEND
-    BlackboxCallbacksProtoFlight o-- AHRS_MessageQueue : calls getQueueItem
+    BlackboxCallbacksProtoFlight o-- AHRS_MessageQueue : calls getReceivedAHRS_Data
     MessageQueueBase <|-- AHRS_MessageQueue
     BlackboxCallbacksProtoFlight o-- FlightController : calls getPID
     BlackboxCallbacksProtoFlight o-- ReceiverBase : calls getControls
