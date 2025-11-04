@@ -337,7 +337,7 @@ void ScreenM5::updateAHRS_Data() const
     //const Quaternion orientationENU {}; //!!= _ahrs.getOrientationForInstrumentationUsingLock();
 
     AHRS::ahrs_data_t ahrsData;
-    _flightController.getAHRS_MessageQueue().PEEK_COPY(ahrsData);
+    _flightController.getAHRS_MessageQueue().PEEK_TELEMETRY(ahrsData);
     const Quaternion orientationENU = ahrsData.orientation;
 
     const TD_AHRS::data_t tdAhrsData {

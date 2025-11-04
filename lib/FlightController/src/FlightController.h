@@ -232,6 +232,7 @@ public:
     void motorsSwitchOff();
     void motorsSwitchOn();
     bool motorsIsDisabled() const;
+    void setBlackboxActive(bool isActive) { _sh.blackboxActive = isActive; }
 
     inline control_mode_e getControlMode() const { return _fcC.controlMode; }
     void setControlMode(control_mode_e controlMode);
@@ -425,6 +426,7 @@ private:
         uint32_t takeOffCountStart {0};
         bool groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
         bool crashDetected {false};
+        bool blackboxActive {false};
 #if defined(USE_YAW_SPIN_RECOVERY)
         bool yawSpinRecovery {false};
         float yawSpinThresholdDPS {0.0F};

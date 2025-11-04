@@ -16,21 +16,29 @@ Targets
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
+
+    #define USE_BACKCHANNEL
 #endif
 
-#if defined(TARGET_M5STACK_STAMPS3)
-    #define BOARD_IDENTIFIER    "M5Stack_StampS3"
+#if defined(TARGET_M5STACK_STAMPS3_FLY)
+    #define BOARD_IDENTIFIER    "M5Stack_StampS3_Fly"
 
     #define USE_YAW_SPIN_RECOVERY
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
-    #define USE_IMU_MPU6886
+    #define USE_IMU_BMI270
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define GYRO_SAMPLE_RATE_HZ 1000
-    #define IMU_I2C_PINS        i2c_pins_t{.sda=38,.scl=39,.irq=16}
+    #define IMU_SPI_INDEX       BUS_INDEX_0
+    #define IMU_SPI_PINS        spi_pins_t{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=0xFF}
+    #define USE_BAROMETER_BMP280
+    #define BAROMETER_I2C_PINS  i2c_pins_t{.sda=3,.scl=4,.irq=BUS_I2C::IRQ_NOT_SET}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
+    //                                       BR       TR       BL       TL
+    #define MOTOR_PINS          motor_pins_t{.m0=23,.m1=25,.m2=10,.m3=5}
+
+    #define USE_BACKCHANNEL
 #endif
 
 #if defined(TARGET_M5STACK_ATOMS3R)
@@ -46,6 +54,7 @@ Targets
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 
+    #define USE_BACKCHANNEL
     #define USE_SCREEN
     #define USE_BUTTONS
 #endif
@@ -78,6 +87,7 @@ Targets
     //#define BLACKBOX_IS_EVENT_DRIVEN
     #define USE_MSP
 
+    #define USE_BACKCHANNEL
     #define USE_SCREEN
     #define USE_BUTTONS
 #endif
@@ -170,6 +180,8 @@ Targets
     //#define USE_RECEIVER_SBUS
     //#define RECEIVER_UART_INDEX         0
     //#define RECEIVER_PINS               UART_0_PINS
+
+    #define USE_BACKCHANNEL
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 

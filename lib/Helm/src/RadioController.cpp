@@ -71,6 +71,7 @@ void RadioController::handleOnOffSwitch()
                 _flightController.motorsSwitchOff();
                 if (_blackbox) {
                     _blackbox->finish();
+                    _flightController.setBlackboxActive(false);
                 }
             } else {
                 if (_blackbox) {
@@ -79,6 +80,7 @@ void RadioController::handleOnOffSwitch()
                         .motorCount = static_cast<uint8_t>(_flightController.getMixer().getMotorCount()),
                         .servoCount = static_cast<uint8_t>(_flightController.getMixer().getServoCount())
                     });
+                    _flightController.setBlackboxActive(true);
                 }
                 _flightController.motorsSwitchOn();
             }

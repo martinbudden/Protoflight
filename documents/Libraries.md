@@ -8,10 +8,10 @@
 | MotorMixers            | yes       | 0.0.3  | 0.0.3   | yes        | no      |
 | SensorFusion           | yes       | 0.2.8  | 0.2.8   | yes        | no      |
 | StreamBuf              | yes       | 0.0.2  | 0.0.2   | yes        | no      |
-| IMU                    | yes       | 0.9.7  | 0.9.7   | yes        | no      |
-| TaskBase               | yes       | 0.0.9  | 0.0.9   | yes        | no      |
-| StabilizedVehicle      | yes       | 0.5.16 | 0.5.16  | yes        | no      |
-| Receiver               | yes       | 0.5.10 | 0.5.10  | yes        | no      |
+| IMU                    | yes       | 0.9.8  | 0.9.8   | yes        | no      |
+| TaskBase               | yes       | 0.0.10 | 0.0.10  | yes        | no      |
+| StabilizedVehicle      | yes       | 0.5.17 | 0.5.17  | yes        | no      |
+| Receiver               | yes       | 0.5.11 | 0.5.11  | yes        | no      |
 | Backchannel            | yes       | 0.1.8  | 0.1.8   | yes        | no      |
 | MultiWiiSerialProtocol | yes       | 0.0.12 | 0.0.12  | yes        | no      |
 | Blackbox               | yes       | 0.0.21 | 0.0.21  | yes        | no      |
@@ -23,31 +23,31 @@
 Libraries
 ├── Filters @ 0.9.4
 ├── PIDF @ 0.4.1
-├── TaskBase @ 0.0.9
-├── VectorQuaternionMatrix @ 0.4.4
+├── TaskBase @ 0.0.10
+├── VectorQuaternionMatrix @ 0.4.5
 ├── FlashKLV @ 0.0.3
 │
 ├── SensorFusion @ 0.2.8
 │   └── VectorQuaternionMatrix @ 0.4.5
 │
-├── IMU @ 0.9.7
-│   └── VectorQuaternionMatrix @ 0.4.3
+├── IMU @ 0.9.8
+│   └── VectorQuaternionMatrix @ 0.4.5
 │
 ├── MotorMixers @ 0.0.3
 │   ├── VectorQuaternionMatrix @ 0.4.5
 │   ├── Filters @ 0.9.4
 │   └── PIDF @ 0.4.1
 │
-├── StabilizedVehicle @ 0.5.16
-│   ├── TaskBase @ 0.0.7
-│   ├── VectorQuaternionMatrix @ 0.4.3
-│   ├── IMU @ 0.9.7
-│   │   └── VectorQuaternionMatrix @ 0.4.3
-│   └── SensorFusion @ 0.2.5
-│       └── VectorQuaternionMatrix @ 0.4.3
+├── StabilizedVehicle @ 0.5.17
+│   ├── TaskBase @ 0.0.9
+│   ├── VectorQuaternionMatrix @ 0.4.5
+│   ├── IMU @ 0.9.8
+│   │   └── VectorQuaternionMatrix @ 0.4.5
+│   └── SensorFusion @ 0.2.8
+│       └── VectorQuaternionMatrix @ 0.4.5
 │
-├── Receiver @ 0.5.10
-│   └── TaskBase @ 0.0.7
+├── Receiver @ 0.5.11
+│   └── TaskBase @ 0.0.10
 │
 └── Backchannel @ 0.1.8
     ├── TaskBase @ 0.0.7
