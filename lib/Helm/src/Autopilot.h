@@ -1,14 +1,14 @@
 #pragma once
 
 #include <AHRS_MessageQueue.h>
+#include <FlightController.h>
 #include <Filters.h>
+#include <RadioControllerBase.h>
 #include <PIDF.h>
 
 #include <array>
 #include <cstdint>
 
-class AHRS;
-class AHRS_MessageQueue;
 class BarometerBase;
 
 
@@ -73,7 +73,8 @@ public:
     const altitude_hold_config_t& getAltitudeHoldConfig() const { return _altitudeHoldConfig; }
 
     bool setAltitudeHoldSetpoint(); //!< use the current altitude to set the setpoint for altitude hold
-    float altitudeHoldCalculateThrottle(float throttle);
+    float calculateThrottleForAltitudeHold(const RadioControllerBase::controls_t& controls);
+    FlightController::controls_t calculateFlightControls(const RadioControllerBase::controls_t& controls, uint32_t flightModeModeFlags);
 private:
     const AHRS_MessageQueue& _messageQueue;
     BarometerBase* _barometer {nullptr};

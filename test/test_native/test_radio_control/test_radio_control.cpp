@@ -1,5 +1,6 @@
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
+#include <Autopilot.h>
 #include <Debug.h>
 #include <FlightController.h>
 #include <IMU_FiltersBase.h>

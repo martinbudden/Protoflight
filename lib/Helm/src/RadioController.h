@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Autopilot.h"
-
 #include <RadioControllerBase.h>
 
 #include <array>
 #include <cstddef>
 #include <cstdint>
 
+class Autopilot;
 class FlightController;
+
 
 class RadioController : public RadioControllerBase {
 public:
@@ -45,10 +45,12 @@ public:
         uint16_t throttle;
         uint16_t throttle_low_delay;
     };
-    static constexpr uint32_t ANGLE_MODE         = 0x01;
-    static constexpr uint32_t HORIZON_MODE       = 0x02;
-    static constexpr uint32_t ALTITUDE_HOLD_MODE = 0x04;
-    static constexpr uint32_t POSITION_HOLD_MODE = 0x08;
+    static constexpr uint32_t ANGLE_MODE            = 0x01;
+    static constexpr uint32_t HORIZON_MODE          = 0x02;
+    static constexpr uint32_t ALTITUDE_HOLD_MODE    = 0x04;
+    static constexpr uint32_t POSITION_HOLD_MODE    = 0x08;
+    static constexpr uint32_t RETURN_TO_HOME_MODE   = 0x10;
+    static constexpr uint32_t WAYPOINT_MODE         = 0x20;
 public:
     RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& _debug, const rates_t& rates);
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }

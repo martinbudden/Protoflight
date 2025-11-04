@@ -9,13 +9,12 @@
 #include <NonVolatileStorage.h>
 
 
-FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, AHRS_MessageQueue& ahrsMessageQueue, IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
+FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds, AHRS_MessageQueue& ahrsMessageQueue, [[maybe_unused]] IMU_Filters& imuFilters, Debug& debug, const NonVolatileStorage& nvs)
 {
     const uint32_t outputToMotorsDenominator = OUTPUT_TO_MOTORS_DENOMINATOR;
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
     static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
-    (void)imuFilters;
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
     static MotorMixerQuadX_DShotBitbang motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
@@ -28,8 +27,6 @@ FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds
         rpmFilters->setConfig(nvs.loadRPM_FiltersConfig());
         imuFilters.setRPM_Filters(rpmFilters);
     }
-#else
-    (void)imuFilters;
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
@@ -39,7 +36,6 @@ FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds
 #endif
 #elif defined(USE_MOTOR_MIXER_NULL)
     static MotorMixerBase motorMixer(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug);
-    (void)imuFilters;
 #else
     static_assert(false && "MotorMixer not specified");
 #endif // USE_MOTOR_MIXER

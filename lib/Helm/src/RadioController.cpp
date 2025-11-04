@@ -1,3 +1,4 @@
+#include "Autopilot.h"
 #include "FlightController.h"
 #include "RadioController.h"
 
@@ -116,14 +117,18 @@ void RadioController::updateControls(const controls_t& controls)
             }
         }
     }
-    const FlightController::control_mode_e controlMode = 
-        (_flightMode & (ANGLE_MODE | ALTITUDE_HOLD_MODE | POSITION_HOLD_MODE)) ?
-        FlightController::CONTROL_MODE_ANGLE : 
-        FlightController::CONTROL_MODE_RATE;
+    if (_flightMode & (POSITION_HOLD_MODE | RETURN_TO_HOME_MODE | WAYPOINT_MODE)) {
+        const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightMode);
+        _flightController.updateSetpoints(flightControls);
+        return;
+    }
+
+    FlightController::control_mode_e controlMode = (_flightMode & ANGLE_MODE) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE;
 
     float throttleStick {};
     if (_flightMode & ALTITUDE_HOLD_MODE) {
-        throttleStick = _autopilot.altitudeHoldCalculateThrottle(controls.throttleStick);
+        throttleStick = _autopilot.calculateThrottleForAltitudeHold(controls);
+        controlMode = FlightController::CONTROL_MODE_ANGLE;
     } else {
         throttleStick = mapThrottle(controls.throttleStick);
     }

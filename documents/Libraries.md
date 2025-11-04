@@ -10,11 +10,11 @@
 | StreamBuf              | yes       | 0.0.2  | 0.0.2   | yes        | no      |
 | IMU                    | yes       | 0.9.8  | 0.9.8   | yes        | no      |
 | TaskBase               | yes       | 0.0.10 | 0.0.10  | yes        | no      |
-| StabilizedVehicle      | yes       | 0.5.17 | 0.5.17  | yes        | no      |
+| StabilizedVehicle      | yes       | 0.5.18 | 0.5.18  | yes        | no      |
 | Receiver               | yes       | 0.5.11 | 0.5.11  | yes        | no      |
-| Backchannel            | yes       | 0.1.8  | 0.1.8   | yes        | no      |
-| MultiWiiSerialProtocol | yes       | 0.0.12 | 0.0.12  | yes        | no      |
-| Blackbox               | yes       | 0.0.21 | 0.0.21  | yes        | no      |
+| Backchannel            | yes       | 0.1.9  | 0.1.9   | yes        | no      |
+| MultiWiiSerialProtocol | yes       | 0.0.13 | 0.0.13  | yes        | no      |
+| Blackbox               | yes       | 0.0.22 | 0.0.22  | yes        | no      |
 | FlashKLV               | yes       | 0.0.3  | 0.0.3   | yes        | no      |
 
 ## Dependencies
@@ -38,8 +38,8 @@ Libraries
 │   ├── Filters @ 0.9.4
 │   └── PIDF @ 0.4.1
 │
-├── StabilizedVehicle @ 0.5.17
-│   ├── TaskBase @ 0.0.9
+├── StabilizedVehicle @ 0.5.18
+│   ├── TaskBase @ 0.0.10
 │   ├── VectorQuaternionMatrix @ 0.4.5
 │   ├── IMU @ 0.9.8
 │   │   └── VectorQuaternionMatrix @ 0.4.5
@@ -49,10 +49,10 @@ Libraries
 ├── Receiver @ 0.5.11
 │   └── TaskBase @ 0.0.10
 │
-└── Backchannel @ 0.1.8
-    ├── TaskBase @ 0.0.7
-    ├── Receiver @ 0.5.10
-    └── StabilizedVehicle @ 0.5.15
+└── Backchannel @ 0.1.9
+    ├── TaskBase @ 0.0.10
+    ├── Receiver @ 0.5.11
+    └── StabilizedVehicle @ 0.5.18
 
 
 └── Protoflight @ 0.0.1
@@ -64,12 +64,12 @@ Libraries
     ├── Receiver @ 0.5.10
     └── Backchannel @ 0.1.8
 
-└── MultiWiiSerialProtocol @ 0.0.12
-    ├── TaskBase @ 0.0.9
+└── MultiWiiSerialProtocol @ 0.0.13
+    ├── TaskBase @ 0.0.10
     └── StreamBuf @ 0.0.2
 
-└── Blackbox @ 0.0.21
-    ├── TaskBase @ 0.0.9
+└── Blackbox @ 0.0.22
+    ├── TaskBase @ 0.0.10
     └── StreamBuf @ 0.0.2
 ```
 

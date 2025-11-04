@@ -59,10 +59,10 @@ bool Autopilot::setAltitudeHoldSetpoint()
     return true;
 }
 
-float Autopilot::altitudeHoldCalculateThrottle(float throttle)
+float Autopilot::calculateThrottleForAltitudeHold(const RadioControllerBase::controls_t& controls)
 {
     if (_barometer == nullptr) {
-        return throttle;
+        return controls.throttleStick;
     }
 
     //const AHRS::ahrs_data_t queueItem = _messageQueue.getQueueItem();
@@ -78,9 +78,9 @@ float Autopilot::altitudeHoldCalculateThrottle(float throttle)
 #if defined(USE_ALTITUDE_HOLD_ITERM_RELAX)
     const float altitudeErrorMeters = _altitude.pid.getSetpoint() - altitudeMeters;
     const float iTermRelax = (std::fabs(altitudeErrorMeters) < 2.0F) ? 1.0F : 0.1F;
-    throttle = _altitude.pid.updateDeltaITerm(altitudeMeters, altitudeDeltaFilteredMeters*dBoost, altitudeErrorMeters*iTermRelax, deltaT);
+    float throttle = _altitude.pid.updateDeltaITerm(altitudeMeters, altitudeDeltaFilteredMeters*dBoost, altitudeErrorMeters*iTermRelax, deltaT);
 #else
-    throttle = _altitude.pid.updateDelta(altitudeMeters, altitudeDeltaFilteredMeters*dBoost, deltaT);
+    float throttle = _altitude.pid.updateDelta(altitudeMeters, altitudeDeltaFilteredMeters*dBoost, deltaT);
 #endif
 
     throttle += _altitude.hoverThrottle;
@@ -92,4 +92,24 @@ float Autopilot::altitudeHoldCalculateThrottle(float throttle)
     throttle *= tiltMultiplier;
 
     return throttle;
+}
+
+FlightController::controls_t Autopilot::calculateFlightControls(const RadioControllerBase::controls_t& controls, uint32_t flightModeModeFlags)
+{
+    (void)flightModeModeFlags;
+
+    const float throttle = calculateThrottleForAltitudeHold(controls);
+
+    const FlightController::controls_t flightControls = {
+        .tickCount = controls.tickCount,
+        .throttleStick = throttle,
+        .rollStickDPS = 0,
+        .pitchStickDPS = 0,
+        .yawStickDPS = 0,
+        .rollStickDegrees = 0,
+        .pitchStickDegrees = 0,
+        .controlMode = FlightController::CONTROL_MODE_ANGLE
+    };
+
+    return flightControls;
 }
