@@ -2,6 +2,7 @@
 #include "version.h"
 
 #include <AHRS.h>
+#include <Cockpit.h>
 #include <Debug.h>
 #include <Features.h>
 #include <FlightController.h>
@@ -9,7 +10,6 @@
 #include <MSP_Protocol.h>
 #include <NonVolatileStorage.h>
 #include <RPM_Filters.h>
-#include <RadioController.h>
 #include <ReceiverBase.h>
 
 const char* const targetName = "TARGETNAME";
@@ -69,10 +69,10 @@ static const char* const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; //
 static const char* const TARGET_BOARD_IDENTIFIER = "A405";
 static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 
-MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, RadioController& radioController, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs, Features& features) :
+MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs, Features& features) :
     _ahrs(ahrs),
     _flightController(flightController),
-    _radioController(radioController),
+    _cockpit(cockpit),
     _receiver(receiver),
     _autopilot(autopilot),
     _debug(debug),
@@ -152,7 +152,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_FAILSAFE_CONFIG: {
-        const RadioController::failsafe_t failsafe = _radioController.getFailsafe();
+        const Cockpit::failsafe_t failsafe = _cockpit.getFailsafe();
         dst.writeU8(failsafe.delay);
         dst.writeU8(failsafe.landing_time);
         dst.writeU16(failsafe.throttle);
@@ -210,32 +210,32 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_RC_TUNING: {
-        const RadioController::rates_t rates = _radioController.getRates();
-        dst.writeU8(static_cast<uint8_t>(rates.rcRates[RadioController::ROLL]));
-        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[RadioController::ROLL]));
-        dst.writeU8(static_cast<uint8_t>(rates.rates[RadioController::ROLL]));
-        dst.writeU8(static_cast<uint8_t>(rates.rates[RadioController::PITCH]));
-        dst.writeU8(static_cast<uint8_t>(rates.rates[RadioController::YAW]));
+        const Cockpit::rates_t rates = _cockpit.getRates();
+        dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::ROLL]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[Cockpit::ROLL]));
+        dst.writeU8(static_cast<uint8_t>(rates.rates[Cockpit::ROLL]));
+        dst.writeU8(static_cast<uint8_t>(rates.rates[Cockpit::PITCH]));
+        dst.writeU8(static_cast<uint8_t>(rates.rates[Cockpit::YAW]));
         dst.writeU8(0); // was tpa_rate
         dst.writeU8(rates.throttleMidpoint);
         dst.writeU8(rates.throttleExpo);
         dst.writeU16(0);   // was tpa_breakpoint
-        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[RadioController::YAW]));
-        dst.writeU8(static_cast<uint8_t>(rates.rcRates[RadioController::YAW]));
-        dst.writeU8(static_cast<uint8_t>(rates.rcRates[RadioController::PITCH]));
-        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[RadioController::PITCH]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[Cockpit::YAW]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::YAW]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::PITCH]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[Cockpit::PITCH]));
 
         // added in 1.41
         dst.writeU8(rates.throttleLimitType);
         dst.writeU8(rates.throttleLimitPercent);
 
         // added in 1.42
-        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[RadioController::ROLL]));
-        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[RadioController::PITCH]));
-        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[RadioController::YAW]));
+        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[Cockpit::ROLL]));
+        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[Cockpit::PITCH]));
+        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[Cockpit::YAW]));
 
         // added in 1.43
-        dst.writeU8(RadioController::RATES_TYPE_ACTUAL); // hardcoded, since we only support RATES_TYPE_ACTUAL rates.ratesType);
+        dst.writeU8(Cockpit::RATES_TYPE_ACTUAL); // hardcoded, since we only support RATES_TYPE_ACTUAL rates.ratesType);
         break;
     }
     case MSP_ATTITUDE: {

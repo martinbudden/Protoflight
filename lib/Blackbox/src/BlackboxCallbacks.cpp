@@ -2,19 +2,19 @@
 #include "AHRS_MessageQueue.h"
 
 #include <AHRS.h>
+#include <Cockpit.h>
 #include <Debug.h>
 #include <FlightController.h>
 #include <MotorMixerBase.h>
-#include <RadioController.h>
 #include <ReceiverBase.h>
 #include <cmath>
 
 
-BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const ReceiverBase& receiver, const Debug& debug) :
+BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const Debug& debug) :
     _messageQueue(messageQueue),
     _ahrs(ahrs),
     _flightController(flightController),
-    _radioController(radioController),
+    _cockpit(cockpit),
     _receiver(receiver),
     _debug(debug)
     {}
@@ -57,10 +57,10 @@ void BlackboxCallbacks::loadSlowState(blackboxSlowState_t& slowState)
     //memcpy(&slowState->flightModeFlags, &_rcModeActivationMask, sizeof(slowState->flightModeFlags)); //was flightModeFlags;
     slowState.flightModeFlags = _flightController.getFlightModeFlags();
     slowState.stateFlags = 0; // this is GPS state
-    slowState.failsafePhase = _radioController.getFailsafePhase();
+    slowState.failsafePhase = _cockpit.getFailsafePhase();
     //slowState.rxSignalReceived = _receiver.isRxReceivingSignal();
-    slowState.rxSignalReceived = (slowState.failsafePhase == RadioController::FAILSAFE_IDLE);
-    slowState.rxFlightChannelsValid = (slowState.failsafePhase == RadioController::FAILSAFE_IDLE);
+    slowState.rxSignalReceived = (slowState.failsafePhase == Cockpit::FAILSAFE_IDLE);
+    slowState.rxFlightChannelsValid = (slowState.failsafePhase == Cockpit::FAILSAFE_IDLE);
 }
 
 /*!

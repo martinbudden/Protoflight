@@ -25,6 +25,7 @@ class BackchannelTask;
 class Blackbox;
 class BlackboxTask;
 class ButtonsBase;
+class Cockpit;
 class Debug;
 class FlightController;
 class IMU_Base;
@@ -34,7 +35,6 @@ class MSP_Task;
 class MSP_SerialBase;
 class NonVolatileStorage;
 class RPM_Filters;
-class RadioController;
 class ReceiverBase;
 class ReceiverTask;
 class ScreenBase;
@@ -126,10 +126,10 @@ private:
     static IMU_Base& createIMU();
     static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static ReceiverBase& createReceiver();
-    static RadioController& createRadioController(ReceiverBase& receiver, FlightController& flightController, Debug& debug, const AHRS_MessageQueue& ahrsMessageQueue, NonVolatileStorage& nvs);
+    static Cockpit& createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, const AHRS_MessageQueue& ahrsMessageQueue, NonVolatileStorage& nvs);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
-    static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, RadioController& radioController, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
-    static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, RadioController& radioController, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs);
+    static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
+    static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
 

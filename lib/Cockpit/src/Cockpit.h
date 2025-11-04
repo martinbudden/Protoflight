@@ -7,10 +7,12 @@
 #include <cstdint>
 
 class Autopilot;
+class Debug;
+class Blackbox;
 class FlightController;
 
 
-class RadioController : public RadioControllerBase {
+class Cockpit : public RadioControllerBase {
 public:
     enum { ROLL = 0, PITCH = 1, YAW = 2, AXIS_COUNT = 3 };
     enum { RATE_LIMIT_MAX = 1998 };
@@ -52,7 +54,7 @@ public:
     static constexpr uint32_t RETURN_TO_HOME_MODE   = 0x10;
     static constexpr uint32_t WAYPOINT_MODE         = 0x20;
 public:
-    RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& _debug, const rates_t& rates);
+    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& _debug, const rates_t& rates);
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
     const Autopilot& getAutopilot() const { return _autopilot; }

@@ -2,6 +2,7 @@
 #include "FC_TelemetryData.h"
 
 #include <AHRS.h>
+#include <Cockpit.h>
 #include <Debug.h>
 #include <FC_Telemetry.h>
 #include <Features.h>
@@ -11,7 +12,6 @@
 #include <MSP_Protocol.h>
 #include <MotorMixerBase.h>
 #include <NonVolatileStorage.h>
-#include <RadioController.h>
 #include <ReceiverNull.h>
 #include <SV_TelemetryData.h>
 #include <SensorFusion.h>
@@ -28,16 +28,16 @@ enum { OUTPUT_TO_MOTORS_DENOMINATOR = 2 };
 enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 #endif
 
-static const RadioController::rates_t radioControllerRates {
-    .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
+static const Cockpit::rates_t cockpitRates {
+    .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },
     .rates = { 67, 67, 67 },
     .throttleMidpoint = 50,
     .throttleExpo = 0,
-    .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitType = Cockpit::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
-    //.ratesType = RadioController::RATES_TYPE_ACTUAL
+    //.ratesType = Cockpit::RATES_TYPE_ACTUAL
 };
 
 void setUp() {
@@ -63,11 +63,11 @@ void test_telemetry_msp()
     static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    static RadioController radioController(receiver, flightController, autopilot, debug, radioControllerRates);
+    static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
 
     // statically allocate an MSP object
     static Features features;
-    static MSP_ProtoFlight msp(ahrs, flightController, radioController, receiver, autopilot, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, flightController, cockpit, receiver, autopilot, debug, nvs, features);
 //size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, MSP_Base& msp, int16_t cmdMSP)
     static std::array<uint8_t, 256> buf;
     enum { ID = 0x11223344 };

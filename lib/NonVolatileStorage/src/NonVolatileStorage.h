@@ -63,7 +63,7 @@ public:
     int32_t clear();
     int32_t remove(uint16_t key);
 
-    int32_t storeAll(const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile);
+    int32_t storeAll(const AHRS& ahrs, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile);
 
     bool loadAccOffset(int32_t& x, int32_t& y, int32_t& z) const;
     int32_t storeAccOffset(int32_t x, int32_t y, int32_t z);
@@ -144,11 +144,11 @@ public:
     IMU_Filters::config_t loadIMU_FiltersConfig() const;
     int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
 
-    RadioController::failsafe_t loadRadioControllerFailsafe();
-    int32_t storeRadioControllerFailsafe(const RadioController::failsafe_t& failsafe);
+    Cockpit::failsafe_t loadRadioControllerFailsafe();
+    int32_t storeRadioControllerFailsafe(const Cockpit::failsafe_t& failsafe);
 
-    RadioController::rates_t loadRadioControllerRates(uint8_t rateProfileIndex) const;
-    int32_t storeRadioControllerRates(const RadioController::rates_t& rates, uint8_t rateProfileIndex);
+    Cockpit::rates_t loadRadioControllerRates(uint8_t rateProfileIndex) const;
+    int32_t storeRadioControllerRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex);
 
 private:
 #if defined(USE_FLASH_KLV)

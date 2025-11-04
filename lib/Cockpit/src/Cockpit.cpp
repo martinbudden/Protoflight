@@ -1,6 +1,6 @@
 #include "Autopilot.h"
+#include "Cockpit.h"
 #include "FlightController.h"
-#include "RadioController.h"
 
 #include <Blackbox.h>
 #include <Debug.h>
@@ -9,7 +9,7 @@
 #include <cmath>
 
 
-RadioController::RadioController(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& debug, const rates_t& rates) :
+Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& debug, const rates_t& rates) :
     RadioControllerBase(receiver),
     _flightController(flightController),
     _autopilot(autopilot),
@@ -19,7 +19,7 @@ RadioController::RadioController(ReceiverBase& receiver, FlightController& fligh
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
 }
 
-void RadioController::setRatesToPassThrough()
+void Cockpit::setRatesToPassThrough()
 {
     _rates.rcRates = { 100, 100, 100 }; // center sensitivity
     _rates.rcExpos = { 0, 0, 0}; // movement sensitivity, nonlinear
@@ -33,7 +33,7 @@ inline float constrain(float value, uint16_t limit)
     return value < -limitF ? -limitF : value > limitF ? limitF : value;
 }
 
-float RadioController::applyRates(size_t axis, float rcCommand) const
+float Cockpit::applyRates(size_t axis, float rcCommand) const
 {
     const float rcCommand2 = rcCommand * rcCommand;
     const float rcCommandAbs = std::fabs(rcCommand);
@@ -53,7 +53,7 @@ float RadioController::applyRates(size_t axis, float rcCommand) const
 Map throttle in range [-1.0F, 1.0F] to a parabolic curve
 in the range [-_rates.throttleLimitPercent) / 100.0F, _rates.throttleLimitPercent) / 100.0F]
 */
-float RadioController::mapThrottle(float throttle) const
+float Cockpit::mapThrottle(float throttle) const
 {
     // alpha=0 gives a linear response, alpha=1 gives a parabolic (x^2) curve
     const float alpha = static_cast<float>(_rates.throttleExpo) / 255.0F;
@@ -61,7 +61,7 @@ float RadioController::mapThrottle(float throttle) const
     return throttle * static_cast<float>(_rates.throttleLimitPercent) / 100.0F;
 }
 
-void RadioController::handleOnOffSwitch()
+void Cockpit::handleOnOffSwitch()
 {
     if (_receiver.getSwitch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
         _onOffSwitchPressed = true;
@@ -93,7 +93,7 @@ void RadioController::handleOnOffSwitch()
 /*!
 Called from Receiver Task.
 */
-void RadioController::updateControls(const controls_t& controls)
+void Cockpit::updateControls(const controls_t& controls)
 {
     // failsafe handling
     _receiverInUse = true;
@@ -137,9 +137,9 @@ void RadioController::updateControls(const controls_t& controls)
     const FlightController::controls_t flightControls = {
         .tickCount = controls.tickCount,
         .throttleStick = throttleStick,
-        .rollStickDPS = applyRates(RadioController::ROLL, controls.rollStick),
-        .pitchStickDPS = applyRates(RadioController::PITCH, controls.pitchStick),
-        .yawStickDPS = applyRates(RadioController::YAW, controls.yawStick),
+        .rollStickDPS = applyRates(Cockpit::ROLL, controls.rollStick),
+        .pitchStickDPS = applyRates(Cockpit::PITCH, controls.pitchStick),
+        .yawStickDPS = applyRates(Cockpit::YAW, controls.yawStick),
         .rollStickDegrees = controls.rollStick * _maxRollAngleDegrees,
         .pitchStickDegrees = controls.pitchStick * _maxPitchAngleDegrees,
         .controlMode = controlMode
@@ -148,12 +148,12 @@ void RadioController::updateControls(const controls_t& controls)
     _flightController.updateSetpoints(flightControls);
 }
 
-void RadioController::setFailsafe(const failsafe_t& failsafe)
+void Cockpit::setFailsafe(const failsafe_t& failsafe)
 {
     _failsafe = failsafe;
 }
 
-void RadioController::checkFailsafe(uint32_t tickCount)
+void Cockpit::checkFailsafe(uint32_t tickCount)
 {
     _flightController.detectCrashOrSpin();
 

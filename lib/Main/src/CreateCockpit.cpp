@@ -4,11 +4,11 @@
 #if defined(USE_BAROMETER_BMP280)
 #include <BarometerBMP280.h>
 #endif
+#include <Cockpit.h>
 #include <NonVolatileStorage.h>
-#include <RadioController.h>
 
 
-RadioController& Main::createRadioController(ReceiverBase& receiver, FlightController& flightController, Debug& debug, const AHRS_MessageQueue& ahrsMessageQueue, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
+Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, const AHRS_MessageQueue& ahrsMessageQueue, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_BAROMETER_BMP280)
     static BarometerBMP280 barometer(BUS_I2C::BAROMETER_I2C_PINS);
@@ -23,7 +23,7 @@ RadioController& Main::createRadioController(ReceiverBase& receiver, FlightContr
     autopilot.setAltitudeHoldConfig(nvs.loadAltitudeHoldConfig());
 #endif
 
-    static RadioController radioController(receiver, flightController, autopilot, debug, nvs.loadRadioControllerRates(nvs.getCurrentRateProfileIndex()));
+    static Cockpit cockpit(receiver, flightController, autopilot, debug, nvs.loadRadioControllerRates(nvs.getCurrentRateProfileIndex()));
 
-    return radioController;
+    return cockpit;
 }

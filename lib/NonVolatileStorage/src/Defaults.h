@@ -1,12 +1,12 @@
 #pragma once
 
 #include <Autopilot.h>
+#include <Cockpit.h>
 #include <DynamicIdleController.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #include <MotorMixerBase.h>
 #include <RPM_Filters.h>
-#include <RadioController.h>
 
 
 namespace DEFAULTS {
@@ -139,7 +139,7 @@ static constexpr RPM_Filters::config_t rpmFiltersConfig = {
 };
 #endif
 
-static constexpr RadioController::failsafe_t radioControllerFailsafe = {
+static constexpr Cockpit::failsafe_t radioControllerFailsafe = {
     .delay = 15,
     .landing_time = 60,
     .switch_mode = 0,
@@ -148,16 +148,16 @@ static constexpr RadioController::failsafe_t radioControllerFailsafe = {
     .throttle_low_delay = 100,
 };
 
-static constexpr RadioController::rates_t radioControllerRates = {
-    .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
+static constexpr Cockpit::rates_t radioControllerRates = {
+    .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },
     .rates = { 67, 67, 67 },
     .throttleMidpoint = 50,
     .throttleExpo = 0,
-    .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitType = Cockpit::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
-    //.ratesType = RadioController::RATES_TYPE_ACTUAL
+    //.ratesType = Cockpit::RATES_TYPE_ACTUAL
 };
 
 #if defined(USE_ALTITUDE_HOLD)

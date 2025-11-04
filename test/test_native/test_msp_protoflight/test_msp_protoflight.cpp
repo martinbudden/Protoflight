@@ -2,7 +2,9 @@
 #include "FC_TelemetryData.h"
 #include "Features.h"
 #include "FlightController.h"
+
 #include <AHRS.h>
+#include <Cockpit.h>
 #include <Debug.h>
 #include <IMU_FiltersBase.h>
 #include <IMU_Null.h>
@@ -12,7 +14,6 @@
 #include <MSP_Stream.h>
 #include <MotorMixerBase.h>
 #include <NonVolatileStorage.h>
-#include <RadioController.h>
 #include <ReceiverNull.h>
 #include <SensorFusion.h>
 
@@ -27,16 +28,16 @@ enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 #endif
 
 
-static const RadioController::rates_t radioControllerRates {
-    .rateLimits = { RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX, RadioController::RATE_LIMIT_MAX},
+static const Cockpit::rates_t cockpitRates {
+    .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },
     .rates = { 67, 67, 67 },
     .throttleMidpoint = 50,
     .throttleExpo = 0,
-    .throttleLimitType = RadioController::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitType = Cockpit::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
-    //.ratesType = RadioController::RATES_TYPE_ACTUAL
+    //.ratesType = Cockpit::RATES_TYPE_ACTUAL
 };
 
 void setUp() {
@@ -61,9 +62,9 @@ void test_msp_set_failsafe_config()
     static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
-    static RadioController radioController(receiver, fc, autopilot, debug, radioControllerRates);
+    static Cockpit cockpit(receiver, fc, autopilot, debug, cockpitRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, autopilot, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs, features);
     static MSP_Stream mspStream(msp);
 
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
@@ -72,7 +73,7 @@ void test_msp_set_failsafe_config()
 
     const uint8_t payloadSize = 8;
     const uint8_t checksum = 197;
-    const RadioController::failsafe_t fsIn {
+    const Cockpit::failsafe_t fsIn {
         .delay = 3,
         .landing_time = 5,
         .switch_mode = 9,
@@ -110,7 +111,7 @@ void test_msp_set_failsafe_config()
     TEST_ASSERT_EQUAL(76, pwh.checksum);
     TEST_ASSERT_EQUAL(0, pwh.dataLen);
 
-    const RadioController::failsafe_t fsOut = radioController.getFailsafe();
+    const Cockpit::failsafe_t fsOut = cockpit.getFailsafe();
     TEST_ASSERT_EQUAL(fsIn.delay, fsOut.delay);
     TEST_ASSERT_EQUAL(fsIn.landing_time, fsOut.landing_time);
     TEST_ASSERT_EQUAL(fsIn.throttle, fsOut.throttle);
@@ -134,9 +135,9 @@ void test_msp_pid_in()
     static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
-    static RadioController radioController(receiver, fc, autopilot, debug, radioControllerRates);
+    static Cockpit cockpit(receiver, fc, autopilot, debug, cockpitRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, autopilot, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs, features);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -181,9 +182,9 @@ void test_msp_features()
     static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
-    static RadioController radioController(receiver, fc, autopilot, debug, radioControllerRates);
+    static Cockpit cockpit(receiver, fc, autopilot, debug, cockpitRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, autopilot, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs, features);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -210,9 +211,9 @@ void test_msp_raw_imu()
     static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
-    static RadioController radioController(receiver, fc, autopilot, debug, radioControllerRates);
+    static Cockpit cockpit(receiver, fc, autopilot, debug, cockpitRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, radioController, receiver, autopilot, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs, features);
     static MSP_Stream mspStream(msp);
     //static const MSP_Serial mspSerial(mspStream, msp);
 

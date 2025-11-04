@@ -281,6 +281,8 @@ classDiagram
 
     class VehicleControllerBase {
         <<abstract>>
+        WAIT()
+        SIGNAL()
         outputToMixer() *
         updateOutputsUsingPIDs() *
     }
@@ -289,7 +291,6 @@ classDiagram
     class MotorMixerBase {
         <<abstract>>
         outputToMotors() *
-        getMotorFrequencyHz() float *
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerBase.h"
     MotorMixerBase <|-- MotorMixerQuadX_Base : overrides outputToMotors
@@ -317,7 +318,7 @@ classDiagram
         updateOutputsUsingPIDs() override
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    RadioController o-- FlightController : calls updateSetpoints
+    Cockpit o-- FlightController : calls updateSetpoints
     FlightController o-- MotorMixerBase : calls outputToMotors
     FlightController o-- AHRS_MessageQueue : calls SEND
 
@@ -330,32 +331,34 @@ classDiagram
     }
     link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
 
-    class RadioControllerBase {
+    class CockpitBase {
         <<abstract>>
         updateControls() *
         checkFailsafe() *
     }
-    link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
+    link CockpitBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/CockpitBase.h"
 
-    ReceiverTask o-- RadioControllerBase : calls updateControls
+    ReceiverTask o-- CockpitBase : calls updateControls
     ReceiverTask o-- ReceiverBase : calls update / getStickValues
     link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
-    %%RadioControllerBase --o ReceiverTask : calls updateControls
+    %%CockpitBase --o ReceiverTask : calls updateControls
 
-    RadioControllerBase <|-- RadioController : overrides updateControls
-    RadioControllerBase o--ReceiverBase : calls getAuxiliaryChannel
-    class RadioController {
+    CockpitBase <|-- Cockpit : overrides updateControls
+    CockpitBase o--ReceiverBase : calls getAuxiliaryChannel
+    class Cockpit {
         updateControls() override
         checkFailsafe() override
         getFailsafePhase()
     }
-    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/RadioController.h"
-    RadioController o-- Autopilot
+    link Cockpit "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Cockpit.h"
+    Cockpit o-- Autopilot : calls calculateFlightControls
     class Autopilot {
+        array~Geodetic~ _waypoints
         altitudeHoldCalculateThrottle()
+        calculateFlightControls()
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Autopilot.h"
-    Autopilot o-- AHRS_MessageQueue : calls getQueueItem
+    Autopilot o-- AHRS_MessageQueue : calls PEEK_TELEMETRY
     class BarometerMessageQueue {
         float altitude
     }
@@ -376,8 +379,14 @@ classDiagram
         filter() override
     }
     link IMU_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/IMU_Filters.h"
-    IMU_Filters *-- RPM_Filters : calls filter
-    IMU_Filters o-- MotorMixerBase
+    class DynamicNotchFilter {
+        array~BiquadFilter~ notchFilters
+        filter()
+    }
+    link DynamicNotchFilter "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/DynamicNotchFilter.h"
+    IMU_Filters o-- DynamicNotchFilter : calls filter
+    IMU_Filters o-- RPM_Filters : calls filter
+    %%IMU_Filters o-- MotorMixerBase
 
     MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot : overrides getMotorFrequencyHz
     class MotorMixerQuadX_Base {
@@ -391,8 +400,8 @@ classDiagram
     link DynamicIdleController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/DynamicIdleController.h"
     class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
     link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
-    MotorMixerQuadX_DShot o-- RPM_Filters : calls setFrequencyHzIterationStep
-    MotorMixerQuadX_DShot o-- DynamicIdleController : calls calculateSpeedIncrease
+    MotorMixerQuadX_DShot *-- RPM_Filters : calls setFrequencyHzIterationStep
+    MotorMixerQuadX_DShot *-- DynamicIdleController : calls calculateSpeedIncrease
 
     IMU_Base <|-- IMU_BMI270 : overrides readAccGyroRPS
     class IMU_BMI270["IMU_BMI270(eg)"]
@@ -464,18 +473,18 @@ classDiagram
     DashboardTask o-- ButtonsBase : calls update
     DashboardTask o-- ScreenBase : calls update
 
-    class RadioControllerBase {
+    class CockpitBase {
         <<abstract>>
         updateControls() *
         checkFailsafe() *
     }
-    link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
-    class RadioController {
+    link CockpitBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/CockpitBase.h"
+    class Cockpit {
         updateControls() override
         checkFailsafe() override
         getFailsafePhase()
     }
-    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/RadioController.h"
+    link Cockpit "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Cockpit.h"
 
     class ReceiverBase {
         <<abstract>>
@@ -495,15 +504,17 @@ classDiagram
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     %%FlightController o-- Blackbox : calls start finish
     FlightController o-- AHRS_MessageQueue : calls SEND
-    RadioControllerBase o--ReceiverBase
-    RadioControllerBase <|-- RadioController
-    RadioController o-- Autopilot : calls altitudeHoldCalculateThrottle
-    RadioController o-- FlightController : calls updateSetpoints
+    CockpitBase o--ReceiverBase
+    CockpitBase <|-- Cockpit
+    Cockpit o-- Autopilot : calls calculateFlightControls
+    Cockpit o-- FlightController : calls updateSetpoints
     class Autopilot {
+        array~Geodetic~ _waypoints
         altitudeHoldCalculateThrottle()
+        calculateFlightControls()
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    Autopilot o-- AHRS_MessageQueue : calls getQueueItem
+    Autopilot o-- AHRS_MessageQueue : calls PEEK_TELEMETRY
 
     TaskBase <|-- ReceiverTask
     class ReceiverTask:::taskClass {
@@ -518,7 +529,7 @@ classDiagram
     ReceiverTask o-- ReceiverWatcher : calls newReceiverPacketAvailable
     ReceiverTask o-- ReceiverBase : calls WAIT_FOR_DATA_RECEIVED update getStickValues
     ReceiverWatcher <|-- ScreenBase
-    ReceiverTask o-- RadioControllerBase : calls updateControls checkFailsafe
+    ReceiverTask o-- CockpitBase : calls updateControls checkFailsafe
 
     ReceiverBase <|-- ReceiverAtomJoyStick
     class ReceiverAtomJoyStick["ReceiverAtomJoyStick(eg)"] {
@@ -530,6 +541,8 @@ classDiagram
 
     class VehicleControllerBase {
         <<abstract>>
+        WAIT()
+        SIGNAL()
         outputToMixer() *
         updateOutputsUsingPIDs() *
     }
@@ -575,7 +588,7 @@ classDiagram
 
     AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs/SIGNAL
-    AHRS --o VehicleControllerBase : historical
+    %%AHRS --o VehicleControllerBase : historical
 
     %%note for IMU_Base "SIGNAL_DATA_READY_FROM_ISR"
     AHRS_Task o-- IMU_Base : calls WAIT_IMU_DATA_READY
@@ -674,15 +687,15 @@ classDiagram
         getReceivedAHRS_Data()
     }
     link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
-    class RadioControllerBase {
+    class CockpitBase {
         <<abstract>>
     }
-    link RadioControllerBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/RadioControllerBase.h"
-    RadioControllerBase <|-- RadioController
-    class RadioController {
+    link CockpitBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/CockpitBase.h"
+    CockpitBase <|-- Cockpit
+    class Cockpit {
         getRates() rates_t  const
     }
-    link RadioController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/RadioController.h"
+    link Cockpit "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Cockpit.h"
 
     %%Blackbox <|-- BlackboxProtoFlight
     class BlackboxProtoFlight {
@@ -723,7 +736,7 @@ classDiagram
     MessageQueueBase <|-- AHRS_MessageQueue
     BlackboxCallbacksProtoFlight o-- FlightController : calls getPID
     BlackboxCallbacksProtoFlight o-- ReceiverBase : calls getControls
-    BlackboxCallbacksProtoFlight o-- RadioControllerBase : calls getFailSafePhase
+    BlackboxCallbacksProtoFlight o-- CockpitBase : calls getFailSafePhase
     %%FlightController --o BlackboxCallbacksProtoFlight
     %%FlightController o-- Blackbox : calls start finish
     %%Blackbox --o FlightController : calls start finish
@@ -733,8 +746,8 @@ classDiagram
     %%FlightController --o BlackboxProtoFlight
     %%Blackbox --o FlightController
     BlackboxProtoFlight o-- FlightController
-    RadioController --o BlackboxProtoFlight : calls getRates
-    %%BlackboxProtoFlight o-- RadioController : calls getRates
+    Cockpit --o BlackboxProtoFlight : calls getRates
+    %%BlackboxProtoFlight o-- Cockpit : calls getRates
 
     class BlackboxSerialDevice {
         <<abstract>>
@@ -793,7 +806,7 @@ classDiagram
     MSP_ProtoFlight o-- Features
     MSP_ProtoFlight o-- AHRS
     MSP_ProtoFlight o-- FlightController
-    MSP_ProtoFlight o-- RadioController
+    MSP_ProtoFlight o-- Cockpit
     class ReceiverBase {
         <<abstract>>
     }

@@ -505,29 +505,29 @@ int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& 
 }
 
 
-RadioController::failsafe_t NonVolatileStorage::loadRadioControllerFailsafe() // NOLINT(readability-make-member-function-const)
+Cockpit::failsafe_t NonVolatileStorage::loadRadioControllerFailsafe() // NOLINT(readability-make-member-function-const)
 {
-    {RadioController::failsafe_t failsafe {};
+    {Cockpit::failsafe_t failsafe {};
     if (loadItem(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe))) { // cppcheck-suppress knownConditionTrueFalse
     }}
     return DEFAULTS::radioControllerFailsafe;
 }
 
-int32_t NonVolatileStorage::storeRadioControllerFailsafe(const RadioController::failsafe_t& failsafe)
+int32_t NonVolatileStorage::storeRadioControllerFailsafe(const Cockpit::failsafe_t& failsafe)
 {
     return storeItem(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe), &DEFAULTS::radioControllerFailsafe);
 }
 
-RadioController::rates_t NonVolatileStorage::loadRadioControllerRates(uint8_t rateProfileIndex) const
+Cockpit::rates_t NonVolatileStorage::loadRadioControllerRates(uint8_t rateProfileIndex) const
 {
-    {RadioController::rates_t rates {};
+    {Cockpit::rates_t rates {};
     if (rateProfileIndex < RATE_PROFILE_COUNT && loadItem(RadioControllerRatesKey + rateProfileIndex, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
         return rates;
     }}
     return DEFAULTS::radioControllerRates;
 }
 
-int32_t NonVolatileStorage::storeRadioControllerRates(const RadioController::rates_t& rates, uint8_t rateProfileIndex)
+int32_t NonVolatileStorage::storeRadioControllerRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex)
 {
     if (rateProfileIndex >= RATE_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
@@ -639,7 +639,7 @@ int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
 #endif
 }
 
-int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& flightController, const RadioController& radioController, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile)
+int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile)
 {
 #if defined(USE_DYNAMIC_IDLE)
     const DynamicIdleController* dynamicIdleController = flightController.getMixer().getDynamicIdleController();
@@ -688,7 +688,7 @@ int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& f
     storeDynamicNotchFilterConfig(imuFilters.getDynamicNotchFilterConfig());
 #endif
 
-    storeRadioControllerRates(radioController.getRates(), ratesProfile);
+    storeRadioControllerRates(cockpit.getRates(), ratesProfile);
 
     return OK;
 }

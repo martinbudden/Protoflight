@@ -1,7 +1,7 @@
 #include "BlackboxProtoFlight.h"
+#include "Cockpit.h"
 #include "IMU_Filters.h"
 #include "MotorMixerBase.h"
-#include "RadioController.h"
 
 #include <BlackboxCallbacksBase.h>
 #include <DynamicIdleController.h>
@@ -39,7 +39,7 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
     const FlightController::filters_config_t fcFiltersConfig = _flightController.getFiltersConfig();
     const FlightController::anti_gravity_config_t antiGravityConfig = _flightController.getAntiGravityConfig();
 
-    const RadioController::rates_t rates = _radioController.getRates();
+    const Cockpit::rates_t rates = _cockpit.getRates();
 
     const IMU_Filters::config_t imuFiltersConfig = _imuFilters.getConfig();
 
@@ -138,18 +138,18 @@ H levelPID:50,50,75
 //H magPID:40
 //H velPID:55,55,75
 */
-        BLACKBOX_PRINT_HEADER_LINE("rc_rates", "%d,%d,%d",                  rates.rcRates[RadioController::ROLL],
-                                                                            rates.rcRates[RadioController::PITCH],
-                                                                            rates.rcRates[RadioController::YAW]);
-        BLACKBOX_PRINT_HEADER_LINE("rc_expo", "%d,%d,%d",                   rates.rcExpos[RadioController::ROLL],
-                                                                            rates.rcExpos[RadioController::PITCH],
-                                                                            rates.rcExpos[RadioController::YAW]);
-        BLACKBOX_PRINT_HEADER_LINE("rates", "%d,%d,%d",                     rates.rates[RadioController::ROLL],
-                                                                            rates.rates[RadioController::PITCH],
-                                                                            rates.rates[RadioController::YAW]);
-        BLACKBOX_PRINT_HEADER_LINE("rate_limits", "%d,%d,%d",               rates.rateLimits[RadioController::ROLL],
-                                                                            rates.rateLimits[RadioController::PITCH],
-                                                                            rates.rateLimits[RadioController::YAW]);
+        BLACKBOX_PRINT_HEADER_LINE("rc_rates", "%d,%d,%d",                  rates.rcRates[Cockpit::ROLL],
+                                                                            rates.rcRates[Cockpit::PITCH],
+                                                                            rates.rcRates[Cockpit::YAW]);
+        BLACKBOX_PRINT_HEADER_LINE("rc_expo", "%d,%d,%d",                   rates.rcExpos[Cockpit::ROLL],
+                                                                            rates.rcExpos[Cockpit::PITCH],
+                                                                            rates.rcExpos[Cockpit::YAW]);
+        BLACKBOX_PRINT_HEADER_LINE("rates", "%d,%d,%d",                     rates.rates[Cockpit::ROLL],
+                                                                            rates.rates[Cockpit::PITCH],
+                                                                            rates.rates[Cockpit::YAW]);
+        BLACKBOX_PRINT_HEADER_LINE("rate_limits", "%d,%d,%d",               rates.rateLimits[Cockpit::ROLL],
+                                                                            rates.rateLimits[Cockpit::PITCH],
+                                                                            rates.rateLimits[Cockpit::YAW]);
         BLACKBOX_PRINT_HEADER_LINE("rollPID", "%d,%d,%d",                   _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kp,
                                                                             _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).ki,
                                                                             _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kd);

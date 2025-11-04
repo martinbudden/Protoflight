@@ -8,6 +8,7 @@
 #if defined(M5_UNIFIED)
 #include <ButtonsM5.h>
 #endif
+#include <Cockpit.h>
 #include <Debug.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
@@ -17,7 +18,6 @@
 #include <MSP_ProtoFlight.h>
 #include <MSP_Task.h>
 #include <NonVolatileStorage.h>
-#include <RadioController.h>
 #include <ReceiverBase.h>
 #include <ReceiverTask.h>
 #if defined(M5_UNIFIED)
@@ -78,12 +78,12 @@ void Main::setup()
 
     ReceiverBase& receiver = createReceiver();
 
-    RadioController& radioController = createRadioController(receiver, flightController, debug, AHRS_MessageQueue, nvs);
+    Cockpit& cockpit = createCockpit(receiver, flightController, debug, AHRS_MessageQueue, nvs);
 #if defined(USE_MSP)
-    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, radioController, receiver, radioController.getAutopilot(), debug, nvs);
+    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), debug, nvs);
 #endif
 #if defined(USE_BLACKBOX)
-    Blackbox& blackbox = createBlackBox(ahrs, flightController, AHRS_MessageQueue, radioController, receiver, imuFilters, debug);
+    Blackbox& blackbox = createBlackBox(ahrs, flightController, AHRS_MessageQueue, cockpit, receiver, imuFilters, debug);
 #endif
 
 #if defined(M5_UNIFIED)
@@ -137,7 +137,7 @@ void Main::setup()
     _tasks.flightControllerTask = VehicleControllerTask::createTask(taskInfo, flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
     printTaskInfo(taskInfo);
 
-    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, radioController, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
+    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, cockpit, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #if defined(USE_MSP)
     _tasks.mspTask = MSP_Task::createTask(taskInfo, mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);

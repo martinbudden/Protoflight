@@ -1,12 +1,12 @@
 #include "MSP_ProtoFlight.h"
 
 #include <AHRS.h>
+#include <Cockpit.h>
 #include <Features.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #include <MSP_Protocol.h>
 #include <NonVolatileStorage.h>
-#include <RadioController.h>
 #include <ReceiverBase.h>
 
 
@@ -22,14 +22,14 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
         break;
 
     case MSP_SET_FAILSAFE_CONFIG: {
-        RadioController::failsafe_t failsafe{};
+        Cockpit::failsafe_t failsafe{};
         failsafe.delay = src.readU8();
         failsafe.landing_time = src.readU8();
         failsafe.throttle = src.readU16();
         failsafe.switch_mode = src.readU8();
         failsafe.throttle_low_delay = src.readU16();
         failsafe.procedure = src.readU8();
-        _radioController.setFailsafe(failsafe);
+        _cockpit.setFailsafe(failsafe);
         break;
     }
     case MSP_SET_MIXER_CONFIG:
@@ -128,38 +128,38 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
         if (src.bytesRemaining() < 10) {
             return RESULT_ERROR;
         }
-        RadioController::rates_t rates = _radioController.getRates();
+        Cockpit::rates_t rates = _cockpit.getRates();
         uint8_t value = src.readU8();
-        if (rates.rcRates[RadioController::PITCH] == rates.rcRates[RadioController::ROLL]) {
-            rates.rcRates[RadioController::PITCH] = value;
+        if (rates.rcRates[Cockpit::PITCH] == rates.rcRates[Cockpit::ROLL]) {
+            rates.rcRates[Cockpit::PITCH] = value;
         }
-        rates.rcRates[RadioController::ROLL] = value;
+        rates.rcRates[Cockpit::ROLL] = value;
 
         value = src.readU8();
-        if (rates.rcExpos[RadioController::PITCH] == rates.rcExpos[RadioController::ROLL]) {
-            rates.rcExpos[RadioController::PITCH] = value;
+        if (rates.rcExpos[Cockpit::PITCH] == rates.rcExpos[Cockpit::ROLL]) {
+            rates.rcExpos[Cockpit::PITCH] = value;
         }
-        rates.rcExpos[RadioController::ROLL] = value;
+        rates.rcExpos[Cockpit::ROLL] = value;
 
-        rates.rcRates[RadioController::ROLL] = src.readU8();
-        rates.rcRates[RadioController::PITCH] = src.readU8();
-        rates.rcRates[RadioController::YAW] = src.readU8();
+        rates.rcRates[Cockpit::ROLL] = src.readU8();
+        rates.rcRates[Cockpit::PITCH] = src.readU8();
+        rates.rcRates[Cockpit::YAW] = src.readU8();
         src.readU8(); // skip tpa_rate
         rates.throttleMidpoint = src.readU8();
         rates.throttleExpo = src.readU8();
         src.readU16(); // skip tpa_breakpoint
 
         if (src.bytesRemaining() >= 1) {
-            rates.rcExpos[RadioController::YAW] = src.readU8();
+            rates.rcExpos[Cockpit::YAW] = src.readU8();
         }
         if (src.bytesRemaining() >= 1) {
-            rates.rcRates[RadioController::YAW] = src.readU8();
+            rates.rcRates[Cockpit::YAW] = src.readU8();
         }
         if (src.bytesRemaining() >= 1) {
-            rates.rcRates[RadioController::PITCH] = src.readU8();
+            rates.rcRates[Cockpit::PITCH] = src.readU8();
         }
         if (src.bytesRemaining() >= 1) {
-            rates.rcExpos[RadioController::PITCH] = src.readU8();
+            rates.rcExpos[Cockpit::PITCH] = src.readU8();
         }
         // version 1.41
         if (src.bytesRemaining() >= 2) {
@@ -168,15 +168,15 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
         }
         // version 1.42
         if (src.bytesRemaining() >= 6) {
-            rates.rateLimits[RadioController::ROLL] = src.readU16();
-            rates.rateLimits[RadioController::PITCH] = src.readU16();
-            rates.rateLimits[RadioController::YAW] = src.readU16();
+            rates.rateLimits[Cockpit::ROLL] = src.readU16();
+            rates.rateLimits[Cockpit::PITCH] = src.readU16();
+            rates.rateLimits[Cockpit::YAW] = src.readU16();
         }
         // version 1.43
         if (src.bytesRemaining() >= 1) {
             src.readU8(); // hardcoded to RATES_TYPE_ACTUAL
         }
-        _radioController.setRates(rates);
+        _cockpit.setRates(rates);
         break;
     }
 
@@ -296,7 +296,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
             // can't save to non volatile storage if the motors are on
             return RESULT_ERROR;
         }
-        _nonVolatileStorage.storeAll(_ahrs, _flightController, _radioController, _autopilot, _pidProfileIndex, _ratesProfileIndex);
+        _nonVolatileStorage.storeAll(_ahrs, _flightController, _cockpit, _autopilot, _pidProfileIndex, _ratesProfileIndex);
         break;
     case MSP_SET_BOARD_ALIGNMENT_CONFIG:
         //rollDegrees = src.readU16();
