@@ -31,7 +31,7 @@ I've called it Protoflight because:
 2. [TaskBase](https://github.com/martinbudden/Library-TaskBase.git) - base class for all tasks.
 3. [Filters](https://github.com/martinbudden/Library-Filters.git) - various filters.
 4. [PIDF](https://github.com/martinbudden/Library-PIDF.git) - PID (Proportional Integral Derivative) controller with optional feedforward and open loop control.
-5. [IMU](https://github.com/martinbudden/Library-IMU.git) (Inertial Measurement Unit) - gyroscopes and accelerometers.
+5. [Sensors](https://github.com/martinbudden/Library-Sensors.git) - gyroscopes, accelerometers, and barometers
 6. [SensorFusion](https://github.com/martinbudden/Library-SensorFusion.git) - sensor fusion, including: Complementary Filter,
    Mahony Filter, Madgwick Filter, and Versatile Quaternion Filter (VQF).
 7. [Stabilized Vehicle](https://github.com/martinbudden/Library-StabilizedVehicle.git) - AHRS (Attitude and Heading Reference System)
@@ -52,12 +52,6 @@ The design/software framework has undergone a number of iterations and I don't e
 is still somewhat in flux and I expect there will continue to be changes. In particular:
 
 1. The Receiver class does not yet handle telemetry. Adding this may involve structural changes to the Receiver class and/or Receiver task.
-2. I'm not really happy with the name of the `RadioController` class.
-  This class forms the interface between the receiver and the flight controller, and "RadioController" doesn't really describe its function properly.
-  For example it is the place where functions like altitude hold, return to home, and waypointing would be implemented.
-  I've thought about other names, including "FlightCommander" and "Pilot".
-  I've also thought of renaming the current "FlightController" to "FlightStabilizer", and renaming "RadioController" to "FlightController".
-  But none of these options seem satisfactory. Currently I'm leaning towards "Helm" or "Cockpit".
 
 ## Protoflight Project
 
@@ -239,44 +233,90 @@ Classes with *"(eg)"* suffix give examples of specific instances.
 On dual-core processors `AHRS_Task` has the entire second core to itself.
 
 ```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: true
+---
 classDiagram
+    class TaskBase:::taskClass {
+    }
+    link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
+    TaskBase <|-- AHRS_Task
+    TaskBase <|-- VehicleControllerTask
+    TaskBase <|-- ReceiverTask
+    TaskBase <|-- BlackboxTask
+
+    class AHRS_Task:::taskClass {
+    }
+    link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
+    AHRS_Task o-- IMU_Base : calls WAIT_IMU_DATA_READY
+    AHRS_Task --o IMU_Base : calls SIGNAL
+    AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
+    class IMU_Base {
+        <<abstract>>
+        WAIT_IMU_DATA_READY()
+        SIGNAL_IMU_DATA_READY_FROM_ISR()
+        virtual readAccGyroRPS() accGyroRPS_t
+    }
+    link IMU_Base "https://github.com/martinbudden/Library-Sensors/blob/main/src/IMU_Base.h"
+
+    IMU_Base <|-- IMU_BMI270 : overrides readAccGyroRPS
+    class IMU_BMI270["IMU_BMI270(eg)"]
+    link IMU_BMI270 "https://github.com/martinbudden/Library-Sensors/blob/main/src/IMU_BMI270.h"
+
+    class IMU_FiltersBase {
+        <<abstract>>
+        filter() *
+    }
+    link IMU_FiltersBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/IMU_FiltersBase.h"
+
+    class DynamicNotchFilter {
+        array~BiquadFilter~ notchFilters
+        filter()
+    }
+    link DynamicNotchFilter "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/DynamicNotchFilter.h"
+
+    class RPM_Filters {
+        array~BiquadFilterT~xyz_t~~ _filters[MOTORS][HARMONICS]
+        setFrequencyHzIterationStep()
+        filter()
+    }
+    link RPM_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RPM_Filters.h"
+
+    class IMU_Filters {
+        FilterT~xyz_t~  _gyroLPF
+        BiquadFilterT~xyz_t~ _gyroNotch
+        filter() override
+    }
+    link IMU_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/IMU_Filters.h"
+    IMU_Filters o-- DynamicNotchFilter : calls filter
+    %%DynamicNotchFilter --o IMU_Filters : calls filter
+    IMU_Filters o-- RPM_Filters : calls filter
+    IMU_FiltersBase <|-- IMU_Filters : overrides filter
+    %%IMU_Filters o-- MotorMixerBase
+
+    class SensorFusionFilterBase {
+        Quaternion orientation
+        <<abstract>>
+        updateOrientation() Quaternion *
+    }
+    link SensorFusionFilterBase "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
+
+    SensorFusionFilterBase  <|-- MadgwickFilter : overrides updateOrientation
+    class MadgwickFilter["MadgwickFilter(eg)"] {
+        updateOrientation() override
+    }
+    link MadgwickFilter "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
+
     class AHRS {
         bool readIMUandUpdateOrientation()
     }
     link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
     AHRS o-- IMU_Base : calls readAccGyroRPS
     AHRS o-- IMU_FiltersBase : calls filter
-    AHRS o-- SensorFusionFilterBase : calls update
-    class AHRS_Task:::taskClass {
-    }
-    link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
-    AHRS_Task o-- AHRS : calls updateOutputsUsingPIDS
-
-    VehicleControllerBase <|-- FlightController : overrides outputToMixer updateOutputsUsingPIDs
+    AHRS o-- SensorFusionFilterBase : calls updateOrientation
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs / SIGNAL
-    class ReceiverTask:::taskClass {
-    }
-    link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
-    class SensorFusionFilterBase {
-        Quaternion orientation
-        <<abstract>>
-        update() Quaternion *
-    }
-    link SensorFusionFilterBase "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
-
-    class IMU_Base {
-        <<abstract>>
-        virtual readAccGyroRPS() accGyroRPS_t
-    }
-    link IMU_Base "https://github.com/martinbudden/Library-IMU/blob/main/src/IMU_Base.h"
-
-    class IMU_FiltersBase {
-        <<abstract>>
-        setFilters() *
-        filter() *
-    }
-    link IMU_FiltersBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/IMU_FiltersBase.h"
-
     class VehicleControllerBase {
         <<abstract>>
         WAIT()
@@ -286,26 +326,40 @@ classDiagram
     }
     link VehicleControllerBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerBase.h"
 
+    class VehicleControllerTask:::taskClass {
+    }
+    link VehicleControllerTask "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerTask.h"
+    %%VehicleControllerBase --o VehicleControllerTask : calls WAIT / outputToMixer
+    VehicleControllerTask o-- VehicleControllerBase : calls WAIT / outputToMixer
+
+    class VehicleControllerMessageQueue {
+        WAIT()
+        SIGNAL()
+    }
+    link VehicleControllerMessageQueue "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerMessageQueue.h"
     class MotorMixerBase {
         <<abstract>>
         outputToMotors() *
     }
-    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerBase.h"
+    link MotorMixerBase "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerBase.h"
+
+    class DynamicIdleController {
+        calculateSpeedIncrease()
+    }
+    link DynamicIdleController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/DynamicIdleController.h"
+
+    class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
+    link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
+    MotorMixerQuadX_DShot *-- RPM_Filters : calls setFrequencyHzIterationStep
+    %%RPM_Filters --* MotorMixerQuadX_DShot : calls setFrequencyHzIterationStep
+    MotorMixerQuadX_DShot *-- DynamicIdleController : calls calculateSpeedIncrease
+
     MotorMixerBase <|-- MotorMixerQuadX_Base : overrides outputToMotors
-
-    class VehicleControllerTask:::taskClass {
+    MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot : overrides getMotorFrequencyHz
+    class MotorMixerQuadX_Base {
+        array~float,4~ _motorOutputs
     }
-    link VehicleControllerTask "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerTask.h"
-    VehicleControllerTask o-- VehicleControllerBase : calls WAIT / outputToMixer
-
-    class AHRS_MessageQueue {
-        ahrs_data_t ahrsData
-        WAIT() override
-        SEND(const ahr_data_t&)
-        PEEK_TELEMETRY(const ahr_data_t&)
-        getReceivedAHRS_Data()
-    }
-    link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
+    link MotorMixerQuadX_Base "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_Base.h"
 
     class FlightController {
         array~PIDF~ _pids
@@ -316,9 +370,55 @@ classDiagram
         updateSetpoints()
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    Cockpit o-- FlightController : calls updateSetpoints
+    VehicleControllerBase *-- VehicleControllerMessageQueue : calls WAIT / SIGNAL
+    VehicleControllerBase <|-- FlightController : overrides outputToMixer updateOutputsUsingPIDs
     FlightController o-- MotorMixerBase : calls outputToMotors
-    FlightController o-- AHRS_MessageQueue : calls SEND
+
+    class CockpitBase {
+        <<abstract>>
+        updateControls() *
+        checkFailsafe() *
+    }
+    link CockpitBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/CockpitBase.h"
+    CockpitBase <|-- Cockpit : overrides updateControls
+    CockpitBase o--ReceiverBase : calls getAuxiliaryChannel
+
+    class Cockpit {
+        updateControls() override
+        checkFailsafe() override
+        getFailsafePhase()
+    }
+    link Cockpit "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Cockpit.h"
+    Cockpit o-- FlightController : calls updateSetpoints
+    Cockpit o-- Autopilot : calls calculateFlightControls
+
+    class ReceiverTask:::taskClass {
+    }
+    link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
+
+    ReceiverTask o-- CockpitBase : calls updateControls
+    ReceiverTask o-- ReceiverBase : calls update / getStickValues
+    %%CockpitBase --o ReceiverTask : calls updateControls
+
+    class Autopilot {
+        array~Geodetic~ _waypoints
+        altitudeHoldCalculateThrottle()
+        calculateFlightControls()
+    }
+    link Autopilot "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Autopilot.h"
+    Autopilot o-- AHRS_MessageQueue : calls PEEK_AHRS_DATA
+
+    class AHRS_MessageQueue {
+        ahrs_data_t ahrsData
+        WAIT() override
+        SIGNAL(const ahr_data_t&)
+        SEND_AHRS_DATA(const ahr_data_t&)
+        PEEK_AHRS_DATA(const ahr_data_t&)
+        getReceivedAHRS_Data()
+    }
+    link AHRS_MessageQueue "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_MessageQueue.h"
+    FlightController o-- AHRS_MessageQueue : calls SIGNAL
+    %%AHRS_MessageQueue --o FlightController : calls SIGNAL
 
     class ReceiverBase {
         <<abstract>>
@@ -328,98 +428,31 @@ classDiagram
         getAuxiliaryChannel() *
     }
     link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
-
-    class CockpitBase {
-        <<abstract>>
-        updateControls() *
-        checkFailsafe() *
-    }
-    link CockpitBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/CockpitBase.h"
-
-    ReceiverTask o-- CockpitBase : calls updateControls
-    ReceiverTask o-- ReceiverBase : calls update / getStickValues
-    link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
-    %%CockpitBase --o ReceiverTask : calls updateControls
-
-    CockpitBase <|-- Cockpit : overrides updateControls
-    CockpitBase o--ReceiverBase : calls getAuxiliaryChannel
-    class Cockpit {
-        updateControls() override
-        checkFailsafe() override
-        getFailsafePhase()
-    }
-    link Cockpit "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Cockpit.h"
-    Cockpit o-- Autopilot : calls calculateFlightControls
-    class Autopilot {
-        array~Geodetic~ _waypoints
-        altitudeHoldCalculateThrottle()
-        calculateFlightControls()
-    }
-    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Autopilot.h"
-    Autopilot o-- AHRS_MessageQueue : calls PEEK_TELEMETRY
-    class BarometerMessageQueue {
-        float altitude
-    }
-    Autopilot o -- BarometerMessageQueue
-
-    class RPM_Filters {
-        array~BiquadFilterT~xyz_t~~ _filters[MOTORS][HARMONICS]
-        setFrequencyHzIterationStep()
-        filter()
-    }
-    link RPM_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RPM_Filters.h"
-
-    IMU_FiltersBase <|-- IMU_Filters : overrides filter
-    class IMU_Filters {
-        FilterT~xyz_t~  _gyroLPF
-        BiquadFilterT~xyz_t~ _gyroNotch
-        setFilters() override
-        filter() override
-    }
-    link IMU_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/IMU_Filters.h"
-    class DynamicNotchFilter {
-        array~BiquadFilter~ notchFilters
-        filter()
-    }
-    link DynamicNotchFilter "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/DynamicNotchFilter.h"
-    IMU_Filters o-- DynamicNotchFilter : calls filter
-    IMU_Filters o-- RPM_Filters : calls filter
-    %%IMU_Filters o-- MotorMixerBase
-
-    MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot : overrides getMotorFrequencyHz
-    class MotorMixerQuadX_Base {
-        array~float,4~ _motorOutputs
-    }
-    link MotorMixerQuadX_Base "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_Base.h"
-
-    class DynamicIdleController {
-        calculateSpeedIncrease()
-    }
-    link DynamicIdleController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/DynamicIdleController.h"
-    class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
-    link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
-    MotorMixerQuadX_DShot *-- RPM_Filters : calls setFrequencyHzIterationStep
-    MotorMixerQuadX_DShot *-- DynamicIdleController : calls calculateSpeedIncrease
-
-    IMU_Base <|-- IMU_BMI270 : overrides readAccGyroRPS
-    class IMU_BMI270["IMU_BMI270(eg)"]
-    link IMU_BMI270 "https://github.com/martinbudden/Library-IMU/blob/main/src/IMU_BMI270.h"
-
-    SensorFusionFilterBase  <|-- MadgwickFilter : overrides  update
-    class MadgwickFilter["MadgwickFilter(eg)"] {
-        update() Quaternion override
-    }
-    link MadgwickFilter "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
-
     class ReceiverAtomJoyStick {
         update() override
     }
     ReceiverBase <|-- ReceiverAtomJoyStick
     class ReceiverAtomJoyStick["ReceiverAtomJoyStick(eg)"]
     link ReceiverAtomJoyStick "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverAtomJoyStick.h"
-    ReceiverAtomJoyStick *-- ESPNOW_Transceiver
-    class ESPNOW_Transceiver
-    link ESPNOW_Transceiver "https://github.com/martinbudden/Library-Receiver/blob/main/src/ESPNOW_Transceiver.h"
+
+    class BlackboxTask:::taskClass {
+    }
+    link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
+    BlackboxTask o-- AHRS_MessageQueue : calls WAIT
+    BlackboxTask o-- Blackbox : calls update
+    class Blackbox {
+        <<abstract>>
+        writeSystemInformation() *
+        start()
+        finish()
+        update() uint32_t
+    }
+    link Blackbox "https://github.com/martinbudden/Library-Blackbox/blob/main/src/Blackbox.h"
+    Blackbox <|-- BlackboxProtoFlight
+    class BlackboxProtoFlight {
+        writeSystemInformation() override
+    }
+    link BlackboxProtoFlight "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxProtoFlight.h"
 
     classDef taskClass fill:#f96
 ```
@@ -450,92 +483,91 @@ In the case where `AHRS_Task` and `ReceiverTask` are interrupt driven, we have:
 6. The `MSP_Task` is called on a timer.
 
 ```mermaid
-
 ---
   config:
     class:
       hideEmptyMembersBox: true
 ---
-
 classDiagram
     class TaskBase:::taskClass {
-        uint32_t _taskIntervalMicroseconds
     }
     link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
-
-    TaskBase <|-- DashboardTask
-    class DashboardTask:::taskClass {
-        +loop()
-        -task() [[noreturn]]
-    }
-    DashboardTask o-- ButtonsBase : calls update
-    DashboardTask o-- ScreenBase : calls update
-
-    class CockpitBase {
-        <<abstract>>
-        updateControls() *
-        checkFailsafe() *
-    }
-    link CockpitBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/CockpitBase.h"
-    class Cockpit {
-        updateControls() override
-        checkFailsafe() override
-        getFailsafePhase()
-    }
-    link Cockpit "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Cockpit.h"
-
-    class ReceiverBase {
-        <<abstract>>
-        WAIT_FOR_DATA_RECEIVED() int32_t *
-        update() bool *
-        getStickValues() *
-        getAuxiliaryChannel() uint32_t *
-    }
-    link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
-
-    class FlightController {
-        array~PIDF~ _pids
-        outputToMixer() override
-        updateOutputsUsingPIDs() override
-        updateSetpoints()
-    }
-    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    %%FlightController o-- Blackbox : calls start finish
-    FlightController o-- AHRS_MessageQueue : calls SEND
-    CockpitBase o--ReceiverBase
-    CockpitBase <|-- Cockpit
-    Cockpit o-- Autopilot : calls calculateFlightControls
-    Cockpit o-- FlightController : calls updateSetpoints
-    class Autopilot {
-        array~Geodetic~ _waypoints
-        altitudeHoldCalculateThrottle()
-        calculateFlightControls()
-    }
-    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    Autopilot o-- AHRS_MessageQueue : calls PEEK_TELEMETRY
-
+    TaskBase <|-- AHRS_Task
+    TaskBase <|-- VehicleControllerTask
     TaskBase <|-- ReceiverTask
-    class ReceiverTask:::taskClass {
-        +loop()
-        -task() [[noreturn]]
+    TaskBase <|-- DashboardTask
+    TaskBase <|-- BlackboxTask
+    TaskBase <|-- BackchannelTask
+    TaskBase <|-- MSP_Task
+
+    class AHRS_Task:::taskClass {
     }
-    link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
-    class ReceiverWatcher {
+    link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
+    AHRS_Task o-- IMU_Base : calls WAIT_IMU_DATA_READY
+    AHRS_Task --o IMU_Base : calls SIGNAL
+    AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
+    class IMU_Base {
         <<abstract>>
-        newReceiverPacketAvailable() *
+        WAIT_IMU_DATA_READY()
+        SIGNAL_IMU_DATA_READY_FROM_ISR()
+        virtual readAccGyroRPS() accGyroRPS_t
     }
-    ReceiverTask o-- ReceiverWatcher : calls newReceiverPacketAvailable
-    ReceiverTask o-- ReceiverBase : calls WAIT_FOR_DATA_RECEIVED update getStickValues
-    ReceiverWatcher <|-- ScreenBase
-    ReceiverTask o-- CockpitBase : calls updateControls checkFailsafe
+    link IMU_Base "https://github.com/martinbudden/Library-Sensors/blob/main/src/IMU_Base.h"
 
-    ReceiverBase <|-- ReceiverAtomJoyStick
-    class ReceiverAtomJoyStick["ReceiverAtomJoyStick(eg)"] {
-        <<SIGNAL_DATA_RECEIVED_FROM_ISR>>
+    IMU_Base <|-- IMU_BMI270 : overrides readAccGyroRPS
+    class IMU_BMI270["IMU_BMI270(eg)"]
+    link IMU_BMI270 "https://github.com/martinbudden/Library-Sensors/blob/main/src/IMU_BMI270.h"
+
+    class IMU_FiltersBase {
+        <<abstract>>
+        filter() *
     }
-    link ReceiverAtomJoyStick "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverAtomJoyStick.h"
-    %%note for ReceiverBase "SIGNAL_DATA_RECEIVED_FROM_ISR"
+    link IMU_FiltersBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/IMU_FiltersBase.h"
 
+    class DynamicNotchFilter {
+        array~BiquadFilter~ notchFilters
+        filter()
+    }
+    link DynamicNotchFilter "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/DynamicNotchFilter.h"
+
+    class RPM_Filters {
+        array~BiquadFilterT~xyz_t~~ _filters[MOTORS][HARMONICS]
+        setFrequencyHzIterationStep()
+        filter()
+    }
+    link RPM_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/RPM_Filters.h"
+
+    class IMU_Filters {
+        FilterT~xyz_t~  _gyroLPF
+        BiquadFilterT~xyz_t~ _gyroNotch
+        filter() override
+    }
+    link IMU_Filters "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/IMU_Filters.h"
+    IMU_Filters o-- DynamicNotchFilter : calls filter
+    IMU_Filters o-- RPM_Filters : calls filter
+    IMU_FiltersBase <|-- IMU_Filters : overrides filter
+
+    class SensorFusionFilterBase {
+        Quaternion orientation
+        <<abstract>>
+        updateOrientation() Quaternion *
+    }
+    link SensorFusionFilterBase "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
+
+    SensorFusionFilterBase  <|-- MadgwickFilter : overrides updateOrientation
+    class MadgwickFilter["MadgwickFilter(eg)"] {
+        updateOrientation() override
+    }
+    link MadgwickFilter "https://github.com/martinbudden/Library-SensorFusion/blob/main/src/SensorFusion.h"
+
+    class AHRS {
+        bool readIMUandUpdateOrientation()
+    }
+    link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
+    AHRS o-- IMU_Base : calls readAccGyroRPS
+    AHRS o-- IMU_FiltersBase : calls filter
+    AHRS o-- SensorFusionFilterBase : calls updateOrientation
+    AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs / SIGNAL
 
     class VehicleControllerBase {
         <<abstract>>
@@ -544,71 +576,132 @@ classDiagram
         outputToMixer() *
         updateOutputsUsingPIDs() *
     }
-    TaskBase <|-- VehicleControllerTask
+    link VehicleControllerBase "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerBase.h"
+
     class VehicleControllerTask:::taskClass {
-        +loop()
-        -task() [[noreturn]]
     }
     link VehicleControllerTask "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerTask.h"
-    VehicleControllerTask o-- VehicleControllerBase : calls WAIT outputToMixer
+    VehicleControllerTask o-- VehicleControllerBase : calls WAIT / outputToMixer
+
+    class VehicleControllerMessageQueue {
+        WAIT()
+        SIGNAL()
+    }
+    link VehicleControllerMessageQueue "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/VehicleControllerMessageQueue.h"
+    class MotorMixerBase {
+        <<abstract>>
+        outputToMotors() *
+    }
+    link MotorMixerBase "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerBase.h"
+
+    class DynamicIdleController {
+        calculateSpeedIncrease()
+    }
+    link DynamicIdleController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/DynamicIdleController.h"
+
+    class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
+    link MotorMixerQuadX_DShot "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_DShot.h"
+    MotorMixerQuadX_DShot *-- RPM_Filters : calls setFrequencyHzIterationStep
+    MotorMixerQuadX_DShot *-- DynamicIdleController : calls calculateSpeedIncrease
+
+    MotorMixerBase <|-- MotorMixerQuadX_Base : overrides outputToMotors
+    MotorMixerQuadX_Base <|-- MotorMixerQuadX_DShot : overrides getMotorFrequencyHz
+    class MotorMixerQuadX_Base {
+        array~float,4~ _motorOutputs
+    }
+    link MotorMixerQuadX_Base "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_Base.h"
+
+    class FlightController {
+        array~PIDF~ _pids
+        array~Filter~ _dTermFilters
+        array~Filter~ _stickSetpointFilters
+        outputToMixer() override
+        updateOutputsUsingPIDs() override
+        updateSetpoints()
+    }
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
+    VehicleControllerBase *-- VehicleControllerMessageQueue : calls WAIT / SIGNAL
     VehicleControllerBase <|-- FlightController : overrides outputToMixer updateOutputsUsingPIDs
+    FlightController o-- MotorMixerBase : calls outputToMotors
 
-    class IMU_Base {
-        <<SIGNAL_DATA_READY_FROM_ISR>>
+    class CockpitBase {
+        <<abstract>>
+        updateControls() *
+        checkFailsafe() *
     }
-    link IMU_Base "https://github.com/martinbudden/Library-IMU/blob/main/src/IMU_Base.h"
+    link CockpitBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/CockpitBase.h"
+    CockpitBase <|-- Cockpit : overrides updateControls
+    CockpitBase o--ReceiverBase : calls getAuxiliaryChannel
 
-    %%class IMU_BMI270["IMU_BMI270(eg)"]
-    %%link IMU_BMI270 "https://github.com/martinbudden/Library-IMU/blob/main/src/IMU_BMI270.h"
-
-    class AHRS {
-        bool readIMUandUpdateOrientation()
+    class Cockpit {
+        updateControls() override
+        checkFailsafe() override
+        getFailsafePhase()
     }
-    link AHRS "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS.h"
+    link Cockpit "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Cockpit.h"
+    Cockpit o-- FlightController : calls updateSetpoints
+    Cockpit o-- Autopilot : calls calculateFlightControls
 
-
-    TaskBase <|-- AHRS_Task
-    class AHRS_Task:::taskClass {
-        +loop()
-        -task() [[noreturn]]
+    class ReceiverTask:::taskClass {
     }
-    link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
+    link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
 
+    ReceiverTask o-- CockpitBase : calls updateControls
+    ReceiverTask o-- ReceiverBase : calls update / getStickValues
+    ReceiverTask o-- ReceiverWatcher : calls newReceiverPacketAvailable
+
+    class Autopilot {
+        array~Geodetic~ _waypoints
+        altitudeHoldCalculateThrottle()
+        calculateFlightControls()
+    }
+    link Autopilot "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Autopilot.h"
+    Autopilot o-- AHRS_MessageQueue : calls PEEK_AHRS_DATA
 
     class AHRS_MessageQueue {
         ahrs_data_t ahrsData
         WAIT() override
-        SEND(const ahr_data_t&)
-        PEEK_TELEMETRY(const ahr_data_t&)
+        SIGNAL(const ahr_data_t&)
+        SEND_AHRS_DATA(const ahr_data_t&)
+        PEEK_AHRS_DATA(const ahr_data_t&)
         getReceivedAHRS_Data()
     }
-    link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
+    link AHRS_MessageQueue "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_MessageQueue.h"
+    FlightController o-- AHRS_MessageQueue : calls SIGNAL
 
-    AHRS_Task o-- AHRS : calls readIMUandUpdateOrientation
-    AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs/SIGNAL
-    %%AHRS --o VehicleControllerBase : historical
-
-    %%note for IMU_Base "SIGNAL_DATA_READY_FROM_ISR"
-    AHRS_Task o-- IMU_Base : calls WAIT_IMU_DATA_READY
-    IMU_Base --o AHRS : calls getAccGyroRPS
-    %%AHRS o-- IMU_Base
-    %%IMU_Base --o AHRS_Task : calls WAIT_IMU_DATA_READY
-
-    TaskBase <|-- BlackboxTask
-    class Backchannel {
-        processedReceivedPacket() bool
+    class ReceiverBase {
+        <<abstract>>
+        WAIT_FOR_DATA_RECEIVED() *
+        update() *
+        getStickValues() *
+        getAuxiliaryChannel() *
     }
-    TaskBase <|-- BackchannelTask
-    class BackchannelTask:::taskClass {
+    link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
+    class ReceiverAtomJoyStick {
+        update() override
+    }
+    ReceiverBase <|-- ReceiverAtomJoyStick
+    class ReceiverAtomJoyStick["ReceiverAtomJoyStick(eg)"]
+    link ReceiverAtomJoyStick "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverAtomJoyStick.h"
+
+    class Screen {
+        newReceiverPacketAvailable() override
+    }
+    Screen o-- AHRS_MessageQueue : calls PEEK_AHRS_DATA
+    class ReceiverWatcher {
+        <<abstract>>
+        newReceiverPacketAvailable() *
+    }
+    ReceiverWatcher <|-- Screen
+
+    class DashboardTask:::taskClass {
         +loop()
         -task() [[noreturn]]
     }
-    link BackchannelTask "https://github.com/martinbudden/Library-Backchannel/blob/main/src/BackchannelTask.h"
-    BackchannelTask o-- Backchannel : calls processedReceivedPacket
+    DashboardTask o-- Screen : calls update
+    DashboardTask o-- Buttons : calls update
 
     class BlackboxTask:::taskClass {
-        +loop()
-        -task() [[noreturn]]
     }
     link BlackboxTask "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxTask.h"
     BlackboxTask o-- AHRS_MessageQueue : calls WAIT
@@ -627,19 +720,29 @@ classDiagram
     }
     link BlackboxProtoFlight "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/BlackboxProtoFlight.h"
 
-    TaskBase <|-- MSP_Task
+    class BackchannelTask:::taskClass {
+    }
+    link BackchannelTask "https://github.com/martinbudden/Library-Backchannel/blob/main/src/BackchannelTask.h"
+    BackchannelTask o-- Backchannel : calls processedReceivedPacket
+    class Backchannel {
+        processedReceivedPacket() bool
+    }
+    Backchannel o-- AHRS_MessageQueue : calls PEEK_AHRS_DATA
+
     class MSP_Task:::taskClass {
-        +loop()
-        -task() [[noreturn]]
     }
     link MSP_Task "https://github.com/martinbudden/Library-MultiWiiSerialProtocol/blob/main/src/MSP_Task.h"
     MSP_Task o-- MSP_SerialBase : calls processInput
-    MSP_SerialBase <|-- MSP_Serial
     class MSP_SerialBase {
         <<abstract>>
         sendFrame() *
         processInput() *
     }
+    class MSP_Serial {
+        sendFrame() override
+        processInput() override
+    }
+    MSP_SerialBase <|-- MSP_Serial
 
     classDef taskClass fill:#f96
 ```
@@ -680,11 +783,12 @@ classDiagram
     class AHRS_MessageQueue {
         ahrs_data_t ahrsData
         WAIT() override
-        SEND(const ahr_data_t&)
-        PEEK_TELEMETRY(const ahr_data_t&)
+        SIGNAL(const ahr_data_t&)
+        SEND_AHRS_DATA(const ahr_data_t&)
+        PEEK_AHRS_DATA(const ahr_data_t&)
         getReceivedAHRS_Data()
     }
-    link AHRS_MessageQueue "https://github.com/martinbudden/protoflight/blob/main/lib/Blackbox/src/AHRS_MessageQueue.h"
+    link AHRS_MessageQueue "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_MessageQueue.h"
     class CockpitBase {
         <<abstract>>
     }
@@ -729,15 +833,13 @@ classDiagram
     class FlightController {
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
-    FlightController o-- AHRS_MessageQueue : calls SEND
+    FlightController o-- AHRS_MessageQueue : calls SIGNAL
     BlackboxCallbacksProtoFlight o-- AHRS_MessageQueue : calls getReceivedAHRS_Data
     MessageQueueBase <|-- AHRS_MessageQueue
     BlackboxCallbacksProtoFlight o-- FlightController : calls getPID
     BlackboxCallbacksProtoFlight o-- ReceiverBase : calls getControls
     BlackboxCallbacksProtoFlight o-- CockpitBase : calls getFailSafePhase
     %%FlightController --o BlackboxCallbacksProtoFlight
-    %%FlightController o-- Blackbox : calls start finish
-    %%Blackbox --o FlightController : calls start finish
     BlackboxCallbacksBase <|-- BlackboxCallbacksProtoFlight
     %%BlackboxCallbacksProtoFlight --|> BlackboxCallbacksBase
 
@@ -895,6 +997,123 @@ classDiagram
         -task() [[noreturn]]
     }
     BackchannelTask o-- BackchannelBase : calls processedReceivedPacket sendPacket
+
+    classDef taskClass fill:#f96
+```
+
+## Proposed Autopilot Design
+
+```mermaid
+---
+  config:
+    class:
+      hideEmptyMembersBox: false
+---
+classDiagram
+    class TaskBase:::taskClass {
+    }
+    link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
+    TaskBase <|-- ReceiverTask
+    TaskBase <|-- BarometerTask
+    TaskBase <|-- GPS_Task
+
+    class FlightController {
+        array~PIDF~ _pids
+        array~Filter~ _dTermFilters
+        array~Filter~ _stickSetpointFilters
+        outputToMixer() override
+        updateOutputsUsingPIDs() override
+        updateSetpoints()
+    }
+    link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
+
+    class CockpitBase {
+        <<abstract>>
+        updateControls() *
+        checkFailsafe() *
+    }
+    link CockpitBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/CockpitBase.h"
+    CockpitBase o--ReceiverBase : calls getAuxiliaryChannel
+    CockpitBase <|-- Cockpit : overrides updateControls
+
+    class Cockpit {
+        updateControls() override
+        checkFailsafe() override
+        getFailsafePhase()
+    }
+    link Cockpit "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Cockpit.h"
+    Cockpit o-- FlightController : calls updateSetpoints
+    Cockpit o-- Autopilot : calls calculateFlightControls
+
+    class ReceiverBase {
+        <<abstract>>
+        WAIT_FOR_DATA_RECEIVED() *
+        update() *
+        getStickValues() *
+        getAuxiliaryChannel() *
+    }
+    link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
+    class ReceiverAtomJoyStick {
+        update() override
+    }
+    ReceiverBase <|-- ReceiverAtomJoyStick
+    class ReceiverAtomJoyStick["ReceiverAtomJoyStick(eg)"]
+    link ReceiverAtomJoyStick "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverAtomJoyStick.h"
+    class ReceiverTask:::taskClass {
+    }
+    link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
+
+    ReceiverTask o-- ReceiverBase : calls update / getStickValues
+    ReceiverTask o-- CockpitBase : calls updateControls
+    %%CockpitBase --o ReceiverTask : calls updateControls
+
+    class Autopilot {
+        array~Geodetic~ _waypoints
+        altitudeHoldCalculateThrottle()
+        calculateFlightControls()
+    }
+    link Autopilot "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Autopilot.h"
+    Autopilot o-- AHRS_MessageQueue : calls PEEK_AHRS_DATA
+    Autopilot *-- KalmanFilter
+
+    class KalmanFilter {
+    }
+    class AHRS_MessageQueue {
+        ahrs_data_t ahrsData
+        WAIT() override
+        SIGNAL(const ahr_data_t&)
+        SEND_AHRS_DATA(const ahr_data_t&)
+        PEEK_AHRS_DATA(const ahr_data_t&)
+        getReceivedAHRS_Data()
+    }
+    link AHRS_MessageQueue "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_MessageQueue.h"
+    FlightController o-- AHRS_MessageQueue : calls SIGNAL
+    %%AHRS_MessageQueue --o FlightController : calls SIGNAL
+
+    class GPS_Base {
+    }
+    class GPS_MessageQueue {
+        Geodetic location
+    }
+
+    class BarometerBase {
+    }
+    class BarometerMessageQueue {
+        float altitude
+    }
+    Autopilot o-- GPS_MessageQueue : calls PEEK
+    BarometerMessageQueue --o Autopilot: calls PEEK
+
+
+    class BarometerTask:::taskClass {
+    }
+    BarometerTask o-- BarometerMessageQueue : calls SEND
+    BarometerTask o-- BarometerBase : calls read
+
+    class GPS_Task:::taskClass {
+    }
+    GPS_Task o-- GPS_MessageQueue : calls SEND
+    GPS_Task o-- GPS_Base : calls read
 
     classDef taskClass fill:#f96
 ```
