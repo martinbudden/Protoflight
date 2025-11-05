@@ -227,17 +227,14 @@ The process of documenting a design can reveal subtleties that were overlooked, 
 
 ## Simplified Class Structure
 
-Classes with *"(eg)"* suffix give examples of specific instances.
+The `Cockpit` is the command center for the aircraft.
 
 All objects are statically allocated in `Main::setup()`.
 
-The `RadioController` class forms the interface between the receiver and the flight controller.
-It handles failsafe.
-It is the place where any intelligence (ie waypointing, return to home, crash detection etc) should be added.
-RadioController is not really a good name and I am trying to think of a better one.
-
 When the hardware supports it `AHRS_Task` and `Receiver_Task` are interrupt-driven.
 `VehicleController_Task` is  triggered when `AHRS::readIMUandUpdateOrientation` completes.
+
+Classes with *"(eg)"* suffix give examples of specific instances.
 
 On dual-core processors `AHRS_Task` has the entire second core to itself.
 
@@ -253,12 +250,13 @@ classDiagram
     class AHRS_Task:::taskClass {
     }
     link AHRS_Task "https://github.com/martinbudden/Library-StabilizedVehicle/blob/main/src/AHRS_Task.h"
-    AHRS_Task o-- AHRS : calls updateOutputUsingPIDS
+    AHRS_Task o-- AHRS : calls updateOutputsUsingPIDS
 
     VehicleControllerBase <|-- FlightController : overrides outputToMixer updateOutputsUsingPIDs
     AHRS o-- VehicleControllerBase : calls updateOutputsUsingPIDs / SIGNAL
     class ReceiverTask:::taskClass {
     }
+    link ReceiverTask "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverTask.h"
     class SensorFusionFilterBase {
         Quaternion orientation
         <<abstract>>
@@ -314,8 +312,8 @@ classDiagram
         array~Filter~ _dTermFilters
         array~Filter~ _stickSetpointFilters
         outputToMixer() override
-        updateSetpoints()
         updateOutputsUsingPIDs() override
+        updateSetpoints()
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     Cockpit o-- FlightController : calls updateSetpoints
@@ -324,10 +322,10 @@ classDiagram
 
     class ReceiverBase {
         <<abstract>>
-        WAIT_FOR_DATA_RECEIVED() int32_t *
-        update() bool *
+        WAIT_FOR_DATA_RECEIVED() *
+        update() *
         getStickValues() *
-        getAuxiliaryChannel() uint32_t *
+        getAuxiliaryChannel() *
     }
     link ReceiverBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/ReceiverBase.h"
 
@@ -395,7 +393,7 @@ classDiagram
     link MotorMixerQuadX_Base "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/MotorMixerQuadX_Base.h"
 
     class DynamicIdleController {
-        calculateSpeedIncrease() float
+        calculateSpeedIncrease()
     }
     link DynamicIdleController "https://github.com/martinbudden/protoflight/blob/main/lib/MotorMixers/src/DynamicIdleController.h"
     class MotorMixerQuadX_DShot["MotorMixerQuadX_DShot(eg)"]
@@ -498,8 +496,8 @@ classDiagram
     class FlightController {
         array~PIDF~ _pids
         outputToMixer() override
-        updateSetpoints()
         updateOutputsUsingPIDs() override
+        updateSetpoints()
     }
     link FlightController "https://github.com/martinbudden/protoflight/blob/main/lib/FlightController/src/FlightController.h"
     %%FlightController o-- Blackbox : calls start finish
@@ -639,7 +637,7 @@ classDiagram
     MSP_SerialBase <|-- MSP_Serial
     class MSP_SerialBase {
         <<abstract>>
-        sendFrame() int *
+        sendFrame() *
         processInput() *
     }
 
@@ -770,7 +768,7 @@ when MSP commands are received.
 classDiagram
     class MSP_SerialBase {
         <<abstract>>
-        sendFrame() int *
+        sendFrame() *
         processInput() *
     }
     link MSP_SerialBase "https://github.com/martinbudden/Library-MultiWiiSerialProtocol/blob/main/src/MSP_SerialBase.h"
@@ -838,11 +836,11 @@ classDiagram
 classDiagram
     class BackchannelTransceiverBase {
         <<abstract>>
-        sendData() const int *
+        sendData() *
         WAIT_FOR_DATA_RECEIVED() *
-        getReceivedDataLength() const size_t *
+        getReceivedDataLength() const *
         setReceivedDataLengthToZero() *
-        getTickCountDeltaAndReset() uint32_t *
+        getTickCountDeltaAndReset() *
         #uint8_t _transmitDataBuffer[512]
         #uint8_t _receivedDataBuffer[256]
     }
@@ -851,8 +849,8 @@ classDiagram
         <<abstract>>
         WAIT_FOR_DATA_RECEIVED()
         sendData() const int
-        processedReceivedPacket() bool *
-        sendPacket() bool *
+        processedReceivedPacket() *
+        sendPacket() *
     }
     BackchannelBase o-- BackchannelTransceiverBase : calls WAIT_FOR_DATA_RECEIVED sendData
 
