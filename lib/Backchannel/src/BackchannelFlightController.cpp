@@ -188,7 +188,7 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
     if (_requestType == CommandPacketRequestData::REQUEST_AHRS_DATA) {
         // intercept an AHRS_DATA request to replace roll and pitch values
         AHRS::ahrs_data_t ahrsData;
-        _flightController.getAHRS_MessageQueue().PEEK_TELEMETRY(ahrsData);
+        _flightController.getAHRS_MessageQueue().PEEK_AHRS_DATA(ahrsData);
         const size_t len = packTelemetryData_AHRS(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _ahrs, ahrsData);
         TD_AHRS* td = reinterpret_cast<TD_AHRS*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
         // convert from ENU to NED

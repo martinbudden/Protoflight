@@ -205,16 +205,15 @@ gyroRPS, acc, and orientation come from the AHRS and use the ENU (East-North-Up)
 void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataNED)
 {
 #if defined(USE_BLACKBOX) || defined(USE_BACKCHANNEL) || defined(USE_SCREEN)
-    // sending to the message queue is not free, so, in this time-critical function, we only do it if necessary
+    // signalling/sending to the message queue is not free, so, in this time-critical function, we only do it if necessary
     ++_ahM.sendBlackboxMessageCount;
     if (_ahM.sendBlackboxMessageCount >= _sendBlackboxMessageDenominator) {
         _ahM.sendBlackboxMessageCount = 0;
-        // Send the data to the message queue
         if (_sh.blackboxActive) {
-            _ahrsMessageQueue.SEND(ahrsDataNED);
+            _ahrsMessageQueue.SIGNAL(ahrsDataNED);
         }
 #if defined(USE_BACKCHANNEL) || defined(USE_SCREEN)
-        _ahrsMessageQueue.SEND_TELEMETRY(ahrsDataNED);
+        _ahrsMessageQueue.SEND_AHRS_DATA(ahrsDataNED);
 #endif
     }
 #endif
