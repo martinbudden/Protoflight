@@ -1,6 +1,5 @@
 #include "AHRS_MessageQueue.h"
 #include "FC_TelemetryData.h"
-#include "Features.h"
 #include "FlightController.h"
 
 #include <AHRS.h>
@@ -50,7 +49,6 @@ void tearDown() {
 void test_msp_set_failsafe_config()
 {
     static NonVolatileStorage nvs;
-    static Features features;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersBase imuFilters;
@@ -64,7 +62,7 @@ void test_msp_set_failsafe_config()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, debug, cockpitRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs);
     static MSP_Stream mspStream(msp);
 
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
@@ -123,7 +121,6 @@ void test_msp_set_failsafe_config()
 void test_msp_pid_in()
 {
     static NonVolatileStorage nvs;
-    static Features features;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersBase imuFilters;
@@ -137,7 +134,7 @@ void test_msp_pid_in()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, debug, cockpitRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -170,7 +167,6 @@ void test_msp_pid_in()
 void test_msp_features()
 {
     static NonVolatileStorage nvs;
-    static Features features;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersBase imuFilters;
@@ -184,7 +180,7 @@ void test_msp_features()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, debug, cockpitRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -193,13 +189,12 @@ void test_msp_features()
     sbuf.reset();
     const uint32_t featuresRead = sbuf.readU32();
 
-    TEST_ASSERT_EQUAL(features.enabledFeatures(), featuresRead);
+    TEST_ASSERT_EQUAL(cockpit.enabledFeatures(), featuresRead);
 }
 
 void test_msp_raw_imu()
 {
     static NonVolatileStorage nvs;
-    static Features features;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu;
     static IMU_FiltersBase imuFilters;
@@ -213,7 +208,7 @@ void test_msp_raw_imu()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, debug, cockpitRates);
 
-    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs, features);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, debug, nvs);
     static MSP_Stream mspStream(msp);
     //static const MSP_Serial mspSerial(mspStream, msp);
 

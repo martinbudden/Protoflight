@@ -19,6 +19,24 @@ Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Aut
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
 }
 
+bool Cockpit::isArmingFlagSet(arming_flag_e armingFlag) const
+{
+    (void)armingFlag;
+    return true; // !!TODO arming flag
+}
+
+bool Cockpit::isFlightModeFlagSet(uint32_t flightModeFlag) const
+{
+    (void)flightModeFlag;
+    return true; // !!TODO flight mode flag
+}
+
+bool Cockpit::isRcModeActive(uint8_t rcMode) const
+{
+    (void)rcMode;
+    return true; // !!TODO rcMode
+}
+
 void Cockpit::setRatesToPassThrough()
 {
     _rates.rcRates = { 100, 100, 100 }; // center sensitivity
@@ -109,15 +127,15 @@ void Cockpit::updateControls(const controls_t& controls)
         _flightMode &= ~ANGLE_MODE;
     }
     if (_receiver.getChannelRaw(ALTITUDE_MODE_CHANNEL)) {
-        if ((_flightMode & ALTITUDE_HOLD_MODE) == 0) {
+        if ((_flightMode & ALT_HOLD_MODE) == 0) {
             // not currently in altitude hold mode, so set the altitude hold setpoint
             if (_autopilot.setAltitudeHoldSetpoint()) {
                 // only switch to altitude hold mode if the autopilot supports it
-                _flightMode |= ALTITUDE_HOLD_MODE;
+                _flightMode |= ALT_HOLD_MODE;
             }
         }
     }
-    if (_flightMode & (POSITION_HOLD_MODE | RETURN_TO_HOME_MODE | WAYPOINT_MODE)) {
+    if (_flightMode & (GPS_HOLD_MODE | GPS_HOME_MODE | GPS_RESCUE_MODE)) {
         const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightMode);
         _flightController.updateSetpoints(flightControls);
         return;
@@ -126,7 +144,7 @@ void Cockpit::updateControls(const controls_t& controls)
     FlightController::control_mode_e controlMode = (_flightMode & ANGLE_MODE) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE;
 
     float throttleStick {};
-    if (_flightMode & ALTITUDE_HOLD_MODE) {
+    if (_flightMode & ALT_HOLD_MODE) {
         throttleStick = _autopilot.calculateThrottleForAltitudeHold(controls);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     } else {

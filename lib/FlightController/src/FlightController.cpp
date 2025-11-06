@@ -150,24 +150,6 @@ uint32_t FlightController::getOutputPowerTimeMicroseconds() const
     return 0;
 }
 
-bool FlightController::isArmingFlagSet(arming_flag_e armingFlag) const
-{
-    (void)armingFlag;
-    return true; // !!TODO arming flag
-}
-
-bool FlightController::isFlightModeFlagSet(flight_mode_flag_e flightModeFlag) const
-{
-    (void)flightModeFlag;
-    return true; // !!TODO flight mode flag
-}
-
-bool FlightController::isRcModeActive(uint8_t rcMode) const
-{
-    (void)rcMode;
-    return true; // !!TODO rcMode
-}
-
 void FlightController::motorsSwitchOff()
 {
     _mixer.motorsSwitchOff();

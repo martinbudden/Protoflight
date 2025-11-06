@@ -1,8 +1,9 @@
-#include "AHRS_MessageQueue.h"
+#include "Cockpit.h"
 #include "FC_TelemetryData.h"
 #include "FlightController.h"
 
 #include <AHRS.h>
+#include <AHRS_MessageQueue.h>
 #include <Debug.h>
 #include <Defaults.h>
 #include <IMU_FiltersBase.h>
@@ -103,17 +104,17 @@ void test_flight_controller_pid_indexes()
 
 void test_flight_controller_flight_mode_flags()
 {
-    TEST_ASSERT_EQUAL(FlightController::ANGLE_MODE, 1U << FlightController::LOG2_ANGLE_MODE);
-    TEST_ASSERT_EQUAL(FlightController::HORIZON_MODE, 1U << FlightController::LOG2_HORIZON_MODE);
-    TEST_ASSERT_EQUAL(FlightController::MAG_MODE, 1U << FlightController::LOG2_MAG_MODE);
-    TEST_ASSERT_EQUAL(FlightController::ALT_HOLD_MODE, 1U << FlightController::LOG2_ALT_HOLD_MODE);
-    TEST_ASSERT_EQUAL(FlightController::GPS_HOME_MODE, 1U << FlightController::LOG2_GPS_HOME_MODE);
-    TEST_ASSERT_EQUAL(FlightController::GPS_HOLD_MODE, 1U << FlightController::LOG2_GPS_HOLD_MODE);
-    TEST_ASSERT_EQUAL(FlightController::HEADFREE_MODE, 1U << FlightController::LOG2_HEADFREE_MODE);
-    TEST_ASSERT_EQUAL(FlightController::PASSTHRU_MODE, 1U << FlightController::LOG2_PASSTHRU_MODE);
-    TEST_ASSERT_EQUAL(FlightController::RANGEFINDER_MODE, 1U << FlightController::LOG2_RANGEFINDER_MODE);
-    TEST_ASSERT_EQUAL(FlightController::FAILSAFE_MODE, 1U << FlightController::LOG2_FAILSAFE_MODE);
-    TEST_ASSERT_EQUAL(FlightController::GPS_RESCUE_MODE, 1U << FlightController::LOG2_GPS_RESCUE_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::ANGLE_MODE, 1U << Cockpit::LOG2_ANGLE_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::HORIZON_MODE, 1U << Cockpit::LOG2_HORIZON_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::MAG_MODE, 1U << Cockpit::LOG2_MAG_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::ALT_HOLD_MODE, 1U << Cockpit::LOG2_ALT_HOLD_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::GPS_HOME_MODE, 1U << Cockpit::LOG2_GPS_HOME_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::GPS_HOLD_MODE, 1U << Cockpit::LOG2_GPS_HOLD_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::HEADFREE_MODE, 1U << Cockpit::LOG2_HEADFREE_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::PASSTHRU_MODE, 1U << Cockpit::LOG2_PASSTHRU_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::RANGEFINDER_MODE, 1U << Cockpit::LOG2_RANGEFINDER_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::FAILSAFE_MODE, 1U << Cockpit::LOG2_FAILSAFE_MODE);
+    TEST_ASSERT_EQUAL(Cockpit::GPS_RESCUE_MODE, 1U << Cockpit::LOG2_GPS_RESCUE_MODE);
 }
 // NOLINTEND(hicpp-signed-bitwise,misc-const-correctness)
 

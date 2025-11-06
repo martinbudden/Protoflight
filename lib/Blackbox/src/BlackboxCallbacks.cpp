@@ -55,7 +55,7 @@ uint32_t BlackboxCallbacks::rcModeActivationMask() const
 void BlackboxCallbacks::loadSlowState(blackboxSlowState_t& slowState)
 {
     //memcpy(&slowState->flightModeFlags, &_rcModeActivationMask, sizeof(slowState->flightModeFlags)); //was flightModeFlags;
-    slowState.flightModeFlags = _flightController.getFlightModeFlags();
+    slowState.flightModeFlags = _cockpit.getFlightModeFlags();
     slowState.stateFlags = 0; // this is GPS state
     slowState.failsafePhase = _cockpit.getFailsafePhase();
     //slowState.rxSignalReceived = _receiver.isRxReceivingSignal();

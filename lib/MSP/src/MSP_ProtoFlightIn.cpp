@@ -2,7 +2,6 @@
 
 #include <AHRS.h>
 #include <Cockpit.h>
-#include <Features.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #include <MSP_Protocol.h>
@@ -18,7 +17,7 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
 
     switch (cmdMSP) {
     case MSP_SET_FEATURE_CONFIG:
-        _features.setFeatures(src.readU32());
+        _cockpit.setFeatures(src.readU32());
         break;
 
     case MSP_SET_FAILSAFE_CONFIG: {

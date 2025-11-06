@@ -23,11 +23,11 @@
 #include <MSP_Box.h>
 
 
-class FlightController;
+class Cockpit;
 
 
 class MSP_ProtoFlightBox : public MSP_Box {
 public:
-    size_t packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const FlightController& flightController);
-    static bool getBoxIdState(const FlightController& flightController, boxId_e boxId);
+    size_t packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const Cockpit& cockpit);
+    static bool getBoxIdState(const Cockpit& cockpit, boxId_e boxId);
 };

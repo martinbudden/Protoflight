@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Features.h>
 #include <RadioControllerBase.h>
 
 #include <array>
@@ -47,12 +48,43 @@ public:
         uint16_t throttle;
         uint16_t throttle_low_delay;
     };
-    static constexpr uint32_t ANGLE_MODE            = 0x01;
+    enum arming_flag_e {
+        ARMED = 0x01,
+        WAS_EVER_ARMED = 0x02,
+        WAS_ARMED_WITH_PREARM = 0x04
+    };
+    enum log2_flight_mode_flag_e {
+        LOG2_ANGLE_MODE         = 0,
+        LOG2_HORIZON_MODE       = 1,
+        LOG2_MAG_MODE           = 2,
+        LOG2_ALT_HOLD_MODE      = 3,
+        LOG2_GPS_HOME_MODE      = 4,
+        LOG2_GPS_HOLD_MODE      = 5,
+        LOG2_HEADFREE_MODE      = 6,
+        LOG2_UNUSED_MODE        = 7, // old autotune
+        LOG2_PASSTHRU_MODE      = 8,
+        LOG2_RANGEFINDER_MODE   = 9,
+        LOG2_FAILSAFE_MODE      = 10,
+        LOG2_GPS_RESCUE_MODE    = 11
+    };
+    static constexpr uint32_t ANGLE_MODE      = 1U << LOG2_ANGLE_MODE;
+    static constexpr uint32_t HORIZON_MODE    = 1U << LOG2_HORIZON_MODE;
+    static constexpr uint32_t MAG_MODE        = 1U << LOG2_MAG_MODE;
+    static constexpr uint32_t ALT_HOLD_MODE   = 1U << LOG2_ALT_HOLD_MODE;
+    static constexpr uint32_t GPS_HOME_MODE   = 1U << LOG2_GPS_HOME_MODE;
+    static constexpr uint32_t GPS_HOLD_MODE   = 1U << LOG2_GPS_HOLD_MODE;
+    static constexpr uint32_t HEADFREE_MODE   = 1U << LOG2_HEADFREE_MODE;
+    static constexpr uint32_t UNUSED_MODE     = 1U << LOG2_UNUSED_MODE; // old autotune
+    static constexpr uint32_t PASSTHRU_MODE   = 1U << LOG2_PASSTHRU_MODE;
+    static constexpr uint32_t RANGEFINDER_MODE= 1U << LOG2_RANGEFINDER_MODE;
+    static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
+    static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
+    /*static constexpr uint32_t ANGLE_MODE            = 0x01;
     static constexpr uint32_t HORIZON_MODE          = 0x02;
     static constexpr uint32_t ALTITUDE_HOLD_MODE    = 0x04;
     static constexpr uint32_t POSITION_HOLD_MODE    = 0x08;
     static constexpr uint32_t RETURN_TO_HOME_MODE   = 0x10;
-    static constexpr uint32_t WAYPOINT_MODE         = 0x20;
+    static constexpr uint32_t WAYPOINT_MODE         = 0x20;*/
 public:
     Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& _debug, const rates_t& rates);
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
@@ -61,6 +93,15 @@ public:
 
     void handleOnOffSwitch();
     virtual void updateControls(const controls_t& controls) override;
+
+    bool featureIsEnabled(uint32_t mask) const { return _features.featureIsEnabled(mask); }
+    uint32_t enabledFeatures() const { return _features.enabledFeatures(); }
+    void setFeatures(uint32_t features) { _features.setFeatures(features); }
+
+    bool isArmingFlagSet(arming_flag_e armingFlag) const;
+    bool isFlightModeFlagSet(uint32_t flightModeFlag) const;
+    uint32_t getFlightModeFlags() const { return ANGLE_MODE; } //!!TODO
+    bool isRcModeActive(uint8_t rcMode) const;
 
     virtual void checkFailsafe(uint32_t tickCount) override;
     const failsafe_t& getFailsafe() const { return _failsafe; }
@@ -73,6 +114,7 @@ public:
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
 private:
+    Features _features;
     FlightController& _flightController;
     Autopilot& _autopilot;
     Debug& _debug;

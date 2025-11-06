@@ -21,40 +21,40 @@
 
 #include "MSP_ProtoFlightBox.h"
 
-#include <FlightController.h>
+#include <Cockpit.h>
 
 /*!
 return state of given boxId box, handling ARM and FLIGHT_MODE
 */
-bool MSP_ProtoFlightBox::getBoxIdState(const FlightController& flightController, boxId_e boxId)
+bool MSP_ProtoFlightBox::getBoxIdState(const Cockpit& cockpit, boxId_e boxId)
 {
     static constexpr std::array<uint8_t, BOX_ID_FLIGHTMODE_LAST+1> boxIdToFlightModeMap = {
         /*[BOX_ARM]*/           0, // not used
-        /*[BOX_ANGLE]*/         FlightController::LOG2_ANGLE_MODE,
-        /*[BOX_HORIZON]*/       FlightController::LOG2_HORIZON_MODE,
-        /*[BOX_MAG]*/           FlightController::LOG2_MAG_MODE,
-        /*[BOX_ALTHOLD]*/       FlightController::LOG2_ALT_HOLD_MODE,
-        /*[BOX_HEADFREE]*/      FlightController::LOG2_HEADFREE_MODE,
-        /*[BOX_PASSTHRU]*/      FlightController::LOG2_PASSTHRU_MODE,
-        /*[BOX_FAILSAFE]*/      FlightController::LOG2_FAILSAFE_MODE,
-        /*[BOX_GPS_RESCUE]*/    FlightController::LOG2_GPS_RESCUE_MODE
+        /*[BOX_ANGLE]*/         Cockpit::LOG2_ANGLE_MODE,
+        /*[BOX_HORIZON]*/       Cockpit::LOG2_HORIZON_MODE,
+        /*[BOX_MAG]*/           Cockpit::LOG2_MAG_MODE,
+        /*[BOX_ALTHOLD]*/       Cockpit::LOG2_ALT_HOLD_MODE,
+        /*[BOX_HEADFREE]*/      Cockpit::LOG2_HEADFREE_MODE,
+        /*[BOX_PASSTHRU]*/      Cockpit::LOG2_PASSTHRU_MODE,
+        /*[BOX_FAILSAFE]*/      Cockpit::LOG2_FAILSAFE_MODE,
+        /*[BOX_GPS_RESCUE]*/    Cockpit::LOG2_GPS_RESCUE_MODE
     };
     // we assume that all boxId below BOXID_FLIGHTMODE_LAST except BOXARM are mapped to flightmode
 
     if (boxId == BOX_ARM) {
-        return flightController.isArmingFlagSet(FlightController::ARMED);
+        return cockpit.isArmingFlagSet(Cockpit::ARMED);
     }
     if (boxId <= BOX_ID_FLIGHTMODE_LAST) {
-        return flightController.isFlightModeFlagSet(static_cast<FlightController::flight_mode_flag_e>(1U << boxIdToFlightModeMap[boxId])); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        return cockpit.isFlightModeFlagSet(1U << boxIdToFlightModeMap[boxId]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     }
-    return flightController.isRcModeActive(static_cast<boxId_e>(boxId));
+    return cockpit.isRcModeActive(static_cast<boxId_e>(boxId));
 }
 
 /*!
 pack used flightModeFlags into supplied bitset
 returns number of bits used
 */
-size_t MSP_ProtoFlightBox::packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const FlightController& flightController)
+size_t MSP_ProtoFlightBox::packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const Cockpit& cockpit)
 {
     // Serialize the flags in the order we delivered them, ignoring BOX NAMES and BOX INDEXES
     flightModeFlags.reset();
@@ -63,7 +63,7 @@ size_t MSP_ProtoFlightBox::packFlightModeFlags(std::bitset<BOX_COUNT>& flightMod
     size_t mspBoxIdx = 0;    // index of active boxId (matches sent permanentId and boxNames)
     for (int boxId = 0; boxId < BOX_COUNT; ++boxId) {
         if (getActiveBoxId(static_cast<boxId_e>(boxId))) {
-            if (getBoxIdState(flightController, static_cast<boxId_e>(boxId))) {
+            if (getBoxIdState(cockpit, static_cast<boxId_e>(boxId))) {
                 flightModeFlags.set(mspBoxIdx); // box is enabled
             }
             ++mspBoxIdx; // box is active, count it

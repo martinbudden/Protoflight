@@ -69,22 +69,21 @@ static const char* const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; //
 static const char* const TARGET_BOARD_IDENTIFIER = "A405";
 static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 
-MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs, Features& features) :
+MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs) :
     _ahrs(ahrs),
     _flightController(flightController),
     _cockpit(cockpit),
     _receiver(receiver),
     _autopilot(autopilot),
     _debug(debug),
-    _nonVolatileStorage(nvs),
-    _features(features)
+    _nonVolatileStorage(nvs)
 {
     //_mspBox.init(features, ahrs, flightController);
     enum { MSP_OVERRIDE_OFF = false, AIRMODE_OFF = false, ANTI_GRAVITY_OFF = false };
     enum { ACCELEROMETER_AVAILABLE = true };
     _mspBox.init(
         ACCELEROMETER_AVAILABLE,
-        features.featureIsEnabled(Features::FEATURE_INFLIGHT_ACC_CAL),
+        _cockpit.featureIsEnabled(Features::FEATURE_INFLIGHT_ACC_CAL),
         MSP_OVERRIDE_OFF,
         AIRMODE_OFF,
         ANTI_GRAVITY_OFF
@@ -115,7 +114,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         static constexpr uint16_t SENSOR_GYROSCOPE = 0x01U << 5U;
         dst.writeU16(SENSOR_ACCELEROMETER | SENSOR_GYROSCOPE);
         std::bitset<MSP_Box::BOX_COUNT> flightModeFlags;
-        const size_t flagBits = _mspBox.packFlightModeFlags(flightModeFlags, _flightController);
+        const size_t flagBits = _mspBox.packFlightModeFlags(flightModeFlags, _cockpit);
         dst.writeData(&flightModeFlags, 4); // unconditional part of flags, first 32 bits
         dst.writeU8(_nonVolatileStorage.getCurrentPidProfileIndex());
         dst.writeU16(10); //constrain(getAverageSystemLoadPercent(), 0, LOAD_PERCENTAGE_ONE))
@@ -460,7 +459,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
 
     case MSP_FEATURE_CONFIG:
-        dst.writeU32(_features.enabledFeatures());
+        dst.writeU32(_cockpit.enabledFeatures());
         break;
 
     case MSP_TRANSPONDER_CONFIG: {
@@ -539,7 +538,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         }
 
         const bool success = false;
-        if (!_flightController.isArmingFlagSet(FlightController::ARMED)) {
+        if (!_cockpit.isArmingFlagSet(Cockpit::ARMED)) {
             //success = resetEEPROM(); //!!TODO: implement this
             //if (success && postProcessFn) {
             if (postProcessFn) {
