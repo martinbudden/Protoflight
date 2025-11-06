@@ -58,6 +58,7 @@ public:
         CONTROL_MODE_ANGLE = 1,
         CONTROL_MODE_HORIZON = 2,
     };
+    static constexpr int TIME_CHECKS_COUNT = 4;
     //enum { AXIS_COUNT = 3 }; //!< roll, pitch, and yaw axis count
     enum { RP_AXIS_COUNT = 2 }; //!< roll and pitch axis count
     enum flight_dynamics_index_e { FD_ROLL = 0, FD_PITCH = 1, FD_YAW = 2, RPY_AXIS_COUNT = 3 };
@@ -281,6 +282,7 @@ public:
 
     const Debug& getDebug() const { return _debug; }
     Debug& getDebug() { return _debug; }
+    inline uint32_t getTimeChecksMicroseconds(size_t index) const { return _sh.timeChecksMicroseconds[index]; } //!< Instrumentation time checks
 
     void setFiltersConfig(const filters_config_t& filtersConfig);
     const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
@@ -407,7 +409,7 @@ private:
         std::array<float, RP_AXIS_COUNT> setpointLPs {};
         std::array<float, RP_AXIS_COUNT> setpointHPs {};
 #endif
-    };
+    }; // rx_t
     enum angle_mode_calculation_state_e { STATE_CALCULATE_ROLL, STATE_CALCULATE_PITCH };
     struct angle_mode_calculation_state_t {
         angle_mode_calculation_state_e state { STATE_CALCULATE_ROLL };
@@ -421,7 +423,7 @@ private:
         float yawAngleDegreesRaw {0.0F};
         uint32_t sendBlackboxMessageCount {0};
         std::array<float, RP_AXIS_COUNT> dMaxMultiplier {1.0F, 1.0F}; // used even if USE_D_MAX not defined
-    };
+    }; // ah_t
     struct shared_t {
         uint32_t takeOffCountStart {0};
         bool groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
@@ -444,8 +446,9 @@ private:
 #if defined(USE_ITERM_RELAX)
         std::array<PowerTransferFilter1, RP_AXIS_COUNT> iTermRelaxFilters {};
 #endif
-
-    };
+        // instrumentation data
+        std::array<uint32_t, TIME_CHECKS_COUNT + 1> timeChecksMicroseconds {};
+    }; // shared_t
 
     fc_t _fcM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the Flight Controller Task
     const fc_t& _fcC;   //!< CONSTANT   partition of member data that MUST be used outside the context of the Flight Controller Task

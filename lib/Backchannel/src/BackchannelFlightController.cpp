@@ -6,6 +6,7 @@
 #if !defined(FRAMEWORK_TEST)
 #include <AHRS_MessageQueue.h>
 #endif
+#include <BackchannelTransceiverBase.h>
 #include <Debug.h>
 #include <NonVolatileStorage.h>
 #include <ReceiverBase.h>
@@ -186,7 +187,7 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
 {
 #if !defined(FRAMEWORK_TEST)
     if (_requestType == CommandPacketRequestData::REQUEST_AHRS_DATA) {
-        // intercept an AHRS_DATA request to replace roll and pitch values
+        // intercept AHRS_DATA request to replace roll and pitch values
         AHRS::ahrs_data_t ahrsData;
         _flightController.getAHRS_MessageQueue().PEEK_AHRS_DATA(ahrsData);
         const size_t len = packTelemetryData_AHRS(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _ahrs, ahrsData);
@@ -199,6 +200,28 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
         sendData(_transmitDataBufferPtr, len);
         return true;
     }
+#if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
+    if (_requestType == CommandPacketRequestData::REQUEST_TASK_INTERVAL_EXTENDED_DATA) {
+        // intercept AHRS_DATA request add additional timing information
+        const size_t len = packTelemetryData_TaskIntervalsExtended(_transmitDataBufferPtr, _telemetryID, _sequenceNumber,
+            _ahrs,
+            _vehicleController,
+            _mainTask ? _mainTask->getTickCountDelta() : 0,
+            _backchannelTransceiver.getTickCountDeltaAndReset(),
+            static_cast<uint32_t>(_receiver.getDroppedPacketCountDelta())
+        );
+        // use empty slots to add additional time checks
+        // timings [0-3] are set in AHRS readIMUandUpdateOrientation(), timings [4-7] are free to use
+        TD_TASK_INTERVALS_EXTENDED* td = reinterpret_cast<TD_TASK_INTERVALS_EXTENDED*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
+        td->data.ahrsTimeChecksMicroseconds[4] = _flightController.getTimeChecksMicroseconds(0);
+        td->data.ahrsTimeChecksMicroseconds[5] = _flightController.getTimeChecksMicroseconds(1);
+        td->data.ahrsTimeChecksMicroseconds[6] = _flightController.getTimeChecksMicroseconds(2);
+        td->data.ahrsTimeChecksMicroseconds[7] = _flightController.getTimeChecksMicroseconds(3);
+        //Serial.printf("tiLen:%d\r\n", len);
+        sendData(_transmitDataBufferPtr, len);
+        return true;
+    }
+#endif
 #endif
 
     if (BackchannelStabilizedVehicle::sendPacket(subCommand)) {
@@ -228,20 +251,21 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
         sendData(_transmitDataBufferPtr, len);
         break;
     }
-    /*case CommandPacketRequestData::REQUEST_DEBUG_DATA: {
+    case CommandPacketRequestData::REQUEST_DEBUG_DATA: {
         const size_t len = packTelemetryData_Debug(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _flightController.getDebug());
         //Serial.printf("debugLen:%d\r\n", len);
         sendData(_transmitDataBufferPtr, len);
         break;
-    }*/
+    }
+#if false
     case CommandPacketRequestData::REQUEST_MSP_DATA: {
-        (void)subCommand;
-        //const size_t len = packTelemetryData_MSP(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _msp, subCommand);
-        //if (len <= ESP_NOW_MAX_DATA_LEN) {
-        //    sendData(_transmitDataBufferPtr, len);
-        //}
+        const size_t len = packTelemetryData_MSP(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _msp, subCommand);
+        if (len <= ESP_NOW_MAX_DATA_LEN) {
+            sendData(_transmitDataBufferPtr, len);
+        }
         break;
     }
+#endif
     default:
         return false;
     } // end switch

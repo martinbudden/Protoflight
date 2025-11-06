@@ -2,6 +2,7 @@
 #include "FlightController.h"
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
+#include <TimeMicroseconds.h>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 // #defines to catch inadvertent use of _fcM or _rxM in this file.
@@ -227,9 +228,16 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataN
     calculateDMaxMultipliers();
 #endif
 
+#if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
+    const timeUs32_t time0 = timeUs();
+#endif
     if (_rxC.useAngleMode) {
         updateRateSetpointsForAngleMode(ahrsDataNED.orientation, ahrsDataNED.deltaT);
     }
+#if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
+    const timeUs32_t time1 = timeUs();
+    _sh.timeChecksMicroseconds[0] = time1 - time0;
+#endif
 
     VehicleControllerMessageQueue::queue_item_t outputs; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
     outputs.throttle = _sh.outputThrottle;
@@ -249,6 +257,10 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataN
                                                     rollRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[ROLL_RATE_DPS], 
                                                     calculateITermError(ROLL_RATE_DPS, rollRateDPS),
                                                     ahrsDataNED.deltaT);
+#if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
+    const timeUs32_t time2 = timeUs();
+    _sh.timeChecksMicroseconds[1] = time2 - time1;
+#endif
 
     //
     // Pitch axis
@@ -261,6 +273,11 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataN
                                                     pitchRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[PITCH_RATE_DPS],
                                                     calculateITermError(PITCH_RATE_DPS, pitchRateDPS),
                                                     ahrsDataNED.deltaT);
+#if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
+    const timeUs32_t time3 = timeUs();
+    _sh.timeChecksMicroseconds[2] = time3 - time2;
+#endif
+
 
     //
     // Yaw axis
@@ -268,6 +285,10 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataN
     // DTerm is zero for yawRate, so call updateSPI() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no KTerm
     const float yawRateDPS = yawRateNED_DPS(ahrsDataNED.accGyroRPS.gyroRPS);
     outputs.yaw = _sh.PIDS[YAW_RATE_DPS].updateSPI(yawRateDPS, ahrsDataNED.deltaT);
+#if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
+    const timeUs32_t time4 = timeUs();
+    _sh.timeChecksMicroseconds[3] = time4 - time3;
+#endif
 
     // The FlightControllerTask is waiting on the message queue, so signal it that there is output data available.
     // This will result in outputToMixer() being called by the scheduler.

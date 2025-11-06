@@ -23,8 +23,6 @@ Targets
 #if defined(TARGET_M5STACK_STAMPS3_FLY)
     #define BOARD_IDENTIFIER    "M5Stack_StampS3_Fly"
 
-    #define USE_YAW_SPIN_RECOVERY
-
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_BMI270
     #define AHRS_TASK_IS_TIMER_DRIVEN
@@ -39,11 +37,12 @@ Targets
     #define MOTOR_PINS          motor_pins_t{.m0=23,.m1=25,.m2=10,.m3=5}
 
     #define USE_BACKCHANNEL
+    #define USE_YAW_SPIN_RECOVERY
+    #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 #endif
 
 #if defined(TARGET_M5STACK_ATOMS3R)
     #define BOARD_IDENTIFIER    "M5Stack_AtomS3"
-
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define USE_IMU_BMI270
@@ -57,16 +56,11 @@ Targets
     #define USE_BACKCHANNEL
     #define USE_SCREEN
     #define USE_BUTTONS
+    #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 #endif
 
 #if defined(TARGET_M5STACK_CORE2)
     #define BOARD_IDENTIFIER    "M5Stack_Core2"
-
-    #define USE_D_MAX
-    #define USE_ITERM_RELAX
-    #define USE_YAW_SPIN_RECOVERY
-    #define USE_CRASH_RECOVERY
-    #define USE_DYNAMIC_NOTCH_FILTER
 
     #define IMU_AXIS_ORDER      IMU_Base::YNEG_XPOS_ZPOS
     #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
@@ -90,6 +84,13 @@ Targets
     #define USE_BACKCHANNEL
     #define USE_SCREEN
     #define USE_BUTTONS
+
+    #define USE_D_MAX
+    #define USE_ITERM_RELAX
+    #define USE_YAW_SPIN_RECOVERY
+    #define USE_CRASH_RECOVERY
+    #define USE_DYNAMIC_NOTCH_FILTER
+    #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 #endif
 
 #if defined(TARGET_PICO)

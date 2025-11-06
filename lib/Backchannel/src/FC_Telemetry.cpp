@@ -98,8 +98,8 @@ size_t packTelemetryData_Debug(uint8_t* telemetryDataPtr, uint32_t id, uint32_t 
     TD_DEBUG* td = reinterpret_cast<TD_DEBUG*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
 
     td->id = id;
-    td->type = TD_TASK_INTERVALS::TYPE;
-    td->len = sizeof(TD_TASK_INTERVALS);
+    td->type = TD_DEBUG::TYPE;
+    td->len = sizeof(TD_DEBUG);
     td->subType = 0;
     td->sequenceNumber = static_cast<uint8_t>(sequenceNumber);
 
