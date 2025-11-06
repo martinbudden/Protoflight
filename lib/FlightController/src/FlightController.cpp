@@ -88,7 +88,7 @@ VehicleControllerBase::PIDF_uint16_t FlightController::getPID_Constants(pid_inde
 }
 
 /*!
-Set the P, I, D, F, and S values for the PID with index pidIndex.
+Set the P, I, D, S, and K values for the PID with index pidIndex.
 Integration is switched off, so that there is no integral windup before takeoff.
 */
 void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16)

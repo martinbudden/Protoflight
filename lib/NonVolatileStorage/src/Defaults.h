@@ -116,6 +116,7 @@ static constexpr DynamicNotchFilter::config_t dynamicNotchFilterConfig = {
 #endif
 
 static constexpr IMU_Filters::config_t imuFiltersConfig = {
+    .acc_lpf_hz = 100,
     .gyro_notch1_hz = 0,
     .gyro_notch1_cutoff = 0,
     .gyro_notch2_hz = 0,

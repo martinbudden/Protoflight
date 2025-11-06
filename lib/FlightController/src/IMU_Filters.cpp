@@ -17,31 +17,37 @@ void IMU_Filters::setConfig(const config_t& config)
 {
     _config = config;
 
+    // set up accLPF
+    if (config.acc_lpf_hz == 0) {
+        _accLPF.setToPassthrough();
+    } else {
+        _accLPF.setCutoffFrequency(config.acc_lpf_hz, _looptimeSeconds);
+    }
+
     // set up gyroLPF1.
+    static constexpr float Q = 0.7071067811865475F; // 1 / sqrt(2)
     const uint16_t gyro_lpf1_hz = config.gyro_lpf1_hz == 0 ? 500 : config.gyro_lpf1_hz;
     switch (config.gyro_lpf1_type) {
-    case config_t::BIQUAD: {
-        static constexpr float Q = 0.7071067811865475F; // 1 / sqrt(2)
+    case config_t::BIQUAD:
         _gyroLPF1Biquad.initLowPass(gyro_lpf1_hz, _looptimeSeconds, Q);
         _gyroLPF1 = &_gyroLPF1Biquad;
         break;
-    }
     case config_t::NOT_SET:
-        _gyroLPF1PT1.setToPassthrough();
-        _gyroLPF1 = &_gyroLPF1PT1;
+        _gyroLPF1_PT1.setToPassthrough();
+        _gyroLPF1 = &_gyroLPF1_PT1;
         break;
     case config_t::PT3:
         // just use PT2 if PT3 specified
         [[fallthrough]];
     case config_t::PT2:
-        _gyroLPF1PT2.setCutoffFrequency(gyro_lpf1_hz, _looptimeSeconds);
-        _gyroLPF1 = &_gyroLPF1PT2;
+        _gyroLPF1_PT2.setCutoffFrequency(gyro_lpf1_hz, _looptimeSeconds);
+        _gyroLPF1 = &_gyroLPF1_PT2;
         break;
     case config_t::PT1:
         [[fallthrough]];
     default:
-        _gyroLPF1PT1.setCutoffFrequency(gyro_lpf1_hz, _looptimeSeconds);
-        _gyroLPF1 = &_gyroLPF1PT1;
+        _gyroLPF1_PT1.setCutoffFrequency(gyro_lpf1_hz, _looptimeSeconds);
+        _gyroLPF1 = &_gyroLPF1_PT1;
         break;
     }
 
@@ -79,10 +85,12 @@ This is called from within AHRS::readIMUandUpdateOrientation() (ie the main IMU/
 */
 void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
 {
-    (void)acc;
     (void)deltaT;
 
-    // apply the lowpass filters
+    // apply the acc lowpass filter
+    acc = _accLPF.filter(acc);
+
+    // apply the gyro lowpass filters
     if (_gyroLPF1) {
         // call filterVirtual(), since type of filter is variable
         gyroRPS = _gyroLPF1->filterVirtual(gyroRPS);
