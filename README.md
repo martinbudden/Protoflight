@@ -823,8 +823,8 @@ classDiagram
 
     Blackbox o-- BlackboxCallbacksBase : calls loadSlow/MainState
     Blackbox <|-- BlackboxProtoFlight : overrides writeSystemInformation
+    Blackbox o-- BlackboxSerialDevice : calls open/close
     Blackbox *-- BlackboxEncoder : calls write
-    Blackbox o-- BlackboxSerialDevice : calls open close
     %%BlackboxEncoder --* Blackbox : calls write
     %%BlackboxSerialDevice --o Blackbox : calls open close
     BlackboxEncoder o-- BlackboxSerialDevice : calls write
@@ -851,9 +851,17 @@ classDiagram
 
     class BlackboxSerialDevice {
         <<abstract>>
+        virtual open() *
+        virtual close() *
+        virtual write() *
     }
     link BlackboxSerialDevice "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxSerialDevice.h"
-    class BlackboxSerialDeviceSDCard["BlackboxSerialDeviceSDCard(eg)"]
+    class BlackboxSerialDeviceSDCard["BlackboxSerialDeviceSDCard(eg)"] {
+        open() override
+        close() override
+        write() override
+    }
+    link BlackboxSerialDevice "https://github.com/martinbudden/Library-Blackbox/blob/main/src/BlackboxSerialDeviceSDCard.h"
     BlackboxSerialDevice <|-- BlackboxSerialDeviceSDCard
 
     classDef taskClass fill:#f96
