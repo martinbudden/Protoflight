@@ -97,6 +97,9 @@ public:
     DynamicIdleController::config_t loadDynamicIdleControllerConfig(uint8_t pidProfileIndex) const;
     int32_t storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config, uint8_t pidProfileIndex);
 
+    MotorMixerBase::motorConfig_t loadMotorConfig() const;
+    int32_t storeMotorConfig(const MotorMixerBase::motorConfig_t& config);
+
     FlightController::filters_config_t loadFlightControllerFiltersConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerFiltersConfig(const FlightController::filters_config_t& config, uint8_t pidProfileIndex);
 

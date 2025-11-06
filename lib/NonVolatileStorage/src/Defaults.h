@@ -35,6 +35,14 @@ static constexpr DynamicIdleController::config_t dynamicIdleControllerConfig = {
     .dyn_idle_max_increase = 150,
 };
 
+static constexpr MotorMixerBase::motorConfig_t motorConfig = {
+    .motorIdle = 550, // 700 for brushed
+    .maxthrottle = 2000,
+    .mincommand = 1000,
+    .kv = 1960,
+    .motorPoleCount = 14,
+};
+
 static constexpr FlightController::filters_config_t flightControllerFiltersConfig = {
     .dterm_lpf1_hz = 75,
     .dterm_lpf2_hz = 150,

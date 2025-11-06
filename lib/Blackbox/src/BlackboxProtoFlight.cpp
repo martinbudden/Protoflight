@@ -36,21 +36,15 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
         return WRITE_NOT_COMPLETE;
     }
 // See https://github.com/betaflight/blackbox-log-viewer/blob/master/src/flightlog_parser.js for parsing of fields
-    const FlightController::filters_config_t fcFiltersConfig = _flightController.getFiltersConfig();
-    const FlightController::anti_gravity_config_t antiGravityConfig = _flightController.getAntiGravityConfig();
+    //enum { PID_ROLL, PID_PITCH, PID_YAW, PID_LEVEL, PID_MAG, PID_ITEM_COUNT };
 
     const Cockpit::rates_t rates = _cockpit.getRates();
 
-    const IMU_Filters::config_t imuFiltersConfig = _imuFilters.getConfig();
-
+    const MotorMixerBase& motorMixer = _flightController.getMixer();
 #if defined(USE_DYNAMIC_IDLE)
-    const DynamicIdleController* dynamicIdleController = _flightController.getMixer().getDynamicIdleController();
+    const DynamicIdleController* dynamicIdleController = motorMixer.getDynamicIdleController();
     const DynamicIdleController::config_t* dynamicIdleControllerConfig = dynamicIdleController ? &dynamicIdleController->getConfig() : nullptr;
 #endif
-
-    //const BlackboxCallbacksBase::rates_t& currentControlRateProfile = _callbacks.currentControlRateProfile();
-    //const pidProfile_t& currentPidProfile = _callbacks.getCurrentPidProfile();
-    //enum { PID_ROLL, PID_PITCH, PID_YAW, PID_LEVEL, PID_MAG, PID_ITEM_COUNT };
 
     struct firmware_t {
         const char* date;
@@ -58,9 +52,9 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
         const char* version;
     };
 #if defined(FIRMWARE)
-    const firmware_t firmware = FIRMWARE;
+    static constexpr firmware_t firmware = FIRMWARE;
 #else
-    const firmware_t firmware = {.date="2025.Jun.28",.time="00:00:00",.version="0.0.1"};
+    static constexpr firmware_t firmware = {.date="2025.Jun.28",.time="00:00:00",.version="0.0.1"};
 #endif
 
     switch (_xmitState.headerIndex) {
@@ -86,14 +80,14 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
 // "P denom" ignored by blackbox-log-view
 //        BLACKBOX_PRINT_HEADER_LINE("P denom", "%d",                         static_cast<uint16_t>(blackboxIInterval / blackboxPInterval));
 
-        BLACKBOX_PRINT_HEADER_LINE("minthrottle", "%d",                     1000);
-        BLACKBOX_PRINT_HEADER_LINE("maxthrottle", "%d",                     2000);
+        BLACKBOX_PRINT_HEADER_LINE("maxthrottle", "%d",                     motorMixer.getMotorConfig().maxthrottle);
 // Baseflight uses a gyroScale that gives radians per microsecond as output, whereas Cleanflight produces degrees
 // per second and leaves the conversion to radians per microsecond to the IMU. Let's just convert Cleanflight's scale to
 // match Baseflight so we can use Baseflight's IMU for both:
 // sysConfig.gyroScale * (Math.PI / 180.0) * 0.000001
         BLACKBOX_PRINT_HEADER_LINE("gyro_scale","0x%x",                     BlackboxEncoder::castFloatBytesToInt(0.000001F / gyroScale));
         BLACKBOX_PRINT_HEADER_LINE("motorOutput", "%d,%d",                  158,2047);
+        BLACKBOX_PRINT_HEADER_LINE("motor_kv", "%d",                        motorMixer.getMotorConfig().kv);
         BLACKBOX_PRINT_HEADER_LINE("acc_1G", "%u",                          4096);
 
 /*
@@ -177,20 +171,20 @@ H pidAtMinThrottle:1
 H anti_gravity_threshold:350
 H anti_gravity_gain:1000
 */
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_type", "%d",                 fcFiltersConfig.dterm_lpf1_type);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_static_hz", "%d",            fcFiltersConfig.dterm_lpf1_hz);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_type", "%d",                 fcFiltersConfig.dterm_lpf2_type);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_static_hz", "%d",            fcFiltersConfig.dterm_lpf2_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_type", "%d",                 _flightController.getFiltersConfig().dterm_lpf1_type);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_static_hz", "%d",            _flightController.getFiltersConfig().dterm_lpf1_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_type", "%d",                 _flightController.getFiltersConfig().dterm_lpf2_type);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_static_hz", "%d",            _flightController.getFiltersConfig().dterm_lpf2_hz);
         //BLACKBOX_PRINT_HEADER_LINE("yaw_lowpass_hz", "%d",                  currentPidProfile.yaw_lowpass_hz);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_hz", "%d",                  fcFiltersConfig.dterm_notch_hz);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_cutoff", "%d",              fcFiltersConfig.dterm_notch_cutoff);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_hz", "%d",                  _flightController.getFiltersConfig().dterm_notch_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_cutoff", "%d",              _flightController.getFiltersConfig().dterm_notch_cutoff);
         //BLACKBOX_PRINT_HEADER_LINE("iterm_windup", "%d",                    currentPidProfile.itermWindup);
         //BLACKBOX_PRINT_HEADER_LINE("pid_at_min_throttle", "%d",             currentPidProfile.pidAtMinThrottle);
 
         // Betaflight PID controller parameters
-        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",               antiGravityConfig.i_gain);
-        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",          antiGravityConfig.cutoff_hz);
-        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",             antiGravityConfig.p_gain);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",               _flightController.getAntiGravityConfig().i_gain);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",          _flightController.getAntiGravityConfig().cutoff_hz);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",             _flightController.getAntiGravityConfig().p_gain);
 #if defined(USE_INTEGRATED_YAW_CONTROL)
         BLACKBOX_PRINT_HEADER_LINE("use_integrated_yaw", "%d",              currentPidProfile.use_integrated_yaw);
 #endif
@@ -218,10 +212,10 @@ H gyro_lowpass_hz:90
 H gyro_notch_hz:0,0
 H gyro_notch_cutoff:300,100
 */
-        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_type", "%d",                  imuFiltersConfig.gyro_lpf1_type);
-        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_static_hz", "%d",             imuFiltersConfig.gyro_lpf1_hz);
-        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_type", "%d",                  imuFiltersConfig.gyro_lpf2_type);
-        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_static_hz", "%d",             imuFiltersConfig.gyro_lpf2_hz);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_type", "%d",                  _imuFilters.getConfig().gyro_lpf1_type);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_static_hz", "%d",             _imuFilters.getConfig().gyro_lpf1_hz);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_type", "%d",                  _imuFilters.getConfig().gyro_lpf2_type);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_static_hz", "%d",             _imuFilters.getConfig().gyro_lpf2_hz);
         BLACKBOX_PRINT_HEADER_LINE("gyro_notch_hz", "%d,%d",                0,0);
         BLACKBOX_PRINT_HEADER_LINE("gyro_notch_cutoff", "%d,%d",            300,100);
 /*
@@ -241,14 +235,14 @@ H dshot_idle_value:550
 H debug_mode:0
 H features:541130760
 */
-        BLACKBOX_PRINT_HEADER_LINE("acc_lpf_hz", "%d",                      1000);
+        BLACKBOX_PRINT_HEADER_LINE("acc_lpf_hz", "%d",                      _imuFilters.getConfig().acc_lpf_hz);
         BLACKBOX_PRINT_HEADER_LINE("acc_hardware", "%d",                    1);
         BLACKBOX_PRINT_HEADER_LINE("gyro_cal_on_first_arm", "%d",           0);
         BLACKBOX_PRINT_HEADER_LINE("serialrx_provider", "%d",               SERIALRX_TARGET_CUSTOM); // custom
         BLACKBOX_PRINT_HEADER_LINE("use_unsynced_pwm", "%d",                0);
         BLACKBOX_PRINT_HEADER_LINE("motor_pwm_protocol", "%d",              PWM_TYPE_BRUSHED);
         BLACKBOX_PRINT_HEADER_LINE("motor_pwm_rate", "%d",                  480);
-        BLACKBOX_PRINT_HEADER_LINE("motor_idle", "%d",                      550);
+        BLACKBOX_PRINT_HEADER_LINE("motor_idle", "%d",                      motorMixer.getMotorConfig().motorIdle);
         BLACKBOX_PRINT_HEADER_LINE("debug_mode", "%d",                      getDebugMode());
         BLACKBOX_PRINT_HEADER_LINE("features", "%d",                        541130760); //0x2041'0008
 

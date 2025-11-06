@@ -52,7 +52,8 @@ constexpr uint16_t RPM_FiltersConfigKey = 0x0505;
 constexpr uint16_t RadioControllerFailsafeKey = 0x0506;
 constexpr uint16_t AutopilotConfigKey = 0x507;
 constexpr uint16_t AutopilotPositionConfigKey = 0x508;
-constexpr uint16_t AltitudeHoldConfigKey = 0x508;
+constexpr uint16_t AltitudeHoldConfigKey = 0x509;
+constexpr uint16_t MotorConfigKey = 0x50A;
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
@@ -283,6 +284,20 @@ DynamicIdleController::config_t NonVolatileStorage::loadDynamicIdleControllerCon
 int32_t NonVolatileStorage::storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config, uint8_t pidProfileIndex)
 {
     return storeItem(DynamicIdleControllerConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::dynamicIdleControllerConfig);
+}
+
+MotorMixerBase::motorConfig_t NonVolatileStorage::loadMotorConfig() const
+{
+    {MotorMixerBase::motorConfig_t config {};
+    if (loadItem(DynamicIdleControllerConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::motorConfig;
+}
+
+int32_t NonVolatileStorage::storeMotorConfig(const MotorMixerBase::motorConfig_t& config)
+{
+    return storeItem(MotorConfigKey, &config, sizeof(config), &DEFAULTS::motorConfig);
 }
 
 

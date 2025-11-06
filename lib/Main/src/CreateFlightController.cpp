@@ -38,7 +38,9 @@ FlightController& Main::createFlightController(uint32_t taskIntervalMicroseconds
     static MotorMixerBase motorMixer(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug);
 #else
     static_assert(false && "MotorMixer not specified");
-#endif // USE_MOTOR_MIXER
+#endif // USE_MOTOR_MIXER_*
+
+    motorMixer.setMotorConfig(nvs.loadMotorConfig());
 
     // Statically allocate the flightController.
     static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, motorMixer, ahrsMessageQueue, debug);
