@@ -911,7 +911,6 @@ classDiagram
     }
     link MSP_ProtoFlightBox "https://github.com/martinbudden/protoflight/blob/main/lib/MSP/src/MSP_ProtoFlightBox.h"
     MSP_ProtoFlight *-- MSP_ProtoFlightBox
-    MSP_ProtoFlight o-- Features
     MSP_ProtoFlight o-- AHRS
     MSP_ProtoFlight o-- FlightController
     MSP_ProtoFlight o-- Cockpit
@@ -1018,13 +1017,6 @@ classDiagram
       hideEmptyMembersBox: false
 ---
 classDiagram
-    class TaskBase:::taskClass {
-    }
-    link TaskBase "https://github.com/martinbudden/Library-TaskBase/blob/main/src/TaskBase.h"
-    TaskBase <|-- ReceiverTask
-    TaskBase <|-- BarometerTask
-    TaskBase <|-- GPS_Task
-
     class FlightController {
         array~PIDF~ _pids
         array~Filter~ _dTermFilters
@@ -1082,7 +1074,7 @@ classDiagram
     }
     link Autopilot "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Autopilot.h"
     Autopilot o-- AHRS_MessageQueue : calls PEEK_AHRS_DATA
-    Autopilot *-- KalmanFilter
+    Autopilot *-- KalmanFilter : calls update
 
     class KalmanFilter {
     }
@@ -1098,30 +1090,28 @@ classDiagram
     FlightController o-- AHRS_MessageQueue : calls SIGNAL
     %%AHRS_MessageQueue --o FlightController : calls SIGNAL
 
+    class BarometerBase {
+    }
+    class BarometerTask:::taskClass {
+    }
+    %%BarometerTask o-- BarometerMessageQueue : calls SEND
+    BarometerMessageQueue --o BarometerTask : calls SEND
+    BarometerTask o-- BarometerBase : calls read
+    class BarometerMessageQueue {
+        float altitude
+    }
+
     class GPS_Base {
+    }
+    class GPS_Task:::taskClass {
     }
     class GPS_MessageQueue {
         Geodetic location
     }
-
-    class BarometerBase {
-    }
-    class BarometerMessageQueue {
-        float altitude
-    }
-    Autopilot o-- GPS_MessageQueue : calls PEEK
-    BarometerMessageQueue --o Autopilot: calls PEEK
-
-
-    class BarometerTask:::taskClass {
-    }
-    BarometerTask o-- BarometerMessageQueue : calls SEND
-    BarometerTask o-- BarometerBase : calls read
-
-    class GPS_Task:::taskClass {
-    }
-    GPS_Task o-- GPS_MessageQueue : calls SEND
+    GPS_MessageQueue --o GPS_Task : calls SEND
     GPS_Task o-- GPS_Base : calls read
 
+    KalmanFilter o-- BarometerMessageQueue : calls PEEK
+    KalmanFilter o-- GPS_MessageQueue : calls PEEK
     classDef taskClass fill:#f96
 ```
