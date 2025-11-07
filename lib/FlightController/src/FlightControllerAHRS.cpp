@@ -97,7 +97,6 @@ Level Race Mode (aka NFE(Not Fast Enough) mode) is equivalent to angle mode on r
 */
 void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT) // NOLINT(readability-make-member-function-const)
 {
-
     // convert orientationENU from the ENU coordinate frame to the NED coordinate frame
     //static const Quaternion qENUtoNED(0.0F, sqrtf(0.5F), sqrtf(0.5F), 0.0F);
     //const Quaternion orientationNED = qENUtoNED * orientationENU;

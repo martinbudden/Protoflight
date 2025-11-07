@@ -538,7 +538,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         }
 
         const bool success = false;
-        if (!_cockpit.isArmingFlagSet(Cockpit::ARMED)) {
+        if (!_cockpit.isArmed()) {
             //success = resetEEPROM(); //!!TODO: implement this
             //if (success && postProcessFn) {
             if (postProcessFn) {

@@ -43,7 +43,11 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
         --_rxM.setpointTickCountCounter;
         if (_rxM.setpointTickCountCounter == 0) {
             _rxM.setpointDeltaT = 0.001F * static_cast<float>(_rxM.setpointTickCountSum) / static_cast<float>(rx_t::SETPOINT_TICKCOUNT_COUNTER_START);
-            _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
+            if (_antiGravityConfig.cutoff_hz == 0) {
+                _sh.antiGravityThrottleFilter.setToPassthrough();
+            } else {
+                _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
+            }
             // Feedforward filters
             if (_filtersConfig.rc_smoothing_feedforward_cutoff == 0) {
                 for (auto& filter : _sh.setpointDerivativeFilters) {
@@ -224,7 +228,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // Angle Mode is used if the controlMode is set to angle mode, or failsafe is on.
     // Angle Mode is prevented when in Ground Mode, so the aircraft doesn't try and self-level while it is still on the ground.
     // This value is cached here, to avoid evaluating a reasonably complex condition in updateOutputsUsingPIDs()
-    _rxM.useAngleMode = (_fcC.controlMode == CONTROL_MODE_ANGLE) && !_sh.groundMode;
+    _rxM.useAngleMode = (_fcC.controlMode >= CONTROL_MODE_ANGLE) && !_sh.groundMode;
 }
 
 /*!

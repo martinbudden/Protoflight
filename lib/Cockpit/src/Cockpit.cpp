@@ -19,16 +19,47 @@ Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Aut
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
 }
 
-bool Cockpit::isArmingFlagSet(arming_flag_e armingFlag) const
+bool Cockpit::isArmed() const
 {
-    (void)armingFlag;
-    return true; // !!TODO arming flag
+    return _armingFlags & ARMED;
+}
+
+bool Cockpit::wasEverArmed() const
+{
+    return _armingFlags & WAS_EVER_ARMED;
+}
+
+void Cockpit::setArmed()
+{
+    _armingFlags |= ARMED | WAS_EVER_ARMED;
+    _flightController.motorsSwitchOn();
+}
+
+void Cockpit::setDisarmed()
+{
+    _armingFlags &= ~ARMED;
+    _flightController.motorsSwitchOff();
 }
 
 bool Cockpit::isFlightModeFlagSet(uint32_t flightModeFlag) const
 {
-    (void)flightModeFlag;
-    return true; // !!TODO flight mode flag
+    return _flightModeFlags & flightModeFlag;
+}
+
+void Cockpit::setFlightModeFlag(uint32_t flightModeFlag)
+{
+    _flightModeFlags |= flightModeFlag;
+}
+
+void Cockpit::clearFlightModeFlag(uint32_t flightModeFlag)
+{
+    _flightModeFlags &= ~flightModeFlag;
+}
+
+
+uint32_t Cockpit::getFlightModeFlags() const
+{
+    return _flightModeFlags;
 }
 
 bool Cockpit::isRcModeActive(uint8_t rcMode) const
@@ -87,7 +118,7 @@ void Cockpit::handleOnOffSwitch()
         if (_onOffSwitchPressed) {
             // motorOnOff false and _onOffPressed true means the  on/off button is being released, so toggle the motor state
             if (_flightController.motorsIsOn()) {
-                _flightController.motorsSwitchOff();
+                setDisarmed();
                 if (_blackbox) {
                     _blackbox->finish();
                     _flightController.setBlackboxActive(false);
@@ -101,7 +132,7 @@ void Cockpit::handleOnOffSwitch()
                     });
                     _flightController.setBlackboxActive(true);
                 }
-                _flightController.motorsSwitchOn();
+                setArmed();
             }
             _onOffSwitchPressed = false;
         }
@@ -122,29 +153,29 @@ void Cockpit::updateControls(const controls_t& controls)
     // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
     enum { CONTROL_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_MODE_CHANNEL = ReceiverBase::AUX3 };
     if (_receiver.getChannelRaw(CONTROL_MODE_CHANNEL)) {
-        _flightMode |= ANGLE_MODE;
+        _flightModeFlags |= ANGLE_MODE;
     } else {
-        _flightMode &= ~ANGLE_MODE;
+        _flightModeFlags &= ~ANGLE_MODE;
     }
     if (_receiver.getChannelRaw(ALTITUDE_MODE_CHANNEL)) {
-        if ((_flightMode & ALT_HOLD_MODE) == 0) {
+        if ((_flightModeFlags & ALT_HOLD_MODE) == 0) {
             // not currently in altitude hold mode, so set the altitude hold setpoint
             if (_autopilot.setAltitudeHoldSetpoint()) {
                 // only switch to altitude hold mode if the autopilot supports it
-                _flightMode |= ALT_HOLD_MODE;
+                _flightModeFlags |= ALT_HOLD_MODE;
             }
         }
     }
-    if (_flightMode & (GPS_HOLD_MODE | GPS_HOME_MODE | GPS_RESCUE_MODE)) {
-        const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightMode);
+    if (_flightModeFlags & (POS_HOLD_MODE | GPS_HOME_MODE | GPS_RESCUE_MODE)) {
+        const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightModeFlags);
         _flightController.updateSetpoints(flightControls);
         return;
     }
 
-    FlightController::control_mode_e controlMode = (_flightMode & ANGLE_MODE) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE;
+    FlightController::control_mode_e controlMode = (_flightModeFlags & ANGLE_MODE) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE;
 
     float throttleStick {};
-    if (_flightMode & ALT_HOLD_MODE) {
+    if (_flightModeFlags & ALT_HOLD_MODE) {
         throttleStick = _autopilot.calculateThrottleForAltitudeHold(controls);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     } else {
