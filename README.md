@@ -1074,9 +1074,9 @@ classDiagram
     }
     link Autopilot "https://github.com/martinbudden/protoflight/blob/main/lib/Helm/src/Autopilot.h"
     Autopilot o-- AHRS_MessageQueue : calls PEEK_AHRS_DATA
-    Autopilot *-- KalmanFilter : calls update
+    Autopilot *-- AltitudeKalmanFilter : calls update
 
-    class KalmanFilter {
+    class AltitudeKalmanFilter {
     }
     class AHRS_MessageQueue {
         ahrs_data_t ahrsData
@@ -1111,7 +1111,7 @@ classDiagram
     GPS_MessageQueue --o GPS_Task : calls SEND
     GPS_Task o-- GPS_Base : calls read
 
-    KalmanFilter o-- BarometerMessageQueue : calls PEEK
-    KalmanFilter o-- GPS_MessageQueue : calls PEEK
+    Cockpit o-- BarometerMessageQueue : calls PEEK
+    Cockpit o-- GPS_MessageQueue : calls PEEK
     classDef taskClass fill:#f96
 ```
