@@ -59,7 +59,7 @@ bool Autopilot::setAltitudeHoldSetpoint()
     return true;
 }
 
-float Autopilot::calculateThrottleForAltitudeHold(const RadioControllerBase::controls_t& controls)
+float Autopilot::calculateThrottleForAltitudeHold(const CockpitBase::controls_t& controls)
 {
     if (_barometer == nullptr) {
         return controls.throttleStick;
@@ -94,7 +94,7 @@ float Autopilot::calculateThrottleForAltitudeHold(const RadioControllerBase::con
     return throttle;
 }
 
-FlightController::controls_t Autopilot::calculateFlightControls(const RadioControllerBase::controls_t& controls, uint32_t flightModeModeFlags)
+FlightController::controls_t Autopilot::calculateFlightControls(const CockpitBase::controls_t& controls, uint32_t flightModeModeFlags)
 {
     (void)flightModeModeFlags;
 

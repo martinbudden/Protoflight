@@ -23,7 +23,7 @@ Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightCon
     autopilot.setAltitudeHoldConfig(nvs.loadAltitudeHoldConfig());
 #endif
 
-    static Cockpit cockpit(receiver, flightController, autopilot, debug, nvs.loadRadioControllerRates(nvs.getCurrentRateProfileIndex()));
+    static Cockpit cockpit(receiver, flightController, autopilot, debug, nvs.loadRates(nvs.getCurrentRateProfileIndex()));
 
     return cockpit;
 }

@@ -8,12 +8,12 @@
 | MotorMixers            | yes       | 0.0.3   | yes        | no      |
 | SensorFusion           | yes       | 0.2.9   | yes        | no      |
 | StreamBuf              | yes       | 0.0.2   | yes        | no      |
-| Sensors                | yes       | 0.0.1   | yes        | no      |
+| Sensors                | yes       | 0.0.2   | yes        | no      |
 | TaskBase               | yes       | 0.0.10  | yes        | no      |
-| StabilizedVehicle      | yes       | 0.5.20  | yes        | no      |
-| Receiver               | yes       | 0.5.11  | yes        | no      |
-| Backchannel            | yes       | 0.1.10  | yes        | no      |
-| MultiWiiSerialProtocol | yes       | 0.0.13  | yes        | no      |
+| StabilizedVehicle      | yes       | 0.5.21  | yes        | no      |
+| Receiver               | yes       | 0.5.12  | yes        | no      |
+| Backchannel            | yes       | 0.1.11  | yes        | no      |
+| MultiWiiSerialProtocol | yes       | 0.0.14  | yes        | no      |
 | Blackbox               | yes       | 0.0.22  | yes        | no      |
 | FlashKLV               | yes       | 0.0.3   | yes        | no      |
 | IMU                    | yes       | 0.9.8 - superseded   | yes        | no      |
@@ -39,33 +39,33 @@ Libraries
 │   ├── Filters @ 0.9.4
 │   └── PIDF @ 0.4.1
 │
-├── StabilizedVehicle @ 0.5.20
+├── StabilizedVehicle @ 0.5.21
 │   ├── TaskBase @ 0.0.10
 │   ├── VectorQuaternionMatrix @ 0.4.5
-│   ├── Sensors @ 0.0.1
+│   ├── Sensors @ 0.0.2
 │   │   └── VectorQuaternionMatrix @ 0.4.5
 │   └── SensorFusion @ 0.2.9
 │       └── VectorQuaternionMatrix @ 0.4.5
 │
-├── Receiver @ 0.5.11
+├── Receiver @ 0.5.12
 │   └── TaskBase @ 0.0.10
 │
-└── Backchannel @ 0.1.10
+└── Backchannel @ 0.1.11
     ├── TaskBase @ 0.0.10
-    ├── Receiver @ 0.5.11
-    └── StabilizedVehicle @ 0.5.19
+    ├── Receiver @ 0.5.12
+    └── StabilizedVehicle @ 0.5.21
 
 
 └── Protoflight @ 0.0.1
-    ├── IMU @ 0.9.7
+    ├── Sensors @ 0.0.2
     ├── Filters @ 0.9.4
     ├── PIDF @ 0.4.1
     ├── MotorMixers @ 0.0.2
-    ├── StabilizedVehicle @ 0.5.20
-    ├── Receiver @ 0.5.11
-    └── Backchannel @ 0.1.10
+    ├── StabilizedVehicle @ 0.5.21
+    ├── Receiver @ 0.5.12
+    └── Backchannel @ 0.1.11
 
-└── MultiWiiSerialProtocol @ 0.0.13
+└── MultiWiiSerialProtocol @ 0.0.14
     ├── TaskBase @ 0.0.10
     └── StreamBuf @ 0.0.2
 

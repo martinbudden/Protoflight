@@ -1,7 +1,7 @@
 #pragma once
 
+#include <CockpitBase.h>
 #include <Features.h>
-#include <RadioControllerBase.h>
 
 #include <array>
 #include <cstddef>
@@ -13,7 +13,7 @@ class Blackbox;
 class FlightController;
 
 
-class Cockpit : public RadioControllerBase {
+class Cockpit : public CockpitBase {
 public:
     enum { ROLL = 0, PITCH = 1, YAW = 2, AXIS_COUNT = 3 };
     enum { RATE_LIMIT_MAX = 1998 };

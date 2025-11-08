@@ -14,12 +14,10 @@
 #include <xyz_type.h>
 
 class AHRS;
-class Blackbox;
 class AHRS_MessageQueue;
 class Debug;
 class DynamicNotchFilter;
 class MotorMixerBase;
-class RadioControllerBase;
 class Quaternion;
 
 /*!

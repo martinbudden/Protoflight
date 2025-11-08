@@ -148,7 +148,7 @@ static constexpr RPM_Filters::config_t rpmFiltersConfig = {
 };
 #endif
 
-static constexpr Cockpit::failsafe_t radioControllerFailsafe = {
+static constexpr Cockpit::failsafe_t cockpitFailSafe = {
     .delay = 15,
     .landing_time = 60,
     .switch_mode = 0,
@@ -157,7 +157,7 @@ static constexpr Cockpit::failsafe_t radioControllerFailsafe = {
     .throttle_low_delay = 100,
 };
 
-static constexpr Cockpit::rates_t radioControllerRates = {
+static constexpr Cockpit::rates_t cockpitRates = {
     .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },

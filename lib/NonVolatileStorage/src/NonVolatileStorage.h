@@ -38,14 +38,10 @@ public:
     enum { READ_WRITE=false, READ_ONLY=true };
     enum { MAC_ADDRESS_LEN = 6 };
 
+    enum calibration_state_e { NOT_CALIBRATED = 0, CALIBRATED = 1 };
     enum { DEFAULT_PID_PROFILE = 0, PID_PROFILE_COUNT = 4 };
     enum { DEFAULT_RATE_PROFILE = 0, RATE_PROFILE_COUNT = 4 };
 
-    struct xyz_int32_t {
-        int32_t x;
-        int32_t y;
-        int32_t z;
-    };
 public:
     // NOTE: "get" functions are declared const, since they are logically const, although not physically const
 
@@ -64,12 +60,6 @@ public:
     int32_t remove(uint16_t key);
 
     int32_t storeAll(const AHRS& ahrs, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile);
-
-    bool loadAccOffset(int32_t& x, int32_t& y, int32_t& z) const;
-    int32_t storeAccOffset(int32_t x, int32_t y, int32_t z);
-
-    bool loadGyroOffset(int32_t& x, int32_t& y, int32_t& z) const;
-    int32_t storeGyroOffset(int32_t x, int32_t y, int32_t z);
 
     void loadMacAddress(uint8_t* macAddress) const;
     int32_t storeMacAddress(const uint8_t* macAddress);
@@ -93,6 +83,18 @@ public:
     bool loadItem(uint16_t key, uint8_t pidProfileIndex, void* item, size_t length) const;
     int32_t storeItem(uint16_t key, const void* item, size_t length, const void* defaults);
     int32_t storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults);
+
+    calibration_state_e loadAccCalibrationState() const;
+    int32_t storeAccCalibrationState(calibration_state_e calibrationState);
+
+    xyz_t loadAccOffset() const;
+    int32_t storeAccOffset(const xyz_t& offset);
+
+    calibration_state_e loadGyroCalibrationState() const;
+    int32_t storeGyroCalibrationState(calibration_state_e calibrationState);
+
+    xyz_t loadGyroOffset() const;
+    int32_t storeGyroOffset(const xyz_t& offset);
 
     DynamicIdleController::config_t loadDynamicIdleControllerConfig(uint8_t pidProfileIndex) const;
     int32_t storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config, uint8_t pidProfileIndex);
@@ -147,11 +149,11 @@ public:
     IMU_Filters::config_t loadIMU_FiltersConfig() const;
     int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
 
-    Cockpit::failsafe_t loadRadioControllerFailsafe();
-    int32_t storeRadioControllerFailsafe(const Cockpit::failsafe_t& failsafe);
+    Cockpit::failsafe_t loadFailsafe();
+    int32_t storeFailsafe(const Cockpit::failsafe_t& failsafe);
 
-    Cockpit::rates_t loadRadioControllerRates(uint8_t rateProfileIndex) const;
-    int32_t storeRadioControllerRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex);
+    Cockpit::rates_t loadRates(uint8_t rateProfileIndex) const;
+    int32_t storeRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex);
 
 private:
 #if defined(USE_FLASH_KLV)

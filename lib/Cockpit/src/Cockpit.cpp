@@ -10,7 +10,7 @@
 
 
 Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& debug, const rates_t& rates) :
-    RadioControllerBase(receiver),
+    CockpitBase(receiver),
     _flightController(flightController),
     _autopilot(autopilot),
     _debug(debug),

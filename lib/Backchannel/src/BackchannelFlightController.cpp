@@ -58,13 +58,11 @@ bool BackchannelFlightController::packetSetOffset(const CommandPacketSetOffset& 
 
     switch (packet.setType) {
     case CommandPacketSetOffset::SAVE_GYRO_OFFSET: {
-        const IMU_Base::xyz_int32_t gyroOffset = _ahrs.getGyroOffset();
-        _nonVolatileStorage.storeGyroOffset(gyroOffset.x, gyroOffset.y, gyroOffset.z);
+        _nonVolatileStorage.storeGyroOffset(_ahrs.getGyroOffset());
         break;
     }
     case CommandPacketSetOffset::SAVE_ACC_OFFSET: {
-        const IMU_Base::xyz_int32_t accOffset = _ahrs.getAccOffset();
-        _nonVolatileStorage.storeAccOffset(accOffset.x, accOffset.y, accOffset.z);
+        _nonVolatileStorage.storeAccOffset(_ahrs.getAccOffset());
         break;
     }
     default:

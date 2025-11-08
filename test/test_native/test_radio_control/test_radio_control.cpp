@@ -47,7 +47,7 @@ void setUp() {
 void tearDown() {
 }
 
-void test_radio_controller()
+void test_cockpit()
 {
     static ReceiverNull receiver;
     static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
@@ -89,7 +89,7 @@ void test_radio_controller()
     TEST_ASSERT_EQUAL_FLOAT(600.0F, roll); // 100.0F / (1.0F - 0.60F)
 }
 
-void test_radio_controller_passthrough()
+void test_cockpit_passthrough()
 {
     static ReceiverNull receiver;
     static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
@@ -108,7 +108,7 @@ void test_radio_controller_passthrough()
     TEST_ASSERT_EQUAL_FLOAT(1000.0F, roll);
 }
 
-void test_radio_controller_defaults()
+void test_cockpit_defaults()
 {
     static ReceiverNull receiver;
     static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
@@ -145,7 +145,7 @@ void test_radio_controller_defaults()
     TEST_ASSERT_EQUAL_FLOAT(670.0F, roll);
 }
 
-void test_radio_controller_constrain()
+void test_cockpit_constrain()
 {
     static ReceiverNull receiver;
     static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
@@ -166,7 +166,7 @@ void test_radio_controller_constrain()
     TEST_ASSERT_EQUAL_FLOAT(1998.0F, roll);
 }
 
-void test_radio_controller_throttle()
+void test_cockpit_throttle()
 {
     static ReceiverNull receiver;
     static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
@@ -219,11 +219,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_radio_controller);
-    RUN_TEST(test_radio_controller_passthrough);
-    RUN_TEST(test_radio_controller_defaults);
-    RUN_TEST(test_radio_controller_constrain);
-    RUN_TEST(test_radio_controller_throttle);
+    RUN_TEST(test_cockpit);
+    RUN_TEST(test_cockpit_passthrough);
+    RUN_TEST(test_cockpit_defaults);
+    RUN_TEST(test_cockpit_constrain);
+    RUN_TEST(test_cockpit_throttle);
 
     UNITY_END();
 }

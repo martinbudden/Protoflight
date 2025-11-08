@@ -22,11 +22,14 @@ This gives a total of 16,169 usable keys.
 
 constexpr uint16_t PID_ProfileIndexKey = 0x0001;
 constexpr uint16_t RateProfileIndexKey = 0x0002;
+constexpr uint16_t AccCalibrationStateKey = 0x0003;
+constexpr uint16_t GyroCalibrationStateKey = 0x0004;
+
 static constexpr std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
     // note these must go up in jumps of 4, since one key is used for each profile
     0x0100, 0x0104, 0x0108, 0x010C, 0x0110, 0x0114, 0x011C
 };
-constexpr uint16_t MotorMixerTypeKey = 0x0003;
+constexpr uint16_t MotorMixerTypeKey = 0x0005;
 
 constexpr uint16_t AccOffsetKey = 0x0200;
 constexpr uint16_t GyroOffsetKey = 0x0201;
@@ -46,10 +49,10 @@ constexpr uint16_t FlightControllerITermRelaxConfigKey = 0x0418;
 constexpr uint16_t FlightControllerYawSpinRecoveryConfigKey = 0x041C;
 constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x0420;
 
-constexpr uint16_t RadioControllerRatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
+constexpr uint16_t RatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
 constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
 constexpr uint16_t RPM_FiltersConfigKey = 0x0505;
-constexpr uint16_t RadioControllerFailsafeKey = 0x0506;
+constexpr uint16_t FailsafeKey = 0x0506;
 constexpr uint16_t AutopilotConfigKey = 0x507;
 constexpr uint16_t AutopilotPositionConfigKey = 0x508;
 constexpr uint16_t AltitudeHoldConfigKey = 0x509;
@@ -520,35 +523,35 @@ int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& 
 }
 
 
-Cockpit::failsafe_t NonVolatileStorage::loadRadioControllerFailsafe() // NOLINT(readability-make-member-function-const)
+Cockpit::failsafe_t NonVolatileStorage::loadFailsafe() // NOLINT(readability-make-member-function-const)
 {
     {Cockpit::failsafe_t failsafe {};
-    if (loadItem(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe))) { // cppcheck-suppress knownConditionTrueFalse
+    if (loadItem(FailsafeKey, &failsafe, sizeof(failsafe))) { // cppcheck-suppress knownConditionTrueFalse
     }}
-    return DEFAULTS::radioControllerFailsafe;
+    return DEFAULTS::cockpitFailSafe;
 }
 
-int32_t NonVolatileStorage::storeRadioControllerFailsafe(const Cockpit::failsafe_t& failsafe)
+int32_t NonVolatileStorage::storeFailsafe(const Cockpit::failsafe_t& failsafe)
 {
-    return storeItem(RadioControllerFailsafeKey, &failsafe, sizeof(failsafe), &DEFAULTS::radioControllerFailsafe);
+    return storeItem(FailsafeKey, &failsafe, sizeof(failsafe), &DEFAULTS::cockpitFailSafe);
 }
 
-Cockpit::rates_t NonVolatileStorage::loadRadioControllerRates(uint8_t rateProfileIndex) const
+Cockpit::rates_t NonVolatileStorage::loadRates(uint8_t rateProfileIndex) const
 {
     {Cockpit::rates_t rates {};
-    if (rateProfileIndex < RATE_PROFILE_COUNT && loadItem(RadioControllerRatesKey + rateProfileIndex, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
+    if (rateProfileIndex < RATE_PROFILE_COUNT && loadItem(RatesKey + rateProfileIndex, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
         return rates;
     }}
-    return DEFAULTS::radioControllerRates;
+    return DEFAULTS::cockpitRates;
 }
 
-int32_t NonVolatileStorage::storeRadioControllerRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex)
+int32_t NonVolatileStorage::storeRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex)
 {
     if (rateProfileIndex >= RATE_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
     }
-    const uint16_t key = RadioControllerRatesKey + rateProfileIndex;
-    return storeItem(key, &rates, sizeof(rates), &DEFAULTS::radioControllerRates);
+    const uint16_t key = RatesKey + rateProfileIndex;
+    return storeItem(key, &rates, sizeof(rates), &DEFAULTS::cockpitRates);
 }
 
 VehicleControllerBase::PIDF_uint16_t NonVolatileStorage::loadPID(uint8_t pidIndex, uint8_t pidProfileIndex) const
@@ -568,7 +571,7 @@ int32_t NonVolatileStorage::storePID(const VehicleControllerBase::PIDF_uint16_t&
         return ERROR_INVALID_PROFILE;
     }
     const uint16_t key = PID_Keys[pidIndex] + pidProfileIndex;
-    return storeItem(key, &key, sizeof(pid), &DEFAULTS::flightControllerPIDs[pidIndex]);
+    return storeItem(key, &pid, sizeof(pid), &DEFAULTS::flightControllerPIDs[pidIndex]);
 }
 
 void NonVolatileStorage::resetPID(uint8_t pidIndex, uint8_t pidProfileIndex)
@@ -580,42 +583,64 @@ void NonVolatileStorage::resetPID(uint8_t pidIndex, uint8_t pidProfileIndex)
 }
 
 
-bool NonVolatileStorage::loadAccOffset(int32_t& x, int32_t& y, int32_t& z) const
+NonVolatileStorage::calibration_state_e NonVolatileStorage::loadAccCalibrationState() const
 {
-    xyz_int32_t xyz {};
-    if (loadItem(AccOffsetKey, &xyz, sizeof(xyz))) { // cppcheck-suppress knownConditionTrueFalse
-        x = xyz.x;
-        y = xyz.y;
-        z = xyz.z;
-        return true;
+    calibration_state_e calibrationState {};
+    if (loadItem(AccCalibrationStateKey, &calibrationState, sizeof(calibrationState))) { // cppcheck-suppress knownConditionTrueFalse
+        return calibrationState;
     }
-    return false;
+    return NOT_CALIBRATED;
 }
 
-int32_t NonVolatileStorage::storeAccOffset(int32_t x, int32_t y, int32_t z)
+int32_t NonVolatileStorage::storeAccCalibrationState(calibration_state_e calibrationState)
 {
-    const xyz_int32_t xyz = { .x = x, .y = y, .z = z };
-    const xyz_int32_t xyzDefault = { .x = 0, .y = 0, .z = 0 };
-    return storeItem(AccOffsetKey, &xyz, sizeof(xyz), &xyzDefault);
+    const calibration_state_e defaultCalibrationState = NOT_CALIBRATED;
+    return storeItem(AccCalibrationStateKey, &calibrationState, sizeof(calibrationState), &defaultCalibrationState);
 }
 
-bool NonVolatileStorage::loadGyroOffset(int32_t& x, int32_t& y, int32_t& z) const
+xyz_t NonVolatileStorage::loadAccOffset() const
 {
-    xyz_int32_t xyz {};
-    if (loadItem(GyroOffsetKey, &xyz, sizeof(xyz))) { // cppcheck-suppress knownConditionTrueFalse
-        x = xyz.x;
-        y = xyz.y;
-        z = xyz.z;
-        return true;
+    {xyz_t offset {};
+    if (loadItem(AccOffsetKey, &offset, sizeof(offset))) { // cppcheck-suppress knownConditionTrueFalse
+        return offset;
+    }}
+    return xyz_t { .x = 0.0F, .y = 0.0F, .z = 0.0F };
+}
+
+int32_t NonVolatileStorage::storeAccOffset(const xyz_t& offset)
+{
+    const xyz_t defaultOffset = { .x = 0.0F, .y = 0.0F, .z = 0.0F };
+    return storeItem(AccOffsetKey, &offset, sizeof(offset), &defaultOffset);
+}
+
+NonVolatileStorage::calibration_state_e NonVolatileStorage::loadGyroCalibrationState() const
+{
+    calibration_state_e calibrationState {};
+    if (loadItem(GyroCalibrationStateKey, &calibrationState, sizeof(calibrationState))) { // cppcheck-suppress knownConditionTrueFalse
+        return calibrationState;
     }
-    return false;
+    return NOT_CALIBRATED;
 }
 
-int32_t NonVolatileStorage::storeGyroOffset(int32_t x, int32_t y, int32_t z)
+int32_t NonVolatileStorage::storeGyroCalibrationState(calibration_state_e calibrationState)
 {
-    const xyz_int32_t xyz = { .x = x, .y = y, .z = z };
-    const xyz_int32_t xyzDefault = { .x = 0, .y = 0, .z = 0 };
-    return storeItem(GyroOffsetKey, &xyz, sizeof(xyz), &xyzDefault);
+    const calibration_state_e defaultCalibrationState = NOT_CALIBRATED;
+    return storeItem(GyroCalibrationStateKey, &calibrationState, sizeof(calibrationState), &defaultCalibrationState);
+}
+
+xyz_t NonVolatileStorage::loadGyroOffset() const
+{
+    {xyz_t offset {};
+    if (loadItem(GyroOffsetKey, &offset, sizeof(offset))) { // cppcheck-suppress knownConditionTrueFalse
+        return offset;
+    }}
+    return xyz_t { .x = 0.0F, .y = 0.0F, .z = 0.0F };
+}
+
+int32_t NonVolatileStorage::storeGyroOffset(const xyz_t& offset)
+{
+    const xyz_t defaultOffset = { .x = 0.0F, .y = 0.0F, .z = 0.0F };
+    return storeItem(GyroOffsetKey, &offset, sizeof(offset), &defaultOffset);
 }
 
 void NonVolatileStorage::loadMacAddress(uint8_t* macAddress) const // NOLINT(readability-non-const-parameter)
@@ -703,7 +728,7 @@ int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& f
     storeDynamicNotchFilterConfig(imuFilters.getDynamicNotchFilterConfig());
 #endif
 
-    storeRadioControllerRates(cockpit.getRates(), ratesProfile);
+    storeRates(cockpit.getRates(), ratesProfile);
 
     return OK;
 }
