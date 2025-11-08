@@ -8,6 +8,10 @@
 #endif
 #include <BackchannelTransceiverBase.h>
 #include <Debug.h>
+//#define USE_DEBUG_PRINTF_BACKCHANNEL
+#if defined(USE_DEBUG_PRINTF_BACKCHANNEL)
+#include <HardwareSerial.h>
+#endif
 #include <NonVolatileStorage.h>
 #include <ReceiverBase.h>
 #include <SV_Telemetry.h>
@@ -45,6 +49,9 @@ BackchannelFlightController::BackchannelFlightController(
 
 bool BackchannelFlightController::packetSetOffset(const CommandPacketSetOffset& packet)
 {
+#if defined(USE_DEBUG_PRINTF_BACKCHANNEL)
+    //Serial.printf("    packetSetOffset itype:%d, len:%d value:%d, type:%d\r\n", packet.type, packet.len, packet.value, packet.type);
+#endif
     if (BackchannelStabilizedVehicle::packetSetOffset(packet)) {
         return true;
     }
