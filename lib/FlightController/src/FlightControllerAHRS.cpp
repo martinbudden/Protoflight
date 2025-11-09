@@ -52,28 +52,28 @@ void FlightController::calculateDMaxMultipliers()
 /*!
 NOTE: CALLED FROM WITHIN THE AHRS TASK
 */
-void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT)
+void FlightController::recoverFromYawSpin(const xyz_t& gyroRPS, float deltaT)
 {
 #if defined(USE_YAW_SPIN_RECOVERY)
-    if (std::fabs(gyroENU_RPS.z) > _yawSpin.recoveredRPS) {
+    if (std::fabs(gyroRPS.z) > _yawSpin.recoveredRPS) {
         _sh.outputThrottle = 0.5F; // half throttle gives maximum yaw authority, since outputs will have maximum range before being clipped
         // use the YAW_RATE_DPS PID to bring the spin down to zero
         _sh.PIDS[YAW_RATE_DPS].setSetpoint(0.0F);
-        const float yawRateDPS = yawRateNED_DPS(gyroENU_RPS);
+        const float yawRateDPS = yawRateNED_DPS(gyroRPS);
         VehicleControllerMessageQueue::queue_item_t outputs {
             .throttle = _sh.outputThrottle,
             .roll = 0.0F,
             .pitch = 0.0F,
             .yaw = _sh.PIDS[YAW_RATE_DPS].update(yawRateDPS, deltaT)
         };
-        if (std::fabs(gyroENU_RPS.z) <= _yawSpin.partiallyRecoveredRPS) {
+        if (std::fabs(gyroRPS.z) <= _yawSpin.partiallyRecoveredRPS) {
             // we have partially recovered from the spin, so try and also correct any roll and pitch spin
             _sh.PIDS[ROLL_RATE_DPS].setSetpoint(0.0F);
-            const float rollRateDPS = rollRateNED_DPS(gyroENU_RPS);
+            const float rollRateDPS = rollRateNED_DPS(gyroRPS);
             outputs.roll = _sh.PIDS[ROLL_RATE_DPS].update(rollRateDPS, deltaT);
 
             _sh.PIDS[PITCH_RATE_DPS].setSetpoint(0.0F);
-            const float pitchRateDPS = pitchRateNED_DPS(gyroENU_RPS);
+            const float pitchRateDPS = pitchRateNED_DPS(gyroRPS);
             outputs.pitch = _sh.PIDS[PITCH_RATE_DPS].update(pitchRateDPS, deltaT);
         }
         SIGNAL(outputs);
@@ -84,7 +84,7 @@ void FlightController::recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT
         switchPID_integrationOn();
     }
 #else
-    (void)gyroENU_RPS;
+    (void)gyroRPS;
     (void)deltaT;
 #endif
 }
@@ -95,7 +95,7 @@ NOTE: CALLED FROM WITHIN THE AHRS TASK
 In angle mode, the roll and pitch angles are used to set the setpoints for the rollRate and pitchRate PIDs.
 Level Race Mode (aka NFE(Not Fast Enough) mode) is equivalent to angle mode on roll and acro mode on pitch.
 */
-void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT) // NOLINT(readability-make-member-function-const)
+void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orientation, float deltaT) // NOLINT(readability-make-member-function-const)
 {
     // convert orientationENU from the ENU coordinate frame to the NED coordinate frame
     //static const Quaternion qENUtoNED(0.0F, sqrtf(0.5F), sqrtf(0.5F), 0.0F);
@@ -119,13 +119,13 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
             _ahM.amcs.state = STATE_CALCULATE_PITCH;
         }
 
-        _ahM.amcs.rollSinAngle = -orientationENU.sinRollClipped(); // sin(x-180) = -sin(x)
+        _ahM.amcs.rollSinAngle = -orientation.sinRollClipped(); // sin(x-180) = -sin(x)
         float rollRateSetpointDPS;
         if (_useQuaternionSpaceForAngleMode) {
             const float rollSinAngleDelta = _sh.dTermFilters1[ROLL_SIN_ANGLE].filter(_ahM.amcs.rollSinAngle - _sh.PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
             rollRateSetpointDPS = _sh.PIDS[ROLL_SIN_ANGLE].updateDelta(_ahM.amcs.rollSinAngle, rollSinAngleDelta, deltaT);
         } else {
-            _ahM.rollAngleDegreesRaw = orientationENU.calculateRollDegrees() - 180.0F;
+            _ahM.rollAngleDegreesRaw = orientation.calculateRollDegrees() - 180.0F;
             const float rollAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_ahM.rollAngleDegreesRaw - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
             rollRateSetpointDPS = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(_ahM.rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
         }
@@ -135,13 +135,13 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
     } else {
         _ahM.amcs.state = STATE_CALCULATE_ROLL;
 
-        _ahM.amcs.pitchSinAngle = -orientationENU.sinPitchClipped(); // this is cheaper to calculate than sinRoll
+        _ahM.amcs.pitchSinAngle = -orientation.sinPitchClipped(); // this is cheaper to calculate than sinRoll
         float pitchRateSetpointDPS;
         if (_useQuaternionSpaceForAngleMode) {
             const float pitchSinAngleDelta = _sh.dTermFilters1[PITCH_SIN_ANGLE].filter(_ahM.amcs.pitchSinAngle - _sh.PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
             pitchRateSetpointDPS = _sh.PIDS[PITCH_SIN_ANGLE].updateDelta(_ahM.amcs.pitchSinAngle, pitchSinAngleDelta, deltaT);
         } else {
-            _ahM.pitchAngleDegreesRaw = -orientationENU.calculatePitchDegrees();
+            _ahM.pitchAngleDegreesRaw = -orientation.calculatePitchDegrees();
             const float pitchAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_ahM.pitchAngleDegreesRaw - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
             pitchRateSetpointDPS = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(_ahM.pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
         }
@@ -202,7 +202,7 @@ It is typically called at frequency of between 1000Hz and 8000Hz, so it has to b
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyroRPS, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
 */
-void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataNED)
+void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsData)
 {
 #if defined(USE_BLACKBOX) || defined(USE_BACKCHANNEL) || defined(USE_SCREEN)
     // signalling/sending to the message queue is not free, so, in this time-critical function, we only do it if necessary
@@ -210,16 +210,16 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataN
     if (_ahM.sendBlackboxMessageCount >= _sendBlackboxMessageDenominator) {
         _ahM.sendBlackboxMessageCount = 0;
         if (_sh.blackboxActive) {
-            _ahrsMessageQueue.SIGNAL(ahrsDataNED);
+            _ahrsMessageQueue.SIGNAL(ahrsData);
         }
 #if defined(USE_BACKCHANNEL) || defined(USE_SCREEN)
-        _ahrsMessageQueue.SEND_AHRS_DATA(ahrsDataNED);
+        _ahrsMessageQueue.SEND_AHRS_DATA(ahrsData);
 #endif
     }
 #endif
 #if defined(USE_YAW_SPIN_RECOVERY)
     if (_sh.yawSpinRecovery) {
-        recoverFromYawSpin(ahrsDataNED.accGyroRPS.gyroRPS, ahrsDataNED.deltaT);
+        recoverFromYawSpin(ahrsData.accGyroRPS.gyroRPS, ahrsData.deltaT);
         return;
     }
 #endif
@@ -231,7 +231,7 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataN
     const timeUs32_t time0 = timeUs();
 #endif
     if (_rxC.useAngleMode) {
-        updateRateSetpointsForAngleMode(ahrsDataNED.orientation, ahrsDataNED.deltaT);
+        updateRateSetpointsForAngleMode(ahrsData.orientation, ahrsData.deltaT);
     }
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const timeUs32_t time1 = timeUs();
@@ -248,14 +248,14 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataN
     //
     // Roll axis
     //
-    const float rollRateDPS = rollRateNED_DPS(ahrsDataNED.accGyroRPS.gyroRPS);
+    const float rollRateDPS = rollRateNED_DPS(ahrsData.accGyroRPS.gyroRPS);
     float rollRateDeltaFilteredDPS = _sh.dTermFilters1[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
     rollRateDeltaFilteredDPS = _sh.dTermFilters2[ROLL_RATE_DPS].filter(rollRateDeltaFilteredDPS);
     outputs.roll = _sh.PIDS[ROLL_RATE_DPS].updateDeltaITerm(
                                                     rollRateDPS, 
                                                     rollRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[ROLL_RATE_DPS], 
                                                     calculateITermError(ROLL_RATE_DPS, rollRateDPS),
-                                                    ahrsDataNED.deltaT);
+                                                    ahrsData.deltaT);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const timeUs32_t time2 = timeUs();
     _sh.timeChecksMicroseconds[1] = time2 - time1;
@@ -264,14 +264,14 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataN
     //
     // Pitch axis
     //
-    const float pitchRateDPS = pitchRateNED_DPS(ahrsDataNED.accGyroRPS.gyroRPS);
+    const float pitchRateDPS = pitchRateNED_DPS(ahrsData.accGyroRPS.gyroRPS);
     float pitchRateDeltaFilteredDPS = _sh.dTermFilters1[PITCH_RATE_DPS].filter(rollRateDPS - _sh.PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
     pitchRateDeltaFilteredDPS = _sh.dTermFilters2[PITCH_RATE_DPS].filter(pitchRateDeltaFilteredDPS);
     outputs.pitch = _sh.PIDS[PITCH_RATE_DPS].updateDeltaITerm(
                                                     pitchRateDPS,
                                                     pitchRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[PITCH_RATE_DPS],
                                                     calculateITermError(PITCH_RATE_DPS, pitchRateDPS),
-                                                    ahrsDataNED.deltaT);
+                                                    ahrsData.deltaT);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const timeUs32_t time3 = timeUs();
     _sh.timeChecksMicroseconds[2] = time3 - time2;
@@ -282,8 +282,8 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsDataN
     // Yaw axis
     //
     // DTerm is zero for yawRate, so call updateSPI() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no KTerm
-    const float yawRateDPS = yawRateNED_DPS(ahrsDataNED.accGyroRPS.gyroRPS);
-    outputs.yaw = _sh.PIDS[YAW_RATE_DPS].updateSPI(yawRateDPS, ahrsDataNED.deltaT);
+    const float yawRateDPS = yawRateNED_DPS(ahrsData.accGyroRPS.gyroRPS);
+    outputs.yaw = _sh.PIDS[YAW_RATE_DPS].updateSPI(yawRateDPS, ahrsData.deltaT);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const timeUs32_t time4 = timeUs();
     _sh.timeChecksMicroseconds[3] = time4 - time3;

@@ -181,7 +181,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         int32_t magX = 0;
         int32_t magY = 0;
         int32_t magZ = 0;
-        _ahrs.readMagRaw(magX, magY, magZ);
+        //_ahrs.readMagRaw(magX, magY, magZ);
         dst.writeU16(static_cast<uint16_t>(magX));
         dst.writeU16(static_cast<uint16_t>(magY));
         dst.writeU16(static_cast<uint16_t>(magZ));

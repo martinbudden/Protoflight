@@ -23,7 +23,7 @@ Targets
 #if defined(TARGET_M5STACK_STAMPS3_FLY)
     #define BOARD_IDENTIFIER    "M5Stack_StampS3_Fly"
 
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
     #define USE_IMU_BMI270
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define GYRO_SAMPLE_RATE_HZ 1000
@@ -62,10 +62,10 @@ Targets
 #if defined(TARGET_M5STACK_CORE2)
     #define BOARD_IDENTIFIER    "M5Stack_Core2"
 
-    #define IMU_AXIS_ORDER      IMU_Base::YNEG_XPOS_ZPOS
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
     #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
-    //#define USE_IMU_MPU6886
-    #define USE_IMU_M5_UNIFIED
+    #define USE_IMU_MPU6886
+    //#define USE_IMU_M5_UNIFIED
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define GYRO_SAMPLE_RATE_HZ 200 // 5000us looptime
     #define IMU_I2C_PINS        i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}

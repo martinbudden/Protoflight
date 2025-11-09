@@ -180,8 +180,8 @@ void FlightController::updateSetpoints(const controls_t& controls)
     //
     // Pitch axis
     //
-    // Pushing the  PITCH stick forward gives a positive value of _pitchStick and we want this to be nose up.
-    // For NED nose up is positive pitch, so sign of setpoint is opposite sign as _pitchStick.
+    // Pushing the  PITCH stick forward gives a positive value of _pitchStick and we want this to be nose down.
+    // For NED nose down is negative pitch, so sign of setpoint is opposite sign as _pitchStick.
     // So sign of _pitchStick is negated.
     _sh.PIDS[PITCH_RATE_DPS].setSetpoint(-controls.pitchStickDPS);
     if (_rxM.setpointDeltaT != 0) {

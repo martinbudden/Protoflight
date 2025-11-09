@@ -46,7 +46,7 @@ IMU_Base& Main::createIMU()
 
 #if defined(USE_IMU_MPU6886)
 #if defined(M5_UNIFIED)
-    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, BUS_I2C::pins_t{.sda=static_cast<uint8_t>(M5.In_I2C.getSDA()), .scl=static_cast<uint8_t>(M5.In_I2C.getSCL()), .irq=0xFF});
+    static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, BUS_I2C::i2c_pins_t{.sda=static_cast<uint8_t>(M5.In_I2C.getSDA()), .scl=static_cast<uint8_t>(M5.In_I2C.getSCL()), .irq=0xFF});
 #else
     static IMU_MPU6886 imuSensor(IMU_AXIS_ORDER, BUS_I2C::IMU_I2C_PINS);
 #endif
