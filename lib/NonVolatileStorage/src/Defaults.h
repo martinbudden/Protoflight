@@ -6,6 +6,8 @@
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #include <MotorMixerBase.h>
+#include <OSD.h>
+#include <OSD_Elements.h>
 #include <RPM_Filters.h>
 
 
@@ -193,5 +195,14 @@ static constexpr Autopilot::altitude_hold_config_t autopilotAltitudeHoldConfig =
     .deadband = 20,     // throttle deadband in percent of stick travel
 };
 #endif
+
+#if defined(USE_OSD)
+static constexpr OSD::config_t osdConfig = {
+};
+
+static constexpr OSD_Elements::config_t osdElementsConfig = {
+};
+#endif
+
 
 } // END namespace

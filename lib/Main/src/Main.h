@@ -34,6 +34,8 @@ class IMU_FiltersBase;
 class MSP_Task;
 class MSP_SerialBase;
 class NonVolatileStorage;
+class OSD;
+class OSD_Task;
 class RPM_Filters;
 class ReceiverBase;
 class ReceiverTask;
@@ -68,6 +70,10 @@ enum { MSP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
 enum { BLACKBOX_TASK_INTERVAL_MICROSECONDS = 2000 }; // 500 Hz
 #endif
 
+#if !defined(OSD_TASK_INTERVAL_MICROSECONDS)
+enum { OSD_TASK_INTERVAL_MICROSECONDS = 80000 }; // 12 Hz
+#endif
+
 enum {
     AHRS_TASK_PRIORITY = 6,
     FC_TASK_PRIORITY = 5,
@@ -76,6 +82,7 @@ enum {
     BACKCHANNEL_TASK_PRIORITY = 3,
     BLACKBOX_TASK_PRIORITY = 3,
     MSP_TASK_PRIORITY = 2,
+    OSD_TASK_PRIORITY = 2,
 };
 
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
@@ -105,6 +112,7 @@ enum {
     MOTORS_TASK_CORE = CPU_CORE_0,
     MSP_TASK_CORE = CPU_CORE_0,
     BLACKBOX_TASK_CORE = CPU_CORE_0,
+    OSD_TASK_CORE = CPU_CORE_0,
 };
 
 class DashboardTask : public TaskBase {
@@ -129,6 +137,7 @@ private:
     static Cockpit& createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, const AHRS_MessageQueue& ahrsMessageQueue, NonVolatileStorage& nvs);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
+    static OSD& createOSD(const FlightController& flightController, Debug& debug);
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
@@ -149,6 +158,7 @@ private:
         BackchannelTask* backchannelTask;
         MSP_Task* mspTask;
         BlackboxTask* blackboxTask;
+        OSD_Task* osdTask;
     };
 private:
     tasks_t _tasks {};

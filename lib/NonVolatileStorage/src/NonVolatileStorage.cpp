@@ -48,6 +48,8 @@ constexpr uint16_t FlightControllerDMaxConfigKey = 0x0414;
 constexpr uint16_t FlightControllerITermRelaxConfigKey = 0x0418;
 constexpr uint16_t FlightControllerYawSpinRecoveryConfigKey = 0x041C;
 constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x0420;
+constexpr uint16_t OSD_ConfigKey = 0x0424;
+constexpr uint16_t OSD_ElementsConfigKey = 0x0428;
 
 constexpr uint16_t RatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
 constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
@@ -461,6 +463,35 @@ RPM_Filters::config_t NonVolatileStorage::loadRPM_FiltersConfig() const
 int32_t NonVolatileStorage::storeRPM_FiltersConfig(const RPM_Filters::config_t& config)
 {
     return storeItem(RPM_FiltersConfigKey, &config, sizeof(config), &DEFAULTS::rpmFiltersConfig);
+}
+#endif
+#if defined(USE_OSD)
+OSD::config_t NonVolatileStorage::loadOSD_Config() const
+{
+    {OSD::config_t config {};
+    if (loadItem(OSD_ElementsConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::osdConfig;
+}
+
+int32_t NonVolatileStorage::storeOSD_Config(const OSD::config_t& config)
+{
+    return storeItem(OSD_ConfigKey, &config, sizeof(config), &DEFAULTS::osdConfig);
+}
+
+OSD_Elements::config_t NonVolatileStorage::loadOSD_ElementsConfig() const
+{
+    {OSD_Elements::config_t config {};
+    if (loadItem(OSD_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::osdElementsConfig;
+}
+
+int32_t NonVolatileStorage::storeOSD_ElementsConfig(const OSD_Elements::config_t& config)
+{
+    return storeItem(OSD_ElementsConfigKey, &config, sizeof(config), &DEFAULTS::osdElementsConfig);
 }
 #endif
 #if defined(USE_ALTITUDE_HOLD)

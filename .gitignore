@@ -11,6 +11,3 @@ _scratch/*.*
 Notes.md
 scratch.md
 build.txt
-
-lib/Display/src/
-test/test_native/test_display/

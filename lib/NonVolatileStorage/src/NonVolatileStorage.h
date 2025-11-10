@@ -138,6 +138,12 @@ public:
     RPM_Filters::config_t loadRPM_FiltersConfig() const;
     int32_t storeRPM_FiltersConfig(const RPM_Filters::config_t& config);
 #endif
+#if defined(USE_OSD)
+    OSD::config_t loadOSD_Config() const;
+    int32_t storeOSD_Config(const OSD::config_t& config);
+    OSD_Elements::config_t loadOSD_ElementsConfig() const;
+    int32_t storeOSD_ElementsConfig(const OSD_Elements::config_t& config);
+#endif
 #if defined USE_ALTITUDE_HOLD
     Autopilot::autopilot_config_t loadAutopilotConfig() const;
     int32_t storeAutopilotConfig(const Autopilot::autopilot_config_t& config);

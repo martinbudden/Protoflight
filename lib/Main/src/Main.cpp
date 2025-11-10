@@ -18,6 +18,7 @@
 #include <MSP_ProtoFlight.h>
 #include <MSP_Task.h>
 #include <NonVolatileStorage.h>
+#include <OSD_Task.h>
 #include <ReceiverBase.h>
 #include <ReceiverTask.h>
 #if defined(M5_UNIFIED)
@@ -85,6 +86,9 @@ void Main::setup()
 #if defined(USE_BLACKBOX)
     Blackbox& blackbox = createBlackBox(ahrs, flightController, AHRS_MessageQueue, cockpit, receiver, imuFilters, debug);
 #endif
+#if defined(USE_OSD)
+    OSD& osd = createOSD(flightController, debug);
+#endif
 
 #if defined(M5_UNIFIED)
     // Holding BtnA down while switching on enters calibration mode.
@@ -145,6 +149,10 @@ void Main::setup()
 #endif
 #if defined(USE_BLACKBOX)
     _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, AHRS_MessageQueue, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(taskInfo);
+#endif
+#if defined(USE_OSD)
+    _tasks.osdTask = OSD_Task::createTask(taskInfo, osd, OSD_TASK_PRIORITY, OSD_TASK_CORE, OSD_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
