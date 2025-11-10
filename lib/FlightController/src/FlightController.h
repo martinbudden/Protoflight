@@ -281,7 +281,7 @@ public:
 public:
     void detectCrashOrSpin();
     void setYawSpinThresholdDPS(float yawSpinThresholdDPS);
-    void recoverFromYawSpin(const xyz_t& gyroENU_RPS, float deltaT);
+    void recoverFromYawSpin(const xyz_t& gyroRPS, float deltaT);
 
     void calculateDMaxMultipliers();
     void applyDynamicPID_AdjustmentsOnThrottleChange(float throttle, uint32_t tickCount);
