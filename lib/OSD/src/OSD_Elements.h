@@ -114,7 +114,7 @@ enum  osd_items_e {
 class OSD_Elements {
 public:
     OSD_Elements(const FlightController& flightController) : _flightController(flightController) {}
-    void init();
+    void init(bool backgroundLayerFlag);
 public:
     enum element_type_e{
         OSD_ELEMENT_TYPE_1 = 0,
@@ -144,12 +144,12 @@ public:
     static constexpr uint32_t OSD_TYPE_MASK = 0xC000;  // bits 14-15
     static uint32_t OSD_TYPE(uint32_t x) { return (x & OSD_TYPE_MASK) >> 14; }
 public:
-    void init(bool backgroundLayerFlag);
     bool isSysOSD_Element(uint8_t index) { return (index >= OSD_SYS_GOGGLE_VOLTAGE) && (index <= OSD_SYS_FAN_SPEED); }
 
     const config_t& getConfig() const { return _config; }
     config_t& getConfig() { return _config; }
     void setConfig(const config_t& config);
+
     int convertTemperatureToSelectedUnit(int temperatureCelsius);
     void formatDistanceString(char *result, int distance, char leadingSymbol);
     bool formatRtcDateTime(char *buffer);
@@ -174,6 +174,7 @@ public:
     bool drawSpec(DisplayPortBase *displayPort);
 
     bool drawSingleElement(DisplayPortBase* displayPort, uint8_t elementIndex);
+    bool drawSingleElementBackground(DisplayPortBase* displayPort, uint8_t elementIndex);
 
     int displayWrite(element_t *element, uint8_t x, uint8_t y, uint8_t attr, const char *s);
     int displayWrite(element_t *element, uint8_t x, uint8_t y, uint8_t attr, char c);
@@ -195,6 +196,10 @@ private:
     bool blinkState {true};
     uint8_t _activeElementIndex = 0;
     uint8_t _activeElementCount = 0;
+    bool _backgroundRendered {false};
+    bool _backgroundLayerSupported {false};
+
+    std::array<uint8_t, OSD_ITEM_COUNT> _activeOsdElementArray;
 
     std::bitset<OSD_ITEM_COUNT> _blinkBits {};
 };

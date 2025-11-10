@@ -131,45 +131,41 @@ public:
     };
 public:
     struct config_t {
-        // Alarms
-        uint16_t cap_alarm;
-        uint16_t alt_alarm;
-        uint8_t rssi_alarm;
-
-        uint8_t units;
-
+        char profile[OSD_PROFILE_COUNT][PROFILE_NAME_LENGTH + 2];
+        int8_t rcChannels[RC_CHANNELS_COUNT];   // RC channel values to display, -1 if none
         uint16_t timers[OSD_TIMER_COUNT];
         uint32_t enabledWarnings;
-
-        uint8_t ahMaxPitch;
-        uint8_t ahMaxRoll;
         uint32_t enabled_stats;
-        uint8_t esc_temp_alarm;
+        uint16_t cap_alarm;
+        uint16_t alt_alarm;
+        uint16_t link_quality_alarm;
+        int16_t rssi_dbm_alarm;
+        int16_t rsnr_alarm;
+        uint16_t distance_alarm;
+        uint16_t framerate_hz;
         int16_t esc_rpm_alarm;
         int16_t esc_current_alarm;
+        uint16_t aux_scale;
+        uint8_t aux_channel;
+        uint8_t aux_symbol;
+        uint8_t rssi_alarm;
+        uint8_t units;
+        uint8_t ahMaxPitch;
+        uint8_t ahMaxRoll;
+        uint8_t esc_temp_alarm;
         uint8_t core_temp_alarm;
         uint8_t artificial_horizon_invert;
         uint8_t osdProfileIndex;
         uint8_t overlay_radio_mode;
-        char profile[OSD_PROFILE_COUNT][PROFILE_NAME_LENGTH + 2];
-        uint16_t link_quality_alarm;
-        int16_t rssi_dbm_alarm;
-        int16_t rsnr_alarm;
         uint8_t gps_sats_show_pdop;
-        int8_t rcChannels[RC_CHANNELS_COUNT];   // RC channel values to display, -1 if none
         uint8_t displayPortDevice;
-        uint16_t distance_alarm;
         uint8_t logo_on_arming;
         uint8_t logo_on_arming_duration;        // display duration in 0.1s units
         uint8_t camera_frame_width;
         uint8_t camera_frame_height;
-        uint16_t framerate_hz;
         uint8_t cms_background_type;            // whether the CMS background is transparent or opaque
         uint8_t stat_show_cell_value;
         uint8_t osd_craftname_messages;         // Insert LQ/RSSI-dBm and warnings into CraftName
-        uint8_t aux_channel;
-        uint16_t aux_scale;
-        uint8_t aux_symbol;
         uint8_t canvas_column_count;
         uint8_t canvas_row_count;
         uint8_t osd_use_quick_menu;
@@ -178,20 +174,20 @@ public:
     };
     struct statistics_t {
         timeUs32_t armed_time;
+        float max_g_force;
+        int32_t max_altitude;
+        int32_t max_esc_rpm;
+        int16_t max_esc_temp_index;
+        int16_t max_esc_temp;
+        int16_t max_distance;
         int16_t max_speed;
         int16_t min_voltage; // /100
         uint16_t end_voltage;
         int16_t max_current; // /10
-        uint8_t min_rssi;
-        int32_t max_altitude;
-        int16_t max_distance;
-        float max_g_force;
-        int16_t max_esc_temp_index;
-        int16_t max_esc_temp;
-        int32_t max_esc_rpm;
         uint16_t min_link_quality;
         int16_t min_rssi_dbm;
         int16_t min_rsnr;
+        uint8_t min_rssi;
     };
     struct statistics_rendering_state_t {
         uint8_t row;

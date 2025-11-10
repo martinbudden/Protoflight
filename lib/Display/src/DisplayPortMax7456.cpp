@@ -392,7 +392,7 @@ void DisplayPortMax7456::invert(bool invert)
     if (invert) {
         displayMemoryModeReg |= INVERT_PIXEL_COLOR;
     } else {
-        displayMemoryModeReg &= ~INVERT_PIXEL_COLOR;
+        displayMemoryModeReg &= static_cast<uint8_t>(~INVERT_PIXEL_COLOR);
     }
 
     if (displayMemoryModeReg != previousInvertRegister) {
@@ -449,8 +449,8 @@ int DisplayPortMax7456::writeString(uint8_t x, uint8_t y, uint8_t attr, const ch
     if (y < VIDEO_LINES_PAL) {
         uint8_t *buffer = getActiveLayerBuffer();
         const uint32_t bufferYOffset = y * CHARS_PER_LINE;
-        for (int i = 0, bufferXOffset = x; text[i] && bufferXOffset < CHARS_PER_LINE; i++, bufferXOffset++) {
-            buffer[bufferYOffset + bufferXOffset] = text[i];
+        for (uint32_t i = 0, bufferXOffset = x; text[i] && bufferXOffset < CHARS_PER_LINE; i++, bufferXOffset++) {
+            buffer[bufferYOffset + bufferXOffset] = static_cast<uint8_t>(text[i]);
         }
     }
     return 0;
@@ -489,8 +489,8 @@ bool DisplayPortMax7456::dmaInProgress() const
 
 bool DisplayPortMax7456::buffersSynced() const
 {
-    for (int i = 0; i < maxScreenSize; i++) {
-        if (displayLayers[LAYER_FOREGROUND].buffer[i] != shadowBuffer[i]) {
+    for (uint16_t ii = 0; ii < maxScreenSize; ++ii) {
+        if (displayLayers[LAYER_FOREGROUND].buffer[ii] != shadowBuffer[ii]) {
             return false;
         }
     }

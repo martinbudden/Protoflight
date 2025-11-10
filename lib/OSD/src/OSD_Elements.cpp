@@ -5,6 +5,7 @@
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
 
 static std::array<OSD_Elements::osdElementDrawFn, OSD_ITEM_COUNT> osdElementDrawFunctions = {};
+static std::array<OSD_Elements::osdElementDrawFn, OSD_ITEM_COUNT> osdElementDrawBackgroundFunctions = {};
 
 void OSD_Elements::init(bool backgroundLayerFlag)
 {
@@ -37,6 +38,40 @@ int OSD_Elements::displayWrite(element_t* element, uint8_t x, uint8_t y, uint8_t
 {
     const std::array<char, 2> buf = { c, 0 };
     return displayWrite(element, x, y, attr, &buf[0]);
+}
+
+bool OSD_Elements::isRenderPending()
+{
+    return _displayPendingForeground | _displayPendingBackground;
+}
+
+bool OSD_Elements::drawNextActiveElement(DisplayPortBase* displayPort)
+{
+    if (_activeElementIndex >= _activeElementCount) {
+        _activeElementIndex = 0;
+        return false;
+    }
+
+    const uint8_t item = _activeOsdElementArray[_activeElementIndex];
+
+    if (!_backgroundLayerSupported && osdElementDrawBackgroundFunctions[item] && !_backgroundRendered) {
+        // If the background layer isn't supported then we
+        // have to draw the element's static layer as well.
+        _backgroundRendered = drawSingleElementBackground(displayPort, item);
+        // After the background always come back to check for foreground
+        return true;
+    }
+
+    if (drawSingleElement(displayPort, item)) {
+        // If rendering is complete then advance to the next element
+        // Prepare to render the background of the next element
+        _backgroundRendered = false;
+        if (++_activeElementIndex >= _activeElementCount) {
+            _activeElementIndex = 0;
+            return false;
+        }
+    }
+    return true;
 }
 
 /*!
@@ -98,6 +133,34 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase* displayPort, uint8_t eleme
         if (_activeElement.drawElement) {
             _displayPendingForeground = true;
         }
+    }
+
+    return _activeElement.rendered;
+}
+
+bool OSD_Elements::drawSingleElementBackground(DisplayPortBase* displayPort, uint8_t elementIndex)
+{
+    if (!osdElementDrawBackgroundFunctions[elementIndex]) { // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        return true;
+    }
+
+    const uint8_t posX = OSD_X(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    const uint8_t posY = OSD_Y(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+
+    _activeElement.index = elementIndex;
+    _activeElement.posX = posX;
+    _activeElement.posY = posY;
+    _activeElement.offsetX = 0;
+    _activeElement.offsetY = 0;
+    _activeElement.type = static_cast<element_type_e>(OSD_TYPE(_config.item_pos[elementIndex])); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    _activeElement.displayPort = displayPort;
+    _activeElement.drawElement = true;
+    _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
+
+    OSD_Elements::osdElementDrawFn drawFn = osdElementDrawBackgroundFunctions[elementIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    (this->*drawFn)(_activeElement);
+    if (_activeElement.drawElement) {
+        _displayPendingBackground = true;
     }
 
     return _activeElement.rendered;

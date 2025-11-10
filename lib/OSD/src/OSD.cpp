@@ -122,6 +122,8 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
     (void)timeMicroseconds;
     (void)timeMicrosecondsDelta;
 
+    timeUs32_t executeTimeUs {};
+
     switch (_state) {
     case STATE_INIT:
         if (!_displayPort->checkReady(false)) {
@@ -165,8 +167,38 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
     case STATE_UPDATE_CANVAS:
         _state = STATE_DRAW_ELEMENT;
         break;
-    case STATE_DRAW_ELEMENT:
+    case STATE_DRAW_ELEMENT: {
+        const uint8_t osdElement = _elements.getActiveElement();
+        enum { OSD_EXEC_TIME_SHIFT = 5 };
+
+        timeUs32_t startElementTime = timeUs();
+        _moreElementsToDraw = _elements.drawNextActiveElement(_displayPort);
+        executeTimeUs = timeUs() - startElementTime;
+
+        if (executeTimeUs > (_elementDurationFractionUs[osdElement] >> OSD_EXEC_TIME_SHIFT)) {
+            _elementDurationFractionUs[osdElement] = executeTimeUs << OSD_EXEC_TIME_SHIFT;
+        } else if (_elementDurationFractionUs[osdElement] > 0) {
+            // Slowly decay the max time
+            --_elementDurationFractionUs[osdElement];
+        }
+
+        if (_elements.isRenderPending()) {
+            _state = STATE_DISPLAY_ELEMENT;
+            // Render the element just drawn
+            break;
+        }
+        if (_moreElementsToDraw) {
+            // There are more elements to draw
+            break;
+        }
+
+        if (/*!ARMING_FLAG(ARMED) &&*/ _config.osd_show_spec_prearm) {
+            _state = STATE_REFRESH_PREARM;
+        } else {
+            _state = STATE_COMMIT;
+        }
         break;
+    }
     case STATE_DISPLAY_ELEMENT:
         if (!_elements.displayActiveElement()) {
             if (_moreElementsToDraw) {
