@@ -200,7 +200,7 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
         break;
     }
     case STATE_DISPLAY_ELEMENT:
-        if (!_elements.displayActiveElement()) {
+        if (!_elements.displayActiveElement(_displayPort)) {
             if (_moreElementsToDraw) {
                 // There is no more to draw so advance to the next element
                 _state = STATE_DRAW_ELEMENT;

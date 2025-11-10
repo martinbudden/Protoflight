@@ -26,23 +26,28 @@ void OSD_Elements::setConfig(const config_t& config)
 }
 
 
-int OSD_Elements::displayWrite(element_t* element, uint8_t x, uint8_t y, uint8_t attr, const char *s)
+int OSD_Elements::displayWrite(DisplayPortBase* displayPort, element_t&  element, uint8_t x, uint8_t y, uint8_t attr, const char *s)
 {
-    if (_blinkBits[element->index]) {
+    if (_blinkBits[element.index]) {
         attr |= DisplayPortBase::BLINK;
     }
-    return element->displayPort->writeString(x, y, attr, s);
+    return displayPort->writeString(x, y, attr, s);
 }
 
-int OSD_Elements::displayWrite(element_t* element, uint8_t x, uint8_t y, uint8_t attr, char c)
+int OSD_Elements::displayWrite(DisplayPortBase* displayPort, element_t& element, uint8_t x, uint8_t y, uint8_t attr, char c)
 {
     const std::array<char, 2> buf = { c, 0 };
-    return displayWrite(element, x, y, attr, &buf[0]);
+    return displayWrite(displayPort, element, x, y, attr, &buf[0]);
 }
 
 bool OSD_Elements::isRenderPending()
 {
     return _displayPendingForeground | _displayPendingBackground;
+}
+
+uint8_t OSD_Elements::getActiveElement()
+{
+    return _activeElementIndex;
 }
 
 bool OSD_Elements::drawNextActiveElement(DisplayPortBase* displayPort)
@@ -77,27 +82,26 @@ bool OSD_Elements::drawNextActiveElement(DisplayPortBase* displayPort)
 /*!
 Returns true if there is more to display
 */
-bool OSD_Elements::displayActiveElement()
+bool OSD_Elements::displayActiveElement(DisplayPortBase* displayPort)
 {
     if (_activeElementIndex >= _activeElementCount) {
         return false;
     }
     // If there's a previously drawn background string to be displayed, do that
     if (_displayPendingBackground) {
-        displayWrite(&_activeElement, _activeElement.posX + _activeElement.offsetX, _activeElement.posY + _activeElement.offsetY, _activeElement.attr, &_activeElement.buf[0]);
+        displayWrite(displayPort, _activeElement, _activeElement.posX + _activeElement.offsetX, _activeElement.posY + _activeElement.offsetY, _activeElement.attr, &_activeElement.buf[0]);
         _activeElement.buf[0] = '\0';
         _displayPendingBackground = false;
         return _displayPendingForeground;
     }
     // If there's a previously drawn foreground string to be displayed, do that
     if (_displayPendingForeground) {
-        displayWrite(&_activeElement, _activeElement.posX + _activeElement.offsetX, _activeElement.posY + _activeElement.offsetY, _activeElement.attr, &_activeElement.buf[0]);
+        displayWrite(displayPort, _activeElement, _activeElement.posX + _activeElement.offsetX, _activeElement.posY + _activeElement.offsetY, _activeElement.attr, &_activeElement.buf[0]);
         _activeElement.buf[0] = '\0';
         _displayPendingForeground = false;
     }
     return false;
 }
-
 
 bool OSD_Elements::drawSingleElement(DisplayPortBase* displayPort, uint8_t elementIndex)
 {
@@ -111,24 +115,20 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase* displayPort, uint8_t eleme
         return true;
     }
 
-    const uint8_t posX = OSD_X(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    const uint8_t posY = OSD_Y(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-
     _activeElement.index = elementIndex;
-    _activeElement.posX = posX;
-    _activeElement.posY = posY;
+    _activeElement.posX = OSD_X(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    _activeElement.posY = OSD_Y(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     _activeElement.offsetX = 0;
     _activeElement.offsetY = 0;
     _activeElement.type = static_cast<element_type_e>(OSD_TYPE(_config.item_pos[elementIndex])); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    _activeElement.displayPort = displayPort;
     _activeElement.drawElement = true;
     _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
 
     // Call the element drawing function
     if (isSysOSD_Element(elementIndex)) {
-        displayPort->writeSys(posX, posY, static_cast<DisplayPortBase::system_element_e>(elementIndex - OSD_SYS_GOGGLE_VOLTAGE + DisplayPortBase::SYS_GOGGLE_VOLTAGE));
+        displayPort->writeSys(_activeElement.posX, _activeElement.posY, static_cast<DisplayPortBase::system_element_e>(elementIndex - OSD_SYS_GOGGLE_VOLTAGE + DisplayPortBase::SYS_GOGGLE_VOLTAGE));
     } else {
-        OSD_Elements::osdElementDrawFn drawFn = osdElementDrawFunctions[elementIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+        const OSD_Elements::osdElementDrawFn drawFn = osdElementDrawFunctions[elementIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
         (this->*drawFn)(_activeElement);
         if (_activeElement.drawElement) {
             _displayPendingForeground = true;
@@ -144,20 +144,16 @@ bool OSD_Elements::drawSingleElementBackground(DisplayPortBase* displayPort, uin
         return true;
     }
 
-    const uint8_t posX = OSD_X(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    const uint8_t posY = OSD_Y(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-
     _activeElement.index = elementIndex;
-    _activeElement.posX = posX;
-    _activeElement.posY = posY;
+    _activeElement.posX = OSD_X(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    _activeElement.posY = OSD_Y(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     _activeElement.offsetX = 0;
     _activeElement.offsetY = 0;
     _activeElement.type = static_cast<element_type_e>(OSD_TYPE(_config.item_pos[elementIndex])); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    _activeElement.displayPort = displayPort;
     _activeElement.drawElement = true;
     _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
 
-    OSD_Elements::osdElementDrawFn drawFn = osdElementDrawBackgroundFunctions[elementIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    const OSD_Elements::osdElementDrawFn drawFn = osdElementDrawBackgroundFunctions[elementIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     (this->*drawFn)(_activeElement);
     if (_activeElement.drawElement) {
         _displayPendingBackground = true;
@@ -166,7 +162,9 @@ bool OSD_Elements::drawSingleElementBackground(DisplayPortBase* displayPort, uin
     return _activeElement.rendered;
 }
 
-// Draw functions
+//
+// Drawing functions
+//
 void OSD_Elements::formatPID(char * buf, const char * label, uint8_t axis) // NOLINT(readability-non-const-parameter)
 {
     const FlightController::PIDF_uint16_t pid = _flightController.getPID_MSP(axis);

@@ -128,7 +128,6 @@ public:
     struct element_t {
         enum { ELEMENT_BUFFER_LENGTH = 32 };
         std::array<char, ELEMENT_BUFFER_LENGTH> buf;
-        DisplayPortBase* displayPort;
         element_type_e type;
         uint8_t index;
         uint8_t posX;
@@ -165,7 +164,7 @@ public:
     uint8_t getActiveElement();
     uint8_t getActiveElementCount();
     bool drawNextActiveElement(DisplayPortBase* displayPort);
-    bool displayActiveElement();
+    bool displayActiveElement(DisplayPortBase* displayPort);
     void drawActiveElementsBackground(DisplayPortBase* displayPort);
     void syncBlink(timeUs32_t currentTimeUs);
     void resetAlarms();
@@ -176,8 +175,8 @@ public:
     bool drawSingleElement(DisplayPortBase* displayPort, uint8_t elementIndex);
     bool drawSingleElementBackground(DisplayPortBase* displayPort, uint8_t elementIndex);
 
-    int displayWrite(element_t *element, uint8_t x, uint8_t y, uint8_t attr, const char *s);
-    int displayWrite(element_t *element, uint8_t x, uint8_t y, uint8_t attr, char c);
+    int displayWrite(DisplayPortBase* displayPort, element_t& element, uint8_t x, uint8_t y, uint8_t attr, const char *s);
+    int displayWrite(DisplayPortBase* displayPort, element_t& element, uint8_t x, uint8_t y, uint8_t attr, char c);
 
 // element drawing functions
     void formatPID(char * buf, const char * label, uint8_t axis);
