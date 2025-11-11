@@ -87,7 +87,7 @@ void Main::setup()
     Blackbox& blackbox = createBlackBox(ahrs, flightController, AHRS_MessageQueue, cockpit, receiver, imuFilters, debug);
 #endif
 #if defined(USE_OSD)
-    OSD& osd = createOSD(flightController, debug);
+    OSD& osd = createOSD(flightController, cockpit, debug);
 #endif
 
 #if defined(M5_UNIFIED)

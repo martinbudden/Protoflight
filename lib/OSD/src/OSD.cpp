@@ -1,5 +1,5 @@
 #include "OSD.h"
-
+#include "Cockpit.h"
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
@@ -7,8 +7,10 @@ enum { OSD_PROFILE_BITS_POS = 11 };
 #define OSD_PROFILE_MASK    (((1 << OSD_PROFILE_COUNT) - 1) << OSD_PROFILE_BITS_POS)
 
 
-OSD::OSD(const FlightController& flightController) :
-    _elements(flightController)
+OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug) : //cppcheck-suppress constParameterReference
+    _elements(*this, flightController),
+    _cockpit(cockpit),
+    _debug(debug)
 {
 }
 
@@ -47,12 +49,13 @@ void OSD::init(DisplayPortBase *displayPort, DisplayPortBase::device_type_e disp
 void OSD::completeInitialization()
 {
 }
+
 void OSD::setConfig(const config_t& config)
 {
     _config = config;
 }
 
-void OSD::setStatisticsState(uint8_t statIndex, bool enabled)
+void OSD::setStatsState(uint8_t statIndex, bool enabled)
 {
     if (enabled) {
         _config.enabled_stats |= (1U << statIndex);
@@ -61,30 +64,30 @@ void OSD::setStatisticsState(uint8_t statIndex, bool enabled)
     }
 }
 
-bool OSD::getStatisticsState(uint8_t statIndex) const
+bool OSD::getStatsState(uint8_t statIndex) const
 {
-    return _config.enabled_stats & (1 << statIndex);
+    return _config.enabled_stats & (1U << statIndex);
 }
 
-void OSD::resetStatistics()
+void OSD::resetStats()
 {
-    _statistics.max_current     = 0;
-    _statistics.max_speed       = 0;
-    _statistics.min_voltage     = 5000;
-    _statistics.end_voltage     = 0;
-    _statistics.min_rssi        = 99; // percent
-    _statistics.max_altitude    = 0;
-    _statistics.max_distance    = 0;
-    _statistics.armed_time      = 0;
-    _statistics.max_g_force     = 0;
-    _statistics.max_esc_temp_index = 0;
-    _statistics.max_esc_temp    = 0;
-    _statistics.max_esc_rpm     = 0;
+    _stats.max_current     = 0;
+    _stats.max_speed       = 0;
+    _stats.min_voltage     = 5000;
+    _stats.end_voltage     = 0;
+    _stats.min_rssi        = 99; // percent
+    _stats.max_altitude    = 0;
+    _stats.max_distance    = 0;
+    _stats.armed_time      = 0;
+    _stats.max_g_force     = 0;
+    _stats.max_esc_temp_index = 0;
+    _stats.max_esc_temp    = 0;
+    _stats.max_esc_rpm     = 0;
 
-    _statistics.min_link_quality = 99; //(linkQualitySource == LQ_SOURCE_NONE) ? 99 : 100; // percent
+    _stats.min_link_quality = 99; //(linkQualitySource == LQ_SOURCE_NONE) ? 99 : 100; // percent
     enum { CRSF_RSSI_MIN =-130, CRSF_RSSI_MAX = 0, CRSF_SNR_MIN = -30, CRSF_SNR_MAX = 20 };
-    _statistics.min_rssi_dbm = CRSF_RSSI_MAX;
-    _statistics.min_rsnr = CRSF_SNR_MAX;
+    _stats.min_rssi_dbm = CRSF_RSSI_MAX;
+    _stats.min_rsnr = CRSF_SNR_MAX;
 }
 
 void OSD::setWarningState(uint8_t warningIndex, bool enabled)
@@ -98,7 +101,7 @@ void OSD::setWarningState(uint8_t warningIndex, bool enabled)
 
 bool OSD::getWarningState(uint8_t warningIndex) const
 {
-    return _config.enabledWarnings & (1 << warningIndex);
+    return _config.enabledWarnings & (1U << warningIndex);
 }
 
 void OSD::drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity)
@@ -117,12 +120,10 @@ void OSD::drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity)
     }
 }
 
-bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
+bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) // NOLINT(readability-function-cognitive-complexity)
 {
     (void)timeMicroseconds;
     (void)timeMicrosecondsDelta;
-
-    timeUs32_t executeTimeUs {};
 
     switch (_state) {
     case STATE_INIT:
@@ -172,8 +173,8 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
         enum { OSD_EXEC_TIME_SHIFT = 5 };
 
         timeUs32_t startElementTime = timeUs();
-        _moreElementsToDraw = _elements.drawNextActiveElement(_displayPort);
-        executeTimeUs = timeUs() - startElementTime;
+        _moreElementsToDraw = _elements.drawNextActiveElement(*_displayPort);
+        timeUs32_t executeTimeUs = timeUs() - startElementTime;
 
         if (executeTimeUs > (_elementDurationFractionUs[osdElement] >> OSD_EXEC_TIME_SHIFT)) {
             _elementDurationFractionUs[osdElement] = executeTimeUs << OSD_EXEC_TIME_SHIFT;
@@ -192,7 +193,7 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
             break;
         }
 
-        if (/*!ARMING_FLAG(ARMED) &&*/ _config.osd_show_spec_prearm) {
+        if (_cockpit.isArmed() && _config.osd_show_spec_prearm) {
             _state = STATE_REFRESH_PREARM;
         } else {
             _state = STATE_COMMIT;
@@ -200,12 +201,12 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
         break;
     }
     case STATE_DISPLAY_ELEMENT:
-        if (!_elements.displayActiveElement(_displayPort)) {
+        if (!_elements.displayActiveElement(*_displayPort)) {
             if (_moreElementsToDraw) {
                 // There is no more to draw so advance to the next element
                 _state = STATE_DRAW_ELEMENT;
             } else {
-                if (/*!ARMING_FLAG(ARMED) && */ _config.osd_show_spec_prearm) {
+                if (_cockpit.isArmed() && _config.osd_show_spec_prearm) {
                     _state = STATE_REFRESH_PREARM;
                 } else {
                     _state = STATE_COMMIT;

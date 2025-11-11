@@ -114,7 +114,6 @@ public:
     void setDeviceType(device_type_e deviceType) { _deviceType = deviceType; }
     bool getUseDeviceBlink() const { return _useDeviceBlink; }
 protected:
-    void *_device {};
     device_type_e _deviceType {};
 
     uint8_t _rows {};

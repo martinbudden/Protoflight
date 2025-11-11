@@ -50,7 +50,7 @@ void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, 
         static const uint32_t timeMicrosecondsDelta = timeMicroseconds - timeMicrosecondsPrevious;
         timeMicrosecondsPrevious = timeMicroseconds;
 
-        const uint32_t state = blackbox.update(timeMicroseconds);
+        const uint32_t state = blackbox.updateLog(timeMicroseconds);
         (void)state;
         // Serial.printf("ii:%3d, s:%2d\r\n", ii, state);
 

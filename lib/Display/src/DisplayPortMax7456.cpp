@@ -1,4 +1,3 @@
-#include "Display.h"
 #include "DisplayPortMax7456.h"
 #include <cstring>
 

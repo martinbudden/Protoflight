@@ -6,6 +6,9 @@
 #include <array>
 #include <cstdint>
 
+class Cockpit;
+class Debug;
+
 
 #ifdef USE_OSD_PROFILES
     enum { OSD_PROFILE_COUNT = 3 };
@@ -13,91 +16,9 @@
     enum { OSD_PROFILE_COUNT = 1 };
 #endif
 
-enum  osd_stats_e {
-    OSD_STAT_RTC_DATE_TIME,
-    OSD_STAT_TIMER_1,
-    OSD_STAT_TIMER_2,
-    OSD_STAT_MAX_SPEED,
-    OSD_STAT_MAX_DISTANCE,
-    OSD_STAT_MIN_BATTERY,
-    OSD_STAT_END_BATTERY,
-    OSD_STAT_BATTERY,
-    OSD_STAT_MIN_RSSI,
-    OSD_STAT_MAX_CURRENT,
-    OSD_STAT_USED_MAH,
-    OSD_STAT_MAX_ALTITUDE,
-    OSD_STAT_BLACKBOX,
-    OSD_STAT_BLACKBOX_NUMBER,
-    OSD_STAT_MAX_G_FORCE,
-    OSD_STAT_MAX_ESC_TEMP,
-    OSD_STAT_MAX_ESC_RPM,
-    OSD_STAT_MIN_LINK_QUALITY,
-    OSD_STAT_FLIGHT_DISTANCE,
-    OSD_STAT_MAX_FFT,
-    OSD_STAT_TOTAL_FLIGHTS,
-    OSD_STAT_TOTAL_TIME,
-    OSD_STAT_TOTAL_DIST,
-    OSD_STAT_MIN_RSSI_DBM,
-    OSD_STAT_WATT_HOURS_DRAWN,
-    OSD_STAT_MIN_RSNR,
-    OSD_STAT_BEST_3_CONSEC_LAPS,
-    OSD_STAT_BEST_LAP,
-    OSD_STAT_FULL_THROTTLE_TIME,
-    OSD_STAT_FULL_THROTTLE_COUNTER,
-    OSD_STAT_AVG_THROTTLE,
-    OSD_STAT_COUNT // MUST BE LAST
-};
-
-
-enum osd_timer_e {
-    OSD_TIMER_1,
-    OSD_TIMER_2,
-    OSD_TIMER_COUNT
-};
-
-enum osd_timer_source_e {
-    OSD_TIMER_SRC_ON,
-    OSD_TIMER_SRC_TOTAL_ARMED,
-    OSD_TIMER_SRC_LAST_ARMED,
-    OSD_TIMER_SRC_ON_OR_ARMED,
-    OSD_TIMER_SRC_LAUNCH_TIME,
-    OSD_TIMER_SRC_COUNT
-};
-
-enum osd_timer_precision_e {
-    OSD_TIMER_PREC_SECOND,
-    OSD_TIMER_PREC_HUNDREDTHS,
-    OSD_TIMER_PREC_TENTHS,
-    OSD_TIMER_PREC_COUNT
-};
-
-enum osd_warnings_flags_e {
-    OSD_WARNING_ARMING_DISABLE,
-    OSD_WARNING_BATTERY_NOT_FULL,
-    OSD_WARNING_BATTERY_WARNING,
-    OSD_WARNING_BATTERY_CRITICAL,
-    OSD_WARNING_VISUAL_BEEPER,
-    OSD_WARNING_CRASHFLIP,
-    OSD_WARNING_ESC_FAIL,
-    OSD_WARNING_CORE_TEMPERATURE,
-    OSD_WARNING_RC_SMOOTHING,
-    OSD_WARNING_FAIL_SAFE,
-    OSD_WARNING_LAUNCH_CONTROL,
-    OSD_WARNING_GPS_RESCUE_UNAVAILABLE,
-    OSD_WARNING_GPS_RESCUE_DISABLED,
-    OSD_WARNING_RSSI,
-    OSD_WARNING_LINK_QUALITY,
-    OSD_WARNING_RSSI_DBM,
-    OSD_WARNING_OVER_CAP,
-    OSD_WARNING_RSNR,
-    OSD_WARNING_LOAD,
-    OSD_WARNING_POSHOLD_FAILED,
-    OSD_WARNING_COUNT // MUST BE LAST
-};
-
 class OSD {
 public:
-    OSD(const FlightController& flightController);
+    OSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug);
 private:
     // OSD is not copyable or moveable
     OSD(const OSD&) = delete;
@@ -129,11 +50,88 @@ public:
         STATE_TRANSFER,
         STATE_COUNT
     };
+    enum  stats_e {
+        STATS_RTC_DATE_TIME,
+        STATS_TIMER_1,
+        STATS_TIMER_2,
+        STATS_MAX_SPEED,
+        STATS_MAX_DISTANCE,
+        STATS_MIN_BATTERY,
+        STATS_END_BATTERY,
+        STATS_BATTERY,
+        STATS_MIN_RSSI,
+        STATS_MAX_CURRENT,
+        STATS_USED_MAH,
+        STATS_MAX_ALTITUDE,
+        STATS_BLACKBOX,
+        STATS_BLACKBOX_NUMBER,
+        STATS_MAX_G_FORCE,
+        STATS_MAX_ESC_TEMP,
+        STATS_MAX_ESC_RPM,
+        STATS_MIN_LINK_QUALITY,
+        STATS_FLIGHT_DISTANCE,
+        STATS_MAX_FFT,
+        STATS_TOTAL_FLIGHTS,
+        STATS_TOTAL_TIME,
+        STATS_TOTAL_DIST,
+        STATS_MIN_RSSI_DBM,
+        STATS_WATT_HOURS_DRAWN,
+        STATS_MIN_RSNR,
+        STATS_BEST_3_CONSEC_LAPS,
+        STATS_BEST_LAP,
+        STATS_FULL_THROTTLE_TIME,
+        STATS_FULL_THROTTLE_COUNTER,
+        STATS_AVG_THROTTLE,
+        STATS_COUNT // MUST BE LAST
+    };
+    enum timer_e {
+        TIMER_1,
+        TIMER_2,
+        TIMER_COUNT
+    };
+    enum timer_source_e {
+        TIMER_SRC_ON,
+        TIMER_SRC_TOTAL_ARMED,
+        TIMER_SRC_LAST_ARMED,
+        TIMER_SRC_ON_OR_ARMED,
+        TIMER_SRC_LAUNCH_TIME,
+        TIMER_SRC_COUNT
+    };
+    enum timer_precision_e {
+        TIMER_PREC_SECOND,
+        TIMER_PREC_HUNDREDTHS,
+        TIMER_PREC_TENTHS,
+        TIMER_PREC_COUNT
+    };
+    enum warnings_flags_e {
+        WARNING_ARMING_DISABLE,
+        WARNING_BATTERY_NOT_FULL,
+        WARNING_BATTERY_WARNING,
+        WARNING_BATTERY_CRITICAL,
+        WARNING_VISUAL_BEEPER,
+        WARNING_CRASHFLIP,
+        WARNING_ESC_FAIL,
+        WARNING_CORE_TEMPERATURE,
+        WARNING_RC_SMOOTHING,
+        WARNING_FAIL_SAFE,
+        WARNING_LAUNCH_CONTROL,
+        WARNING_GPS_RESCUE_UNAVAILABLE,
+        WARNING_GPS_RESCUE_DISABLED,
+        WARNING_RSSI,
+        WARNING_LINK_QUALITY,
+        WARNING_RSSI_DBM,
+        WARNING_OVER_CAP,
+        WARNING_RSNR,
+        WARNING_LOAD,
+        WARNING_POSHOLD_FAILED,
+        WARNING_COUNT // MUST BE LAST
+    };
+
 public:
     struct config_t {
         char profile[OSD_PROFILE_COUNT][PROFILE_NAME_LENGTH + 2];
         int8_t rcChannels[RC_CHANNELS_COUNT];   // RC channel values to display, -1 if none
-        uint16_t timers[OSD_TIMER_COUNT];
+        uint16_t timers[TIMER_COUNT];
         uint32_t enabledWarnings;
         uint32_t enabled_stats;
         uint16_t cap_alarm;
@@ -152,9 +150,9 @@ public:
         uint8_t units;
         uint8_t ahMaxPitch;
         uint8_t ahMaxRoll;
+        uint8_t ahInvert;
         uint8_t esc_temp_alarm;
         uint8_t core_temp_alarm;
-        uint8_t artificial_horizon_invert;
         uint8_t osdProfileIndex;
         uint8_t overlay_radio_mode;
         uint8_t gps_sats_show_pdop;
@@ -172,7 +170,7 @@ public:
         uint8_t osd_show_spec_prearm;
         DisplayPortBase::severity_e arming_logo; // font from which to display the logo on arming
     };
-    struct statistics_t {
+    struct stats_t {
         timeUs32_t armed_time;
         float max_g_force;
         int32_t max_altitude;
@@ -189,13 +187,13 @@ public:
         int16_t min_rsnr;
         uint8_t min_rssi;
     };
-    struct statistics_rendering_state_t {
+    struct stats_rendering_state_t {
         uint8_t row;
         uint8_t index;
         uint8_t rowCount;
     };
 public:
-    void init(DisplayPortBase *displayPort, DisplayPortBase::device_type_e displayPortDeviceType);
+    void init(DisplayPortBase* displayPort, DisplayPortBase::device_type_e displayPortDeviceType);
     void completeInitialization();
     const config_t& getConfig() const { return _config; }
     void setConfig(const config_t& config);
@@ -203,10 +201,10 @@ public:
     bool updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta);
     void drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity);
 
-    void setStatisticsState(uint8_t statIndex, bool enabled);
-    bool getStatisticsState(uint8_t statIndex) const;
-    void resetStatistics();
-    void suppressStatistics(bool suppressStatsFlag) { _suppressStatsFlag = suppressStatsFlag; }
+    void setStatsState(uint8_t statIndex, bool enabled);
+    bool getStatsState(uint8_t statIndex) const;
+    void resetStats();
+    void suppressStats(bool suppressStatsFlag) { _suppressStatsFlag = suppressStatsFlag; }
 
     void analyzeActiveElements();
 
@@ -215,20 +213,22 @@ public:
     bool elementVisible(uint16_t value) const;
     bool getVisualBeeperState() const { return _visualBeeperState; }
     void setVisualBeeperState(bool visualBeeperState) { _visualBeeperState = visualBeeperState; }
-    const statistics_t& getStatistics() const { return _statistics; }
+    const stats_t& getStats() const { return _stats; }
 
-    static int printFloat(char *buffer, char leadingSymbol, float value, char *formatString, unsigned decimalPlaces, bool round, char trailingSymbol);
+    static int printFloat(char* buffer, char leadingSymbol, float value, char *formatString, unsigned decimalPlaces, bool round, char trailingSymbol);
 private:
     DisplayPortBase* _displayPort {};
     DisplayPortBase::device_type_e _displayPortDeviceType {};
     OSD_Elements _elements;
+    const Cockpit& _cockpit;
+    const Debug& _debug;
     state_e _state { STATE_INIT };
     std::array<uint16_t, STATE_COUNT> _stateDurationFractionUs {};
     std::array<uint32_t, OSD_ITEM_COUNT> _elementDurationFractionUs {};
 
     config_t _config {};
-    statistics_t _statistics {};
-    statistics_rendering_state_t _statisticRenderingState {};
+    stats_t _stats {};
+    stats_rendering_state_t _statsRenderingState {};
     bool _visualBeeperState {};
     bool _suppressStatsFlag {};
     bool _moreElementsToDraw {};

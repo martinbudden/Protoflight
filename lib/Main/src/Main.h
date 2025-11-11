@@ -137,7 +137,7 @@ private:
     static Cockpit& createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, const AHRS_MessageQueue& ahrsMessageQueue, NonVolatileStorage& nvs);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
-    static OSD& createOSD(const FlightController& flightController, Debug& debug);
+    static OSD& createOSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug);
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);

@@ -6,10 +6,9 @@
 /*!
 Statically allocate the OSD and associated objects.
 */
-OSD& Main::createOSD(const FlightController& flightController, Debug& debug)
+OSD& Main::createOSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug)
 {
-    (void)debug;
-    static OSD osd(flightController);
+    static OSD osd(flightController, cockpit, debug);
     //!!TODO:init OSD with displayPort
     //osd.init();
 

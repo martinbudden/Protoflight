@@ -5,9 +5,11 @@
 #include <bitset>
 #include <cstdint>
 
+class Cockpit;
 class DisplayPortBase;
 class FlightController;
 class OSD;
+
 
 // Character coordinate
 #define OSD_POSITION_BITS       5       // 5 bits gives a range 0-31
@@ -113,8 +115,9 @@ enum  osd_items_e {
 
 class OSD_Elements {
 public:
-    OSD_Elements(const FlightController& flightController) : _flightController(flightController) {}
+    OSD_Elements(const OSD& osd, const FlightController& flightController);
     void init(bool backgroundLayerFlag);
+    void initDrawFunctions();
 public:
     enum element_type_e{
         OSD_ELEMENT_TYPE_1 = 0,
@@ -138,7 +141,7 @@ public:
         bool rendered;
         uint8_t attr;
     };
-    typedef void (OSD_Elements::*osdElementDrawFn)(element_t& element);
+    typedef void (OSD_Elements::*elementDrawFn)(element_t& element);
 
     static constexpr uint32_t OSD_TYPE_MASK = 0xC000;  // bits 14-15
     static uint32_t OSD_TYPE(uint32_t x) { return (x & OSD_TYPE_MASK) >> 14; }
@@ -160,23 +163,24 @@ public:
     char getSpeedToSelectedUnitSymbol();
     char getTemperatureSymbolForSelectedUnit();
     void addActiveElements();
-    bool isRenderPending();
-    uint8_t getActiveElement();
-    uint8_t getActiveElementCount();
-    bool drawNextActiveElement(DisplayPortBase* displayPort);
-    bool displayActiveElement(DisplayPortBase* displayPort);
-    void drawActiveElementsBackground(DisplayPortBase* displayPort);
+    bool isRenderPending() const;
+    uint8_t getActiveElement() const;
+    uint8_t getActiveElementCount() const;
+    bool drawNextActiveElement(DisplayPortBase& displayPort);
+    bool displayActiveElement(DisplayPortBase& displayPort);
+    void drawActiveElementsBackground(DisplayPortBase& displayPort);
+
     void syncBlink(timeUs32_t currentTimeUs);
     void resetAlarms();
     void updateAlarms();
     bool elementsNeedAccelerometer();
     bool drawSpec(DisplayPortBase *displayPort);
 
-    bool drawSingleElement(DisplayPortBase* displayPort, uint8_t elementIndex);
-    bool drawSingleElementBackground(DisplayPortBase* displayPort, uint8_t elementIndex);
+    bool drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex);
+    bool drawSingleElementBackground(DisplayPortBase& displayPort, uint8_t elementIndex);
 
-    int displayWrite(DisplayPortBase* displayPort, element_t& element, uint8_t x, uint8_t y, uint8_t attr, const char *s);
-    int displayWrite(DisplayPortBase* displayPort, element_t& element, uint8_t x, uint8_t y, uint8_t attr, char c);
+    int displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, const char *s);
+    int displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, char c);
 
 // element drawing functions
     void formatPID(char * buf, const char * label, uint8_t axis);
@@ -186,7 +190,11 @@ public:
     void drawRSSI(element_t& element);
     void drawMainBatteryVoltage(element_t& element);
     void drawCrosshairs(element_t& element);  // only has background, but needs to be over other elements (like artificial horizon)
+    void drawArtificialHorizon(element_t& element);
+// element background drawing functions
+    void drawBackgroundHorizonSidebars(element_t& element);
 private:
+    const OSD& _osd;
     const FlightController& _flightController;
     element_t _activeElement {};
     config_t _config {};
@@ -199,6 +207,8 @@ private:
     bool _backgroundLayerSupported {false};
 
     std::array<uint8_t, OSD_ITEM_COUNT> _activeOsdElementArray;
-
     std::bitset<OSD_ITEM_COUNT> _blinkBits {};
+
+    static std::array<OSD_Elements::elementDrawFn, OSD_ITEM_COUNT> elementDrawFunctions;
+    static std::array<OSD_Elements::elementDrawFn, OSD_ITEM_COUNT> elementDrawBackgroundFunctions;
 };
