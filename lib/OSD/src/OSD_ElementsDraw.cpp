@@ -2,6 +2,7 @@
 #include "OSD_Elements.h"
 #include "OSD_Symbols.h"
 
+#include "Debug.h"
 #include "FlightController.h"
 
 //
@@ -24,6 +25,8 @@ void OSD_Elements::initDrawFunctions()
     elementDrawFunctions[OSD_ROLL_PIDS]          = &OSD_Elements::drawPIDsRoll;
     elementDrawFunctions[OSD_PITCH_PIDS]         = &OSD_Elements::drawPIDsPitch;
     elementDrawFunctions[OSD_YAW_PIDS]           = &OSD_Elements::drawPIDsYaw;
+    elementDrawFunctions[OSD_DEBUG]              = &OSD_Elements::drawDebug;
+    elementDrawFunctions[OSD_DEBUG2]              = &OSD_Elements::drawDebug2;
 
     elementDrawBackgroundFunctions[OSD_HORIZON_SIDEBARS]        = &OSD_Elements::drawBackgroundHorizonSidebars;
 };
@@ -113,5 +116,40 @@ void OSD_Elements::drawArtificialHorizon(element_t& element)
 
 void OSD_Elements::drawBackgroundHorizonSidebars(element_t& element)
 {
-    (void)element;
+    // Draw AH sides
+    const int8_t width = AH_SIDEBAR_WIDTH_POS;
+    const int8_t height = AH_SIDEBAR_HEIGHT_POS;
+
+    DisplayPortBase* displayPort = _osd.getDisplayPort();
+    if (_sideBarRenderLevel) {
+        // AH level indicators
+        displayPort->writeChar(element.posX - width + 1, element.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_LEFT);
+        displayPort->writeChar(element.posX + width - 1, element.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_RIGHT);
+        _sideBarRenderLevel = false;
+    } else {
+        displayPort->writeChar(element.posX - width, element.posY + static_cast<uint8_t>(_sidbarPosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
+        displayPort->writeChar(element.posX + width, element.posY + static_cast<uint8_t>(_sidbarPosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
+        if (_sidbarPosY == height) {
+            // Rendering is complete, so prepare to start again
+            _sidbarPosY = -height;
+            // On next pass render the level markers
+            _sideBarRenderLevel = true;
+        } else {
+            ++_sidbarPosY;
+        }
+        // Rendering not yet complete
+        element.rendered = false;
+    }
+
+    element.drawElement = false;  // element already drawn
+}
+
+void OSD_Elements::drawDebug(element_t& element)
+{
+    sprintf(&element.buf[0], "DBG %5d %5d %5d %5d", _debug.get(0), _debug.get(1),_debug.get(2),_debug.get(3));
+}
+
+void OSD_Elements::drawDebug2(element_t& element)
+{
+    sprintf(&element.buf[0], "DBG %5d %5d %5d %5d", _debug.get(4), _debug.get(5),_debug.get(6),_debug.get(7));
 }

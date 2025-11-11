@@ -79,7 +79,7 @@ public:
 public:
     virtual ~DisplayPortBase() = default;
     DisplayPortBase() = default;
-    virtual int clearScreen(display_clear_option_e options) = 0;
+    virtual int clearScreen(display_clear_option_e options) { (void)options; cleared = true; cursorRow = -1; return 0; }
     virtual bool drawScreen() = 0;
     virtual int writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) = 0;
     virtual int writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) = 0;

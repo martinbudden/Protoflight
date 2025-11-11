@@ -3,9 +3,10 @@
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
 
-OSD_Elements::OSD_Elements(const OSD& osd, const FlightController& flightController) :
+OSD_Elements::OSD_Elements(OSD& osd, const FlightController& flightController, const Debug& debug) :
     _osd(osd),
-    _flightController(flightController)
+    _flightController(flightController),
+    _debug(debug)
 {
 }
 
@@ -14,6 +15,45 @@ void OSD_Elements::init(bool backgroundLayerFlag)
     (void)backgroundLayerFlag;
     initDrawFunctions();
 };
+
+static constexpr uint32_t OSD_PROFILE_BITS_POS = 11;
+uint16_t OSD_PROFILE_FLAG(uint32_t x);
+uint16_t OSD_PROFILE_FLAG(uint32_t x)
+{ 
+    return 1U << (x - 1 + OSD_PROFILE_BITS_POS);
+}
+
+void OSD_Elements::setConfigDefaults()
+{
+// If user includes OSD_HD in the build assume they want to use it as default
+#ifdef USE_OSD_HD
+    uint8_t midRow = 10;
+    uint8_t midCol = 26;
+#else
+    uint8_t midRow = 7;
+    uint8_t midCol = 15;
+#endif
+
+    // Position elements near centre of screen and disabled by default
+    for (auto& item_pos : _config.item_pos) { 
+        item_pos = OSD_POS((midCol - 5), midRow); // cppcheck-suppress useStlAlgorithm
+    }
+
+    // Always enable warnings elements by default
+    uint16_t profileFlags = 0;
+    for (uint32_t ii = 0; ii <= OSD_PROFILE_COUNT; ++ii) {
+        profileFlags |= OSD_PROFILE_FLAG(ii);
+    }
+    enum { OSD_WARNINGS_PREFERRED_SIZE = 12 }; // centered on OSD
+    _config.item_pos[OSD_WARNINGS] = OSD_POS((midCol - OSD_WARNINGS_PREFERRED_SIZE / 2), (midRow + 3)) | profileFlags;
+
+    // Default to old fixed positions for these elements
+    _config.item_pos[OSD_CROSSHAIRS]         = OSD_POS((midCol - 2), (midRow - 1));
+    _config.item_pos[OSD_ARTIFICIAL_HORIZON] = OSD_POS((midCol - 1), (midRow - 5));
+    _config.item_pos[OSD_HORIZON_SIDEBARS]   = OSD_POS((midCol - 1), (midRow - 1));
+    _config.item_pos[OSD_CAMERA_FRAME]       = OSD_POS((midCol - 12), (midRow - 6));
+    _config.item_pos[OSD_UP_DOWN_REFERENCE]  = OSD_POS((midCol - 2), (midRow - 1));
+}
 
 void OSD_Elements::setConfig(const config_t& config)
 {

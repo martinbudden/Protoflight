@@ -2,6 +2,7 @@
 
 #include <Autopilot.h>
 #include <Cockpit.h>
+#include <DisplayPortBase.h>
 #include <DynamicIdleController.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
@@ -9,6 +10,8 @@
 #include <OSD.h>
 #include <OSD_Elements.h>
 #include <RPM_Filters.h>
+
+enum units_e { UNITS_METRIC = 0, UNIT_IMPERIAL = 1 };
 
 
 namespace DEFAULTS {
@@ -198,6 +201,54 @@ static constexpr Autopilot::altitude_hold_config_t autopilotAltitudeHoldConfig =
 
 #if defined(USE_OSD)
 static constexpr OSD::config_t osdConfig = {
+    .rcChannels = { -1, -1, -1, -1 },
+    .enabled_warnings =  static_cast<uint32_t>(~(OSD::WARNING_RSSI |OSD::WARNING_LINK_QUALITY | OSD::WARNING_RSSI_DBM |OSD::WARNING_RSNR | OSD::WARNING_OVER_CAP)),
+    .enabled_stats = static_cast<uint32_t>(~(OSD::STATS_MAX_SPEED | OSD::STATS_MIN_BATTERY | OSD::STATS_MIN_RSSI | OSD::STATS_MAX_CURRENT | OSD::STATS_USED_MAH | OSD::STATS_BLACKBOX | OSD::STATS_BLACKBOX_NUMBER | OSD::STATS_TIMER_2)),
+    .cap_alarm  = 2200,
+    .alt_alarm  = 100, // meters or feet depend on configuration
+    .link_quality_alarm = 80,
+    .rssi_dbm_alarm = -60,
+    .rsnr_alarm = 4,
+    .distance_alarm = 0,
+    .framerate_hz = OSD::FRAMERATE_DEFAULT_HZ,
+    .esc_rpm_alarm = OSD::ESC_RPM_ALARM_OFF,
+    .esc_current_alarm = OSD::ESC_CURRENT_ALARM_OFF,
+    .aux_scale = 200,
+
+    .aux_channel = 1,
+    .aux_symbol = 'A',
+    .esc_temp_alarm = OSD::ESC_TEMP_ALARM_OFF,
+    .rssi_alarm = 20,
+
+    .units = UNITS_METRIC,
+
+    .ahMaxPitch = 20, // 20 degrees
+    .ahMaxRoll = 40, // 40 degrees
+    .ahInvert = false,
+
+    .core_temp_alarm = 70, // a temperature above 70C should produce a warning, lockups have been reported above 80C
+    .osdProfileIndex = 1,
+    .overlay_radio_mode = 2,
+    .gps_sats_show_pdop = false,
+
+    .logo_on_arming = OSD::LOGO_ARMING_OFF,
+    .logo_on_arming_duration = 5,  // 0.5 seconds
+    .camera_frame_width = 24,
+    .camera_frame_height = 11,
+
+    .cms_background_type = DisplayPortBase::BACKGROUND_TRANSPARENT,
+    .stats_show_cell_value = false,
+    .osd_craftname_messages = false,   // Insert LQ/RSSI-dBm and warnings into CraftName
+    // Make it obvious on the configurator that the FC doesn't support HD
+#ifdef USE_OSD_HD
+    .displayPortDevice = OSD_DISPLAYPORT_DEVICE_MSP,
+    .canvas_column_count = OSD::HD_COLS,
+    .canvas_row_count = OSD::HD_ROWS,
+#else
+    .display_port_device_type = DisplayPortBase::DEVICE_TYPE_AUTO,
+    .canvas_column_count = OSD::SD_COLS,
+    .canvas_row_count = OSD::SD_ROWS,
+#endif
 };
 
 static constexpr OSD_Elements::config_t osdElementsConfig = {

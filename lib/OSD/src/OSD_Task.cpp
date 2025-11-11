@@ -27,7 +27,7 @@ void OSD_Task::loop()
 
     if (_timeMicrosecondsDelta >= _taskIntervalMicroseconds) { // if _taskIntervalMicroseconds has passed, then run the update
         _timeMicrosecondsPrevious = timeMicroseconds;
-        _osd.updateOSD(timeMicroseconds, _timeMicrosecondsDelta);
+        _osd.updateDisplay(timeMicroseconds, _timeMicrosecondsDelta);
     }
 }
 
@@ -51,7 +51,7 @@ Task function for the AHRS. Sets up and runs the task loop() function.
         _timeMicrosecondsDelta = timeMicroseconds - _timeMicrosecondsPrevious;
         _timeMicrosecondsPrevious = timeMicroseconds;
         if (_timeMicrosecondsDelta > 0) { // guard against the case of this while loop executing twice on the same tick interval
-            _osd.updateOSD(timeMicroseconds, _timeMicrosecondsDelta);
+            _osd.updateDisplay(timeMicroseconds, _timeMicrosecondsDelta);
         }
     }
 #else

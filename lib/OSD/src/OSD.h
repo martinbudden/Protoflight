@@ -10,12 +10,6 @@ class Cockpit;
 class Debug;
 
 
-#ifdef USE_OSD_PROFILES
-    enum { OSD_PROFILE_COUNT = 3 };
-#else
-    enum { OSD_PROFILE_COUNT = 1 };
-#endif
-
 class OSD {
 public:
     OSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug);
@@ -31,6 +25,11 @@ public:
     enum { RC_CHANNELS_COUNT = 4 };
     enum { OSD_LOGO_ROW_COUNT = 4 };
     enum { OSD_LOGO_COLUMN_COUNT = 24 };
+    enum { SD_ROWS = 16, SD_COLS = 30 };
+    enum { HD_ROWS = 20, HD_COLS = 53 };
+    enum { FRAMERATE_DEFAULT_HZ = 12 };
+    enum { ESC_RPM_ALARM_OFF = -1, ESC_TEMP_ALARM_OFF = 0, ESC_CURRENT_ALARM_OFF = -1 };
+
     enum  state_e {
         STATE_INIT,
         STATE_IDLE,
@@ -84,6 +83,7 @@ public:
         STATS_AVG_THROTTLE,
         STATS_COUNT // MUST BE LAST
     };
+    enum logo_on_arming_e { LOGO_ARMING_OFF, LOGO_ARMING_ON, LOGO_ARMING_FIRST };
     enum timer_e {
         TIMER_1,
         TIMER_2,
@@ -132,7 +132,7 @@ public:
         char profile[OSD_PROFILE_COUNT][PROFILE_NAME_LENGTH + 2];
         int8_t rcChannels[RC_CHANNELS_COUNT];   // RC channel values to display, -1 if none
         uint16_t timers[TIMER_COUNT];
-        uint32_t enabledWarnings;
+        uint32_t enabled_warnings;
         uint32_t enabled_stats;
         uint16_t cap_alarm;
         uint16_t alt_alarm;
@@ -146,24 +146,24 @@ public:
         uint16_t aux_scale;
         uint8_t aux_channel;
         uint8_t aux_symbol;
+        uint8_t esc_temp_alarm;
         uint8_t rssi_alarm;
         uint8_t units;
         uint8_t ahMaxPitch;
         uint8_t ahMaxRoll;
         uint8_t ahInvert;
-        uint8_t esc_temp_alarm;
         uint8_t core_temp_alarm;
         uint8_t osdProfileIndex;
         uint8_t overlay_radio_mode;
         uint8_t gps_sats_show_pdop;
-        uint8_t displayPortDevice;
         uint8_t logo_on_arming;
         uint8_t logo_on_arming_duration;        // display duration in 0.1s units
         uint8_t camera_frame_width;
         uint8_t camera_frame_height;
         uint8_t cms_background_type;            // whether the CMS background is transparent or opaque
-        uint8_t stat_show_cell_value;
+        uint8_t stats_show_cell_value;
         uint8_t osd_craftname_messages;         // Insert LQ/RSSI-dBm and warnings into CraftName
+        uint8_t display_port_device_type;
         uint8_t canvas_column_count;
         uint8_t canvas_row_count;
         uint8_t osd_use_quick_menu;
@@ -197,8 +197,10 @@ public:
     void completeInitialization();
     const config_t& getConfig() const { return _config; }
     void setConfig(const config_t& config);
+    DisplayPortBase* getDisplayPort() { return _displayPort; }
 
-    bool updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta);
+
+    void updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta); //!< OSD Task function, called by OSD_Task
     void drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity);
 
     void setStatsState(uint8_t statIndex, bool enabled);
@@ -214,14 +216,18 @@ public:
     bool getVisualBeeperState() const { return _visualBeeperState; }
     void setVisualBeeperState(bool visualBeeperState) { _visualBeeperState = visualBeeperState; }
     const stats_t& getStats() const { return _stats; }
-
+    bool refreshStats();
+    bool processStats1(timeUs32_t currentTimeUs);
+    bool processStats2(timeUs32_t currentTimeUs);
+    void processStats3();
+    void updateAlarms();
+    void syncBlink(timeUs32_t currentTimeUs);
     static int printFloat(char* buffer, char leadingSymbol, float value, char *formatString, unsigned decimalPlaces, bool round, char trailingSymbol);
 private:
     DisplayPortBase* _displayPort {};
     DisplayPortBase::device_type_e _displayPortDeviceType {};
     OSD_Elements _elements;
     const Cockpit& _cockpit;
-    const Debug& _debug;
     state_e _state { STATE_INIT };
     std::array<uint16_t, STATE_COUNT> _stateDurationFractionUs {};
     std::array<uint32_t, OSD_ITEM_COUNT> _elementDurationFractionUs {};
@@ -232,4 +238,6 @@ private:
     bool _visualBeeperState {};
     bool _suppressStatsFlag {};
     bool _moreElementsToDraw {};
+    bool _resumeRefreshAt {};
+    bool _backgroundLayerSupported {};
 };

@@ -259,6 +259,6 @@ H features:541130760
             return WRITE_COMPLETE;
     }
 
-    _xmitState.headerIndex++;
+    ++_xmitState.headerIndex;
     return WRITE_NOT_COMPLETE;
 }

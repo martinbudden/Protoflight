@@ -1,6 +1,8 @@
 #include "OSD.h"
 #include "Cockpit.h"
 
+#include <MSP_Box.h>
+
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
 enum { OSD_PROFILE_BITS_POS = 11 };
@@ -8,15 +10,15 @@ enum { OSD_PROFILE_BITS_POS = 11 };
 
 
 OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug) : //cppcheck-suppress constParameterReference
-    _elements(*this, flightController),
-    _cockpit(cockpit),
-    _debug(debug)
+    _elements(*this, flightController, debug),
+    _cockpit(cockpit)
 {
 }
 
 void OSD::init(DisplayPortBase *displayPort, DisplayPortBase::device_type_e displayPortDeviceType)
 {
     _elements.init(false);
+    _elements.setConfigDefaults();
 
     _displayPort = displayPort;
     _displayPortDeviceType = displayPortDeviceType;
@@ -90,18 +92,49 @@ void OSD::resetStats()
     _stats.min_rsnr = CRSF_SNR_MAX;
 }
 
+bool OSD::refreshStats()
+{
+    return true;
+}
+
+bool OSD::processStats1(timeUs32_t currentTimeUs)
+{
+    (void)currentTimeUs;
+    return true;
+}
+
+bool OSD::processStats2(timeUs32_t currentTimeUs)
+{
+    (void)currentTimeUs;
+    return true;
+}
+
+void OSD::processStats3()
+{
+}
+
+void OSD::updateAlarms()
+{
+}
+
+void OSD::syncBlink(timeUs32_t currentTimeUs)
+{
+    (void)currentTimeUs;
+}
+
+
 void OSD::setWarningState(uint8_t warningIndex, bool enabled)
 {
     if (enabled) {
-        _config.enabledWarnings |= (1U << warningIndex);
+        _config.enabled_warnings |= (1U << warningIndex);
     } else {
-        _config.enabledWarnings &= ~(1U << warningIndex);
+        _config.enabled_warnings &= ~(1U << warningIndex);
     }
 }
 
 bool OSD::getWarningState(uint8_t warningIndex) const
 {
-    return _config.enabledWarnings & (1U << warningIndex);
+    return _config.enabled_warnings & (1U << warningIndex);
 }
 
 void OSD::drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity)
@@ -120,9 +153,8 @@ void OSD::drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity)
     }
 }
 
-bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) // NOLINT(readability-function-cognitive-complexity)
+void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) // NOLINT(readability-function-cognitive-complexity)
 {
-    (void)timeMicroseconds;
     (void)timeMicrosecondsDelta;
 
     switch (_state) {
@@ -131,7 +163,7 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) /
             // Frsky OSD needs a display redraw after search for MAX7456 devices
             if (_displayPortDeviceType == DisplayPortBase::DEVICE_TYPE_FRSKY_OSD) {
                 _displayPort->redraw();
-                return true;
+                return;
             }
         }
         completeInitialization();
@@ -147,57 +179,72 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) /
         break;
     case STATE_UPDATE_HEARTBEAT:
         if (_displayPort->heartbeat()) {
-            // Extraordinary action was taken, so return without allowing osdStateDurationFractionUs table to be updated
-            return true;
+            // Extraordinary action was taken, so return without allowing stateDurationFractionUs table to be updated
+            return;
         }
         _state = STATE_PROCESS_STATS1;
         break;
     case STATE_PROCESS_STATS1:
-        [[fallthrough]];
+        _state = processStats1(timeMicroseconds) ? STATE_REFRESH_STATS : STATE_PROCESS_STATS2; // cppcheck-suppress knownConditionTrueFalse
+        break;
     case STATE_REFRESH_STATS:
-        [[fallthrough]];
+        if (refreshStats()) {
+            _state = STATE_PROCESS_STATS2;
+        }
+        break;
     case STATE_PROCESS_STATS2:
+        processStats2(timeMicroseconds);
         _state = STATE_PROCESS_STATS3;
         break;
     case STATE_PROCESS_STATS3:
+        processStats3();
         _state = STATE_COMMIT;
         break;
     case STATE_UPDATE_ALARMS:
-        _state = STATE_UPDATE_CANVAS;
+        updateAlarms();
+        _state = _resumeRefreshAt ? STATE_TRANSFER : STATE_UPDATE_CANVAS;
         break;
     case STATE_UPDATE_CANVAS:
+        // Hide OSD when OSD SW mode is active
+        if (_cockpit.isRcModeActive(MSP_Box::BOX_OSD)) {
+            _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+            _state = STATE_COMMIT;
+            break;
+        }
+        if (_backgroundLayerSupported) {
+            // Background layer is supported, overlay it onto the foreground
+            // so that we only need to draw the active parts of the elements.
+            _displayPort->layerCopy(DisplayPortBase::LAYER_FOREGROUND, DisplayPortBase::LAYER_BACKGROUND);
+        } else {
+            // Background layer not supported, just clear the foreground in preparation
+            // for drawing the elements including their backgrounds.
+            _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+        }
+        syncBlink(timeMicroseconds);
         _state = STATE_DRAW_ELEMENT;
         break;
     case STATE_DRAW_ELEMENT: {
-        const uint8_t osdElement = _elements.getActiveElement();
+        const uint8_t activeElement = _elements.getActiveElement();
         enum { OSD_EXEC_TIME_SHIFT = 5 };
 
         timeUs32_t startElementTime = timeUs();
         _moreElementsToDraw = _elements.drawNextActiveElement(*_displayPort);
         timeUs32_t executeTimeUs = timeUs() - startElementTime;
 
-        if (executeTimeUs > (_elementDurationFractionUs[osdElement] >> OSD_EXEC_TIME_SHIFT)) {
-            _elementDurationFractionUs[osdElement] = executeTimeUs << OSD_EXEC_TIME_SHIFT;
-        } else if (_elementDurationFractionUs[osdElement] > 0) {
+        if (executeTimeUs > (_elementDurationFractionUs[activeElement] >> OSD_EXEC_TIME_SHIFT)) {
+            _elementDurationFractionUs[activeElement] = executeTimeUs << OSD_EXEC_TIME_SHIFT;
+        } else if (_elementDurationFractionUs[activeElement] > 0) {
             // Slowly decay the max time
-            --_elementDurationFractionUs[osdElement];
+            --_elementDurationFractionUs[activeElement];
         }
-
-        if (_elements.isRenderPending()) {
+        if (_elements.isRenderPending()) { // Render the element just drawn
             _state = STATE_DISPLAY_ELEMENT;
-            // Render the element just drawn
             break;
         }
         if (_moreElementsToDraw) {
-            // There are more elements to draw
             break;
         }
-
-        if (_cockpit.isArmed() && _config.osd_show_spec_prearm) {
-            _state = STATE_REFRESH_PREARM;
-        } else {
-            _state = STATE_COMMIT;
-        }
+        _state = (_cockpit.isArmed() && _config.osd_show_spec_prearm) ? STATE_REFRESH_PREARM : STATE_COMMIT;
         break;
     }
     case STATE_DISPLAY_ELEMENT:
@@ -217,8 +264,18 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) /
     case STATE_REFRESH_PREARM:
         break;
     case STATE_COMMIT:
+        _displayPort->commitTransaction();
+        _state = _resumeRefreshAt ? STATE_IDLE : STATE_TRANSFER;
         break;
     case STATE_TRANSFER:
+        // Wait for any current transfer to complete
+        if (_displayPort->isTransferInProgress()) {
+            break;
+        }
+        // Transfer may be broken into many parts
+        if (_displayPort->drawScreen()) {
+            break;
+        }
         _state = STATE_IDLE;
         break;
     case STATE_IDLE:
@@ -227,7 +284,5 @@ bool OSD::updateOSD(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) /
         _state = STATE_IDLE;
         break;
     }
-
-    return true;
 }
 // NOLINTEND(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)

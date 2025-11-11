@@ -4,8 +4,10 @@
 
 #include <Blackbox.h>
 #include <Debug.h>
+#include <MSP_Box.h>
 #include <MotorMixerBase.h>
 #include <ReceiverBase.h>
+
 #include <cmath>
 
 
@@ -64,7 +66,9 @@ uint32_t Cockpit::getFlightModeFlags() const
 
 bool Cockpit::isRcModeActive(uint8_t rcMode) const
 {
-    (void)rcMode;
+    if (rcMode == MSP_Box::BOX_OSD) {
+        return false;
+    }
     return true; // !!TODO rcMode
 }
 

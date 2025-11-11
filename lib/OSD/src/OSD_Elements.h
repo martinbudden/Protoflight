@@ -6,9 +6,16 @@
 #include <cstdint>
 
 class Cockpit;
+class Debug;
 class DisplayPortBase;
 class FlightController;
 class OSD;
+
+#ifdef USE_OSD_PROFILES
+    enum { OSD_PROFILE_COUNT = 3 };
+#else
+    enum { OSD_PROFILE_COUNT = 1 };
+#endif
 
 
 // Character coordinate
@@ -115,7 +122,7 @@ enum  osd_items_e {
 
 class OSD_Elements {
 public:
-    OSD_Elements(const OSD& osd, const FlightController& flightController);
+    OSD_Elements(OSD& osd, const FlightController& flightController, const Debug& debug);
     void init(bool backgroundLayerFlag);
     void initDrawFunctions();
 public:
@@ -126,7 +133,7 @@ public:
         OSD_ELEMENT_TYPE_4
     };
     struct config_t {
-        uint16_t item_pos[OSD_ITEM_COUNT];
+        std::array<uint16_t, OSD_ITEM_COUNT> item_pos;
     };
     struct element_t {
         enum { ELEMENT_BUFFER_LENGTH = 32 };
@@ -151,6 +158,7 @@ public:
     const config_t& getConfig() const { return _config; }
     config_t& getConfig() { return _config; }
     void setConfig(const config_t& config);
+    void setConfigDefaults();
 
     int convertTemperatureToSelectedUnit(int temperatureCelsius);
     void formatDistanceString(char *result, int distance, char leadingSymbol);
@@ -191,11 +199,14 @@ public:
     void drawMainBatteryVoltage(element_t& element);
     void drawCrosshairs(element_t& element);  // only has background, but needs to be over other elements (like artificial horizon)
     void drawArtificialHorizon(element_t& element);
+    void drawDebug(element_t& element);
+    void drawDebug2(element_t& element);
 // element background drawing functions
     void drawBackgroundHorizonSidebars(element_t& element);
 private:
-    const OSD& _osd;
+    OSD& _osd;
     const FlightController& _flightController;
+    const Debug& _debug;
     element_t _activeElement {};
     config_t _config {};
     bool _displayPendingForeground {};
@@ -205,6 +216,9 @@ private:
     uint8_t _activeElementCount = 0;
     bool _backgroundRendered {false};
     bool _backgroundLayerSupported {false};
+    bool _sideBarRenderLevel {false};
+    enum { AH_SIDEBAR_WIDTH_POS = 7, AH_SIDEBAR_HEIGHT_POS = 3 };
+    int8_t _sidbarPosY {AH_SIDEBAR_HEIGHT_POS};
 
     std::array<uint8_t, OSD_ITEM_COUNT> _activeOsdElementArray;
     std::bitset<OSD_ITEM_COUNT> _blinkBits {};
