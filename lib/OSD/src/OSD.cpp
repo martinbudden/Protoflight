@@ -262,6 +262,10 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         }
         break;
     case STATE_REFRESH_PREARM:
+        if (_elements.drawSpec(*_displayPort)) {
+            // Rendering is complete
+            _state = STATE_COMMIT;
+        }
         break;
     case STATE_COMMIT:
         _displayPort->commitTransaction();

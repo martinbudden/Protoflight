@@ -16,10 +16,9 @@ void OSD_Elements::init(bool backgroundLayerFlag)
     initDrawFunctions();
 };
 
-static constexpr uint32_t OSD_PROFILE_BITS_POS = 11;
-uint16_t OSD_PROFILE_FLAG(uint32_t x);
-uint16_t OSD_PROFILE_FLAG(uint32_t x)
+uint16_t OSD_Elements::profileFlag(uint32_t x)
 { 
+    static constexpr uint32_t OSD_PROFILE_BITS_POS = 11;
     return 1U << (x - 1 + OSD_PROFILE_BITS_POS);
 }
 
@@ -42,9 +41,9 @@ void OSD_Elements::setConfigDefaults()
     // Always enable warnings elements by default
     uint16_t profileFlags = 0;
     for (uint32_t ii = 0; ii <= OSD_PROFILE_COUNT; ++ii) {
-        profileFlags |= OSD_PROFILE_FLAG(ii);
+        profileFlags |= profileFlag(ii);
     }
-    enum { OSD_WARNINGS_PREFERRED_SIZE = 12 }; // centered on OSD
+    enum { OSD_WARNINGS_PREFERRED_SIZE = 12 };
     _config.item_pos[OSD_WARNINGS] = OSD_POS((midCol - OSD_WARNINGS_PREFERRED_SIZE / 2), (midRow + 3)) | profileFlags;
 
     // Default to old fixed positions for these elements
@@ -200,4 +199,11 @@ bool OSD_Elements::drawSingleElementBackground(DisplayPortBase& displayPort, uin
 
     return _activeElement.rendered;
 }
+
+bool OSD_Elements::drawSpec(DisplayPortBase& displayPort)
+{
+    (void)displayPort;
+    return true;
+}
+
 // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)

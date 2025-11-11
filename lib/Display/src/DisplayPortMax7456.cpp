@@ -674,7 +674,7 @@ bool DisplayPortMax7456::drawScreen()
 
             spiSequence(dev, &segments[0]);
 
-            // Non-blocking, so transfer still in progress if using DMA
+            // Non-blocking, so transfer stay in progress if using DMA
         }
     }
 

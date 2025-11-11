@@ -159,6 +159,7 @@ public:
     config_t& getConfig() { return _config; }
     void setConfig(const config_t& config);
     void setConfigDefaults();
+    static uint16_t profileFlag(uint32_t x);
 
     int convertTemperatureToSelectedUnit(int temperatureCelsius);
     void formatDistanceString(char *result, int distance, char leadingSymbol);
@@ -182,7 +183,7 @@ public:
     void resetAlarms();
     void updateAlarms();
     bool elementsNeedAccelerometer();
-    bool drawSpec(DisplayPortBase *displayPort);
+    bool drawSpec(DisplayPortBase& displayPort);
 
     bool drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex);
     bool drawSingleElementBackground(DisplayPortBase& displayPort, uint8_t elementIndex);
