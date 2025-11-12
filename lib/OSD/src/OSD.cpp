@@ -5,21 +5,14 @@
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
-enum { OSD_PROFILE_BITS_POS = 11 };
-#define OSD_PROFILE_MASK    (((1 << OSD_PROFILE_COUNT) - 1) << OSD_PROFILE_BITS_POS)
-
-
-OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug) : //cppcheck-suppress constParameterReference
-    _elements(*this, flightController, debug),
+OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug) : // cppcheck-suppress constParameterReference
+    _elements(*this, flightController, cockpit, debug),
     _cockpit(cockpit)
 {
 }
 
 void OSD::init(DisplayPortBase *displayPort, DisplayPortBase::device_type_e displayPortDeviceType)
 {
-    _elements.init(false);
-    _elements.setConfigDefaults();
-
     _displayPort = displayPort;
     _displayPortDeviceType = displayPortDeviceType;
 
@@ -28,24 +21,8 @@ void OSD::init(DisplayPortBase *displayPort, DisplayPortBase::device_type_e disp
     if (columnCount !=0  && rowCount != 0) {
         _config.canvas_column_count = columnCount;
         _config.canvas_row_count = rowCount;
-
-        // Ensure that all OSD elements are on the canvas once the number of row and columns is known
-        for (size_t ii = 0; ii < OSD_ITEM_COUNT; ++ii) { // NOLINT(modernize-loop-convert)
-            const uint16_t itemPos = _elements.getConfig().item_pos[ii];
-            const uint16_t elemProfileType = itemPos & (OSD_PROFILE_MASK | OSD_Elements::OSD_TYPE_MASK);
-
-            uint8_t posX = OSD_X(itemPos);
-            uint8_t posY = OSD_Y(itemPos);
-            if (posX >= columnCount) {
-                posX = columnCount - 1;
-                _elements.getConfig().item_pos[ii] = elemProfileType | OSD_POS(posX, posY);
-            }
-            if (posY >= rowCount) {
-                posY = rowCount - 1;
-                _elements.getConfig().item_pos[ii] = elemProfileType | OSD_POS(posX, posY);
-            }
-        }
     }
+    _elements.init(false, rowCount, columnCount);
 }
 
 void OSD::completeInitialization()
@@ -143,8 +120,8 @@ void OSD::drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity)
 
     // display logo and help
     uint8_t fontOffset = 160;
-    for (uint8_t row = 0; row < OSD_LOGO_ROW_COUNT; ++row) {
-        for (uint8_t column = 0; column < OSD_LOGO_COLUMN_COUNT; ++column) {
+    for (uint8_t row = 0; row < LOGO_ROW_COUNT; ++row) {
+        for (uint8_t column = 0; column < LOGO_COLUMN_COUNT; ++column) {
             if (fontOffset < SYMBOL_END_OF_FONT) {
                 _displayPort->writeChar(x + column, y + row, severity, fontOffset);
                 ++fontOffset;
@@ -224,18 +201,18 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         _state = STATE_DRAW_ELEMENT;
         break;
     case STATE_DRAW_ELEMENT: {
-        const uint8_t activeElement = _elements.getActiveElement();
+        const uint8_t activeElementIndex = _elements.getActiveElementIndex();
         enum { OSD_EXEC_TIME_SHIFT = 5 };
 
         timeUs32_t startElementTime = timeUs();
         _moreElementsToDraw = _elements.drawNextActiveElement(*_displayPort);
         timeUs32_t executeTimeUs = timeUs() - startElementTime;
 
-        if (executeTimeUs > (_elementDurationFractionUs[activeElement] >> OSD_EXEC_TIME_SHIFT)) {
-            _elementDurationFractionUs[activeElement] = executeTimeUs << OSD_EXEC_TIME_SHIFT;
-        } else if (_elementDurationFractionUs[activeElement] > 0) {
+        if (executeTimeUs > (_elementDurationFractionUs[activeElementIndex] >> OSD_EXEC_TIME_SHIFT)) { // cppcheck-suppress unsignedLessThanZero
+            _elementDurationFractionUs[activeElementIndex] = executeTimeUs << OSD_EXEC_TIME_SHIFT;
+        } else if (_elementDurationFractionUs[activeElementIndex] > 0) {
             // Slowly decay the max time
-            --_elementDurationFractionUs[activeElement];
+            --_elementDurationFractionUs[activeElementIndex];
         }
         if (_elements.isRenderPending()) { // Render the element just drawn
             _state = STATE_DISPLAY_ELEMENT;
@@ -283,6 +260,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         _state = STATE_IDLE;
         break;
     case STATE_IDLE:
+        _state = STATE_CHECK;
         break;
     default:
         _state = STATE_IDLE;

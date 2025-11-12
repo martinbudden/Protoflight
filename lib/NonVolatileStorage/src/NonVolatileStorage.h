@@ -141,7 +141,7 @@ public:
 #if defined(USE_OSD)
     OSD::config_t loadOSD_Config() const;
     int32_t storeOSD_Config(const OSD::config_t& config);
-    OSD_Elements::config_t loadOSD_ElementsConfig() const;
+    bool loadOSD_ElementsConfig(OSD_Elements::config_t & config) const;
     int32_t storeOSD_ElementsConfig(const OSD_Elements::config_t& config);
 #endif
 #if defined USE_ALTITUDE_HOLD

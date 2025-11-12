@@ -20,11 +20,10 @@ private:
     OSD(OSD&&) = delete;
     OSD& operator=(OSD&&) = delete;
 public:
-    enum { ELEMENT_BUFFER_LENGTH = 32 };
     enum { PROFILE_NAME_LENGTH = 16 };
     enum { RC_CHANNELS_COUNT = 4 };
-    enum { OSD_LOGO_ROW_COUNT = 4 };
-    enum { OSD_LOGO_COLUMN_COUNT = 24 };
+    enum { LOGO_ROW_COUNT = 4 };
+    enum { LOGO_COLUMN_COUNT = 24 };
     enum { SD_ROWS = 16, SD_COLS = 30 };
     enum { HD_ROWS = 20, HD_COLS = 53 };
     enum { FRAMERATE_DEFAULT_HZ = 12 };
@@ -129,35 +128,43 @@ public:
 
 public:
     struct config_t {
-        char profile[OSD_PROFILE_COUNT][PROFILE_NAME_LENGTH + 2];
+        char profile[OSD_Elements::PROFILE_COUNT][PROFILE_NAME_LENGTH + 2]; // extra byte for zero terminator and extra byte to even-align
         int8_t rcChannels[RC_CHANNELS_COUNT];   // RC channel values to display, -1 if none
         uint16_t timers[TIMER_COUNT];
+
         uint32_t enabled_warnings;
         uint32_t enabled_stats;
+
+        uint16_t framerate_hz;
+
         uint16_t cap_alarm;
         uint16_t alt_alarm;
         uint16_t link_quality_alarm;
         int16_t rssi_dbm_alarm;
         int16_t rsnr_alarm;
         uint16_t distance_alarm;
-        uint16_t framerate_hz;
         int16_t esc_rpm_alarm;
         int16_t esc_current_alarm;
+        uint8_t esc_temp_alarm;
+        uint8_t core_temp_alarm;
+        uint8_t rssi_alarm;
+
+        uint8_t units;
+
         uint16_t aux_scale;
         uint8_t aux_channel;
         uint8_t aux_symbol;
-        uint8_t esc_temp_alarm;
-        uint8_t rssi_alarm;
-        uint8_t units;
+
+        uint8_t logo_on_arming;
+        uint8_t logo_on_arming_duration;        // display duration in 0.1s units
+        uint8_t arming_logo_attribute;          // font attribute to use to display the logo on arming
+
         uint8_t ahMaxPitch;
         uint8_t ahMaxRoll;
         uint8_t ahInvert;
-        uint8_t core_temp_alarm;
         uint8_t osdProfileIndex;
         uint8_t overlay_radio_mode;
         uint8_t gps_sats_show_pdop;
-        uint8_t logo_on_arming;
-        uint8_t logo_on_arming_duration;        // display duration in 0.1s units
         uint8_t camera_frame_width;
         uint8_t camera_frame_height;
         uint8_t cms_background_type;            // whether the CMS background is transparent or opaque
@@ -168,7 +175,6 @@ public:
         uint8_t canvas_row_count;
         uint8_t osd_use_quick_menu;
         uint8_t osd_show_spec_prearm;
-        DisplayPortBase::severity_e arming_logo; // font from which to display the logo on arming
     };
     struct stats_t {
         timeUs32_t armed_time;
@@ -197,8 +203,9 @@ public:
     void completeInitialization();
     const config_t& getConfig() const { return _config; }
     void setConfig(const config_t& config);
-    DisplayPortBase* getDisplayPort() { return _displayPort; }
 
+    OSD_Elements& getOSD_Elements() { return _elements; }
+    const OSD_Elements& getOSD_Elements() const { return _elements; }
 
     void updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta); //!< OSD Task function, called by OSD_Task
     void drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity);

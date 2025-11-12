@@ -2,9 +2,8 @@
 
 #if defined(M5_UNIFIED)
 
-static M5Canvas canvas(&M5.Display);
 
-DisplayPortM5GFX::DisplayPortM5GFX() :
+DisplayPortM5GFX::DisplayPortM5GFX(M5Canvas& canvas) :
     _canvas(canvas)
 {
     _canvas.fillSprite(TFT_WHITE);
@@ -14,8 +13,8 @@ DisplayPortM5GFX::DisplayPortM5GFX() :
 int DisplayPortM5GFX::clearScreen(display_clear_option_e options)
 { 
     (void)options;
-    cleared = true;
-    cursorRow = -1;
+    _cleared = true;
+    _cursorRow = -1;
     _canvas.fillSprite(TFT_WHITE);
     //_canvas.startWrite();
     //_canvas.pushSprite(0, 0);

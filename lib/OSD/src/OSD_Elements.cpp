@@ -3,26 +3,46 @@
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
 
-OSD_Elements::OSD_Elements(OSD& osd, const FlightController& flightController, const Debug& debug) :
+
+OSD_Elements::OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug) :
     _osd(osd),
     _flightController(flightController),
+    _cockpit(cockpit),
     _debug(debug)
 {
 }
 
-void OSD_Elements::init(bool backgroundLayerFlag)
+void OSD_Elements::init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t columnCount)
 {
     (void)backgroundLayerFlag;
     initDrawFunctions();
+
+    if (columnCount !=0  && rowCount != 0) {
+        // Ensure that all OSD elements are on the canvas once the number of row and columns is known
+        for (size_t ii = 0; ii < OSD_ITEM_COUNT; ++ii) { // NOLINT(modernize-loop-convert)
+            const uint16_t elementPos = _config.element_pos[ii];
+            const uint16_t elementTopBits = elementPos & (ELEMENT_TYPE_MASK | PROFILE_MASK);
+
+            uint8_t posX = OSD_X(elementPos);
+            uint8_t posY = OSD_Y(elementPos);
+            if (posX >= columnCount) {
+                posX = columnCount - 1;
+                _config.element_pos[ii] = elementTopBits | OSD_POS(posX, posY);
+            }
+            if (posY >= rowCount) {
+                posY = rowCount - 1;
+                _config.element_pos[ii] = elementTopBits | OSD_POS(posX, posY);
+            }
+        }
+    }
 };
 
-uint16_t OSD_Elements::profileFlag(uint32_t x)
-{ 
-    static constexpr uint32_t OSD_PROFILE_BITS_POS = 11;
-    return 1U << (x - 1 + OSD_PROFILE_BITS_POS);
+void OSD_Elements::setConfig(const config_t& config)
+{
+    _config = config;
 }
 
-void OSD_Elements::setConfigDefaults()
+void OSD_Elements::setDefaultConfig()
 {
 // If user includes OSD_HD in the build assume they want to use it as default
 #ifdef USE_OSD_HD
@@ -34,31 +54,26 @@ void OSD_Elements::setConfigDefaults()
 #endif
 
     // Position elements near centre of screen and disabled by default
-    for (auto& item_pos : _config.item_pos) { 
-        item_pos = OSD_POS((midCol - 5), midRow); // cppcheck-suppress useStlAlgorithm
+    for (auto& element_pos : _config.element_pos) { 
+        element_pos = OSD_POS((midCol - 5), midRow); // cppcheck-suppress useStlAlgorithm
     }
 
-    // Always enable warnings elements by default
     uint16_t profileFlags = 0;
-    for (uint32_t ii = 0; ii <= OSD_PROFILE_COUNT; ++ii) {
+    for (uint16_t ii = 0; ii <= PROFILE_COUNT; ++ii) {
         profileFlags |= profileFlag(ii);
     }
+    // Always enable warnings elements by default
+
     enum { OSD_WARNINGS_PREFERRED_SIZE = 12 };
-    _config.item_pos[OSD_WARNINGS] = OSD_POS((midCol - OSD_WARNINGS_PREFERRED_SIZE / 2), (midRow + 3)) | profileFlags;
+    _config.element_pos[OSD_WARNINGS] = OSD_POS(midCol - OSD_WARNINGS_PREFERRED_SIZE/2, midRow + 3) | profileFlags;
 
     // Default to old fixed positions for these elements
-    _config.item_pos[OSD_CROSSHAIRS]         = OSD_POS((midCol - 2), (midRow - 1));
-    _config.item_pos[OSD_ARTIFICIAL_HORIZON] = OSD_POS((midCol - 1), (midRow - 5));
-    _config.item_pos[OSD_HORIZON_SIDEBARS]   = OSD_POS((midCol - 1), (midRow - 1));
-    _config.item_pos[OSD_CAMERA_FRAME]       = OSD_POS((midCol - 12), (midRow - 6));
-    _config.item_pos[OSD_UP_DOWN_REFERENCE]  = OSD_POS((midCol - 2), (midRow - 1));
+    _config.element_pos[OSD_CROSSHAIRS]         = OSD_POS(midCol - 2,  midRow - 1);
+    _config.element_pos[OSD_ARTIFICIAL_HORIZON] = OSD_POS(midCol - 1,  midRow - 5);
+    _config.element_pos[OSD_HORIZON_SIDEBARS]   = OSD_POS(midCol - 1,  midRow - 1);
+    _config.element_pos[OSD_CAMERA_FRAME]       = OSD_POS(midCol - 12, midRow - 6);
+    _config.element_pos[OSD_UP_DOWN_REFERENCE]  = OSD_POS(midCol - 2,  midRow - 1);
 }
-
-void OSD_Elements::setConfig(const config_t& config)
-{
-    _config = config;
-}
-
 
 int OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  element, uint8_t x, uint8_t y, uint8_t attr, const char *s)
 {
@@ -68,7 +83,7 @@ int OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  e
     return displayPort.writeString(x, y, attr, s);
 }
 
-int OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, char c)
+int OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
 {
     if (_blinkBits[element.index]) {
         attr |= DisplayPortBase::BLINK;
@@ -81,9 +96,8 @@ bool OSD_Elements::isRenderPending() const
     return _displayPendingForeground | _displayPendingBackground;
 }
 
-uint8_t OSD_Elements::getActiveElement() const 
+void OSD_Elements::addActiveElements()
 {
-    return _activeElementIndex;
 }
 
 bool OSD_Elements::drawNextActiveElement(DisplayPortBase& displayPort)
@@ -143,7 +157,9 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
 {
     // By default mark the element as rendered in case it's in the off blink state
     _activeElement.rendered = true;
-    if (!elementDrawFunctions[elementIndex]) { // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
+    if (!elementDrawFunctions[elementIndex]) {
         // Element has no drawing function
         return true;
     }
@@ -151,25 +167,23 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
         return true;
     }
 
+    _activeElement.type = ELEMENT_TYPE(_config.element_pos[elementIndex]);
     _activeElement.index = elementIndex;
-    _activeElement.posX = OSD_X(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    _activeElement.posY = OSD_Y(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    _activeElement.posX = OSD_X(_config.element_pos[elementIndex]);
+    _activeElement.posY = OSD_Y(_config.element_pos[elementIndex]);
     _activeElement.offsetX = 0;
     _activeElement.offsetY = 0;
-    _activeElement.type = static_cast<element_type_e>(OSD_TYPE(_config.item_pos[elementIndex])); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    _activeElement.drawElement = true;
     _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
 
     // Call the element drawing function
     if (isSysOSD_Element(elementIndex)) {
         displayPort.writeSys(_activeElement.posX, _activeElement.posY, static_cast<DisplayPortBase::system_element_e>(elementIndex - OSD_SYS_GOGGLE_VOLTAGE + DisplayPortBase::SYS_GOGGLE_VOLTAGE));
     } else {
-        const OSD_Elements::elementDrawFn drawFn = elementDrawFunctions[elementIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-        (this->*drawFn)(_activeElement);
-        if (_activeElement.drawElement) {
+        if ((this->*elementDrawFunctions[elementIndex])(displayPort, _activeElement)) {
             _displayPendingForeground = true;
         }
     }
+    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 
     return _activeElement.rendered;
 }
@@ -178,26 +192,37 @@ bool OSD_Elements::drawSingleElementBackground(DisplayPortBase& displayPort, uin
 {
     (void)displayPort;
 
-    if (!elementDrawBackgroundFunctions[elementIndex]) { // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
+    if (!elementDrawBackgroundFunctions[elementIndex]) {
         return true;
     }
 
+    _activeElement.type = ELEMENT_TYPE(_config.element_pos[elementIndex]);
     _activeElement.index = elementIndex;
-    _activeElement.posX = OSD_X(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    _activeElement.posY = OSD_Y(_config.item_pos[elementIndex]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    _activeElement.posX = OSD_X(_config.element_pos[elementIndex]);
+    _activeElement.posY = OSD_Y(_config.element_pos[elementIndex]);
     _activeElement.offsetX = 0;
     _activeElement.offsetY = 0;
-    _activeElement.type = static_cast<element_type_e>(OSD_TYPE(_config.item_pos[elementIndex])); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    _activeElement.drawElement = true;
     _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
 
-    const OSD_Elements::elementDrawFn drawFn = elementDrawBackgroundFunctions[elementIndex]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-    (this->*drawFn)(_activeElement);
-    if (_activeElement.drawElement) {
+    if ((this->*elementDrawBackgroundFunctions[elementIndex])(displayPort, _activeElement)) {
         _displayPendingBackground = true;
     }
+    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
 
     return _activeElement.rendered;
+}
+
+void OSD_Elements::drawActiveElementsBackground(DisplayPortBase& displayPort) // NOLINT(readability-make-member-function-const)
+{
+    if (_backgroundLayerSupported) {
+        displayPort.layerSelect(DisplayPortBase::LAYER_BACKGROUND);
+        displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
+        for (size_t ii = 0; ii < _activeElementCount; ++ii) {
+            while (!drawSingleElementBackground(displayPort, _activeOsdElementArray[ii])) {};
+        }
+        displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
+    }
 }
 
 bool OSD_Elements::drawSpec(DisplayPortBase& displayPort)

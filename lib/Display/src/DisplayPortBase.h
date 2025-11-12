@@ -28,6 +28,7 @@ enum display_clear_option_e {
 };
 
 class DisplayPortBase {
+friend class Display; //!!FOR NOW
 public:
     enum { BLINK = 0x80 }; // blink attribute bit
 
@@ -79,7 +80,7 @@ public:
 public:
     virtual ~DisplayPortBase() = default;
     DisplayPortBase() = default;
-    virtual int clearScreen(display_clear_option_e options) { (void)options; cleared = true; cursorRow = -1; return 0; }
+    virtual int clearScreen(display_clear_option_e options) { (void)options; _cleared = true; _cursorRow = -1; return 0; }
     virtual bool drawScreen() = 0;
     virtual int writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) = 0;
     virtual int writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) = 0;
@@ -105,11 +106,14 @@ public:
 
     uint8_t getRowCount() const { return _rows; }
     uint8_t getColumnCount() const { return _cols; }
+
     uint8_t getPosX() const { return _posX; }
     void setPosX(uint8_t posX) { _posX = posX; }
     uint8_t getPosY() const { return _posY; }
     void setPosY(uint8_t posY) { _posY = posY; }
-    void resetGrabCount() { grabCount = 0; }
+
+    void resetGrabCount() { _grabCount = 0; }
+
     device_type_e getDeviceType() const { return _deviceType; }
     void setDeviceType(device_type_e deviceType) { _deviceType = deviceType; }
     bool getUseDeviceBlink() const { return _useDeviceBlink; }
@@ -123,10 +127,9 @@ protected:
 
     // Displayport device capability
     bool _useDeviceBlink {};
-public: //!!FOR NOW
     // CMS state
-    bool cleared {};
-    int8_t cursorRow {};
-    bool useFullscreen {};
-    int8_t grabCount {};
+    int8_t _cursorRow {};
+    int8_t _grabCount {};
+    bool _cleared {};
+    bool _useFullscreen {};
 };

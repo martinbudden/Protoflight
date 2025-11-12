@@ -18,7 +18,7 @@ https://thekalmanfilter.com/kalman-filter-explained-simply/
 
 AltitudeKalmanFilter::state_t AltitudeKalmanFilter::updateState(float altitudeMeasurement, float accelerationMeasurement, float dT)
 {
-    // predict state
+    // predicted state
     _predicted.velocity = _estimated.velocity + (accelerationMeasurement - _estimated.bias)*dT;
     _predicted.altitude = _estimated.altitude + _estimated.velocity*dT;
     _predicted.bias     = _estimated.bias*(1.0F + _beta*dT);
@@ -52,9 +52,9 @@ AltitudeKalmanFilter::state_t AltitudeKalmanFilter::updateState(float altitudeMe
     _e11 = _p11 - k1*_p21;
     _e12 = _p12 - k1*_p22;
     _e13 = _p13 - k1*_p23;
-    _e21 = _p21*(1 - k2);
-    _e22 = _p22*(1 - k2);
-    _e23 = _p23*(1 - k2);
+    _e21 = _p21*(1.0F - k2);
+    _e22 = _p22*(1.0F - k2);
+    _e23 = _p23*(1.0F - k2);
     _e31 = -k3*_p21 + _p31;
     _e32 = -k3*_p22 + _p32;
     _e33 = -k3*_p23 + _p33;

@@ -11,25 +11,6 @@ class DisplayPortBase;
 class FlightController;
 class OSD;
 
-#ifdef USE_OSD_PROFILES
-    enum { OSD_PROFILE_COUNT = 3 };
-#else
-    enum { OSD_PROFILE_COUNT = 1 };
-#endif
-
-
-// Character coordinate
-#define OSD_POSITION_BITS       5       // 5 bits gives a range 0-31
-#define OSD_POSITION_BIT_XHD    10      // extra bit used to extend X range in a backward compatible manner for HD displays
-#define OSD_POSITION_XHD_MASK   (1 << OSD_POSITION_BIT_XHD)
-#define OSD_POSITION_XY_MASK    ((1 << OSD_POSITION_BITS) - 1)
-#define OSD_POS(x, y)  (((x) & OSD_POSITION_XY_MASK)                    \
-                        | (((x) << (OSD_POSITION_BIT_XHD - OSD_POSITION_BITS)) & OSD_POSITION_XHD_MASK) \
-                        | (((y) & OSD_POSITION_XY_MASK) << OSD_POSITION_BITS)) \
-    /**/
-#define OSD_X(x)      (((x) & OSD_POSITION_XY_MASK) | (((x) & OSD_POSITION_XHD_MASK) >> (OSD_POSITION_BIT_XHD - OSD_POSITION_BITS)))
-#define OSD_Y(x)      (((x) >> OSD_POSITION_BITS) & OSD_POSITION_XY_MASK)
-
 enum  osd_items_e {
     OSD_RSSI_VALUE,
     OSD_MAIN_BATT_VOLTAGE,
@@ -122,10 +103,11 @@ enum  osd_items_e {
 
 class OSD_Elements {
 public:
-    OSD_Elements(OSD& osd, const FlightController& flightController, const Debug& debug);
-    void init(bool backgroundLayerFlag);
+    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug);
+    void init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t columnCount);
     void initDrawFunctions();
 public:
+    enum { PROFILE_COUNT = 2 };
     enum element_type_e{
         OSD_ELEMENT_TYPE_1 = 0,
         OSD_ELEMENT_TYPE_2,
@@ -133,7 +115,7 @@ public:
         OSD_ELEMENT_TYPE_4
     };
     struct config_t {
-        std::array<uint16_t, OSD_ITEM_COUNT> item_pos;
+        std::array<uint16_t, OSD_ITEM_COUNT> element_pos; // 2 bits for type, 2 bits for profile, 6 bits for y, 6 bits for x
     };
     struct element_t {
         enum { ELEMENT_BUFFER_LENGTH = 32 };
@@ -144,83 +126,83 @@ public:
         uint8_t posY;
         uint8_t offsetX;
         uint8_t offsetY;
-        bool drawElement;
-        bool rendered;
         uint8_t attr;
+        bool rendered;
     };
-    typedef void (OSD_Elements::*elementDrawFn)(element_t& element);
+    typedef bool (OSD_Elements::*elementDrawFn)(DisplayPortBase& displayPort, element_t& element);
 
-    static constexpr uint32_t OSD_TYPE_MASK = 0xC000;  // bits 14-15
-    static uint32_t OSD_TYPE(uint32_t x) { return (x & OSD_TYPE_MASK) >> 14; }
 public:
     bool isSysOSD_Element(uint8_t index) { return (index >= OSD_SYS_GOGGLE_VOLTAGE) && (index <= OSD_SYS_FAN_SPEED); }
 
     const config_t& getConfig() const { return _config; }
     config_t& getConfig() { return _config; }
     void setConfig(const config_t& config);
-    void setConfigDefaults();
-    static uint16_t profileFlag(uint32_t x);
+    void setDefaultConfig();
 
-    int convertTemperatureToSelectedUnit(int temperatureCelsius);
-    void formatDistanceString(char *result, int distance, char leadingSymbol);
-    bool formatRtcDateTime(char *buffer);
-    //void formatTime(char * buff, _timer_precision_e precision, timeUs32_t time);
-    void formatTimer(char *buff, bool showSymbol, bool usePrecision, int timerIndex);
-    float getMetersToSelectedUnit(int32_t meters);
-    char getMetersToSelectedUnitSymbol();
-    int32_t getSpeedToSelectedUnit(int32_t value);
-    char getSpeedToSelectedUnitSymbol();
-    char getTemperatureSymbolForSelectedUnit();
+    static constexpr uint16_t ELEMENT_BITS_POS = 14;
+    static constexpr uint32_t ELEMENT_TYPE_MASK = 0b1100'0000'0000'0000U;  // bits 14-15
+    static element_type_e ELEMENT_TYPE(uint32_t x) { return static_cast<element_type_e>((x & ELEMENT_TYPE_MASK) >> ELEMENT_BITS_POS); }
+
+    static constexpr uint16_t PROFILE_BITS_POS = 12;
+    static constexpr uint16_t PROFILE_MASK = 0b0011'0000'0000'0000U;
+    static uint16_t profileFlag(uint16_t x) { return 1U << (x - 1 + PROFILE_BITS_POS); }
+
+    static constexpr uint16_t XY_POSITION_BITS = 6;       // 6 bits gives a range 0-63
+    static constexpr uint16_t XY_POSITION_MASK = 0b11'1111U;
+
+    static uint8_t OSD_X(uint16_t x) { return x & XY_POSITION_MASK; }
+    static uint8_t OSD_Y(uint16_t x) { return (x >> XY_POSITION_BITS) & XY_POSITION_MASK; }
+    static uint16_t OSD_POS(uint8_t x, uint8_t y) { return (x & XY_POSITION_MASK) | ((y & XY_POSITION_MASK) << XY_POSITION_BITS); }
+
+
     void addActiveElements();
     bool isRenderPending() const;
-    uint8_t getActiveElement() const;
-    uint8_t getActiveElementCount() const;
+    uint8_t getActiveElementIndex() const { return _activeElementIndex; }
+    uint8_t getActiveElementCount() const { return _activeElementCount; }
+
     bool drawNextActiveElement(DisplayPortBase& displayPort);
     bool displayActiveElement(DisplayPortBase& displayPort);
     void drawActiveElementsBackground(DisplayPortBase& displayPort);
 
-    void syncBlink(timeUs32_t currentTimeUs);
-    void resetAlarms();
-    void updateAlarms();
-    bool elementsNeedAccelerometer();
     bool drawSpec(DisplayPortBase& displayPort);
 
     bool drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex);
     bool drawSingleElementBackground(DisplayPortBase& displayPort, uint8_t elementIndex);
 
-    int displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, const char *s);
-    int displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, char c);
+    int displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, const char* s);
+    int displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, uint8_t c);
 
 // element drawing functions
-    void formatPID(char * buf, const char * label, uint8_t axis);
-    void drawPIDsRoll(element_t& element);
-    void drawPIDsPitch(element_t& element);
-    void drawPIDsYaw(element_t& element);
-    void drawRSSI(element_t& element);
-    void drawMainBatteryVoltage(element_t& element);
-    void drawCrosshairs(element_t& element);  // only has background, but needs to be over other elements (like artificial horizon)
-    void drawArtificialHorizon(element_t& element);
-    void drawDebug(element_t& element);
-    void drawDebug2(element_t& element);
+    void formatPID(char* buf, const char* label, uint8_t axis);
+    bool drawPIDsRoll(DisplayPortBase& displayPort, element_t& element);
+    bool drawPIDsPitch(DisplayPortBase& displayPort, element_t& element);
+    bool drawPIDsYaw(DisplayPortBase& displayPort, element_t& element);
+    bool drawRSSI(DisplayPortBase& displayPort, element_t& element);
+    bool drawMainBatteryVoltage(DisplayPortBase& displayPort, element_t& element);
+    bool drawCrosshairs(DisplayPortBase& displayPort, element_t& element);  // only has background, but needs to be over other elements (like artificial horizon)
+    bool drawArtificialHorizon(DisplayPortBase& displayPort, element_t& element);
+    bool drawDebug(DisplayPortBase& displayPort, element_t& element);
+    bool drawDebug2(DisplayPortBase& displayPort, element_t& element);
 // element background drawing functions
-    void drawBackgroundHorizonSidebars(element_t& element);
+    bool drawBackgroundHorizonSidebars(DisplayPortBase& displayPort, element_t& element);
 private:
-    OSD& _osd;
+    const OSD& _osd;
     const FlightController& _flightController;
+    const Cockpit& _cockpit;
     const Debug& _debug;
     element_t _activeElement {};
-    config_t _config {};
-    bool _displayPendingForeground {};
-    bool _displayPendingBackground {};
-    bool blinkState {true};
     uint8_t _activeElementIndex = 0;
     uint8_t _activeElementCount = 0;
+    bool _displayPendingForeground {};
+    bool _displayPendingBackground {};
+    //bool _blinkState {true};
     bool _backgroundRendered {false};
     bool _backgroundLayerSupported {false};
     bool _sideBarRenderLevel {false};
     enum { AH_SIDEBAR_WIDTH_POS = 7, AH_SIDEBAR_HEIGHT_POS = 3 };
     int8_t _sidbarPosY {AH_SIDEBAR_HEIGHT_POS};
 
+    config_t _config {};
     std::array<uint8_t, OSD_ITEM_COUNT> _activeOsdElementArray;
     std::bitset<OSD_ITEM_COUNT> _blinkBits {};
 

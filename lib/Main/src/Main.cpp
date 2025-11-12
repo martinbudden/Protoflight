@@ -87,7 +87,7 @@ void Main::setup()
     Blackbox& blackbox = createBlackBox(ahrs, flightController, AHRS_MessageQueue, cockpit, receiver, imuFilters, debug);
 #endif
 #if defined(USE_OSD)
-    OSD& osd = createOSD(flightController, cockpit, debug);
+    OSD& osd = createOSD(flightController, cockpit, debug, nvs);
 #endif
 
 #if defined(M5_UNIFIED)
@@ -152,7 +152,8 @@ void Main::setup()
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_OSD)
-    _tasks.osdTask = OSD_Task::createTask(taskInfo, osd, OSD_TASK_PRIORITY, OSD_TASK_CORE, OSD_TASK_INTERVAL_MICROSECONDS);
+    const uint32_t osdTaskIntervalMicroseconds = 1'000'000 / osd.getConfig().framerate_hz;
+    _tasks.osdTask = OSD_Task::createTask(taskInfo, osd, OSD_TASK_PRIORITY, OSD_TASK_CORE, osdTaskIntervalMicroseconds);
     printTaskInfo(taskInfo);
 #endif
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)

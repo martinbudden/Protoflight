@@ -70,10 +70,6 @@ enum { MSP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
 enum { BLACKBOX_TASK_INTERVAL_MICROSECONDS = 2000 }; // 500 Hz
 #endif
 
-#if !defined(OSD_TASK_INTERVAL_MICROSECONDS)
-enum { OSD_TASK_INTERVAL_MICROSECONDS = 80000 }; // 12 Hz
-#endif
-
 enum {
     AHRS_TASK_PRIORITY = 6,
     FC_TASK_PRIORITY = 5,
@@ -137,7 +133,7 @@ private:
     static Cockpit& createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, const AHRS_MessageQueue& ahrsMessageQueue, NonVolatileStorage& nvs);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
-    static OSD& createOSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug);
+    static OSD& createOSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);

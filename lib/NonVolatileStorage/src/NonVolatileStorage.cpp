@@ -480,13 +480,12 @@ int32_t NonVolatileStorage::storeOSD_Config(const OSD::config_t& config)
     return storeItem(OSD_ConfigKey, &config, sizeof(config), &DEFAULTS::osdConfig);
 }
 
-OSD_Elements::config_t NonVolatileStorage::loadOSD_ElementsConfig() const
+bool NonVolatileStorage::loadOSD_ElementsConfig(OSD_Elements::config_t& config) const
 {
-    {OSD_Elements::config_t config {};
     if (loadItem(OSD_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
-        return config;
-    }}
-    return DEFAULTS::osdElementsConfig;
+        return true;
+    }
+    return false;
 }
 
 int32_t NonVolatileStorage::storeOSD_ElementsConfig(const OSD_Elements::config_t& config)
