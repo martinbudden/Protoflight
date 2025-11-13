@@ -40,10 +40,6 @@ enum osd_menu_element_e {
     SLIDER_DTERM     = 0x4000  // Value should be read only if simplified D term slider is enabled
 };
 
-// Special return value(s) for function chaining by CMSMenuFuncPtr
-extern int menuChainBack;
-#define MENU_CHAIN_BACK  (&menuChainBack) // Causes automatic cmsMenuBack
-
 struct OSD_UINT8_t {
     uint8_t* val;
     uint8_t min;

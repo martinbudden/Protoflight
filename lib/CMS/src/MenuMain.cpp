@@ -21,10 +21,10 @@ CMSX::menu_t CMSX::menuFeatures = {
     .entries = &menuFeaturesEntries[0],
 };
 
-static const void* cmsx_SaveExitMenu(CMS& cms, DisplayPortBase& displayPort, const void* ptr)
+static const void* cmsx_SaveExitMenu(CMS& cms, DisplayPortBase& displayPort, const CMSX::menu_t* menu)
 {
     (void)displayPort;
-    (void)ptr;
+    (void)menu;
 
     CMSX::menuChange(cms, displayPort, CMSX::getSaveExitMenu());
 

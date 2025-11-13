@@ -21,7 +21,8 @@ namespace CMSX {
     enum { OSD_MENU_ELEMENT_MASK = 0x001F };
     enum { MAX_ROWS = 31 };
 
-    typedef const void* (*entryFnPtr)(CMS& cms, DisplayPortBase& displayPort, const void* ptr);
+    struct menu_t;
+    typedef const void* (*entryFnPtr)(CMS& cms, DisplayPortBase& displayPort, const menu_t* ptr);
     struct OSD_Entry {
         const char* text;
         uint32_t flags;
@@ -48,19 +49,19 @@ namespace CMSX {
     void menuCountPage();
     void updateMaxRow();
     void pageSelect(DisplayPortBase& displayPort, int8_t newpage);
-    const void* menuChange(CMS& cms, DisplayPortBase& displayPort, const void* ptr);
+    const void* menuChange(CMS& cms, DisplayPortBase& displayPort, const menu_t* ptr);
     const void* menuBack(CMS& cms, DisplayPortBase& displayPort);
-    const void* menuExit(CMS& cms, DisplayPortBase& displayPort, const void* ptr);
+    const void* menuExit(CMS& cms, DisplayPortBase& displayPort, const  menu_t* ptr);
     menu_t* getSaveExitMenu();
 
     // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
-    extern const void* MENU_NULL_PTR;
-    extern const void* EXIT_PTR;
-    extern const void* EXIT_SAVE_PTR;
-    extern const void* EXIT_SAVE_REBOOT_PTR;
-    extern const void* POPUP_SAVE_PTR;
-    extern const void* POPUP_SAVE_REBOOT_PTR;
-    extern const void* POPUP_EXIT_REBOOT_PTR;
+    extern const menu_t* MENU_NULL_PTR;
+    extern const menu_t* EXIT_PTR;
+    extern const menu_t* EXIT_SAVE_PTR;
+    extern const menu_t* EXIT_SAVE_REBOOT_PTR;
+    extern const menu_t* POPUP_SAVE_PTR;
+    extern const menu_t* POPUP_SAVE_REBOOT_PTR;
+    extern const menu_t* POPUP_EXIT_REBOOT_PTR;
     // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 
     enum { MAX_MENU_STACK_SIZE = 10 };
@@ -73,6 +74,8 @@ namespace CMSX {
     extern uint8_t pageMaxRow;       // Max row in the current page
     extern bool saveMenuInhibited;
     extern std::array<uint8_t, MAX_ROWS> runtimeEntryFlags;
+    // Special return value(s) for function chaining by CMSMenuFuncPtr
+    extern int menuChainBack;
 
     // Menus
     extern menu_t menuSetPopup;

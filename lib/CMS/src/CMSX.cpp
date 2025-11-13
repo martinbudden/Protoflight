@@ -3,27 +3,27 @@
 #include "CMS_Types.h"
 #include "DisplayPortBase.h"
 
-int menuChainBack {};
+int CMSX::menuChainBack {};
 
 std::array<CMSX::ctx_t, CMSX::MAX_MENU_STACK_SIZE> CMSX::menuStack;
 uint8_t CMSX::menuStackIndex {0};
 uint8_t CMSX::maxMenuItems {8};
 CMSX::ctx_t CMSX::currentCtx {};
-int8_t CMSX::pageCount;
+int8_t CMSX::pageCount {};
 const CMSX::OSD_Entry* CMSX::pageTop {};
-uint8_t CMSX::pageMaxRow;
+uint8_t CMSX::pageMaxRow {};
 bool CMSX::saveMenuInhibited {false};
 std::array<uint8_t, CMSX::MAX_ROWS> CMSX::runtimeEntryFlags {};
 
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
-const void* CMSX::MENU_NULL_PTR = reinterpret_cast<const void*>(CMSX::MENU_NULL);
-const void* CMSX::EXIT_PTR = reinterpret_cast<const void*>(CMSX::EXIT);
-const void* CMSX::EXIT_SAVE_PTR = reinterpret_cast<const void*>(CMSX::EXIT_SAVE);
-const void* CMSX::EXIT_SAVE_REBOOT_PTR = reinterpret_cast<const void*>(CMSX::EXIT_SAVE_REBOOT);
-const void* CMSX::POPUP_SAVE_PTR = reinterpret_cast<const void*>(POPUP_SAVE);
-const void* CMSX::POPUP_SAVE_REBOOT_PTR = reinterpret_cast<const void*>(CMSX::POPUP_SAVE_REBOOT);
-const void* CMSX::POPUP_EXIT_REBOOT_PTR = reinterpret_cast<const void*>(CMSX::POPUP_EXIT_REBOOT);
+const CMSX::menu_t* CMSX::MENU_NULL_PTR = reinterpret_cast<const CMSX::menu_t*>(CMSX::MENU_NULL);
+const CMSX::menu_t* CMSX::EXIT_PTR = reinterpret_cast<const CMSX::menu_t*>(CMSX::EXIT);
+const CMSX::menu_t* CMSX::EXIT_SAVE_PTR = reinterpret_cast<const CMSX::menu_t*>(CMSX::EXIT_SAVE);
+const CMSX::menu_t* CMSX::EXIT_SAVE_REBOOT_PTR = reinterpret_cast<const CMSX::menu_t*>(CMSX::EXIT_SAVE_REBOOT);
+const CMSX::menu_t* CMSX::POPUP_SAVE_PTR = reinterpret_cast<const CMSX::menu_t*>(POPUP_SAVE);
+const CMSX::menu_t* CMSX::POPUP_SAVE_REBOOT_PTR = reinterpret_cast<const CMSX::menu_t*>(CMSX::POPUP_SAVE_REBOOT);
+const CMSX::menu_t* CMSX::POPUP_EXIT_REBOOT_PTR = reinterpret_cast<const CMSX::menu_t*>(CMSX::POPUP_EXIT_REBOOT);
 // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 
 uint8_t CMSX::cursorAbsolute()
@@ -39,9 +39,8 @@ void CMSX::addMenuEntry(CMSX::OSD_Entry& menuEntry, const char* text, uint32_t f
     menuEntry.data = data;
 }
 
-const void* CMSX::menuChange(CMS& cms, DisplayPortBase& displayPort, const void* ptr)
+const void* CMSX::menuChange(CMS& cms, DisplayPortBase& displayPort, const menu_t* menu)
 {
-    const menu_t* menu = reinterpret_cast<const menu_t*>(ptr);
     if (!menu) {
         return nullptr;
     }
@@ -60,14 +59,13 @@ const void* CMSX::menuChange(CMS& cms, DisplayPortBase& displayPort, const void*
         currentCtx.cursorRow = 0;
 
         if (menu->onEnter) {
-            const void *result = menu->onEnter(cms, displayPort, nullptr);
-            if (result == MENU_CHAIN_BACK) {
+            const void* result = menu->onEnter(cms, displayPort, nullptr);
+            if (result == &menuChainBack) {
                 return menuBack(cms, displayPort);
             }
         }
 
     }
-
     return nullptr;
 }
 
@@ -83,8 +81,8 @@ void CMSX::menuCountPage()
 const void* CMSX::menuBack(CMS& cms, DisplayPortBase& displayPort)
 {
     if (currentCtx.menu->onExit) {
-        const void *result = currentCtx.menu->onExit(cms, displayPort, pageTop + currentCtx.cursorRow);
-        if (result == MENU_CHAIN_BACK) {
+        const void* result = currentCtx.menu->onExit(cms, displayPort, pageTop + currentCtx.cursorRow);
+        if (result == &menuChainBack) {
             return result;
         }
     }
@@ -120,7 +118,7 @@ void CMSX::pageSelect(DisplayPortBase& displayPort, int8_t newpage)
     pageTop = &currentCtx.menu->entries[currentCtx.page * maxMenuItems];
     updateMaxRow();
 
-    const OSD_Entry *p = pageTop;
+    const OSD_Entry* p = pageTop;
     int ii = 0;
     while (p <= pageTop + pageMaxRow) {
         runtimeEntryFlags[ii] = p->flags;
@@ -142,14 +140,14 @@ void CMSX::traverseGlobalExit(const CMSX::menu_t* menu)
 }
 // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast,hicpp-signed-bitwise,misc-no-recursion)
 
-const void* CMSX::menuExit(CMS& cms, DisplayPortBase& displayPort, const void* ptr)
+const void* CMSX::menuExit(CMS& cms, DisplayPortBase& displayPort, const menu_t* menu)
 {
-    if (ptr == EXIT_SAVE_PTR || ptr == EXIT_SAVE_REBOOT_PTR || ptr == POPUP_SAVE_PTR || ptr == POPUP_SAVE_REBOOT_PTR) {
+    if (menu == EXIT_SAVE_PTR || menu == EXIT_SAVE_REBOOT_PTR || menu == POPUP_SAVE_PTR || menu == POPUP_SAVE_REBOOT_PTR) {
         traverseGlobalExit(&CMSX::menuMain);
         if (currentCtx.menu->onExit) {
             currentCtx.menu->onExit(cms, displayPort, nullptr); // Forced exit
         }
-        if ((ptr == POPUP_SAVE_PTR) || (ptr == POPUP_SAVE_REBOOT_PTR)) {
+        if ((menu == POPUP_SAVE_PTR) || (menu == POPUP_SAVE_REBOOT_PTR)) {
             // traverse through the menu stack and call all their onExit functions
             for (int ii = menuStackIndex - 1; ii >= 0; --ii) {
                 if (menuStack[static_cast<size_t>(ii)].menu->onExit) {
@@ -165,7 +163,7 @@ const void* CMSX::menuExit(CMS& cms, DisplayPortBase& displayPort, const void* p
     displayPort.release();
     currentCtx.menu = nullptr;
 
-    if ((ptr == EXIT_SAVE_REBOOT_PTR) || (ptr == POPUP_SAVE_REBOOT_PTR) || (ptr == POPUP_EXIT_REBOOT_PTR)) {
+    if ((menu == EXIT_SAVE_REBOOT_PTR) || (menu == POPUP_SAVE_REBOOT_PTR) || (menu == POPUP_EXIT_REBOOT_PTR)) {
         displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
         displayPort.writeString(5, 3, DisplayPortBase::SEVERITY_NORMAL, "REBOOTING...");
         displayPort.redraw();
