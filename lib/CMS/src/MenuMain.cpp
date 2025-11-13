@@ -1,19 +1,20 @@
 #include "CMS.h"
+#include "CMSX.h"
 #include "CMS_Types.h"
 
 
-static const std::array<CMS::OSD_Entry, 6> menuFeaturesEntries =
+static const std::array<CMSX::OSD_Entry, 6> menuFeaturesEntries =
 {{
     {"--- FEATURES ---", OME_Label, nullptr, nullptr},
 
-    {"BLACKBOX", OME_Submenu, &CMS::menuChange, &CMSX::menuBlackbox},
-    {"POWER",    OME_Submenu, &CMS::menuChange, &CMSX::menuPower},
-    {"FAILSAFE", OME_Submenu, &CMS::menuChange, &CMSX::menuFailsafe},
+    {"BLACKBOX", OME_Submenu, &CMSX::menuChange, &CMSX::menuBlackbox},
+    {"POWER",    OME_Submenu, &CMSX::menuChange, &CMSX::menuPower},
+    {"FAILSAFE", OME_Submenu, &CMSX::menuChange, &CMSX::menuFailsafe},
     {"BACK",     OME_Back, nullptr, nullptr},
     {nullptr, OME_END, nullptr, nullptr}
 }};
 
-CMS::menu_t CMSX::menuFeatures = {
+CMSX::menu_t CMSX::menuFeatures = {
     .onEnter = nullptr,
     .onExit = nullptr,
     .onDisplayUpdate = nullptr,
@@ -25,7 +26,7 @@ static const void* cmsx_SaveExitMenu(CMS& cms, DisplayPortBase& displayPort, con
     (void)displayPort;
     (void)ptr;
 
-    CMS::menuChange(cms, displayPort, CMS::getSaveExitMenu());
+    CMSX::menuChange(cms, displayPort, CMSX::getSaveExitMenu());
 
     return nullptr;
 }
@@ -33,23 +34,23 @@ static const void* cmsx_SaveExitMenu(CMS& cms, DisplayPortBase& displayPort, con
 #if defined(USE_OSD)
 static const std::array<CMS::OSD_Entry, 8> menuMainEntries =
 #else
-static const std::array<CMS::OSD_Entry, 7> menuMainEntries =
+static const std::array<CMSX::OSD_Entry, 7> menuMainEntries =
 #endif
 {{
     {"-- MAIN --",  OME_Label, nullptr, nullptr},
 
-    {"PROFILE",     OME_Submenu,  &CMS::menuChange, &CMSX::menuImu},
-    {"FEATURES",    OME_Submenu,  &CMS::menuChange, &CMSX::menuFeatures},
+    {"PROFILE",     OME_Submenu,  &CMSX::menuChange, &CMSX::menuImu},
+    {"FEATURES",    OME_Submenu,  &CMSX::menuChange, &CMSX::menuFeatures},
 #if defined(USE_OSD)
     {"OSD",         OME_Submenu,  &CMS::menuChange, &CMSX::menuOsd},
 #endif
-    {"FC&FIRMWARE", OME_Submenu,  &CMS::menuChange, &CMSX::menuFirmware},
-    {"MISC",        OME_Submenu,  &CMS::menuChange, &CMSX::menuMisc},
+    {"FC&FIRMWARE", OME_Submenu,  &CMSX::menuChange, &CMSX::menuFirmware},
+    {"MISC",        OME_Submenu,  &CMSX::menuChange, &CMSX::menuMisc},
     {"SAVE/EXIT",   OME_Funcall,  &cmsx_SaveExitMenu, nullptr},
     {nullptr, OME_END, nullptr, nullptr},
 }};
 
-static const void* mainMenuOnEnter(CMS& cms, DisplayPortBase& displayPort, const CMS::OSD_Entry* self)
+static const void* mainMenuOnEnter(CMS& cms, DisplayPortBase& displayPort, const CMSX::OSD_Entry* self)
 {
     (void)self;
 #if false
@@ -59,21 +60,21 @@ static const void* mainMenuOnEnter(CMS& cms, DisplayPortBase& displayPort, const
     }
 #else
 #endif
-    CMS::menuChange(cms, displayPort, &CMSX::menuSetPopup);
+    CMSX::menuChange(cms, displayPort, &CMSX::menuSetPopup);
     return nullptr;
 }
 
-CMS::menu_t CMSX::menuMain = {
+CMSX::menu_t CMSX::menuMain = {
     .onEnter = mainMenuOnEnter,
     .onExit = nullptr,
     .onDisplayUpdate = nullptr,
     .entries = &menuMainEntries[0],
 };
 
-CMS::menu_t CMSX::menuSetPopup {};
-CMS::menu_t CMSX::menuImu {};
-CMS::menu_t CMSX::menuOsd {};
-CMS::menu_t CMSX::menuFirmware {};
-CMS::menu_t CMSX::menuMisc {};
-CMS::menu_t CMSX::menuBlackbox {};
-CMS::menu_t CMSX::menuPower {};
+CMSX::menu_t CMSX::menuSetPopup {};
+CMSX::menu_t CMSX::menuImu {};
+CMSX::menu_t CMSX::menuOsd {};
+CMSX::menu_t CMSX::menuFirmware {};
+CMSX::menu_t CMSX::menuMisc {};
+CMSX::menu_t CMSX::menuBlackbox {};
+CMSX::menu_t CMSX::menuPower {};

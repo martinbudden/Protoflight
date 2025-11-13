@@ -1,19 +1,11 @@
 #include "CMS.h"
+#include "CMSX.h"
 #include "CMS_Types.h"
 #include "Cockpit.h"
 #include "DisplayPortBase.h"
 
 #include <MSP_Box.h>
 #include <ReceiverBase.h>
-
-// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
-const void* CMS::EXIT_PTR = reinterpret_cast<const void*>(CMS_EXIT);
-const void* CMS::EXIT_SAVE_PTR = reinterpret_cast<const void*>(CMS_EXIT_SAVE);
-const void* CMS::EXIT_SAVE_REBOOT_PTR = reinterpret_cast<const void*>(CMS_EXIT_SAVE_REBOOT);
-const void* CMS::POPUP_SAVE_PTR = reinterpret_cast<const void*>(CMS_POPUP_SAVE);
-const void* CMS::POPUP_SAVE_REBOOT_PTR = reinterpret_cast<const void*>(CMS_POPUP_SAVE_REBOOT);
-const void* CMS::POPUP_EXIT_REBOOT_PTR = reinterpret_cast<const void*>(CMS_POPUP_EXIT_REBOOT);
-// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 
 
 CMS::CMS(OSD& osd, const ReceiverBase& receiver, const FlightController& flightController, Cockpit& cockpit) :
@@ -49,7 +41,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
     if (_inMenu) {
         _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPT_RESET_DRAWING);
         _rcDelayMs = static_cast<int32_t>(scanKeys(currentTimeMs, _lastCalledMs, _rcDelayMs));
-        drawMenu(*_displayPort, currentTimeUs);
+        drawMenu(currentTimeUs);
         if (currentTimeMs > _lastHeartbeatTimeMs + 500) {
             // Heart beat for external CMS display device @500ms, timeout @1000ms
             _displayPort->heartbeat();
@@ -58,7 +50,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         _displayPort->commitTransaction();
     } else {
         // Detect menu invocation
-        if (!_cockpit.isRcModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE) && !_cockpit.isArmed()) {
+        if (!_cockpit.isArmed() && !_cockpit.isRcModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
             const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
             if (pwmIsMid(controls.throttle) && pwmIsLow(controls.yaw) && pwmIsHigh(controls.pitch)) {
                 menuOpen();
@@ -78,10 +70,8 @@ void CMS::setExternKey(key_e externKey)
     }
 }
 
-uint32_t CMS::handleKey(DisplayPortBase& displayPort, key_e key)
+uint32_t CMS::handleKey(key_e key)
 {
-    (void)displayPort;
-
     const uint32_t ret = BUTTON_TIME_MS;
 
     if (key == KEY_MENU) {
@@ -91,78 +81,43 @@ uint32_t CMS::handleKey(DisplayPortBase& displayPort, key_e key)
     return ret;
 }
 
-void CMS::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs)
+void CMS::drawMenu(uint32_t currentTimeUs)
 {
-    (void)displayPort;
     (void)currentTimeUs;
 }
 
 void CMS::menuOpen()
 {
-}
-
-const void* CMS::menuChange(CMS& cms, DisplayPortBase& displayPort, const void* ptr)
-{
-    (void)cms;
-    (void)displayPort;
-    (void)ptr;
-    return nullptr;
-}
-
-// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast,hicpp-signed-bitwise,misc-no-recursion)
-void CMS::traverseGlobalExit(const menu_t *menu)
-{
-    for (const OSD_Entry* p = menu->entries; (p->flags & OSD_MENU_ELEMENT_MASK) != OME_END ; ++p) {
-        if ((p->flags & OSD_MENU_ELEMENT_MASK) == OME_Submenu) {
-            traverseGlobalExit(reinterpret_cast<const menu_t*>(p->data));
+    const CMSX::menu_t* startMenu {};
+    if (_inMenu) {
+        // Switch display
+        DisplayPortBase* nextDisplayPort = displayPortSelectNext();
+        startMenu = CMSX::currentCtx.menu;
+        if (nextDisplayPort == _displayPort) {
+            return;
         }
-    }
-
-}
-// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast,hicpp-signed-bitwise,misc-no-recursion)
-
-const void* CMS::menuExit(CMS& cms, DisplayPortBase& displayPort, const void* ptr)
-{
-
-    if (ptr == EXIT_SAVE_PTR || ptr == EXIT_SAVE_REBOOT_PTR || ptr == POPUP_SAVE_PTR || ptr == POPUP_SAVE_REBOOT_PTR) {
-        traverseGlobalExit(&CMSX::menuMain);
-        if (cms.getCurrentCtx().menu->onExit) {
-            cms.getCurrentCtx().menu->onExit(cms, displayPort, nullptr); // Forced exit
+        // DisplayPort has been changed.
+        CMSX::currentCtx.cursorRow = CMSX::cursorAbsolute();
+        _displayPort->setBackgroundType(DisplayPortBase::BACKGROUND_TRANSPARENT); // reset previous displayPort to transparent
+        _displayPort->release();
+        _displayPort = nextDisplayPort;
+    } else {
+        //_displayPort = cmsDisplayPortSelectCurrent();
+        if (!_displayPort) {
+            return;
         }
-        if ((ptr == POPUP_SAVE_PTR) || (ptr == POPUP_SAVE_REBOOT_PTR)) {
-            // traverse through the menu stack and call all their onExit functions
-            for (int ii = cms._menuStackIndex - 1; ii >= 0; --ii) {
-                if (cms._menuStack[static_cast<size_t>(ii)].menu->onExit) {
-                    cms._menuStack[static_cast<size_t>(ii)].menu->onExit(cms, displayPort, nullptr);
-                }
-            }
-        }
-        //saveConfigAndNotify();
+        _inMenu = true;
+        CMSX::currentCtx = { nullptr, 0, 0 };
+        startMenu = &CMSX::menuMain;
+        CMSX::menuStackIndex = 0;
+        //setArmingDisabled(ARMING_DISABLED_CMS_MENU);
+        _displayPort->layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }
-
-    cms.setInMenu(false);
-    displayPort.setBackgroundType(DisplayPortBase::BACKGROUND_TRANSPARENT);
-    displayPort.release();
-    cms.setCurrentCtxMenuToNull();
-
-    if ((ptr == EXIT_SAVE_REBOOT_PTR) || (ptr == POPUP_SAVE_REBOOT_PTR) || (ptr == POPUP_EXIT_REBOOT_PTR)) {
-        displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
-        displayPort.writeString(5, 3, DisplayPortBase::SEVERITY_NORMAL, "REBOOTING...");
-        displayPort.redraw();
-#if false
-        stopMotors();
-        motorShutdown();
-        delay(200);
-
-        systemReset();
-#endif
-    }
-
-    //unsetArmingDisabled(ARMING_DISABLED_CMS_MENU);
-
-    return nullptr;
+    //!!other stuff here
+    (void)startMenu;
+    //CMSX::menuChange(startMenu, *this, *_displayPort, nullptr);
+    CMSX::menuChange(*this, *_displayPort, nullptr);
 }
-
 
 uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t rcDelayMs)
 {
@@ -175,14 +130,6 @@ uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t r
 void CMS::inhibitSaveMenu()
 {
     _saveMenuInhibited = true;
-}
-
-void CMS::addMenuEntry(OSD_Entry& menuEntry, const char* text, uint32_t flags, entryFnPtr fnPtr, void* data)
-{
-        menuEntry.text = text;
-        menuEntry.flags = flags;
-        menuEntry.fnPtr = fnPtr;
-        menuEntry.data = data;
 }
 
 DisplayPortBase* CMS::displayPortSelectNext()

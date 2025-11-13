@@ -1,0 +1,78 @@
+#pragma once
+
+#include <array>
+#include <cstdint>
+
+class CMS;
+class DisplayPortBase;
+
+
+namespace CMSX {
+    // MenuExit special pointer values
+    enum {
+        MENU_NULL         = 0,
+        EXIT              = 1,
+        EXIT_SAVE         = 2,
+        EXIT_SAVE_REBOOT  = 3,
+        POPUP_SAVE        = 4,
+        POPUP_SAVE_REBOOT = 5,
+        POPUP_EXIT_REBOOT = 6
+    };
+    enum { OSD_MENU_ELEMENT_MASK = 0x001F };
+    typedef const void* (*entryFnPtr)(CMS& cms, DisplayPortBase& displayPort, const void* ptr);
+    struct OSD_Entry {
+        const char* text;
+        uint32_t flags;
+        entryFnPtr fnPtr;
+        const void* data;
+    };
+    typedef const void* (*menuFnPtr)(CMS& cms, DisplayPortBase& displayPort, const OSD_Entry* self);
+    struct menu_t {
+        menuFnPtr onEnter;
+        menuFnPtr onExit;
+        menuFnPtr onDisplayUpdate;
+        const OSD_Entry* entries;
+    };
+    struct ctx_t {
+        const menu_t* menu; // menu for this context
+        uint8_t page;       // page in the menu
+        int8_t cursorRow;   // cursorRow in the page
+    };
+
+    uint8_t cursorAbsolute();
+
+    void addMenuEntry(OSD_Entry& menuEntry, const char* text, uint32_t flags, entryFnPtr fnPtr, void* data);
+    void traverseGlobalExit(const menu_t* menu);
+    const void* menuChange(CMS& cms, DisplayPortBase& displayPort, const void* ptr);
+    const void* menuExit(CMS& cms, DisplayPortBase& displayPort, const void* ptr);
+    menu_t* getSaveExitMenu();
+
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
+    extern const void* MENU_NULL_PTR;
+    extern const void* EXIT_PTR;
+    extern const void* EXIT_SAVE_PTR;
+    extern const void* EXIT_SAVE_REBOOT_PTR;
+    extern const void* POPUP_SAVE_PTR;
+    extern const void* POPUP_SAVE_REBOOT_PTR;
+    extern const void* POPUP_EXIT_REBOOT_PTR;
+    // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
+
+    enum { MAX_MENU_STACK_SIZE = 10 };
+    extern std::array<ctx_t, MAX_MENU_STACK_SIZE> menuStack;
+    extern uint8_t menuStackIndex;
+    extern uint8_t maxMenuItems;
+    extern ctx_t currentCtx;
+
+    // Menus
+    extern menu_t menuSetPopup;
+
+    extern menu_t menuMain;
+        extern menu_t menuImu;
+        extern menu_t menuFeatures;
+            extern menu_t menuBlackbox;
+            extern menu_t menuPower;
+            extern menu_t menuFailsafe;
+        extern menu_t menuOsd;
+        extern menu_t menuFirmware;
+        extern menu_t menuMisc;
+} // END namespace
