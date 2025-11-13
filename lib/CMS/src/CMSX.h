@@ -19,6 +19,8 @@ namespace CMSX {
         POPUP_EXIT_REBOOT = 6
     };
     enum { OSD_MENU_ELEMENT_MASK = 0x001F };
+    enum { MAX_ROWS = 31 };
+
     typedef const void* (*entryFnPtr)(CMS& cms, DisplayPortBase& displayPort, const void* ptr);
     struct OSD_Entry {
         const char* text;
@@ -43,7 +45,11 @@ namespace CMSX {
 
     void addMenuEntry(OSD_Entry& menuEntry, const char* text, uint32_t flags, entryFnPtr fnPtr, void* data);
     void traverseGlobalExit(const menu_t* menu);
+    void menuCountPage();
+    void updateMaxRow();
+    void pageSelect(DisplayPortBase& displayPort, int8_t newpage);
     const void* menuChange(CMS& cms, DisplayPortBase& displayPort, const void* ptr);
+    const void* menuBack(CMS& cms, DisplayPortBase& displayPort);
     const void* menuExit(CMS& cms, DisplayPortBase& displayPort, const void* ptr);
     menu_t* getSaveExitMenu();
 
@@ -62,12 +68,20 @@ namespace CMSX {
     extern uint8_t menuStackIndex;
     extern uint8_t maxMenuItems;
     extern ctx_t currentCtx;
+    extern int8_t pageCount;         // Number of pages in the current menu
+    extern const OSD_Entry* pageTop; // First entry for the current page
+    extern uint8_t pageMaxRow;       // Max row in the current page
+    extern bool saveMenuInhibited;
+    extern std::array<uint8_t, MAX_ROWS> runtimeEntryFlags;
 
     // Menus
     extern menu_t menuSetPopup;
 
     extern menu_t menuMain;
         extern menu_t menuImu;
+            //extern menu_t menuPid;
+            //extern menu_t menuRates;
+            //extern menu_t menuFilters;
         extern menu_t menuFeatures;
             extern menu_t menuBlackbox;
             extern menu_t menuPower;

@@ -3,10 +3,18 @@
 #include "CMS_Types.h"
 #include "DisplayPortBase.h"
 
+int menuChainBack {};
+
 std::array<CMSX::ctx_t, CMSX::MAX_MENU_STACK_SIZE> CMSX::menuStack;
 uint8_t CMSX::menuStackIndex {0};
 uint8_t CMSX::maxMenuItems {8};
 CMSX::ctx_t CMSX::currentCtx {};
+int8_t CMSX::pageCount;
+const CMSX::OSD_Entry* CMSX::pageTop {};
+uint8_t CMSX::pageMaxRow;
+bool CMSX::saveMenuInhibited {false};
+std::array<uint8_t, CMSX::MAX_ROWS> CMSX::runtimeEntryFlags {};
+
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 const void* CMSX::MENU_NULL_PTR = reinterpret_cast<const void*>(CMSX::MENU_NULL);
@@ -31,14 +39,95 @@ void CMSX::addMenuEntry(CMSX::OSD_Entry& menuEntry, const char* text, uint32_t f
     menuEntry.data = data;
 }
 
-//!!TODO need to add menu_t* menu parameter 
 const void* CMSX::menuChange(CMS& cms, DisplayPortBase& displayPort, const void* ptr)
 {
-    //(void)menu;
-    (void)cms;
-    (void)displayPort;
-    (void)ptr;
+    const menu_t* menu = reinterpret_cast<const menu_t*>(ptr);
+    if (!menu) {
+        return nullptr;
+    }
+    if (menu == currentCtx.menu) {
+    } else {
+        if (currentCtx.menu && menu != &menuMain) {
+            // If we are opening the initial top-level menu, then currentCtx.menu will be NULL and there is nothing to do.
+            // Otherwise stack the current menu before moving to the selected menu.
+            if (menuStackIndex >= MAX_MENU_STACK_SIZE - 1) {
+                // menu stack limit reached - prevent array overflow
+                return nullptr;
+            }
+            menuStack[menuStackIndex++] = currentCtx; // push
+        }
+        currentCtx.menu = menu;
+        currentCtx.cursorRow = 0;
+
+        if (menu->onEnter) {
+            const void *result = menu->onEnter(cms, displayPort, nullptr);
+            if (result == MENU_CHAIN_BACK) {
+                return menuBack(cms, displayPort);
+            }
+        }
+
+    }
+
     return nullptr;
+}
+
+void CMSX::menuCountPage()
+{
+    const OSD_Entry *p = currentCtx.menu->entries; 
+    while ((p->flags & OSD_MENU_ELEMENT_MASK) != OME_END) {
+        ++p;
+    }
+    pageCount = (p - currentCtx.menu->entries - 1) / maxMenuItems + 1;
+}
+
+const void* CMSX::menuBack(CMS& cms, DisplayPortBase& displayPort)
+{
+    if (currentCtx.menu->onExit) {
+        const void *result = currentCtx.menu->onExit(cms, displayPort, pageTop + currentCtx.cursorRow);
+        if (result == MENU_CHAIN_BACK) {
+            return result;
+        }
+    }
+    saveMenuInhibited = false;
+    if (!menuStackIndex) {
+        return NULL;
+    }
+    currentCtx = menuStack[--menuStackIndex]; // pop
+    menuCountPage();
+    pageSelect(displayPort, currentCtx.page);
+
+    return nullptr;
+}
+
+void CMSX::updateMaxRow()
+{
+    pageMaxRow = 0;
+    for (const OSD_Entry *ptr = pageTop; (ptr->flags & OSD_MENU_ELEMENT_MASK) != OME_END; ++ptr) {
+        ++pageMaxRow;
+    }
+    if (pageMaxRow > maxMenuItems) {
+        pageMaxRow = maxMenuItems;
+    }
+    if (pageMaxRow > MAX_ROWS) {
+        pageMaxRow = MAX_ROWS;
+    }
+    --pageMaxRow;
+}
+
+void CMSX::pageSelect(DisplayPortBase& displayPort, int8_t newpage)
+{
+    currentCtx.page = (newpage + pageCount) % pageCount;
+    pageTop = &currentCtx.menu->entries[currentCtx.page * maxMenuItems];
+    updateMaxRow();
+
+    const OSD_Entry *p = pageTop;
+    int ii = 0;
+    while (p <= pageTop + pageMaxRow) {
+        runtimeEntryFlags[ii] = p->flags;
+        ++p;
+        ++ii;
+    }
+    displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
 }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast,hicpp-signed-bitwise,misc-no-recursion)
@@ -55,7 +144,6 @@ void CMSX::traverseGlobalExit(const CMSX::menu_t* menu)
 
 const void* CMSX::menuExit(CMS& cms, DisplayPortBase& displayPort, const void* ptr)
 {
-
     if (ptr == EXIT_SAVE_PTR || ptr == EXIT_SAVE_REBOOT_PTR || ptr == POPUP_SAVE_PTR || ptr == POPUP_SAVE_REBOOT_PTR) {
         traverseGlobalExit(&CMSX::menuMain);
         if (currentCtx.menu->onExit) {

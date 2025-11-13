@@ -114,9 +114,7 @@ void CMS::menuOpen()
         _displayPort->layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }
     //!!other stuff here
-    (void)startMenu;
-    //CMSX::menuChange(startMenu, *this, *_displayPort, nullptr);
-    CMSX::menuChange(*this, *_displayPort, nullptr);
+    CMSX::menuChange(*this, *_displayPort, startMenu);
 }
 
 uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t rcDelayMs)

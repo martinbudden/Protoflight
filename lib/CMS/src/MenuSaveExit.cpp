@@ -31,7 +31,7 @@ static const std::array<CMSX::OSD_Entry, 5> cmsx_menuSaveExitRebootEntries =
     { nullptr, OME_END, nullptr, nullptr}
 };
 
-static CMS::menu_t cmsx_menuSaveExitReboot = {
+static CMSX::menu_t cmsx_menuSaveExitReboot = {
     .onEnter = nullptr,
     .onExit = nullptr,
     .onDisplayUpdate = nullptr,

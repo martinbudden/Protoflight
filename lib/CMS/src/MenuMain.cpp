@@ -56,7 +56,7 @@ static const void* mainMenuOnEnter(CMS& cms, DisplayPortBase& displayPort, const
 #if false
     if (setupPopupMenuBuild()) {
         // If setup issues were found then switch to the dynamically constructed menu
-        CMS::menuChange(displayPort, &CMSX::menuSetPopup);
+        CMS::menuChange(cms, displayPort, &CMSX::menuSetPopup);
     }
 #else
 #endif
