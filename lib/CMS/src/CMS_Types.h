@@ -24,8 +24,8 @@ enum osd_menu_element_e {
 
     // Debug aid
     OME_MENU,
-
     OME_COUNT = OME_MENU,
+    OME_MASK         = 0x001F,
 
 // Bits in flags
     PRINT_VALUE      = 0x0020,  // Value has been changed, need to redraw
@@ -37,7 +37,7 @@ enum osd_menu_element_e {
     SLIDER_RP        = 0x0800,  // Value should be read only if simplified RP slider is enabled
     SLIDER_RPY       = 0x1000,  // Value should be read only if simplified RPY slider is enabled
     SLIDER_GYRO      = 0x2000,  // Value should be read only if simplified gyro slider is enabled
-    SLIDER_DTERM     = 0x4000  // Value should be read only if simplified D term slider is enabled
+    SLIDER_DTERM     = 0x4000,  // Value should be read only if simplified D term slider is enabled
 };
 
 struct OSD_UINT8_t {

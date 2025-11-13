@@ -38,11 +38,11 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
 
     const uint32_t currentTimeMs = currentTimeUs / 1000;
 
-    if (_inMenu) {
+    if (CMSX::isInMenu()) {
         _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPT_RESET_DRAWING);
         _rcDelayMs = static_cast<int32_t>(scanKeys(currentTimeMs, _lastCalledMs, _rcDelayMs));
         drawMenu(currentTimeUs);
-        if (currentTimeMs > _lastHeartbeatTimeMs + 500) {
+        if (currentTimeMs > _lastHeartbeatTimeMs + HEARTBEAT_INTERVAL_MS) {
             // Heart beat for external CMS display device @500ms, timeout @1000ms
             _displayPort->heartbeat();
             _lastHeartbeatTimeMs = currentTimeMs;
@@ -89,7 +89,7 @@ void CMS::drawMenu(uint32_t currentTimeUs)
 void CMS::menuOpen()
 {
     const CMSX::menu_t* startMenu {};
-    if (_inMenu) {
+    if (CMSX::isInMenu()) {
         // Switch display
         DisplayPortBase* nextDisplayPort = displayPortSelectNext();
         startMenu = CMSX::currentCtx.menu;
@@ -106,7 +106,7 @@ void CMS::menuOpen()
         if (!_displayPort) {
             return;
         }
-        _inMenu = true;
+        CMSX::setInMenu(true);
         CMSX::currentCtx = { nullptr, 0, 0 };
         startMenu = &CMSX::menuMain;
         CMSX::menuStackIndex = 0;
@@ -123,11 +123,6 @@ uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t r
     (void)lastCalledMs;
     (void)rcDelayMs;
     return 0;
-}
-
-void CMS::inhibitSaveMenu()
-{
-    _saveMenuInhibited = true;
 }
 
 DisplayPortBase* CMS::displayPortSelectNext()

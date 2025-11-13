@@ -37,11 +37,10 @@ enum { PWM_PULSE_MIN = 750 };
 enum { PWM_PULSE_MAX = 2250 };
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-OSD_TAB_t    entry0 = OSD_TAB_t    
-{ &failsafe.procedure, Cockpit::FAILSAFE_PROCEDURE_COUNT - 1, &failsafeProcedureNames[0] };
-OSD_FLOAT_t  entry1 = OSD_FLOAT_t  { &failsafe.delay, Cockpit::PERIOD_RX_DATA_RECOVERY_MS / MILLIS_PER_TENTH_SECOND, 200, 1, 100 };
-OSD_FLOAT_t  entry2 = OSD_FLOAT_t  { &failsafe.landing_time, 0, 200, 1, 100 };
-OSD_UINT16_t entry3 = OSD_UINT16_t { &failsafe.throttle, PWM_PULSE_MIN, PWM_PULSE_MAX, 1 };
+auto entry0 = OSD_TAB_t    { &failsafe.procedure, Cockpit::FAILSAFE_PROCEDURE_COUNT - 1, &failsafeProcedureNames[0] };
+auto entry1 = OSD_FLOAT_t  { &failsafe.delay, Cockpit::PERIOD_RX_DATA_RECOVERY_MS / MILLIS_PER_TENTH_SECOND, 200, 1, 100 };
+auto entry2 = OSD_FLOAT_t  { &failsafe.landing_time, 0, 200, 1, 100 };
+auto entry3 = OSD_UINT16_t { &failsafe.throttle, PWM_PULSE_MIN, PWM_PULSE_MAX, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 // NOLINTBEGIN(hicpp-signed-bitwise)

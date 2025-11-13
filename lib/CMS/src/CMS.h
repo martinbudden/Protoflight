@@ -34,6 +34,7 @@ public:
         KEY_SAVEMENU,
     };
     enum { MAX_DISPLAY_PORT_COUNT = 4 };
+    enum { HEARTBEAT_INTERVAL_MS = 500 };
 public:
     struct config_t {
         uint8_t filler;
@@ -48,9 +49,7 @@ public:
     uint32_t scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t rcDelayMs);
     void setExternKey(key_e externKey);
 
-    void setInMenu(bool inMenu) { _inMenu = inMenu; }
 
-    void inhibitSaveMenu();
     void drawMenu(uint32_t currentTimeUs);
     void menuOpen();
 
@@ -75,7 +74,5 @@ private:
     int32_t _currentDeviceIndex {-1};
 
     key_e _externKey {};
-    bool _inMenu {};
-    bool _saveMenuInhibited {};
     std::array<DisplayPortBase*, MAX_DISPLAY_PORT_COUNT> _displayPorts {};
 };
