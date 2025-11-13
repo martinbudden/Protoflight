@@ -9,8 +9,8 @@
 // Drawing functions
 //
 
-std::array<OSD_Elements::elementDrawFn, OSD_ITEM_COUNT> OSD_Elements::elementDrawFunctions {};
-std::array<OSD_Elements::elementDrawFn, OSD_ITEM_COUNT> OSD_Elements::elementDrawBackgroundFunctions {};
+std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> OSD_Elements::elementDrawFunctions {};
+std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> OSD_Elements::elementDrawBackgroundFunctions {};
 
 
 void OSD_Elements::initDrawFunctions()

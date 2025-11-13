@@ -77,7 +77,8 @@ void test_msp_set_failsafe_config()
         .switch_mode = 9,
         .procedure = 13,
         .throttle = 2963,
-        .throttle_low_delay = 4107
+        .throttle_low_delay = 4107,
+        .failsafe_recovery_delay = 5,
     };
     const std::array<uint8_t, 13> inStream = {
         'M', '<', payloadSize, MSP_SET_FAILSAFE_CONFIG,

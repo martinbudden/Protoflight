@@ -25,6 +25,8 @@ class BackchannelTask;
 class Blackbox;
 class BlackboxTask;
 class ButtonsBase;
+class CMS;
+class CMS_Task;
 class Cockpit;
 class Debug;
 class FlightController;
@@ -70,6 +72,10 @@ enum { MSP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
 enum { BLACKBOX_TASK_INTERVAL_MICROSECONDS = 2000 }; // 500 Hz
 #endif
 
+#if !defined(CMS_TASK_INTERVAL_MICROSECONDS)
+enum { CMS_TASK_INTERVAL_MICROSECONDS = 50000 }; // 20 Hz
+#endif
+
 enum {
     AHRS_TASK_PRIORITY = 6,
     FC_TASK_PRIORITY = 5,
@@ -79,6 +85,7 @@ enum {
     BLACKBOX_TASK_PRIORITY = 3,
     MSP_TASK_PRIORITY = 2,
     OSD_TASK_PRIORITY = 2,
+    CMS_TASK_PRIORITY = 2,
 };
 
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
@@ -109,6 +116,7 @@ enum {
     MSP_TASK_CORE = CPU_CORE_0,
     BLACKBOX_TASK_CORE = CPU_CORE_0,
     OSD_TASK_CORE = CPU_CORE_0,
+    CMS_TASK_CORE = CPU_CORE_0,
 };
 
 class DashboardTask : public TaskBase {
@@ -134,6 +142,7 @@ private:
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
     static OSD& createOSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
+    static CMS& createCMS(OSD& osd, const ReceiverBase& receiver, const FlightController& flightController, Cockpit& cockpit);
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
@@ -155,6 +164,7 @@ private:
         MSP_Task* mspTask;
         BlackboxTask* blackboxTask;
         OSD_Task* osdTask;
+        CMS_Task* cmsTask;
     };
 private:
     tasks_t _tasks {};

@@ -1,6 +1,5 @@
 #include "Main.h"
 
-
 #include <AHRS.h>
 #include <AHRS_Task.h>
 #include <BackchannelTask.h>
@@ -8,6 +7,7 @@
 #if defined(M5_UNIFIED)
 #include <ButtonsM5.h>
 #endif
+#include <CMS_Task.h>
 #include <Cockpit.h>
 #include <Debug.h>
 #include <FlightController.h>
@@ -88,6 +88,9 @@ void Main::setup()
 #endif
 #if defined(USE_OSD)
     OSD& osd = createOSD(flightController, cockpit, debug, nvs);
+#if defined(USE_CMS)
+    CMS& cms = createCMS(osd, receiver, flightController, cockpit);
+#endif
 #endif
 
 #if defined(M5_UNIFIED)
@@ -154,6 +157,10 @@ void Main::setup()
 #if defined(USE_OSD)
     const uint32_t osdTaskIntervalMicroseconds = 1'000'000 / osd.getConfig().framerate_hz;
     _tasks.osdTask = OSD_Task::createTask(taskInfo, osd, OSD_TASK_PRIORITY, OSD_TASK_CORE, osdTaskIntervalMicroseconds);
+    printTaskInfo(taskInfo);
+#endif
+#if defined(USE_CMS)
+    _tasks.cmsTask = CMS_Task::createTask(taskInfo, cms, CMS_TASK_PRIORITY, CMS_TASK_CORE, CMS_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)

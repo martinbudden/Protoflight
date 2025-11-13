@@ -157,6 +157,7 @@ static constexpr Cockpit::failsafe_t cockpitFailSafe = {
     .procedure = 0,
     .throttle = 1000,
     .throttle_low_delay = 100,
+    .failsafe_recovery_delay = 5, // 500ms of valid rx data needed to allow recovery from failsafe and re-arming
 };
 
 static constexpr Cockpit::rates_t cockpitRates = {

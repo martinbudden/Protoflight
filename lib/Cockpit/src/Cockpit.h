@@ -39,6 +39,13 @@ public:
         FAILSAFE_RX_LOSS_RECOVERED,
         FAILSAFE_GPS_RESCUE
     };
+    enum failsafe_procedure_e {
+        FAILSAFE_PROCEDURE_AUTO_LANDING = 0,
+        FAILSAFE_PROCEDURE_DROP_IT,
+        FAILSAFE_PROCEDURE_GPS_RESCUE,
+        FAILSAFE_PROCEDURE_COUNT   // must be last
+    };
+    enum { PERIOD_RX_DATA_RECOVERY_MS = 100 };
     // MSP compatible failsafe parameters
     struct failsafe_t {
         uint8_t delay;
@@ -47,6 +54,7 @@ public:
         uint8_t procedure;
         uint16_t throttle;
         uint16_t throttle_low_delay;
+        uint16_t failsafe_recovery_delay;
     };
     // arming flags
     static constexpr uint32_t ARMED = 0x01;

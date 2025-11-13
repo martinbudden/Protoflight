@@ -129,7 +129,7 @@ public:
         uint8_t attr;
         bool rendered;
     };
-    typedef bool (OSD_Elements::*elementDrawFn)(DisplayPortBase& displayPort, element_t& element);
+    typedef bool (OSD_Elements::*elementDrawFnPtr)(DisplayPortBase& displayPort, element_t& element);
 
 public:
     bool isSysOSD_Element(uint8_t index) { return (index >= OSD_SYS_GOGGLE_VOLTAGE) && (index <= OSD_SYS_FAN_SPEED); }
@@ -206,6 +206,6 @@ private:
     std::array<uint8_t, OSD_ITEM_COUNT> _activeOsdElementArray;
     std::bitset<OSD_ITEM_COUNT> _blinkBits {};
 
-    static std::array<OSD_Elements::elementDrawFn, OSD_ITEM_COUNT> elementDrawFunctions;
-    static std::array<OSD_Elements::elementDrawFn, OSD_ITEM_COUNT> elementDrawBackgroundFunctions;
+    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> elementDrawFunctions;
+    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> elementDrawBackgroundFunctions;
 };

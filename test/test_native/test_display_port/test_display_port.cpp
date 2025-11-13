@@ -1,14 +1,6 @@
 #include <Display.h>
-#include <DisplayPortBase.h>
+#include <DisplayPortNull.h>
 #include <unity.h>
-
-class DisplayPortNull : public DisplayPortBase {
-public:
-    int clearScreen(display_clear_option_e options) override { (void)options; return 0; }
-    bool drawScreen() override { return true; }
-    int writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) override { (void)x; (void)y; (void)attr; (void)text; return 0; }
-    int writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) override { (void)x; (void)y; (void)attr; (void)c; return 0; }
-};
 
 void setUp()
 {
