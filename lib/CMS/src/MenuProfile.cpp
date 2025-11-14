@@ -116,7 +116,7 @@ CMSX::menu_t CMSX::menuPID = {
     .onEnter = menuPID_onEnter,
     .onExit = menuPID_onExit,
     .onDisplayUpdate = nullptr,
-    .entries = nullptr
+    .entries = &menuPidEntries[0]
 };
 
 static const void* pidProfileIndexOnChange(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu)
@@ -132,6 +132,66 @@ static std::array<const char * const, 4> pidProfileNames { "1", "2", "3", "4" };
 //
 // Rates
 //
+static std::array<char, 2> rateProfileIndexString = { '1', '\0' };
+static Cockpit::rates_t rates {};
+
+static const void* menuRatesOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+{
+    rates = cmsx.getCMS().getCockpit().getRates();
+    return nullptr;
+}
+
+static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+{
+    cmsx.getCMS().getCockpit().setRates(rates);
+    return nullptr;
+}
+
+const char * const lookupTableThrottleLimitType[] = { "OFF", "SCALE", "CLIP" };
+
+static auto entryRcRatesRoll  = OSD_FLOAT_t { &rates.rcRates[FlightController::FD_ROLL], 1, 255, 1, 10 };
+static auto entryRcRatesPitch = OSD_FLOAT_t { &rates.rcRates[FlightController::FD_PITCH], 1, 255, 1, 10 };
+static auto entryRcRatesYaw   = OSD_FLOAT_t { &rates.rcRates[FlightController::FD_YAW], 1, 255, 1, 10 };
+
+static auto entryRatesRoll    = OSD_FLOAT_t { &rates.rates[FlightController::FD_ROLL], 1, 255, 1, 10 };
+static auto entryRatesPitch   = OSD_FLOAT_t { &rates.rates[FlightController::FD_PITCH], 1, 255, 1, 10 };
+static auto entryRatesYaw     = OSD_FLOAT_t { &rates.rates[FlightController::FD_YAW], 1, 255, 1, 10 };
+
+static auto entryRcExpoRoll   = OSD_FLOAT_t { &rates.rcRates[FlightController::FD_ROLL], 1, 100, 1, 10 };
+static auto entryRcExpoPitch  = OSD_FLOAT_t { &rates.rcRates[FlightController::FD_PITCH], 1, 100, 1, 10 };
+static auto entryRcExpoYaw    = OSD_FLOAT_t { &rates.rcRates[FlightController::FD_YAW], 1, 100, 1, 10 };
+
+static auto entryThrottleMid  = OSD_UINT8_t { &rates.throttleMidpoint, 1, 100, 1 };
+static auto entryThrottleExpo = OSD_UINT8_t { &rates.throttleExpo, 1, 100, 1 };
+static auto entryThrottleLimitType = OSD_TABLE_t { &rates.throttleLimitType, 2, &lookupTableThrottleLimitType[0] };
+static auto entryThrottleLimitPercent = OSD_UINT8_t { &rates.throttleLimitPercent, 25, 100, 1 };
+
+
+static const std::array<CMSX::OSD_Entry, 16> menuRatesEntries =
+{{
+    { "-- RATE --",  OME_Label, nullptr, &rateProfileIndexString[0] },
+
+    { "ROLL RATE",   OME_FLOAT,  nullptr, &entryRcRatesRoll },
+    { "PITCH RATE",  OME_FLOAT,  nullptr, &entryRcRatesPitch },
+    { "YAW RATE",    OME_FLOAT,  nullptr, &entryRcRatesYaw },
+
+    { "ROLL SUPER",  OME_FLOAT,  nullptr, &entryRatesRoll },
+    { "PITCH SUPER", OME_FLOAT,  nullptr, &entryRatesPitch },
+    { "YAW SUPER",   OME_FLOAT,  nullptr, &entryRatesYaw },
+
+    { "ROLL EXPO",   OME_FLOAT,  nullptr, &entryRcExpoRoll },
+    { "PITCH EXPO",  OME_FLOAT,  nullptr, &entryRcExpoPitch },
+    { "YAW EXPO",    OME_FLOAT,  nullptr, &entryRcExpoYaw },
+
+    { "THR MID",     OME_UINT8,  nullptr, &entryThrottleMid },
+    { "THR EXPO",    OME_UINT8,  nullptr, &entryThrottleExpo },
+
+    { "THR LIM TYPE",OME_TABLE,  nullptr, &entryThrottleLimitType },
+    { "THR LIM %",   OME_UINT8,  nullptr, &entryThrottleLimitPercent },
+
+    { "BACK", OME_Back, nullptr, nullptr },
+    { nullptr, OME_END, nullptr, nullptr}
+}};
 
 static const void* rateProfileIndexOnChange(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu)
 {
@@ -142,10 +202,10 @@ static const void* rateProfileIndexOnChange(CMSX& cmsx, DisplayPortBase& display
 }
 
 CMSX::menu_t CMSX::menuRates = {
-    .onEnter = nullptr,
-    .onExit = nullptr,
+    .onEnter = menuRatesOnEnter,
+    .onExit = menuRatesOnExit,
     .onDisplayUpdate = nullptr,
-    .entries = nullptr
+    .entries = &menuRatesEntries[0]
 };
 
 static std::array<const char * const, 4> rateProfileNames { "1", "2", "3", "4" };
