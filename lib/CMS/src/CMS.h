@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CMSX.h"
+
 #include <TimeMicroseconds.h>
 #include <array>
 #include <cstdint>
@@ -61,6 +63,7 @@ public:
 
     Cockpit& getCockpit() { return _cockpit; }
 private:
+    CMSX _cmsx;
     DisplayPortBase* _displayPort {};
     OSD& _osd;
     const ReceiverBase& _receiver;

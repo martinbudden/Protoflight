@@ -7,18 +7,26 @@ class CMS;
 class DisplayPortBase;
 
 
-namespace CMSX {
+class CMSX {
+public:
+    CMSX(CMS& cms);
+private:
+    // CMS is not copyable or moveable
+    CMSX(const CMSX&) = delete;
+    CMSX& operator=(const CMSX&) = delete;
+    CMSX(CMSX&&) = delete;
+    CMSX& operator=(CMSX&&) = delete;
+public:
     enum { MAX_ROWS = 31 };
-
     struct menu_t;
-    typedef const void* (*entryFnPtr)(CMS& cms, DisplayPortBase& displayPort, const menu_t* ptr);
+    typedef const void* (*entryFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu);
     struct OSD_Entry {
         const char* text;
         uint32_t flags;
         entryFnPtr fnPtr;
         const void* data;
     };
-    typedef const void* (*menuFnPtr)(CMS& cms, DisplayPortBase& displayPort, const OSD_Entry* self);
+    typedef const void* (*menuFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort, const OSD_Entry* entry);
     struct menu_t {
         menuFnPtr onEnter;
         menuFnPtr onExit;
@@ -30,57 +38,64 @@ namespace CMSX {
         uint8_t page;       // page in the menu
         int8_t cursorRow;   // cursorRow in the page
     };
-
-    uint8_t cursorAbsolute();
+public:
+    uint8_t cursorAbsolute() const;
     void setInMenu(bool inMenu);
-    bool isInMenu();
+    bool isInMenu() const;
 
     void addMenuEntry(OSD_Entry& menuEntry, const char* text, uint32_t flags, entryFnPtr fnPtr, void* data);
     void traverseGlobalExit(const menu_t* menu);
     void menuCountPage();
     void updateMaxRow();
     void pageSelect(DisplayPortBase& displayPort, int8_t newpage);
-    const void* menuChange(CMS& cms, DisplayPortBase& displayPort, const menu_t* ptr);
-    const void* menuBack(CMS& cms, DisplayPortBase& displayPort);
-    const void* menuExit(CMS& cms, DisplayPortBase& displayPort, const  menu_t* ptr);
-    menu_t* getSaveExitMenu();
 
-    // MenuExit special pointer values
-    extern const menu_t* MENU_NULL_PTR;
-    extern const menu_t* EXIT_PTR;
-    extern const menu_t* EXIT_SAVE_PTR;
-    extern const menu_t* EXIT_SAVE_REBOOT_PTR;
-    extern const menu_t* POPUP_SAVE_PTR;
-    extern const menu_t* POPUP_SAVE_REBOOT_PTR;
-    extern const menu_t* POPUP_EXIT_REBOOT_PTR;
+    CMS& getCMS() { return _cms; }
 
+// static functions with entryFnPtr signature for use by menu system
+    static const void* menuChange(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu);
+    static const void* menuBack(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu);
+    static const void* menuExit(CMSX& cmsx, DisplayPortBase& displayPort, const  menu_t* menu);
+    static menu_t* getSaveExitMenu();
+
+// variables public for now
+    ctx_t _currentCtx {};
+    uint8_t _menuStackIndex {};
+private:
+    CMS& _cms;
     enum { MAX_MENU_STACK_DEPTH = 10 };
-    extern std::array<ctx_t, MAX_MENU_STACK_DEPTH> menuStack;
-    extern uint8_t menuStackIndex;
-    extern uint8_t maxMenuItems;
-    extern ctx_t currentCtx;
-    extern int8_t pageCount;         // Number of pages in the current menu
-    extern const OSD_Entry* pageTop; // First entry for the current page
-    extern uint8_t pageMaxRow;       // Max row in the current page
-    extern bool saveMenuInhibited;
-    extern std::array<uint8_t, MAX_ROWS> runtimeEntryFlags;
-    // Special return value(s) for function chaining by CMSMenuFuncPtr
-    extern int menuChainBack;
-    extern bool _inMenu;
+    std::array<ctx_t, MAX_MENU_STACK_DEPTH> _menuStack {};
+    const OSD_Entry* _pageTop {}; // First entry for the current page
+    
+    int _menuChainBack {}; // Special return value for function chaining by menu function pointer
+    uint8_t _maxMenuItems {};
+    int8_t _pageCount {};         // Number of pages in the current menu
+    uint8_t _pageMaxRow {};       // Max row in the current page
+    bool _saveMenuInhibited {};
+    bool _inMenu {};
+    std::array<uint8_t, MAX_ROWS> runtimeEntryFlags {};
+public:
+    // MenuExit special pointer values
+    static const menu_t* MENU_NULL_PTR;
+    static const menu_t* EXIT_PTR;
+    static const menu_t* EXIT_SAVE_PTR;
+    static const menu_t* EXIT_SAVE_REBOOT_PTR;
+    static const menu_t* POPUP_SAVE_PTR;
+    static const menu_t* POPUP_SAVE_REBOOT_PTR;
+    static const menu_t* POPUP_EXIT_REBOOT_PTR;
 
     // Menus
-    extern menu_t menuSetPopup;
+    static menu_t menuSetPopup;
 
-    extern menu_t menuMain;
-        extern menu_t menuImu;
-            //extern menu_t menuPid;
-            //extern menu_t menuRates;
-            //extern menu_t menuFilters;
-        extern menu_t menuFeatures;
-            extern menu_t menuBlackbox;
-            extern menu_t menuPower;
-            extern menu_t menuFailsafe;
-        extern menu_t menuOsd;
-        extern menu_t menuFirmware;
-        extern menu_t menuMisc;
-} // END namespace
+    static menu_t menuMain;
+        static menu_t menuImu;
+            //static menu_t menuPid;
+            //static menu_t menuRates;
+            //static menu_t menuFilters;
+        static menu_t menuFeatures;
+            static menu_t menuBlackbox;
+            static menu_t menuPower;
+            static menu_t menuFailsafe;
+        static menu_t menuOsd;
+        static menu_t menuFirmware;
+        static menu_t menuMisc;
+}; // END namespace

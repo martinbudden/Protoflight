@@ -6,22 +6,22 @@
 
 static Cockpit::failsafe_t failsafe {};
 
-static const void* cmsx_Failsafe_onEnter(CMS& cms, DisplayPortBase& displayPort, const CMSX::OSD_Entry* self)
+static const void* cmsx_Failsafe_onEnter(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* entry)
 {
     (void)displayPort;
-    (void)self;
+    (void)entry;
 
-    failsafe = cms.getCockpit().getFailsafe();
+    failsafe = cmsx.getCMS().getCockpit().getFailsafe();
 
     return nullptr;
 }
 
-static const void* cmsx_Failsafe_onExit(CMS& cms, DisplayPortBase& displayPort, const CMSX::OSD_Entry* self)
+static const void* cmsx_Failsafe_onExit(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* entry)
 {
     (void)displayPort;
-    (void)self;
+    (void)entry;
 
-    cms.getCockpit().setFailsafe(failsafe);
+    cmsx.getCMS().getCockpit().setFailsafe(failsafe);
 
     return nullptr;
 }
@@ -37,7 +37,7 @@ enum { PWM_PULSE_MIN = 750 };
 enum { PWM_PULSE_MAX = 2250 };
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-auto entry0 = OSD_TAB_t    { &failsafe.procedure, Cockpit::FAILSAFE_PROCEDURE_COUNT - 1, &failsafeProcedureNames[0] };
+auto entry0 = OSD_TABLE_t  { &failsafe.procedure, Cockpit::FAILSAFE_PROCEDURE_COUNT - 1, &failsafeProcedureNames[0] };
 auto entry1 = OSD_FLOAT_t  { &failsafe.delay, Cockpit::PERIOD_RX_DATA_RECOVERY_MS / MILLIS_PER_TENTH_SECOND, 200, 1, 100 };
 auto entry2 = OSD_FLOAT_t  { &failsafe.landing_time, 0, 200, 1, 100 };
 auto entry3 = OSD_UINT16_t { &failsafe.throttle, PWM_PULSE_MIN, PWM_PULSE_MAX, 1 };
@@ -48,7 +48,7 @@ static const std::array<CMSX::OSD_Entry, 7> cmsx_menuFailsafeEntries =
 {{
     { "-- FAILSAFE --", OME_Label, nullptr, nullptr},
 
-    { "PROCEDURE",        OME_TAB    | REBOOT_REQUIRED, nullptr, &entry0 },
+    { "PROCEDURE",        OME_TABLE  | REBOOT_REQUIRED, nullptr, &entry0 },
     { "GUARD TIME",       OME_FLOAT  | REBOOT_REQUIRED, nullptr, &entry1 },
     { "LANDING_TIME",     OME_FLOAT  | REBOOT_REQUIRED, nullptr, &entry2 },
     { "STAGE 2 THROTTLE", OME_UINT16 | REBOOT_REQUIRED, nullptr, &entry3 },

@@ -19,26 +19,26 @@ enum osd_menu_element_e {
     OME_String,
     OME_FLOAT,
     OME_VISIBLE,
-    OME_TAB,
+    OME_TABLE,
     OME_END,
-
-    // Debug aid
     OME_MENU,
+
     OME_COUNT = OME_MENU,
-    OME_MASK         = 0x001F,
+};
 
 // Bits in flags
-    PRINT_VALUE      = 0x0020,  // Value has been changed, need to redraw
-    PRINT_LABEL      = 0x0040,  // Text label should be printed
-    DYNAMIC          = 0x0080,  // Value should be updated dynamically
-    OPTSTRING        = 0x0100,  // (Temporary) Flag for OME_Submenu, indicating func should be called to get a string to display.
-    REBOOT_REQUIRED  = 0x0200,  // Reboot is required if the value is changed
-    SCROLLING_TICKER = 0x0400,  // Long values are displayed as horizontally scrolling tickers (OME_TAB only)
-    SLIDER_RP        = 0x0800,  // Value should be read only if simplified RP slider is enabled
-    SLIDER_RPY       = 0x1000,  // Value should be read only if simplified RPY slider is enabled
-    SLIDER_GYRO      = 0x2000,  // Value should be read only if simplified gyro slider is enabled
-    SLIDER_DTERM     = 0x4000,  // Value should be read only if simplified D term slider is enabled
-};
+static constexpr uint32_t PRINT_VALUE      = 0x0020;  // Value has been changed, need to redraw
+static constexpr uint32_t PRINT_LABEL      = 0x0040;  // Text label should be printed
+static constexpr uint32_t DYNAMIC          = 0x0080;  // Value should be updated dynamically
+static constexpr uint32_t OPTSTRING        = 0x0100;  // (Temporary) Flag for OME_Submenu, indicating func should be called to get a string to display.
+static constexpr uint32_t REBOOT_REQUIRED  = 0x0200;  // Reboot is required if the value is changed
+static constexpr uint32_t SCROLLING_TICKER = 0x0400;  // Long values are displayed as horizontally scrolling tickers (OME_TABLE only)
+static constexpr uint32_t SLIDER_RP        = 0x0800;  // Value should be read only if simplified RP slider is enabled
+static constexpr uint32_t SLIDER_RPY       = 0x1000;  // Value should be read only if simplified RPY slider is enabled
+static constexpr uint32_t SLIDER_GYRO      = 0x2000;  // Value should be read only if simplified gyro slider is enabled
+static constexpr uint32_t SLIDER_DTERM     = 0x4000;  // Value should be read only if simplified D term slider is enabled
+
+static constexpr uint32_t OME_MASK = 0x001F;
 
 struct OSD_UINT8_t {
     uint8_t* val;
@@ -90,7 +90,7 @@ struct OSD_FLOAT_t {
     uint16_t multiplier;
 };
 
-struct OSD_TAB_t {
+struct OSD_TABLE_t {
     uint8_t* val;
     uint8_t max;
     const char * const* names;
