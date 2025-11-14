@@ -72,6 +72,16 @@ bool Cockpit::isRcModeActive(uint8_t rcMode) const
     return true; // !!TODO rcMode
 }
 
+void Cockpit::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex)
+{
+    _currentRateProfileIndex = currentRateProfileIndex;
+}
+
+void Cockpit::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex)
+{
+    _currentPidProfileIndex = currentPidProfileIndex;
+}
+
 void Cockpit::setRatesToPassThrough()
 {
     _rates.rcRates = { 100, 100, 100 }; // center sensitivity

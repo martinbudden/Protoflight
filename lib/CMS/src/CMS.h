@@ -8,13 +8,13 @@
 
 class Cockpit;
 class DisplayPortBase;
-class FlightController;
+class IMU_Filters;
 class OSD;
 class ReceiverBase;
 
 class CMS {
 public:
-    CMS(OSD& osd, const ReceiverBase& receiver, const FlightController& flightController, Cockpit& cockpit);
+    CMS(const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd);
     void init();
 private:
     // CMS is not copyable or moveable
@@ -45,6 +45,8 @@ public:
     const config_t& getConfig() const { return _config; }
     void setConfig(const config_t& config);
 
+    IMU_Filters& getIMU_Filters() { return _imuFilters; };
+
     void updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta); //!< CMS Task function, called by Task
 
     uint32_t handleKey(key_e key);
@@ -65,10 +67,10 @@ public:
 private:
     CMSX _cmsx;
     DisplayPortBase* _displayPort {};
-    OSD& _osd;
     const ReceiverBase& _receiver;
-    const FlightController& _flightController;
     Cockpit& _cockpit;
+    IMU_Filters& _imuFilters;
+    OSD* _osd;
     config_t _config {};
     int32_t _rcDelayMs {BUTTON_TIME_MS};
     uint32_t _lastCalledMs {};

@@ -6,27 +6,19 @@
 
 static Cockpit::failsafe_t failsafe {};
 
-static const void* cmsx_Failsafe_onEnter(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* entry)
+static const void* menuFailsafeOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
 {
-    (void)displayPort;
-    (void)entry;
-
     failsafe = cmsx.getCMS().getCockpit().getFailsafe();
-
     return nullptr;
 }
 
-static const void* cmsx_Failsafe_onExit(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* entry)
+static const void* menuFailsafeOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
 {
-    (void)displayPort;
-    (void)entry;
-
     cmsx.getCMS().getCockpit().setFailsafe(failsafe);
-
     return nullptr;
 }
 
-std::array<const char * const,Cockpit::FAILSAFE_PROCEDURE_COUNT> failsafeProcedureNames = {
+static std::array<const char * const, Cockpit::FAILSAFE_PROCEDURE_COUNT> failsafeProcedureNames = {
     "AUTO-LAND",
     "DROP",
     "GPS-RESCUE",
@@ -37,14 +29,14 @@ enum { PWM_PULSE_MIN = 750 };
 enum { PWM_PULSE_MAX = 2250 };
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-auto entry0 = OSD_TABLE_t  { &failsafe.procedure, Cockpit::FAILSAFE_PROCEDURE_COUNT - 1, &failsafeProcedureNames[0] };
-auto entry1 = OSD_FLOAT_t  { &failsafe.delay, Cockpit::PERIOD_RX_DATA_RECOVERY_MS / MILLIS_PER_TENTH_SECOND, 200, 1, 100 };
-auto entry2 = OSD_FLOAT_t  { &failsafe.landing_time, 0, 200, 1, 100 };
-auto entry3 = OSD_UINT16_t { &failsafe.throttle, PWM_PULSE_MIN, PWM_PULSE_MAX, 1 };
+static auto entry0 = OSD_TABLE_t  { &failsafe.procedure, Cockpit::FAILSAFE_PROCEDURE_COUNT - 1, &failsafeProcedureNames[0] };
+static auto entry1 = OSD_FLOAT_t  { &failsafe.delay, Cockpit::PERIOD_RX_DATA_RECOVERY_MS / MILLIS_PER_TENTH_SECOND, 200, 1, 100 };
+static auto entry2 = OSD_FLOAT_t  { &failsafe.landing_time, 0, 200, 1, 100 };
+static auto entry3 = OSD_UINT16_t { &failsafe.throttle, PWM_PULSE_MIN, PWM_PULSE_MAX, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 // NOLINTBEGIN(hicpp-signed-bitwise)
-static const std::array<CMSX::OSD_Entry, 7> cmsx_menuFailsafeEntries =
+static const std::array<CMSX::OSD_Entry, 7> menuFailsafeEntries =
 {{
     { "-- FAILSAFE --", OME_Label, nullptr, nullptr},
 
@@ -58,8 +50,8 @@ static const std::array<CMSX::OSD_Entry, 7> cmsx_menuFailsafeEntries =
 // NOLINTEND(hicpp-signed-bitwise)
 
 CMSX::menu_t CMSX::menuFailsafe = {
-    .onEnter = cmsx_Failsafe_onEnter,
-    .onExit = cmsx_Failsafe_onExit,
+    .onEnter = menuFailsafeOnEnter,
+    .onExit = menuFailsafeOnExit,
     .onDisplayUpdate = nullptr,
-    .entries = &cmsx_menuFailsafeEntries[0]
+    .entries = &menuFailsafeEntries[0]
 };

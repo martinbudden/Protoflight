@@ -5,13 +5,13 @@
 
 
 //NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-const CMSX::menu_t* CMSX::MENU_NULL_PTR = nullptr;
-const CMSX::menu_t* CMSX::EXIT_PTR = CMSX::MENU_NULL_PTR + sizeof(CMSX::menu_t);
-const CMSX::menu_t* CMSX::EXIT_SAVE_PTR = CMSX::MENU_NULL_PTR + 2*sizeof(CMSX::menu_t);
-const CMSX::menu_t* CMSX::EXIT_SAVE_REBOOT_PTR = CMSX::MENU_NULL_PTR + 3*sizeof(CMSX::menu_t);
-const CMSX::menu_t* CMSX::POPUP_SAVE_PTR = CMSX::MENU_NULL_PTR + 3*sizeof(CMSX::menu_t);
-const CMSX::menu_t* CMSX::POPUP_SAVE_REBOOT_PTR = CMSX::MENU_NULL_PTR + 5*sizeof(CMSX::menu_t);
-const CMSX::menu_t* CMSX::POPUP_EXIT_REBOOT_PTR = CMSX::MENU_NULL_PTR + 6*sizeof(CMSX::menu_t);
+const CMSX::menu_t* CMSX::MENU_NULL_PTR         = nullptr;
+const CMSX::menu_t* CMSX::EXIT_PTR              = CMSX::MENU_NULL_PTR + 1;
+const CMSX::menu_t* CMSX::EXIT_SAVE_PTR         = CMSX::MENU_NULL_PTR + 2;
+const CMSX::menu_t* CMSX::EXIT_SAVE_REBOOT_PTR  = CMSX::MENU_NULL_PTR + 3;
+const CMSX::menu_t* CMSX::POPUP_SAVE_PTR        = CMSX::MENU_NULL_PTR + 4;
+const CMSX::menu_t* CMSX::POPUP_SAVE_REBOOT_PTR = CMSX::MENU_NULL_PTR + 5;
+const CMSX::menu_t* CMSX::POPUP_EXIT_REBOOT_PTR = CMSX::MENU_NULL_PTR + 6;
 //NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 
@@ -79,7 +79,7 @@ void CMSX::menuCountPage()
     while ((entry->flags & OME_MASK) != OME_END) {
         ++entry; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     }
-    _pageCount = static_cast<int8_t>((entry - _currentCtx.menu->entries - 1) / _maxMenuItems) + 1;
+    _pageCount = static_cast<int8_t>(((entry - _currentCtx.menu->entries - 1) / _maxMenuItems) + 1);
 }
 
 const void* CMSX::menuBack(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu)

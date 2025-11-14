@@ -199,8 +199,10 @@ static constexpr Autopilot::altitude_hold_config_t autopilotAltitudeHoldConfig =
 
 #if defined(USE_OSD)
 static constexpr OSD::config_t osdConfig = {
+    .profile = {},
     .rcChannels = { -1, -1, -1, -1 },
-    .enabled_warnings =  static_cast<uint32_t>(~(OSD::WARNING_RSSI |OSD::WARNING_LINK_QUALITY | OSD::WARNING_RSSI_DBM |OSD::WARNING_RSNR | OSD::WARNING_OVER_CAP)),
+    .timers = {},
+    .enabled_warnings = static_cast<uint32_t>(~(OSD::WARNING_RSSI |OSD::WARNING_LINK_QUALITY | OSD::WARNING_RSSI_DBM |OSD::WARNING_RSNR | OSD::WARNING_OVER_CAP)),
     .enabled_stats = static_cast<uint32_t>(~(OSD::STATS_MAX_SPEED | OSD::STATS_MIN_BATTERY | OSD::STATS_MIN_RSSI | OSD::STATS_MAX_CURRENT | OSD::STATS_USED_MAH | OSD::STATS_BLACKBOX | OSD::STATS_BLACKBOX_NUMBER | OSD::STATS_TIMER_2)),
     .framerate_hz = OSD::FRAMERATE_DEFAULT_HZ,
     .cap_alarm  = 2200,
@@ -249,6 +251,8 @@ static constexpr OSD::config_t osdConfig = {
     .canvas_column_count = OSD::SD_COLS,
     .canvas_row_count = OSD::SD_ROWS,
 #endif
+    .osd_use_quick_menu = 0,
+    .osd_show_spec_prearm = 0,
 };
 
 static constexpr OSD_Elements::config_t osdElementsConfig = {};

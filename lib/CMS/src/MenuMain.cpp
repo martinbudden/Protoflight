@@ -1,4 +1,3 @@
-#include "CMS.h"
 #include "CMSX.h"
 #include "CMS_Types.h"
 
@@ -39,7 +38,7 @@ static const std::array<CMSX::OSD_Entry, 7> menuMainEntries =
 {{
     {"-- MAIN --",  OME_Label, nullptr, nullptr},
 
-    {"PROFILE",     OME_Submenu,  &CMSX::menuChange, &CMSX::menuImu},
+    {"PROFILE",     OME_Submenu,  &CMSX::menuChange, &CMSX::menuProfile},
     {"FEATURES",    OME_Submenu,  &CMSX::menuChange, &CMSX::menuFeatures},
 #if defined(USE_OSD)
     {"OSD",         OME_Submenu,  &CMS::menuChange, &CMSX::menuOsd},
@@ -68,13 +67,12 @@ CMSX::menu_t CMSX::menuMain = {
     .onEnter = mainMenuOnEnter,
     .onExit = nullptr,
     .onDisplayUpdate = nullptr,
-    .entries = &menuMainEntries[0],
+    .entries = &menuMainEntries[0]
 };
 
 CMSX::menu_t CMSX::menuSetPopup {};
-CMSX::menu_t CMSX::menuImu {};
-CMSX::menu_t CMSX::menuOsd {};
-CMSX::menu_t CMSX::menuFirmware {};
-CMSX::menu_t CMSX::menuMisc {};
 CMSX::menu_t CMSX::menuBlackbox {};
 CMSX::menu_t CMSX::menuPower {};
+CMSX::menu_t CMSX::menuFirmware {};
+CMSX::menu_t CMSX::menuMisc {};
+CMSX::menu_t CMSX::menuCalibrate {};

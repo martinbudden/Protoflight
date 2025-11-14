@@ -87,15 +87,17 @@ public:
     static menu_t menuSetPopup;
 
     static menu_t menuMain;
-        static menu_t menuImu;
-            //static menu_t menuPid;
-            //static menu_t menuRates;
-            //static menu_t menuFilters;
+        static menu_t menuProfile;
+            static menu_t menuPID;
+            static menu_t menuRates;
+            static menu_t menuFilters;
         static menu_t menuFeatures;
             static menu_t menuBlackbox;
             static menu_t menuPower;
             static menu_t menuFailsafe;
-        static menu_t menuOsd;
+        //static menu_t menuOsd;
         static menu_t menuFirmware;
+            // display info
+            static menu_t menuCalibrate;
         static menu_t menuMisc;
 }; // END namespace

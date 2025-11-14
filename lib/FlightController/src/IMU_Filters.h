@@ -30,6 +30,7 @@ public:
         uint8_t gyro_lpf2_type;
         // uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
     };
+    enum { GYRO_LPF_MAX_HZ = 1000 }; // so little filtering above 1000Hz that to get less delay you might as well disable the filter
 public:
     IMU_Filters(size_t motorCount, Debug& debug, float looptimeSeconds);
     IMU_Filters(size_t motorCount, Debug& debug, uint32_t looptime) = delete; // delete this overload so it is not accidentally called

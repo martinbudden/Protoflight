@@ -6,9 +6,9 @@
 /*!
 Statically allocate the CMS.
 */
-CMS& Main::createCMS(OSD& osd, const ReceiverBase& receiver, const FlightController& flightController, Cockpit& cockpit) // cppcheck-suppress constParameterReference
+CMS& Main::createCMS(const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd) // cppcheck-suppress constParameterReference
 {
-    static CMS cms(osd, receiver, flightController, cockpit);
+    static CMS cms(receiver, cockpit, imuFilters, osd);
 
     return cms;
 }

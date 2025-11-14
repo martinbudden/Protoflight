@@ -18,9 +18,9 @@ Targets
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 
     #define USE_BACKCHANNEL
-#endif
 
-#if defined(TARGET_M5STACK_STAMPS3_FLY)
+#elif defined(TARGET_M5STACK_STAMPS3_FLY)
+
     #define BOARD_IDENTIFIER    "M5Stack_StampS3_Fly"
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
@@ -39,9 +39,9 @@ Targets
     #define USE_BACKCHANNEL
     #define USE_YAW_SPIN_RECOVERY
     #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
-#endif
 
-#if defined(TARGET_M5STACK_ATOMS3R)
+#elif defined(TARGET_M5STACK_ATOMS3R)
+
     #define BOARD_IDENTIFIER    "M5Stack_AtomS3"
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
@@ -57,10 +57,12 @@ Targets
     #define USE_SCREEN
     #define USE_BUTTONS
     #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
-#endif
 
-#if defined(TARGET_M5STACK_CORE2)
+#elif defined(TARGET_M5STACK_CORE2)
+
     #define BOARD_IDENTIFIER    "M5Stack_Core2"
+
+    #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
     #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
@@ -69,9 +71,10 @@ Targets
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define GYRO_SAMPLE_RATE_HZ 200 // 5000us looptime
     #define IMU_I2C_PINS        i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
+
     #define USE_BAROMETER_BMP280
     #define BAROMETER_I2C_PINS  i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
-    #define USE_ALTITUDE_HOLD
+
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 
@@ -92,10 +95,43 @@ Targets
     #define USE_YAW_SPIN_RECOVERY
     #define USE_CRASH_RECOVERY
     #define USE_DYNAMIC_NOTCH_FILTER
-    #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
-#endif
+    #define USE_ALTITUDE_HOLD
 
-#if defined(TARGET_PICO)
+
+#elif defined(TARGET_NATIVE)
+
+    #define BOARD_IDENTIFIER    "BOARD_NONE"
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
+    #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
+    #define AHRS_TASK_IS_TIMER_DRIVEN
+    #define GYRO_SAMPLE_RATE_HZ 200 // 5000us looptime
+
+    #define USE_BAROMETER_BMP280
+    #define BAROMETER_I2C_PINS  i2c_pins_t{.sda=0,.scl=0,.irq=BUS_I2C::IRQ_NOT_SET}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
+
+    #define SDCARD_SPI_PINS     spi_pins_t{.cs=0,.sck=0,.cipo=0,.copi=0,.irq=0xFF}
+    #define USE_BLACKBOX
+
+    #define USE_MSP
+    #define USE_CMS
+
+    #define USE_BACKCHANNEL
+
+    #define USE_D_MAX
+    #define USE_ITERM_RELAX
+    #define USE_YAW_SPIN_RECOVERY
+    #define USE_CRASH_RECOVERY
+    #define USE_DYNAMIC_NOTCH_FILTER
+    #define USE_RPM_FILTERS
+    #define USE_ALTITUDE_HOLD
+    #define USE_OSD
+
+#elif defined(TARGET_PICO)
+
     #define BOARD_IDENTIFIER "RPI_Pico"
 
     #define USE_ITERM_RELAX
@@ -115,9 +151,9 @@ Targets
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
-#endif
 
-#if defined(TARGET_PICO2)
+#elif defined(TARGET_PICO2)
+
     #define BOARD_IDENTIFIER    "RPI_Pico2"
 
     #define USE_D_MAX
@@ -152,9 +188,9 @@ Targets
     #define USE_DSHOT_RPI_PICO_PIO
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
     //#define MOTOR_PINS          motor_pins_t{.m0=2,.m1=3,.m2=4,.m3=5}
-#endif
 
-#if defined(TARGET_MADFLIGHT_FC2)
+#elif defined(TARGET_MADFLIGHT_FC2)
+
     #define BOARD_IDENTIFIER    "Madflight_FC2"
     // ESP32 S3
     // see https://madflight.com/Board-ESP-FC2/
@@ -204,9 +240,8 @@ Targets
     #define GPS_UART_INDEX              1
 
     #define NEO_PIXEL_PIN               12
-#endif
 
-#if defined(TARGET_MADFLIGHT_FC3)
+#elif defined(TARGET_MADFLIGHT_FC3)
     #define BOARD_IDENTIFIER    "Madflight_FC3"
     // RPI PICO RP2350
     // see https://madflight.com/Board-FC3/
@@ -261,9 +296,9 @@ Targets
     #define GPS_UART_INDEX              1
 
     #define NEO_PIXEL_PIN               46
-#endif
 
-#if defined(TARGET_SEED_XIAO_NRF52840_SENSE)
+#elif defined(TARGET_SEED_XIAO_NRF52840_SENSE)
+
     #define BOARD_IDENTIFIER    "NRF52840_Sense"
 
     #define USE_YAW_SPIN_RECOVERY
@@ -280,9 +315,9 @@ Targets
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
-#endif
 
-#if defined(TARGET_ADAFRUIT_FEATHER_F405)
+#elif defined(TARGET_ADAFRUIT_FEATHER_F405)
+
     #define BOARD_IDENTIFIER    "Feather_F405"
 
     #define USE_D_MAX
@@ -316,9 +351,9 @@ Targets
     #define SDCARD_SPI_PINS     stm32_spi_pins_t{.cs={PC,8},.sck={PC,9},.cipo={PC,10},.copi={PC,11},.irq={0,0xFF}}
     #define USE_BLACKBOX
     //#define USE_MSP
-#endif
 
-#if defined(TARGET_STM32F3_DISCOVERY)
+#elif defined(TARGET_STM32F3_DISCOVERY)
+
     #define BOARD_IDENTIFIER    "STM32F3_Discovery"
     // https://www.st.com/resource/en/user_manual/um1570-discovery-kit-with-stm32f303vc-mcu-stmicroelectronics.pdf
     // https://www.st.com/resource/en/schematic_pack/mb1035-f303c-e02_schematic.pdf
@@ -343,9 +378,9 @@ Targets
 
     // LED3 PE9 // red
     // LED4 PE8 // blue
-#endif
 
-#if defined(TARGET_AFROFLIGHT_F301CB)
+#elif defined(TARGET_AFROFLIGHT_F301CB)
+
     #define BOARD_IDENTIFIER    "AfroFlight_F301CB"
 
     //#define USE_D_MAX
@@ -374,4 +409,5 @@ Targets
 
     //#define USE_MSP
     // LED0 PB4, LED1 PB3
+
 #endif

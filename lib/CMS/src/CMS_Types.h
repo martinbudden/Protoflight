@@ -3,28 +3,27 @@
 #include <cstdint>
 
 
-enum osd_menu_element_e {
-    OME_Label,
-    OME_Back,
-    OME_OSD_Exit,
-    OME_Submenu,
-    OME_Funcall,
-    OME_Bool,
-    OME_INT8,
-    OME_UINT8,
-    OME_UINT16,
-    OME_INT16,
-    OME_UINT32,
-    OME_INT32,
-    OME_String,
-    OME_FLOAT,
-    OME_VISIBLE,
-    OME_TABLE,
-    OME_END,
-    OME_MENU,
+static constexpr uint32_t OME_Label = 0;
+static constexpr uint32_t OME_Back = 1;
+static constexpr uint32_t OME_OSD_Exit = 2;
+static constexpr uint32_t OME_Submenu = 3;
+static constexpr uint32_t OME_Funcall = 4;
+static constexpr uint32_t OME_Bool = 5;
+static constexpr uint32_t OME_INT8 = 6;
+static constexpr uint32_t OME_UINT8 = 7;
+static constexpr uint32_t OME_UINT16 = 8;
+static constexpr uint32_t OME_INT16 = 9;
+static constexpr uint32_t OME_UINT32 = 10;
+static constexpr uint32_t OME_INT32 = 11;
+static constexpr uint32_t OME_String = 12;
+static constexpr uint32_t OME_FLOAT = 13;
+static constexpr uint32_t OME_VISIBLE = 14;
+static constexpr uint32_t OME_TABLE = 15;
+static constexpr uint32_t OME_END = 16;
+static constexpr uint32_t OME_MENU = 17;
 
-    OME_COUNT = OME_MENU,
-};
+static constexpr uint32_t OME_COUNT = OME_MENU;
+static constexpr uint32_t OME_MASK = 0x001F;
 
 // Bits in flags
 static constexpr uint32_t PRINT_VALUE      = 0x0020;  // Value has been changed, need to redraw
@@ -38,7 +37,6 @@ static constexpr uint32_t SLIDER_RPY       = 0x1000;  // Value should be read on
 static constexpr uint32_t SLIDER_GYRO      = 0x2000;  // Value should be read only if simplified gyro slider is enabled
 static constexpr uint32_t SLIDER_DTERM     = 0x4000;  // Value should be read only if simplified D term slider is enabled
 
-static constexpr uint32_t OME_MASK = 0x001F;
 
 struct OSD_UINT8_t {
     uint8_t* val;

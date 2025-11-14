@@ -8,12 +8,12 @@
 #include <ReceiverBase.h>
 
 
-CMS::CMS(OSD& osd, const ReceiverBase& receiver, const FlightController& flightController, Cockpit& cockpit) :
+CMS::CMS(const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd) :
     _cmsx(*this),
-    _osd(osd),
     _receiver(receiver),
-    _flightController(flightController),
-    _cockpit(cockpit)
+    _cockpit(cockpit),
+    _imuFilters(imuFilters),
+    _osd(osd)
 {
 }
 

@@ -92,6 +92,13 @@ public:
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
     const Autopilot& getAutopilot() const { return _autopilot; }
+    FlightController& getFlightController() { return _flightController; }
+
+    uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
+    void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex);
+
+    uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
+    void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex);
 
     void handleOnOffSwitch();
     virtual void updateControls(const controls_t& controls) override;
@@ -139,4 +146,6 @@ private:
     uint32_t _failsafeTickCount {0}; //!< failsafe counter, so the vehicle doesn't fly away if it looses contact with the transmitter (for example by going out of range)
     uint32_t _failsafeTickCountThreshold {1500};
     uint32_t _failsafeTickCountSwitchOffThreshold {5000};
+    uint8_t _currentPidProfileIndex {0};
+    uint8_t _currentRateProfileIndex {0};
 };

@@ -88,8 +88,12 @@ void Main::setup()
 #endif
 #if defined(USE_OSD)
     OSD& osd = createOSD(flightController, cockpit, debug, nvs);
+#endif
 #if defined(USE_CMS)
-    CMS& cms = createCMS(osd, receiver, flightController, cockpit);
+#if defined(USE_OSD)
+    CMS& cms = createCMS(receiver, cockpit, imuFilters, &osd);
+#else
+    CMS& cms = createCMS(receiver, cockpit, imuFilters, nullptr);
 #endif
 #endif
 
