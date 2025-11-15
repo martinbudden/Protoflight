@@ -72,31 +72,30 @@ Targets
     #define GYRO_SAMPLE_RATE_HZ 200 // 5000us looptime
     #define IMU_I2C_PINS        i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
 
-    #define USE_BAROMETER_BMP280
-    #define BAROMETER_I2C_PINS  i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
+    //#define USE_BAROMETER_BMP280
+    //#define BAROMETER_I2C_PINS  i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 
-    #define SDCARD_SPI_PINS     spi_pins_t{.cs=4,.sck=18,.cipo=38,.copi=23,.irq=0xFF}
-    #define USE_BLACKBOX
+    //#define SDCARD_SPI_PINS     spi_pins_t{.cs=4,.sck=18,.cipo=38,.copi=23,.irq=0xFF}
+    //#define USE_BLACKBOX
     //#define USE_BLACKBOX_DEBUG
     //#define BLACKBOX_IS_EVENT_DRIVEN
-    #define USE_MSP
-    #define USE_OSD
-    #define USE_CMS
+    //#define USE_MSP
+    //#define USE_OSD
+    //#define USE_CMS
 
     #define USE_BACKCHANNEL
     #define USE_SCREEN
     #define USE_BUTTONS
 
-    #define USE_D_MAX
-    #define USE_ITERM_RELAX
-    #define USE_YAW_SPIN_RECOVERY
-    #define USE_CRASH_RECOVERY
-    #define USE_DYNAMIC_NOTCH_FILTER
-    #define USE_ALTITUDE_HOLD
-
+    //#define USE_D_MAX
+    //#define USE_ITERM_RELAX
+    //#define USE_YAW_SPIN_RECOVERY
+    //#define USE_CRASH_RECOVERY
+    //#define USE_DYNAMIC_NOTCH_FILTER
+    //#define USE_ALTITUDE_HOLD
 
 #elif defined(TARGET_NATIVE)
 

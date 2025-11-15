@@ -9,6 +9,7 @@ class Autopilot;
 class Cockpit;
 class Debug;
 class FlightController;
+class IMU_Filters;
 class NonVolatileStorage;
 class ReceiverBase;
 
@@ -20,7 +21,7 @@ public:
     enum { SENSOR_NOT_AVAILABLE = 0xFF };
 public:
     virtual ~MSP_ProtoFlight() = default;
-    MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, Debug& debug, NonVolatileStorage& nvs);
+    MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs);
 
     virtual void rebootFn(serialPort_t* serialPort) override;
 
@@ -37,6 +38,7 @@ private:
     Cockpit& _cockpit;
     const ReceiverBase& _receiver;
     const Autopilot& _autopilot;
+    const IMU_Filters& _imuFilters;
     Debug& _debug;
     NonVolatileStorage& _nonVolatileStorage;
     uint8_t _pidProfileIndex {0};

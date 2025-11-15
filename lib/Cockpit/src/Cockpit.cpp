@@ -11,12 +11,13 @@
 #include <cmath>
 
 
-Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& debug, const rates_t& rates) :
+Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs) :
     CockpitBase(receiver),
     _flightController(flightController),
     _autopilot(autopilot),
     _debug(debug),
-    _rates(rates)
+    _imuFilters(imuFilters),
+    _nvs(nvs)
 {
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
 }
@@ -75,11 +76,17 @@ bool Cockpit::isRcModeActive(uint8_t rcMode) const
 void Cockpit::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex)
 {
     _currentRateProfileIndex = currentRateProfileIndex;
+    //!!_rates = _nvs.loadRates(currentRateProfileIndex);
 }
 
 void Cockpit::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex)
 {
     _currentPidProfileIndex = currentPidProfileIndex;
+}
+
+void Cockpit::storeAllToNonVolatileStorage()
+{
+    //_nvs.storeAll(_imuFilters, _flightController, *this, _autopilot, _currentPidProfileIndex, _currentRateProfileIndex);
 }
 
 void Cockpit::setRatesToPassThrough()

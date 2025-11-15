@@ -709,7 +709,7 @@ int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
 #endif
 }
 
-int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile)
+int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile)
 {
 #if defined(USE_DYNAMIC_IDLE)
     const DynamicIdleController* dynamicIdleController = flightController.getMixer().getDynamicIdleController();
@@ -750,7 +750,6 @@ int32_t NonVolatileStorage::storeAll(const AHRS& ahrs, const FlightController& f
     (void)autopilot;
 #endif
 
-    const IMU_Filters& imuFilters = static_cast<IMU_Filters&>(ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
     storeIMU_FiltersConfig(imuFiltersConfig);
 

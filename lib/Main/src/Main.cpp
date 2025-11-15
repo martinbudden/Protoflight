@@ -79,9 +79,9 @@ void Main::setup()
 
     ReceiverBase& receiver = createReceiver();
 
-    Cockpit& cockpit = createCockpit(receiver, flightController, debug, AHRS_MessageQueue, nvs);
+    Cockpit& cockpit = createCockpit(receiver, flightController, debug, AHRS_MessageQueue, imuFilters, nvs);
 #if defined(USE_MSP)
-    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), debug, nvs);
+    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs);
 #endif
 #if defined(USE_BLACKBOX)
     Blackbox& blackbox = createBlackBox(ahrs, flightController, AHRS_MessageQueue, cockpit, receiver, imuFilters, debug);

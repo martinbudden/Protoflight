@@ -59,7 +59,7 @@ public:
     int32_t clear();
     int32_t remove(uint16_t key);
 
-    int32_t storeAll(const AHRS& ahrs, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile);
+    int32_t storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile);
 
     void loadMacAddress(uint8_t* macAddress) const;
     int32_t storeMacAddress(const uint8_t* macAddress);
