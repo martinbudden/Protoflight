@@ -14,7 +14,7 @@ class ReceiverBase;
 
 class CMS {
 public:
-    CMS(const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd);
+    CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd);
     void init();
 private:
     // CMS is not copyable or moveable
@@ -65,8 +65,8 @@ public:
 
     Cockpit& getCockpit() { return _cockpit; }
 private:
+    DisplayPortBase* _displayPort;
     CMSX _cmsx;
-    DisplayPortBase* _displayPort {};
     const ReceiverBase& _receiver;
     Cockpit& _cockpit;
     IMU_Filters& _imuFilters;

@@ -2,7 +2,7 @@
 #include "CMS_Types.h"
 
 
-static const std::array<CMSX::OSD_Entry, 6> menuFeaturesEntries =
+static const std::array<CMSX::OSD_Entry, 6> menuFeaturesEntries
 {{
     {"--- FEATURES ---", OME_Label, nullptr, nullptr},
 
@@ -31,9 +31,9 @@ static const void* cmsx_SaveExitMenu(CMSX& cmsx, DisplayPortBase& displayPort, c
 }
 
 #if defined(USE_OSD)
-static const std::array<CMS::OSD_Entry, 8> menuMainEntries =
+static const std::array<CMS::OSD_Entry, 8> menuMainEntries
 #else
-static const std::array<CMSX::OSD_Entry, 7> menuMainEntries =
+static const std::array<CMSX::OSD_Entry, 7> menuMainEntries
 #endif
 {{
     {"-- MAIN --",  OME_Label, nullptr, nullptr},

@@ -11,7 +11,7 @@ void Display::init(DisplayPortBase::device_type_e deviceType)
     _displayPort.setDeviceType(deviceType);
 
     _displayPort._useFullscreen = false;
-    _displayPort.resetGrabCount();
+    _displayPort.releaseAll();
 
     beginTransaction(DISPLAY_TRANSACTION_OPT_NONE);
     clearScreen(DISPLAY_CLEAR_WAIT);

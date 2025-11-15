@@ -3,14 +3,15 @@
 #include <ReceiverBase.h>
 
 class AHRS;
+class DisplayPortBase;
 class FlightController;
 
 
 class ScreenBase : public ReceiverWatcher {
 public:
     virtual ~ScreenBase() = default;
-    ScreenBase(const AHRS& ahrs, const FlightController& flightController, const ReceiverBase& receiver) :
-        _ahrs(ahrs), _flightController(flightController), _receiver(receiver) {}
+    ScreenBase(const DisplayPortBase& displayPort, const AHRS& ahrs, const FlightController& flightController, const ReceiverBase& receiver) :
+        _displayPort(displayPort), _ahrs(ahrs), _flightController(flightController), _receiver(receiver) {}
 public:
     virtual void nextScreenMode() = 0;
     virtual void update() = 0;
@@ -24,6 +25,7 @@ protected:
     inline void clearNewReceiverPacketAvailable() { _newReceiverPacketAvailable = false; }
     inline bool isNewReceiverPacketAvailable() const { return _newReceiverPacketAvailable; }
 protected:
+    const DisplayPortBase& _displayPort;
     const AHRS& _ahrs;
     const FlightController& _flightController;
     const ReceiverBase& _receiver;

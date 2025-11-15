@@ -13,6 +13,7 @@ class Blackbox;
 class FlightController;
 class IMU_Filters;
 class NonVolatileStorage;
+class ReceiverBase;
 
 
 class Cockpit : public CockpitBase {
@@ -90,7 +91,7 @@ public:
     static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
     static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
 public:
-    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& _debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs);
+    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters,  Debug& _debug, NonVolatileStorage& nvs);
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
     const Autopilot& getAutopilot() const { return _autopilot; }
@@ -133,10 +134,19 @@ private:
     Features _features;
     FlightController& _flightController;
     Autopilot& _autopilot;
-    Debug& _debug;
     IMU_Filters& _imuFilters;
+    Debug& _debug;
     NonVolatileStorage& _nvs;
-    rates_t _rates;
+    rates_t _rates {
+        .rateLimits = { RATE_LIMIT_MAX, RATE_LIMIT_MAX, RATE_LIMIT_MAX },
+        .rcRates = { 100, 100, 100 },
+        .rcExpos = { 0, 0, 0 },
+        .rates = { 0, 0, 0 },
+        .throttleMidpoint = 50,
+        .throttleExpo = 0,
+        .throttleLimitType = THROTTLE_LIMIT_TYPE_OFF,
+        .throttleLimitPercent = 100
+    };
     Blackbox* _blackbox {nullptr};
     int32_t _onOffSwitchPressed {false}; // on/off switch debouncing
     float _maxRollAngleDegrees { 60.0F }; // used for angle mode

@@ -23,7 +23,7 @@ Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightCon
     autopilot.setAltitudeHoldConfig(nvs.loadAltitudeHoldConfig());
 #endif
 
-    static Cockpit cockpit(receiver, flightController, autopilot, debug, imuFilters, nvs);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
     cockpit.setCurrentPidProfileIndex(nvs.getCurrentPidProfileIndex());
     cockpit.setCurrentRateProfileIndex(nvs.getCurrentRateProfileIndex());
     cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()));

@@ -2,8 +2,8 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
 #include "Cockpit.h"
-#include "IMU_Filters.h"
 #include "FlightController.h"
+#include "IMU_Filters.h"
 
 //
 // Filters
@@ -29,7 +29,7 @@ static auto entryGyroNF1C = OSD_UINT16_t { &imuFiltersConfig.gyro_notch1_cutoff,
 static auto entryGyroNF2  = OSD_UINT16_t { &imuFiltersConfig.gyro_notch2_hz, 0, 500, 1 };
 static auto entryGyroNF2C = OSD_UINT16_t { &imuFiltersConfig.gyro_notch2_cutoff, 0, 500, 1 };
 
-static const std::array<CMSX::OSD_Entry, 9> menuFiltersEntries =
+static const std::array<CMSX::OSD_Entry, 9> menuFiltersEntries
 {{
     { "-- FILTERS --", OME_Label, nullptr, nullptr },
 
@@ -60,7 +60,7 @@ static std::array<FlightController::PIDF_uint16_t, 3> pids {};
 static const void* menuPID_onEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
 {
     pidProfileIndexString[0] = '1' + cmsx.getCMS().getCockpit().getCurrentPidProfileIndex();
-    FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
+    const FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
     pids[FlightController::ROLL_RATE_DPS] = flightController.getPID_Constants(FlightController::ROLL_RATE_DPS);
     pids[FlightController::PITCH_RATE_DPS] = flightController.getPID_Constants(FlightController::PITCH_RATE_DPS);
     pids[FlightController::YAW_RATE_DPS] = flightController.getPID_Constants(FlightController::YAW_RATE_DPS);
@@ -89,7 +89,7 @@ static auto entryYawPID_I   = OSD_UINT16_t { &pids[2].ki, 0, 200, 1 };
 static auto entryYawPID_D   = OSD_UINT16_t { &pids[2].kd, 0, 200, 1 };
 static auto entryYawPID_K   = OSD_UINT16_t { &pids[2].kk, 0, 200, 1 };
 
-static const std::array<CMSX::OSD_Entry, 15> menuPidEntries =
+static const std::array<CMSX::OSD_Entry, 15> menuPidEntries
 {{
     { "-- PID --", OME_Label, nullptr, &pidProfileIndexString[0] },
 
@@ -147,7 +147,8 @@ static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
     return nullptr;
 }
 
-const char * const lookupTableThrottleLimitType[] = { "OFF", "SCALE", "CLIP" };
+// NOLINTBEGIN(fuchsia-statically-constructed-objects)
+static std::array<const char * const, 3> lookupTableThrottleLimitType { "OFF", "SCALE", "CLIP" };
 
 static auto entryRcRatesRoll  = OSD_FLOAT_t { &rates.rcRates[FlightController::FD_ROLL], 1, 255, 1, 10 };
 static auto entryRcRatesPitch = OSD_FLOAT_t { &rates.rcRates[FlightController::FD_PITCH], 1, 255, 1, 10 };
@@ -165,9 +166,9 @@ static auto entryThrottleMid  = OSD_UINT8_t { &rates.throttleMidpoint, 1, 100, 1
 static auto entryThrottleExpo = OSD_UINT8_t { &rates.throttleExpo, 1, 100, 1 };
 static auto entryThrottleLimitType = OSD_TABLE_t { &rates.throttleLimitType, 2, &lookupTableThrottleLimitType[0] };
 static auto entryThrottleLimitPercent = OSD_UINT8_t { &rates.throttleLimitPercent, 25, 100, 1 };
+// NOLINTEND(fuchsia-statically-constructed-objects)
 
-
-static const std::array<CMSX::OSD_Entry, 16> menuRatesEntries =
+static const std::array<CMSX::OSD_Entry, 16> menuRatesEntries
 {{
     { "-- RATE --",  OME_Label, nullptr, &rateProfileIndexString[0] },
 
@@ -219,7 +220,7 @@ static auto entryPID_Profile = OSD_TABLE_t  { nullptr, 3, &pidProfileNames[0] };
 static auto entryRateProfile = OSD_TABLE_t  { nullptr, 3, &rateProfileNames[0] };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 8> menuProfileEntries =
+static const std::array<CMSX::OSD_Entry, 8> menuProfileEntries
 {{
     {"-- PROFILE --",  OME_Label, nullptr, nullptr},
 

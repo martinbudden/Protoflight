@@ -1,6 +1,7 @@
 #include "Autopilot.h"
 #include "Cockpit.h"
 #include "FlightController.h"
+#include "IMU_Filters.h"
 
 #include <Blackbox.h>
 #include <Debug.h>
@@ -11,12 +12,12 @@
 #include <cmath>
 
 
-Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs) :
+Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs) :
     CockpitBase(receiver),
     _flightController(flightController),
     _autopilot(autopilot),
-    _debug(debug),
     _imuFilters(imuFilters),
+    _debug(debug),
     _nvs(nvs)
 {
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
@@ -97,7 +98,7 @@ void Cockpit::setRatesToPassThrough()
     //_rates.ratesType = RATES_TYPE_ACTUAL;
 }
 
-inline float constrain(float value, uint16_t limit)
+inline float constrainToLimit(float value, uint16_t limit)
 {
     const auto limitF = static_cast<float>(limit);
     return value < -limitF ? -limitF : value > limitF ? limitF : value;
@@ -116,7 +117,7 @@ float Cockpit::applyRates(size_t axis, float rcCommand) const
     const float angleRate = 10.0F * (rcCommand*centerSensitivity + expo*stickMovement);
     //const float angleRate = 0.01F * (rcCommand*centerSensitivity + expo*stickMovement);
 
-    return constrain(angleRate, _rates.rateLimits[axis]);
+    return constrainToLimit(angleRate, _rates.rateLimits[axis]);
 }
 
 /*!

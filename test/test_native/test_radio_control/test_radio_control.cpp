@@ -4,9 +4,10 @@
 #include <Cockpit.h>
 #include <Debug.h>
 #include <FlightController.h>
-#include <IMU_FiltersBase.h>
+#include <IMU_Filters.h>
 #include <IMU_Null.h>
 #include <MotorMixerBase.h>
+#include <NonVolatileStorage.h>
 #include <ReceiverNull.h>
 #include <SensorFusion.h>
 
@@ -21,13 +22,16 @@ enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 
 static MadgwickFilter sensorFusionFilter;
 static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
-static IMU_FiltersBase imuFilters;
+enum { MOTOR_COUNT = 4 };
 static Debug debug;
-static MotorMixerBase motorMixer(4, debug);
+static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
+static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
 static AHRS_MessageQueue ahrsMessageQueue;
 static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, motorMixer, ahrsMessageQueue, debug);
 static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
 static Autopilot autopilot(ahrsMessageQueue);
+static NonVolatileStorage nvs;
+static ReceiverNull receiver;
 
 static const Cockpit::rates_t cockpitRates {
     .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
@@ -49,8 +53,8 @@ void tearDown() {
 
 void test_cockpit()
 {
-    static ReceiverNull receiver;
-    static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    cockpit.setRates(cockpitRates);
 
     Cockpit::rates_t rates = cockpit.getRates();
 
@@ -91,8 +95,23 @@ void test_cockpit()
 
 void test_cockpit_passthrough()
 {
-    static ReceiverNull receiver;
-    static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+
+    float roll = cockpit.applyRates(Cockpit::ROLL, 0.0F);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
+    roll = cockpit.applyRates(Cockpit::ROLL, 0.25F);
+    TEST_ASSERT_EQUAL_FLOAT(250.0F, roll);
+    roll = cockpit.applyRates(Cockpit::ROLL, 0.5F);
+    TEST_ASSERT_EQUAL_FLOAT(500.0F, roll);
+    roll = cockpit.applyRates(Cockpit::ROLL, 0.75F);
+    TEST_ASSERT_EQUAL_FLOAT(750.0F, roll);
+    roll = cockpit.applyRates(Cockpit::ROLL, 1.0F);
+    TEST_ASSERT_EQUAL_FLOAT(1000.0F, roll);
+}
+
+void test_cockpit_set_passthrough()
+{
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
 
     cockpit.setRatesToPassThrough();
 
@@ -110,8 +129,8 @@ void test_cockpit_passthrough()
 
 void test_cockpit_defaults()
 {
-    static ReceiverNull receiver;
-    static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    cockpit.setRates(cockpitRates);
 
     const Cockpit::rates_t rates = cockpit.getRates();
 
@@ -147,8 +166,8 @@ void test_cockpit_defaults()
 
 void test_cockpit_constrain()
 {
-    static ReceiverNull receiver;
-    static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    cockpit.setRates(cockpitRates);
 
     Cockpit::rates_t rates = cockpit.getRates(); // NOLINT(misc-const-correctness)
     rates.rcRates = {200, 200, 200};
@@ -168,8 +187,8 @@ void test_cockpit_constrain()
 
 void test_cockpit_throttle()
 {
-    static ReceiverNull receiver;
-    static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    cockpit.setRates(cockpitRates);
 
     float throttle = cockpit.mapThrottle(0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, throttle);
@@ -221,6 +240,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 
     RUN_TEST(test_cockpit);
     RUN_TEST(test_cockpit_passthrough);
+    RUN_TEST(test_cockpit_set_passthrough);
     RUN_TEST(test_cockpit_defaults);
     RUN_TEST(test_cockpit_constrain);
     RUN_TEST(test_cockpit_throttle);

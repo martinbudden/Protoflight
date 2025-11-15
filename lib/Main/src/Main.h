@@ -29,6 +29,7 @@ class CMS;
 class CMS_Task;
 class Cockpit;
 class Debug;
+class DisplayPortBase;
 class FlightController;
 class IMU_Base;
 class IMU_Filters;
@@ -45,7 +46,7 @@ class ScreenBase;
 class VehicleControllerBase;
 class VehicleControllerTask;
 
-enum { MAIN_LOOP_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
+enum { DASHBOARD_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
 
 #if !defined(GYRO_SAMPLE_RATE_HZ)
 enum { GYRO_SAMPLE_RATE_HZ = 2000 }; // 2000 Hz, 500 microseconds looptime
@@ -86,6 +87,7 @@ enum {
     MSP_TASK_PRIORITY = 2,
     OSD_TASK_PRIORITY = 2,
     CMS_TASK_PRIORITY = 2,
+    DASHBOARD_TASK_PRIORITY = 2,
 };
 
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
@@ -117,6 +119,7 @@ enum {
     BLACKBOX_TASK_CORE = CPU_CORE_0,
     OSD_TASK_CORE = CPU_CORE_0,
     CMS_TASK_CORE = CPU_CORE_0,
+    DASHBOARD_TASK_CORE = CPU_CORE_0,
 };
 
 class DashboardTask : public TaskBase {
@@ -141,8 +144,8 @@ private:
     static Cockpit& createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, const AHRS_MessageQueue& ahrsMessageQueue, IMU_Filters& imuFilters, NonVolatileStorage& nvs);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
-    static OSD& createOSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
-    static CMS& createCMS(const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd);
+    static OSD& createOSD(DisplayPortBase* displayPort, const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
+    static CMS& createCMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd);
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);

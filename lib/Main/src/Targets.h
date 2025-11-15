@@ -66,8 +66,11 @@ Targets
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
     #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
+#if defined(LIBRARY_SENSORS_IMU_USE_M5_UNIFIED)
+    #define USE_IMU_M5_UNIFIED
+#else
     #define USE_IMU_MPU6886
-    //#define USE_IMU_M5_UNIFIED
+#endif
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define GYRO_SAMPLE_RATE_HZ 200 // 5000us looptime
     #define IMU_I2C_PINS        i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}

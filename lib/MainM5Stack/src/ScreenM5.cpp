@@ -4,6 +4,7 @@
 
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
+#include <DisplayPortBase.h>
 #include <FlightController.h>
 #include <M5Unified.h>
 #include <ReceiverAtomJoyStick.h>
@@ -30,8 +31,8 @@ enum {
 
 static constexpr float radiansToDegrees {180.0 / M_PI};
 
-ScreenM5::ScreenM5(const AHRS& ahrs, const FlightController& flightController, const ReceiverBase& receiver) :
-    ScreenBase(ahrs, flightController, receiver),
+ScreenM5::ScreenM5(const DisplayPortBase& displayPort, const AHRS& ahrs, const FlightController& flightController, const ReceiverBase& receiver) :
+    ScreenBase(displayPort, ahrs, flightController, receiver),
     _screenSize(screenSize()),
     _screenRotationOffset(
         (_screenSize == SIZE_80x160 || _screenSize == SIZE_135x240) ? 1 :
@@ -292,6 +293,9 @@ void ScreenM5::update320x240(const TD_AHRS::data_t& ahrsData) const
 
 void ScreenM5::updateTemplate()
 {
+    if (_displayPort.isGrabbed()) {
+        return;
+    }
     M5.Lcd.fillScreen(TFT_BLACK);
 
     switch (_screenSize) {
@@ -371,6 +375,9 @@ Update the screen with data from the AHRS and the receiver.
 */
 void ScreenM5::update()
 {
+    if (_displayPort.isGrabbed()) {
+        return;
+    }
     // update the screen with the AHRS data
     if (_screenMode != ScreenM5::MODE_QRCODE) {
         // update the screen template if it hasn't been updated

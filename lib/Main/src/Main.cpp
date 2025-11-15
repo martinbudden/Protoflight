@@ -10,6 +10,8 @@
 #include <CMS_Task.h>
 #include <Cockpit.h>
 #include <Debug.h>
+#include <DisplayPortM5GFX.h>
+#include <DisplayPortNull.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #if defined(M5_UNIFIED)
@@ -86,16 +88,6 @@ void Main::setup()
 #if defined(USE_BLACKBOX)
     Blackbox& blackbox = createBlackBox(ahrs, flightController, AHRS_MessageQueue, cockpit, receiver, imuFilters, debug);
 #endif
-#if defined(USE_OSD)
-    OSD& osd = createOSD(flightController, cockpit, debug, nvs);
-#endif
-#if defined(USE_CMS)
-#if defined(USE_OSD)
-    CMS& cms = createCMS(receiver, cockpit, imuFilters, &osd);
-#else
-    CMS& cms = createCMS(receiver, cockpit, imuFilters, nullptr);
-#endif
-#endif
 
 #if defined(M5_UNIFIED)
     // Holding BtnA down while switching on enters calibration mode.
@@ -107,13 +99,16 @@ void Main::setup()
     if (M5.BtnC.isPressed()) {
         nvs.clear();
     }
+    static M5Canvas canvas(&M5.Display);
+    static DisplayPortM5GFX displayPort(canvas);
+
     // Statically allocate the screen.
-    static ScreenM5 screen(ahrs, flightController, receiver);
-    ReceiverWatcher* receiverWatcher = &screen;
+    static ScreenM5 screen(displayPort, ahrs, flightController, receiver);
     _screen = &screen;
-    _screen->updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
+    ReceiverWatcher* receiverWatcher = &screen;
+    screen.updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
     // Statically allocate the buttons.
-    static ButtonsM5 buttons(flightController, receiver, _screen);
+    static ButtonsM5 buttons(flightController, receiver, &screen);
     _buttons = &buttons;
     // Holding BtnB down while switching on initiates binding.
     // The Atom has no BtnB, so it always broadcasts address for binding on startup.
@@ -124,7 +119,19 @@ void Main::setup()
     // no buttons defined, so always broadcast address for binding on startup
     receiver.broadcastMyEUI();
     ReceiverWatcher* receiverWatcher = nullptr;
+    [[maybe_unused]] static DisplayPortNull displayPort;
 #endif // M5_UNIFIED
+
+#if defined(USE_OSD)
+    OSD& osd = createOSD(&displayPort, flightController, cockpit, debug, nvs);
+#endif
+#if defined(USE_CMS)
+#if defined(USE_OSD)
+    CMS& cms = createCMS(&displayPort, receiver, cockpit, imuFilters, &osd);
+#else
+    CMS& cms = createCMS(&displayPort, receiver, cockpit, imuFilters, nullptr);
+#endif
+#endif
 
 
     //
@@ -132,7 +139,7 @@ void Main::setup()
     //
 
     // The DashboardTask runs in the main loop
-    static DashboardTask dashboardTask(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS);
+    static DashboardTask dashboardTask(DASHBOARD_TASK_INTERVAL_MICROSECONDS);
     _tasks.dashboardTask = &dashboardTask;
     reportDashboardTask();
 
@@ -168,7 +175,7 @@ void Main::setup()
     printTaskInfo(taskInfo);
 #endif
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, &dashboardTask, nvs);
+    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, _tasks.dashboardTask, nvs);
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
@@ -256,7 +263,7 @@ void DashboardTask::loop()
 void Main::loop() // NOLINT(readability-make-member-function-const)
 {
 #if defined(FRAMEWORK_USE_FREERTOS)
-    vTaskDelay(pdMS_TO_TICKS(MAIN_LOOP_TASK_INTERVAL_MICROSECONDS / 1000));
+    vTaskDelay(pdMS_TO_TICKS(DASHBOARD_TASK_INTERVAL_MICROSECONDS / 1000));
     [[maybe_unused]] const TickType_t tickCount = xTaskGetTickCount();
 #else
     // simple round-robbin scheduling
@@ -270,14 +277,14 @@ void Main::loop() // NOLINT(readability-make-member-function-const)
 #if defined(USE_SCREEN)
     // screen and button update tick counts are coprime, so screen and buttons are not normally updated in same loop
     // update the screen every 101 ticks (0.1 seconds)
-    if (_screenTickCount - tickCount > 101) {
+    if (tickCount - _screenTickCount> 101) {
         _screenTickCount = tickCount;
         _screen->update();
     }
 #endif
 #if defined(USE_BUTTONS)
     // update the buttons every 149 ticks (0.15 seconds)
-    if (_buttonsTickCount - tickCount > 149) {
+    if (tickCount - _buttonsTickCount > 149) {
         _buttonsTickCount = tickCount;
         _buttons->update();
     }

@@ -85,8 +85,11 @@ public:
     virtual int writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) = 0;
     virtual int writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) = 0;
 
-    virtual int grab() { return 0; }
-    virtual int release() { return 0; }
+    void grab() { clearScreen(DISPLAY_CLEAR_WAIT); ++_grabCount; }
+    bool isGrabbed() const { return _grabCount > 0; }
+    void release() { --_grabCount; }
+    void releaseAll() { _grabCount = 0; }
+
     virtual int screenSize() const { return 0; }
     virtual int writeSys(uint8_t x, uint8_t y, system_element_e systemElement) { (void)x; (void)y; (void)systemElement; return 0; }
     virtual bool isTransferInProgress() const { return false; }
@@ -94,7 +97,10 @@ public:
     virtual void redraw() {}
     virtual bool isSynced() const {return true;}
     virtual uint32_t txBytesFree() const {return 0;}
-    virtual bool layerSupported(layer_e layer) { (void)layer; return false; }
+    virtual bool layerSupported(layer_e layer) {
+        if (layer == LAYER_FOREGROUND) { return true; } // Every device must support the foreground (default) layer
+        return false;
+    }
     virtual bool layerSelect(layer_e layer) { (void)layer; return false; }
     virtual bool layerCopy(layer_e destLayer, layer_e sourceLayer) { return (sourceLayer == destLayer) ? false : true; }
     virtual bool writeFontCharacter(uint16_t addr, const struct osd_character_t* chr) { (void)addr; (void)chr; return false; }
@@ -112,8 +118,6 @@ public:
     uint8_t getPosY() const { return _posY; }
     void setPosY(uint8_t posY) { _posY = posY; }
 
-    void resetGrabCount() { _grabCount = 0; }
-
     device_type_e getDeviceType() const { return _deviceType; }
     void setDeviceType(device_type_e deviceType) { _deviceType = deviceType; }
     bool getUseDeviceBlink() const { return _useDeviceBlink; }
@@ -129,7 +133,7 @@ protected:
     bool _useDeviceBlink {};
     // CMS state
     int8_t _cursorRow {};
-    int8_t _grabCount {};
+    int8_t _grabCount {0};
     bool _cleared {};
     bool _useFullscreen {};
 };

@@ -8,7 +8,8 @@
 #include <ReceiverBase.h>
 
 
-CMS::CMS(const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd) :
+CMS::CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd) :
+    _displayPort(displayPort),
     _cmsx(*this),
     _receiver(receiver),
     _cockpit(cockpit),

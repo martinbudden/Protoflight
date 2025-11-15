@@ -36,7 +36,7 @@ static auto entry3 = OSD_UINT16_t { &failsafe.throttle, PWM_PULSE_MIN, PWM_PULSE
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 // NOLINTBEGIN(hicpp-signed-bitwise)
-static const std::array<CMSX::OSD_Entry, 7> menuFailsafeEntries =
+static const std::array<CMSX::OSD_Entry, 7> menuFailsafeEntries
 {{
     { "-- FAILSAFE --", OME_Label, nullptr, nullptr},
 

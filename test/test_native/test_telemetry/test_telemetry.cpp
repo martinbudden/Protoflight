@@ -5,7 +5,7 @@
 #include <Cockpit.h>
 #include <Debug.h>
 #include <FC_Telemetry.h>
-#include <IMU_FiltersBase.h>
+#include <IMU_Filters.h>
 #include <IMU_Null.h>
 #include <MSP_ProtoFlight.h>
 #include <MSP_Protocol.h>
@@ -48,13 +48,13 @@ void tearDown() {
 // NOLINTBEGIN(misc-const-correctness)
 void test_telemetry_msp()
 {
-    static NonVolatileStorage nvs;
     static MadgwickFilter sensorFusionFilter;
     static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
-    static IMU_FiltersBase imuFilters;
+    static NonVolatileStorage nvs;
 
     enum { MOTOR_COUNT = 4 };
     static Debug debug;
+    static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
     static MotorMixerBase motorMixer(MOTOR_COUNT, debug);
     static ReceiverNull receiver;
     static AHRS_MessageQueue ahrsMessageQueue;
@@ -62,10 +62,10 @@ void test_telemetry_msp()
     static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    static Cockpit cockpit(receiver, flightController, autopilot, debug, cockpitRates);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
 
     // statically allocate an MSP object
-    static MSP_ProtoFlight msp(ahrs, flightController, cockpit, receiver, autopilot, debug, nvs);
+    static MSP_ProtoFlight msp(ahrs, flightController, cockpit, receiver, autopilot, imuFilters, debug, nvs);
 //size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, MSP_Base& msp, int16_t cmdMSP)
     static std::array<uint8_t, 256> buf;
     enum { ID = 0x11223344 };
