@@ -54,8 +54,11 @@ Targets
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
 
     #define USE_BACKCHANNEL
+
+    #define USE_DASHBOARD
     #define USE_SCREEN
     #define USE_BUTTONS
+
     #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 
 #elif defined(TARGET_M5STACK_CORE2)
@@ -90,6 +93,8 @@ Targets
     //#define USE_CMS
 
     #define USE_BACKCHANNEL
+
+    #define USE_DASHBOARD
     #define USE_SCREEN
     #define USE_BUTTONS
 

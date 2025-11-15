@@ -28,6 +28,7 @@ class ButtonsBase;
 class CMS;
 class CMS_Task;
 class Cockpit;
+class DashboardTask;
 class Debug;
 class DisplayPortBase;
 class FlightController;
@@ -46,7 +47,9 @@ class ScreenBase;
 class VehicleControllerBase;
 class VehicleControllerTask;
 
-enum { DASHBOARD_TASK_INTERVAL_MICROSECONDS = 5000 }; // 200 Hz
+#if !defined(DASHBOARD_TASK_INTERVAL_MICROSECONDS)
+enum { DASHBOARD_TASK_INTERVAL_MICROSECONDS = 40000 }; // 25 Hz
+#endif
 
 #if !defined(GYRO_SAMPLE_RATE_HZ)
 enum { GYRO_SAMPLE_RATE_HZ = 2000 }; // 2000 Hz, 500 microseconds looptime
@@ -122,12 +125,6 @@ enum {
     DASHBOARD_TASK_CORE = CPU_CORE_0,
 };
 
-class DashboardTask : public TaskBase {
-public:
-    explicit DashboardTask(uint32_t taskIntervalMicroseconds) : TaskBase(taskIntervalMicroseconds) {}
-    void loop();
-};
-
 class Main {
 public:
     enum {PA=0, PB=1, PC=2, PD=3, PE=4, PF=5, PG=6, PH=7}; // Note: defining PI=8 will cause conflict with Arduino's #define of PI (3.14..)
@@ -171,10 +168,10 @@ private:
     };
 private:
     tasks_t _tasks {};
-
+#if !defined(USE_DASHBOARD)
     ScreenBase* _screen {nullptr};
     uint32_t _screenTickCount {0};
-
     ButtonsBase* _buttons {nullptr};
     uint32_t _buttonsTickCount {0};
+#endif
 };

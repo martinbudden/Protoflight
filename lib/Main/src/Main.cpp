@@ -9,6 +9,8 @@
 #endif
 #include <CMS_Task.h>
 #include <Cockpit.h>
+#include <Dashboard.h>
+#include <DashboardTask.h>
 #include <Debug.h>
 #include <DisplayPortM5GFX.h>
 #include <DisplayPortNull.h>
@@ -66,13 +68,15 @@ void Main::setup()
 
     // Statically allocate the debug object
     static Debug debug;
-    // statically allocate the IMU_Filters
+
+    // Statically allocate the IMU_Filters
     const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSampleRateHz);
     static IMU_Filters imuFilters(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug, AHRS_taskIntervalSeconds);
     imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
 #endif
+
     const auto AHRS_taskIntervalMicroSeconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
     static AHRS_MessageQueue AHRS_MessageQueue;
     FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, AHRS_MessageQueue, imuFilters, debug, nvs);
@@ -104,22 +108,26 @@ void Main::setup()
 
     // Statically allocate the screen.
     static ScreenM5 screen(displayPort, ahrs, flightController, receiver);
-    _screen = &screen;
-    ReceiverWatcher* receiverWatcher = &screen;
     screen.updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
     // Statically allocate the buttons.
     static ButtonsM5 buttons(flightController, receiver, &screen);
-    _buttons = &buttons;
     // Holding BtnB down while switching on initiates binding.
     // The Atom has no BtnB, so it always broadcasts address for binding on startup.
     if (M5.getBoard() ==lgfx::board_M5AtomS3 || M5.BtnB.wasPressed()) {
         receiver.broadcastMyEUI();
     }
+    ReceiverWatcher* receiverWatcher = &screen;
+#if defined(USE_DASHBOARD)
+    static Dashboard dashboard(&screen, &buttons);
 #else
+    _screen = &screen;
+    _buttons = &buttons;
+#endif
+#else
+    [[maybe_unused]] static DisplayPortNull displayPort;
     // no buttons defined, so always broadcast address for binding on startup
     receiver.broadcastMyEUI();
     ReceiverWatcher* receiverWatcher = nullptr;
-    [[maybe_unused]] static DisplayPortNull displayPort;
 #endif // M5_UNIFIED
 
 #if defined(USE_OSD)
@@ -138,10 +146,6 @@ void Main::setup()
     // Create all the tasks
     //
 
-    // The DashboardTask runs in the main loop
-    static DashboardTask dashboardTask(DASHBOARD_TASK_INTERVAL_MICROSECONDS);
-    _tasks.dashboardTask = &dashboardTask;
-    reportDashboardTask();
 
     TaskBase::task_info_t taskInfo {};
 
@@ -157,6 +161,10 @@ void Main::setup()
 
     _tasks.receiverTask = ReceiverTask::createTask(taskInfo, cockpit, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
+#if defined(USE_DASHBOARD)
+    _tasks.dashboardTask = DashboardTask::createTask(taskInfo, dashboard, DASHBOARD_TASK_PRIORITY, DASHBOARD_TASK_CORE, DASHBOARD_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(taskInfo);
+#endif
 #if defined(USE_MSP)
     _tasks.mspTask = MSP_Task::createTask(taskInfo, mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
@@ -182,18 +190,6 @@ void Main::setup()
 }
 
 
-void Main::reportDashboardTask()
-{
-#if defined(FRAMEWORK_ARDUINO_ESP32)
-    // The main task is set up by the framework, so just print its details.
-    // It has name "loopTask" and priority 1.
-    const TaskHandle_t taskHandle = xTaskGetCurrentTaskHandle();
-    const UBaseType_t taskPriority = uxTaskPriorityGet(taskHandle);
-    const char* taskName = pcTaskGetName(taskHandle);
-    Serial.printf("\r\n\r\n**** Main loop task, name:'%s' priority:%d, tickRate:%dHz\r\n", taskName, static_cast<int>(taskPriority), configTICK_RATE_HZ);
-#endif
-}
-
 void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
 {
 #if defined(FRAMEWORK_ARDUINO_ESP32)
@@ -201,7 +197,11 @@ void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
     if (taskInfo.taskIntervalMicroseconds == 0) {
         Serial.printf("interrupt driven\r\n");
     } else {
-        Serial.printf("task interval:%ums\r\n", static_cast<unsigned int>(taskInfo.taskIntervalMicroseconds / 1000));
+        if (taskInfo.taskIntervalMicroseconds / 1000 == 0) {
+            Serial.printf("task interval:%4uus\r\n", static_cast<unsigned int>(taskInfo.taskIntervalMicroseconds));
+        } else {
+            Serial.printf("task interval:%3ums\r\n", static_cast<unsigned int>(taskInfo.taskIntervalMicroseconds / 1000));
+        }
     }
 #else
     std::array<char, 128> buf;
@@ -246,38 +246,22 @@ void Main::print(const char* buf)
 #endif
 }
 
-/*!
-The dashboard loop handles:
-1. Output to the screen
-2. Input from the buttons
-*/
-void DashboardTask::loop()
-{
-#if defined(FRAMEWORK_USE_FREERTOS)
-    const TickType_t tickCount = xTaskGetTickCount();
-    _tickCountDelta = tickCount - _tickCountPrevious;
-    _tickCountPrevious = tickCount;
-#endif // USE_FREERTOS
-}
-
 void Main::loop() // NOLINT(readability-make-member-function-const)
 {
-#if defined(FRAMEWORK_USE_FREERTOS)
-    vTaskDelay(pdMS_TO_TICKS(DASHBOARD_TASK_INTERVAL_MICROSECONDS / 1000));
-    [[maybe_unused]] const TickType_t tickCount = xTaskGetTickCount();
-#else
+#if !defined(FRAMEWORK_USE_FREERTOS)
     // simple round-robbin scheduling
-    _tasks.dashboardTask->loop();
     _tasks.ahrsTask->loop();
     _tasks.flightControllerTask->loop();
     _tasks.receiverTask->loop();
     [[maybe_unused]] const uint32_t tickCount = timeUs() / 1000;
-#endif
 
+#if defined(USE_DASHBOARD)
+    _tasks.dashboardTask->loop();
+#else
 #if defined(USE_SCREEN)
     // screen and button update tick counts are coprime, so screen and buttons are not normally updated in same loop
     // update the screen every 101 ticks (0.1 seconds)
-    if (tickCount - _screenTickCount> 101) {
+    if (tickCount - _screenTickCount > 101) {
         _screenTickCount = tickCount;
         _screen->update();
     }
@@ -289,4 +273,6 @@ void Main::loop() // NOLINT(readability-make-member-function-const)
         _buttons->update();
     }
 #endif
+#endif // USE_DASHBOARD
+#endif // FRAMEWORK_USE_FREERTOS
 }
