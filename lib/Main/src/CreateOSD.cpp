@@ -7,9 +7,9 @@
 /*!
 Statically allocate the OSD and associated objects.
 */
-OSD& Main::createOSD(DisplayPortBase* displayPort, const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
+OSD& Main::createOSD(DisplayPortBase* displayPort, const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
-    static OSD osd(flightController, cockpit, debug);
+    static OSD osd(flightController, cockpit, ahrsMessageQueue, debug);
 
 #if defined(USE_OSD)
     osd.init(displayPort, DisplayPortBase::DEVICE_TYPE_OLED);

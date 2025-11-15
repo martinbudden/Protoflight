@@ -6,13 +6,14 @@
 #include <array>
 #include <cstdint>
 
+class AHRS_MessageQueue;
 class Cockpit;
 class Debug;
 
 
 class OSD {
 public:
-    OSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug);
+    OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug);
 private:
     // OSD is not copyable or moveable
     OSD(const OSD&) = delete;
@@ -22,11 +23,10 @@ private:
 public:
     enum { PROFILE_NAME_LENGTH = 16 };
     enum { RC_CHANNELS_COUNT = 4 };
-    enum { LOGO_ROW_COUNT = 4 };
-    enum { LOGO_COLUMN_COUNT = 24 };
+    enum { LOGO_ROW_COUNT = 4, LOGO_COLUMN_COUNT = 24 };
     enum { SD_ROWS = 16, SD_COLS = 30 };
     enum { HD_ROWS = 20, HD_COLS = 53 };
-    enum { FRAMERATE_DEFAULT_HZ = 12 };
+    enum { FRAMERATE_DEFAULT_HZ = 100 }; // 12 };
     enum { ESC_RPM_ALARM_OFF = -1, ESC_TEMP_ALARM_OFF = 0, ESC_CURRENT_ALARM_OFF = -1 };
 
     enum  state_e {
@@ -235,6 +235,7 @@ private:
     DisplayPortBase::device_type_e _displayPortDeviceType {};
     OSD_Elements _elements;
     const Cockpit& _cockpit;
+    uint32_t  _resumeRefreshAtUs {};
     state_e _state { STATE_INIT };
     std::array<uint16_t, STATE_COUNT> _stateDurationFractionUs {};
     std::array<uint32_t, OSD_ITEM_COUNT> _elementDurationFractionUs {};
@@ -245,6 +246,7 @@ private:
     bool _visualBeeperState {};
     bool _suppressStatsFlag {};
     bool _moreElementsToDraw {};
-    bool _resumeRefreshAt {};
     bool _backgroundLayerSupported {};
+    bool _isReady {false};
+    bool _isArmed {};
 };

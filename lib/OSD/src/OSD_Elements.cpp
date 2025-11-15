@@ -1,13 +1,16 @@
 #include "DisplayPortBase.h"
 #include "OSD_Elements.h"
 
+//#include <HardwareSerial.h>
+
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
 
 
-OSD_Elements::OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug) :
+OSD_Elements::OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, const Debug& debug) :
     _osd(osd),
     _flightController(flightController),
     _cockpit(cockpit),
+    _ahrsMessageQueue(ahrsMessageQueue),
     _debug(debug)
 {
 }
@@ -45,7 +48,7 @@ void OSD_Elements::setConfig(const config_t& config)
 void OSD_Elements::setDefaultConfig()
 {
 // If user includes OSD_HD in the build assume they want to use it as default
-#ifdef USE_OSD_HD
+#if defined(USE_OSD_HD)
     uint8_t midRow = 10;
     uint8_t midCol = 26;
 #else
@@ -73,6 +76,10 @@ void OSD_Elements::setDefaultConfig()
     _config.element_pos[OSD_HORIZON_SIDEBARS]   = OSD_POS(midCol - 1,  midRow - 1);
     _config.element_pos[OSD_CAMERA_FRAME]       = OSD_POS(midCol - 12, midRow - 6);
     _config.element_pos[OSD_UP_DOWN_REFERENCE]  = OSD_POS(midCol - 2,  midRow - 1);
+    _config.element_pos[OSD_ROLL_ANGLE]         = OSD_POS(2, 1);
+    _config.element_pos[OSD_PITCH_ANGLE]        = OSD_POS(2, 2);
+    _config.element_pos[OSD_ROLL_PIDS]          = OSD_POS(2, 12);
+    _config.element_pos[OSD_PITCH_PIDS]         = OSD_POS(2, 13);
 }
 
 int OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  element, uint8_t x, uint8_t y, uint8_t attr, const char *s)
@@ -96,18 +103,32 @@ bool OSD_Elements::isRenderPending() const
     return _displayPendingForeground | _displayPendingBackground;
 }
 
+void OSD_Elements::addActiveElement(osd_items_e element)
+{
+    if (IS_VISIBLE(_config.element_pos[element])) {
+        _activeElementArray[_activeElementCount++] = element;
+    }
+}
+
 void OSD_Elements::addActiveElements()
 {
+    //addActiveElement(OSD_DEBUG);
+    addActiveElement(OSD_ROLL_PIDS);
+    addActiveElement(OSD_PITCH_PIDS);
+    addActiveElement(OSD_CROSSHAIRS);
+    addActiveElement(OSD_ROLL_ANGLE);
+    addActiveElement(OSD_PITCH_ANGLE);
 }
 
 bool OSD_Elements::drawNextActiveElement(DisplayPortBase& displayPort)
 {
+    //Serial.printf("drawNextActiveElement: idx:%d cnt:%d\r\n", _activeElementIndex, _activeElementCount);
     if (_activeElementIndex >= _activeElementCount) {
         _activeElementIndex = 0;
         return false;
     }
 
-    const uint8_t item = _activeOsdElementArray[_activeElementIndex];
+    const uint8_t item = _activeElementArray[_activeElementIndex];
 
     if (!_backgroundLayerSupported && elementDrawBackgroundFunctions[item] && !_backgroundRendered) {
         // If the background layer isn't supported then we
@@ -155,6 +176,7 @@ bool OSD_Elements::displayActiveElement(DisplayPortBase& displayPort)
 
 bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex)
 {
+    //Serial.printf("drawSingleElement:%d\r\n", elementIndex);
     // By default mark the element as rendered in case it's in the off blink state
     _activeElement.rendered = true;
 
@@ -179,6 +201,7 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
     if (isSysOSD_Element(elementIndex)) {
         displayPort.writeSys(_activeElement.posX, _activeElement.posY, static_cast<DisplayPortBase::system_element_e>(elementIndex - OSD_SYS_GOGGLE_VOLTAGE + DisplayPortBase::SYS_GOGGLE_VOLTAGE));
     } else {
+        //Serial.print("calling draw fn\r\n");
         if ((this->*elementDrawFunctions[elementIndex])(displayPort, _activeElement)) {
             _displayPendingForeground = true;
         }
@@ -219,7 +242,7 @@ void OSD_Elements::drawActiveElementsBackground(DisplayPortBase& displayPort) //
         displayPort.layerSelect(DisplayPortBase::LAYER_BACKGROUND);
         displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
         for (size_t ii = 0; ii < _activeElementCount; ++ii) {
-            while (!drawSingleElementBackground(displayPort, _activeOsdElementArray[ii])) {};
+            while (!drawSingleElementBackground(displayPort, _activeElementArray[ii])) {};
         }
         displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }

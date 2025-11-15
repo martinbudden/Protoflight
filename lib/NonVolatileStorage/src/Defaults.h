@@ -242,7 +242,7 @@ static constexpr OSD::config_t osdConfig = {
     .stats_show_cell_value = false,
     .osd_craftname_messages = false,   // Insert LQ/RSSI-dBm and warnings into CraftName
     // Make it obvious on the configurator that the FC doesn't support HD
-#ifdef USE_OSD_HD
+#if defined(USE_OSD_HD)
     .displayPortDevice = OSD_DISPLAYPORT_DEVICE_MSP,
     .canvas_column_count = OSD::HD_COLS,
     .canvas_row_count = OSD::HD_ROWS,

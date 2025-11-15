@@ -5,6 +5,7 @@
 #include <bitset>
 #include <cstdint>
 
+class AHRS_MessageQueue;
 class Cockpit;
 class Debug;
 class DisplayPortBase;
@@ -103,7 +104,7 @@ enum  osd_items_e {
 
 class OSD_Elements {
 public:
-    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug);
+    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, const Debug& debug);
     void init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t columnCount);
     void initDrawFunctions();
 public:
@@ -153,8 +154,10 @@ public:
     static uint8_t OSD_X(uint16_t x) { return x & XY_POSITION_MASK; }
     static uint8_t OSD_Y(uint16_t x) { return (x >> XY_POSITION_BITS) & XY_POSITION_MASK; }
     static uint16_t OSD_POS(uint8_t x, uint8_t y) { return (x & XY_POSITION_MASK) | ((y & XY_POSITION_MASK) << XY_POSITION_BITS); }
+    static uint16_t IS_VISIBLE(uint16_t x) { (void)x; return true; }
 
 
+    void addActiveElement(osd_items_e element);
     void addActiveElements();
     bool isRenderPending() const;
     uint8_t getActiveElementIndex() const { return _activeElementIndex; }
@@ -182,6 +185,8 @@ public:
     bool drawCrosshairs(DisplayPortBase& displayPort, element_t& element);  // only has background, but needs to be over other elements (like artificial horizon)
     bool drawArtificialHorizon(DisplayPortBase& displayPort, element_t& element);
     bool drawDebug(DisplayPortBase& displayPort, element_t& element);
+    bool drawAngleRoll(DisplayPortBase& displayPort, element_t& element);
+    bool drawAnglePitch(DisplayPortBase& displayPort, element_t& element);
     bool drawDebug2(DisplayPortBase& displayPort, element_t& element);
 // element background drawing functions
     bool drawBackgroundHorizonSidebars(DisplayPortBase& displayPort, element_t& element);
@@ -189,6 +194,7 @@ private:
     const OSD& _osd;
     const FlightController& _flightController;
     const Cockpit& _cockpit;
+    const AHRS_MessageQueue& _ahrsMessageQueue;
     const Debug& _debug;
     element_t _activeElement {};
     uint8_t _activeElementIndex = 0;
@@ -203,7 +209,7 @@ private:
     int8_t _sidbarPosY {AH_SIDEBAR_HEIGHT_POS};
 
     config_t _config {};
-    std::array<uint8_t, OSD_ITEM_COUNT> _activeOsdElementArray;
+    std::array<uint8_t, OSD_ITEM_COUNT> _activeElementArray;
     std::bitset<OSD_ITEM_COUNT> _blinkBits {};
 
     static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> elementDrawFunctions;

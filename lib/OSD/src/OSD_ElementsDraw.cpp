@@ -2,6 +2,7 @@
 #include "OSD_Elements.h"
 #include "OSD_Symbols.h"
 
+#include "AHRS_MessageQueue.h"
 #include "Debug.h"
 #include "FlightController.h"
 
@@ -26,6 +27,8 @@ void OSD_Elements::initDrawFunctions()
     elementDrawFunctions[OSD_PITCH_PIDS]        = &OSD_Elements::drawPIDsPitch;
     elementDrawFunctions[OSD_YAW_PIDS]          = &OSD_Elements::drawPIDsYaw;
     elementDrawFunctions[OSD_DEBUG]             = &OSD_Elements::drawDebug;
+    elementDrawFunctions[OSD_PITCH_ANGLE]       = &OSD_Elements::drawAnglePitch;
+    elementDrawFunctions[OSD_ROLL_ANGLE]        = &OSD_Elements::drawAngleRoll;
     elementDrawFunctions[OSD_DEBUG2]            = &OSD_Elements::drawDebug2;
 
     elementDrawBackgroundFunctions[OSD_HORIZON_SIDEBARS]    = &OSD_Elements::drawBackgroundHorizonSidebars;
@@ -46,21 +49,41 @@ void OSD_Elements::formatPID(char * buf, const char * label, uint8_t axis) // NO
 bool OSD_Elements::drawPIDsRoll(DisplayPortBase& displayPort, element_t&element)
 {
     (void)displayPort;
-    formatPID(&element.buf[0], "ROL", FlightController::ROLL_RATE_DPS);
+    formatPID(&element.buf[0], "PIDR", FlightController::ROLL_RATE_DPS);
     return true;
 }
 
 bool OSD_Elements::drawPIDsPitch(DisplayPortBase& displayPort, element_t& element)
 {
     (void)displayPort;
-    formatPID(&element.buf[0], "PIT", FlightController::PITCH_RATE_DPS);
+    formatPID(&element.buf[0], "PIDP", FlightController::PITCH_RATE_DPS);
     return true;
 }
 
 bool OSD_Elements::drawPIDsYaw(DisplayPortBase& displayPort, element_t&element)
 {
     (void)displayPort;
-    formatPID(&element.buf[0], "YAW", FlightController::YAW_RATE_DPS);
+    formatPID(&element.buf[0], "PIDY", FlightController::YAW_RATE_DPS);
+    return true;
+}
+
+bool OSD_Elements::drawAngleRoll(DisplayPortBase& displayPort, element_t&element)
+{
+    (void)displayPort;
+    AHRS::ahrs_data_t ahrsData {};
+    _ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
+    const float rollAngleDegrees = ahrsData.orientation.calculateRollDegrees();
+    sprintf(&element.buf[0], "ROL %3.1f", rollAngleDegrees);
+    return true;
+}
+
+bool OSD_Elements::drawAnglePitch(DisplayPortBase& displayPort, element_t&element)
+{
+    (void)displayPort;
+    AHRS::ahrs_data_t ahrsData {};
+    _ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
+    const float pitchAngleDegrees = ahrsData.orientation.calculatePitchDegrees();
+    sprintf(&element.buf[0], "PIT %3.1f", pitchAngleDegrees);
     return true;
 }
 
@@ -81,9 +104,9 @@ bool OSD_Elements::drawMainBatteryVoltage(DisplayPortBase& displayPort, element_
 bool OSD_Elements::drawCrosshairs(DisplayPortBase& displayPort, element_t&element)
 {
     (void)displayPort;
-    element.buf[0] = SYM_AH_CENTER_LINE;
-    element.buf[1] = SYM_AH_CENTER;
-    element.buf[2] = SYM_AH_CENTER_LINE_RIGHT;
+    element.buf[0] = '-';//SYM_AH_CENTER_LINE;
+    element.buf[1] = '+';//SYM_AH_CENTER;
+    element.buf[2] = '-';//SYM_AH_CENTER_LINE_RIGHT;
     element.buf[3] = 0;
     return true;
 }

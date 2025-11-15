@@ -104,11 +104,13 @@ void Main::setup()
         nvs.clear();
     }
     static M5Canvas canvas(&M5.Display);
-    static DisplayPortM5GFX displayPort(canvas);
+    static DisplayPortM5GFX displayPort(canvas, 320, 240);
 
     // Statically allocate the screen.
     static ScreenM5 screen(displayPort, ahrs, flightController, receiver);
+#if defined(USE_DASHBOARD)
     screen.updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
+#endif
     // Statically allocate the buttons.
     static ButtonsM5 buttons(flightController, receiver, &screen);
     // Holding BtnB down while switching on initiates binding.
@@ -131,7 +133,7 @@ void Main::setup()
 #endif // M5_UNIFIED
 
 #if defined(USE_OSD)
-    OSD& osd = createOSD(&displayPort, flightController, cockpit, debug, nvs);
+    OSD& osd = createOSD(&displayPort, flightController, cockpit, AHRS_MessageQueue, debug, nvs);
 #endif
 #if defined(USE_CMS)
 #if defined(USE_OSD)

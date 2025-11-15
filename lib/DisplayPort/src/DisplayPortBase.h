@@ -105,7 +105,7 @@ public:
     virtual bool layerCopy(layer_e destLayer, layer_e sourceLayer) { return (sourceLayer == destLayer) ? false : true; }
     virtual bool writeFontCharacter(uint16_t addr, const struct osd_character_t* chr) { (void)addr; (void)chr; return false; }
     virtual bool checkReady(bool rescan) { (void)rescan; return true; }
-    virtual void beginTransaction(display_transaction_option_e opts) {(void)opts;}
+    virtual void beginTransaction(display_transaction_option_e options) {(void)options;}
     virtual void commitTransaction() {}
     virtual bool getCanvas(display_canvas_t* canvas) const { (void)canvas; return false; }
     virtual void setBackgroundType(background_e backgroundType) { (void)backgroundType; }

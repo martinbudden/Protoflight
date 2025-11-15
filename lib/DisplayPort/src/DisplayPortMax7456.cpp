@@ -589,7 +589,7 @@ bool DisplayPortMax7456::drawScreen()
         bool autoInc = false;
         int posLimit = pos + (maxScreenSize / 2);
 
-#ifdef USE_DMA
+#if defined(USE_DMA)
         const bool useDma = spiUseSDO_DMA(dev);
 #else
         const bool useDma = false;
@@ -711,7 +711,7 @@ bool DisplayPortMax7456::writeNvm(uint8_t char_address, const uint8_t *font_data
     for (int x = 0; x < 54; x++) {
         spiWriteReg(dev, MAX7456ADD_CMAL, x); //set start address low
         spiWriteReg(dev, MAX7456ADD_CMDI, font_data[x]);
-#ifdef LED0_TOGGLE
+#if defined(LED0_TOGGLE)
         LED0_TOGGLE;
 #else
         LED1_TOGGLE;
@@ -729,13 +729,13 @@ bool DisplayPortMax7456::writeNvm(uint8_t char_address, const uint8_t *font_data
     return true;
 }
 
-#ifdef MAX7456_NRST_PIN
+#if defined(MAX7456_NRST_PIN)
 static IO_t max7456ResetPin        = IO_NONE;
 #endif
 
 void DisplayPortMax7456::hardwareReset()
 {
-#ifdef MAX7456_NRST_PIN
+#if defined(MAX7456_NRST_PIN)
 #define IO_RESET_CFG      IO_CONFIG(GPIO_Mode_OUT, GPIO_Speed_2MHz, GPIO_OType_PP, GPIO_PuPd_DOWN)
 
     max7456ResetPin = IOGetByTag(IO_TAG(MAX7456_NRST_PIN));

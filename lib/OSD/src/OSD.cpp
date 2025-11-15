@@ -1,12 +1,13 @@
 #include "OSD.h"
 #include "Cockpit.h"
 
+//#include <HardwareSerial.h>
 #include <MSP_Box.h>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
-OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, Debug& debug) : // cppcheck-suppress constParameterReference
-    _elements(*this, flightController, cockpit, debug),
+OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug) : // cppcheck-suppress constParameterReference
+    _elements(*this, flightController, cockpit, ahrsMessageQueue, debug),
     _cockpit(cockpit)
 {
 }
@@ -22,12 +23,61 @@ void OSD::init(DisplayPortBase *displayPort, DisplayPortBase::device_type_e disp
         _config.canvas_column_count = columnCount;
         _config.canvas_row_count = rowCount;
     }
-    _elements.init(false, rowCount, columnCount);
 }
 
 void OSD::completeInitialization()
 {
+    uint8_t midRow = _displayPort->getRowCount() / 2;
+    uint8_t midCol = _displayPort->getColumnCount() / 2;
+
+    _isArmed = _cockpit.isArmed();
+
+    //resetAlarms();
+
+    _backgroundLayerSupported = _displayPort->layerSupported(DisplayPortBase::LAYER_BACKGROUND);
+    _displayPort->layerSelect(DisplayPortBase::LAYER_FOREGROUND);
+
+    _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPT_RESET_DRAWING);
+    _displayPort->clearScreen(DISPLAY_CLEAR_WAIT);
+
+    // Display betaflight logo
+    drawLogo(midCol - (LOGO_COLUMN_COUNT) / 2, midRow - 5, DisplayPortBase::SEVERITY_NORMAL);
+
+    std::array<char, 30> string_buffer;
+    sprintf(&string_buffer[0], "V%s", "0.0.1");//FC_VERSION_STRING);
+    _displayPort->writeString(midCol + 5, midRow, DisplayPortBase::SEVERITY_NORMAL, &string_buffer[0]);
+#if defined(USE_CMS) || true
+    _displayPort->writeString(midCol - 8, midRow + 2,  DisplayPortBase::SEVERITY_NORMAL, "MENU:THR MID");
+    _displayPort->writeString(midCol - 4, midRow + 3, DisplayPortBase::SEVERITY_NORMAL, "+ YAW LEFT");
+    _displayPort->writeString(midCol - 4, midRow + 4, DisplayPortBase::SEVERITY_NORMAL, "+ PITCH UP");
+#endif
+
+#if defined(USE_RTC_TIME)
+    std::array<char, FORMATTED_DATE_TIME_BUFSIZE> dateTimeBuffer;
+    if (osdFormatRtcDateTime(&dateTimeBuffer[0])) {
+        _displayPort->writeString(midCol - 10, midRow + 6, DisplayPortBase::SEVERITY_NORMAL, &dateTimeBuffer[]);
+    }
+#endif
+
+    _resumeRefreshAtUs = timeUs() + 4'000'000;
+#if defined(USE_OSD_PROFILES)
+    setOsdProfile(osdConfig()->osdProfileIndex);
+#endif
+
+    _elements.init(_backgroundLayerSupported, _displayPort->getRowCount(), _displayPort->getColumnCount());
+    analyzeActiveElements();
+
+    _displayPort->commitTransaction();
+
+    _isReady = true;
 }
+
+void OSD::analyzeActiveElements()
+{
+    _elements.addActiveElements();
+    _elements.drawActiveElementsBackground(*_displayPort);
+}
+
 
 void OSD::setConfig(const config_t& config)
 {
@@ -116,15 +166,17 @@ bool OSD::getWarningState(uint8_t warningIndex) const
 
 void OSD::drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity)
 {
-    enum { SYMBOL_END_OF_FONT = 0xFF };
+    // the logo is in the font characters starting at 160
+    enum { START_CHARACTER = 160 };
+    enum { END_OF_FONT = 255 };
 
     // display logo and help
-    uint8_t fontOffset = 160;
+    uint8_t characterCode = START_CHARACTER;
     for (uint8_t row = 0; row < LOGO_ROW_COUNT; ++row) {
         for (uint8_t column = 0; column < LOGO_COLUMN_COUNT; ++column) {
-            if (fontOffset < SYMBOL_END_OF_FONT) {
-                _displayPort->writeChar(x + column, y + row, severity, fontOffset);
-                ++fontOffset;
+            if (characterCode < END_OF_FONT) {
+                _displayPort->writeChar(x + column, y + row, severity, characterCode);
+                ++characterCode;
             }
         }
     }
@@ -136,6 +188,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
 
     switch (_state) {
     case STATE_INIT:
+        //Serial.printf("STATE_INIT\r\n");
         if (!_displayPort->checkReady(false)) {
             // Frsky OSD needs a display redraw after search for MAX7456 devices
             if (_displayPortDeviceType == DisplayPortBase::DEVICE_TYPE_FRSKY_OSD) {
@@ -148,6 +201,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         _state = STATE_COMMIT;
         break;
     case STATE_CHECK:
+        //Serial.printf("STATE_CHECK\r\n");
         // don't touch buffers if DMA transaction is in progress
         if (_displayPort->isTransferInProgress()) {
             break;
@@ -155,6 +209,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         _state = STATE_UPDATE_HEARTBEAT;
         break;
     case STATE_UPDATE_HEARTBEAT:
+        //Serial.printf("STATE_UPDATE_HEARTBEAT\r\n");
         if (_displayPort->heartbeat()) {
             // Extraordinary action was taken, so return without allowing stateDurationFractionUs table to be updated
             return;
@@ -162,26 +217,39 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         _state = STATE_PROCESS_STATS1;
         break;
     case STATE_PROCESS_STATS1:
+        //Serial.printf("STATE_PROCESS_STATS1\r\n");
         _state = processStats1(timeMicroseconds) ? STATE_REFRESH_STATS : STATE_PROCESS_STATS2; // cppcheck-suppress knownConditionTrueFalse
         break;
     case STATE_REFRESH_STATS:
+        //Serial.printf("STATE_REFRESH_STATS\r\n");
         if (refreshStats()) {
             _state = STATE_PROCESS_STATS2;
         }
         break;
     case STATE_PROCESS_STATS2:
+        //Serial.printf("STATE_PROCESS_STATS2\r\n");
+        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPT_RESET_DRAWING);
         processStats2(timeMicroseconds);
         _state = STATE_PROCESS_STATS3;
         break;
     case STATE_PROCESS_STATS3:
+        //Serial.printf("STATE_PROCESS_STATS3\r\n");
         processStats3();
-        _state = STATE_COMMIT;
+#if defined(USE_CMS)
+        if (_displayPort->isGrabbed()) {
+            _state = STATE_COMMIT:
+        }
+#endif
+        _state = STATE_UPDATE_ALARMS;
         break;
     case STATE_UPDATE_ALARMS:
+        //Serial.printf("STATE_UPDATE_ALARMS\r\n");
         updateAlarms();
-        _state = _resumeRefreshAt ? STATE_TRANSFER : STATE_UPDATE_CANVAS;
+        //_state = _resumeRefreshAtUs ? STATE_TRANSFER : STATE_UPDATE_CANVAS;
+        _state = STATE_UPDATE_CANVAS;
         break;
     case STATE_UPDATE_CANVAS:
+        //Serial.printf("STATE_UPDATE_CANVAS\r\n");
         // Hide OSD when OSD SW mode is active
         if (_cockpit.isRcModeActive(MSP_Box::BOX_OSD)) {
             _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
@@ -207,6 +275,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         timeUs32_t startElementTime = timeUs();
         _moreElementsToDraw = _elements.drawNextActiveElement(*_displayPort);
         timeUs32_t executeTimeUs = timeUs() - startElementTime;
+        //Serial.printf("STATE_DRAW_ELEMENT ai:%d more:%d\r\n", static_cast<int>(activeElementIndex), static_cast<int>(_moreElementsToDraw));
 
         if (executeTimeUs > (_elementDurationFractionUs[activeElementIndex] >> OSD_EXEC_TIME_SHIFT)) { // cppcheck-suppress unsignedLessThanZero
             _elementDurationFractionUs[activeElementIndex] = executeTimeUs << OSD_EXEC_TIME_SHIFT;
@@ -225,6 +294,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         break;
     }
     case STATE_DISPLAY_ELEMENT:
+        //Serial.printf("STATE_DISPLAY_ELEMENT\r\n");
         if (!_elements.displayActiveElement(*_displayPort)) {
             if (_moreElementsToDraw) {
                 // There is no more to draw so advance to the next element
@@ -239,16 +309,19 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         }
         break;
     case STATE_REFRESH_PREARM:
+        //Serial.printf("STATE_REFRESH_PREARM\r\n");
         if (_elements.drawSpec(*_displayPort)) {
             // Rendering is complete
             _state = STATE_COMMIT;
         }
         break;
     case STATE_COMMIT:
+        //Serial.printf("STATE_COMMIT\r\n");
         _displayPort->commitTransaction();
-        _state = _resumeRefreshAt ? STATE_IDLE : STATE_TRANSFER;
+        _state = _resumeRefreshAtUs ? STATE_IDLE : STATE_TRANSFER;
         break;
     case STATE_TRANSFER:
+        //Serial.printf("STATE_TRANSFER\r\n");
         // Wait for any current transfer to complete
         if (_displayPort->isTransferInProgress()) {
             break;
@@ -260,9 +333,11 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         _state = STATE_IDLE;
         break;
     case STATE_IDLE:
+        //Serial.printf("STATE_IDLE\r\n");
         _state = STATE_CHECK;
         break;
     default:
+        //Serial.printf("STATE_default\r\n");
         _state = STATE_IDLE;
         break;
     }

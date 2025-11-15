@@ -190,8 +190,10 @@
         "picotool",
         "PIDF",
         "PIDFS",
+        "PIDR",
         "pids",
         "pidsum",
+        "PIDY",
         "pindirs",
         "pioasm",
         "PIOENV",
@@ -301,5 +303,8 @@
         "xtensa",
         "YNEG",
         "ZNEG"
-    ]
+    ],
+    "files.associations": {
+        "array": "cpp"
+    }
 }
