@@ -1,7 +1,7 @@
 #include "OSD.h"
 #include "Cockpit.h"
 
-//#include <HardwareSerial.h>
+//#include <Hardware//Serial.h>
 #include <MSP_Box.h>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
@@ -37,7 +37,7 @@ void OSD::completeInitialization()
     _backgroundLayerSupported = _displayPort->layerSupported(DisplayPortBase::LAYER_BACKGROUND);
     _displayPort->layerSelect(DisplayPortBase::LAYER_FOREGROUND);
 
-    _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPT_RESET_DRAWING);
+    _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
     _displayPort->clearScreen(DISPLAY_CLEAR_WAIT);
 
     // Display betaflight logo
@@ -228,7 +228,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         break;
     case STATE_PROCESS_STATS2:
         //Serial.printf("STATE_PROCESS_STATS2\r\n");
-        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPT_RESET_DRAWING);
+        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
         processStats2(timeMicroseconds);
         _state = STATE_PROCESS_STATS3;
         break;
@@ -245,7 +245,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
     case STATE_UPDATE_ALARMS:
         //Serial.printf("STATE_UPDATE_ALARMS\r\n");
         updateAlarms();
-        //_state = _resumeRefreshAtUs ? STATE_TRANSFER : STATE_UPDATE_CANVAS;
+        //!!_state = _resumeRefreshAtUs ? STATE_TRANSFER : STATE_UPDATE_CANVAS;
         _state = STATE_UPDATE_CANVAS;
         break;
     case STATE_UPDATE_CANVAS:
@@ -266,17 +266,18 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
             _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
         }
         syncBlink(timeMicroseconds);
+        _elements.updateAHRS_data();
         _state = STATE_DRAW_ELEMENT;
         break;
     case STATE_DRAW_ELEMENT: {
         const uint8_t activeElementIndex = _elements.getActiveElementIndex();
-        enum { OSD_EXEC_TIME_SHIFT = 5 };
 
         timeUs32_t startElementTime = timeUs();
         _moreElementsToDraw = _elements.drawNextActiveElement(*_displayPort);
         timeUs32_t executeTimeUs = timeUs() - startElementTime;
         //Serial.printf("STATE_DRAW_ELEMENT ai:%d more:%d\r\n", static_cast<int>(activeElementIndex), static_cast<int>(_moreElementsToDraw));
 
+        enum { OSD_EXEC_TIME_SHIFT = 5 };
         if (executeTimeUs > (_elementDurationFractionUs[activeElementIndex] >> OSD_EXEC_TIME_SHIFT)) { // cppcheck-suppress unsignedLessThanZero
             _elementDurationFractionUs[activeElementIndex] = executeTimeUs << OSD_EXEC_TIME_SHIFT;
         } else if (_elementDurationFractionUs[activeElementIndex] > 0) {

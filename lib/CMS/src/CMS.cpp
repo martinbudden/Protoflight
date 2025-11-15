@@ -41,7 +41,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
     const uint32_t currentTimeMs = currentTimeUs / 1000;
 
     if (_cmsx.isInMenu()) {
-        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPT_RESET_DRAWING);
+        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
         _rcDelayMs = static_cast<int32_t>(scanKeys(currentTimeMs, _lastCalledMs, _rcDelayMs));
         drawMenu(currentTimeUs);
         if (currentTimeMs > _lastHeartbeatTimeMs + HEARTBEAT_INTERVAL_MS) {

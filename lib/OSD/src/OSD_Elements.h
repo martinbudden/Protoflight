@@ -1,5 +1,6 @@
 #pragma once
 
+#include <AHRS.h>
 #include <TimeMicroseconds.h>
 #include <array>
 #include <bitset>
@@ -129,8 +130,9 @@ public:
         uint8_t offsetY;
         uint8_t attr;
         bool rendered;
+        bool drawElement;
     };
-    typedef bool (OSD_Elements::*elementDrawFnPtr)(DisplayPortBase& displayPort, element_t& element);
+    typedef void (OSD_Elements::*elementDrawFnPtr)(DisplayPortBase& displayPort);
 
 public:
     bool isSysOSD_Element(uint8_t index) { return (index >= OSD_SYS_GOGGLE_VOLTAGE) && (index <= OSD_SYS_FAN_SPEED); }
@@ -163,6 +165,7 @@ public:
     uint8_t getActiveElementIndex() const { return _activeElementIndex; }
     uint8_t getActiveElementCount() const { return _activeElementCount; }
 
+    void updateAHRS_data();
     bool drawNextActiveElement(DisplayPortBase& displayPort);
     bool displayActiveElement(DisplayPortBase& displayPort);
     void drawActiveElementsBackground(DisplayPortBase& displayPort);
@@ -177,25 +180,29 @@ public:
 
 // element drawing functions
     void formatPID(char* buf, const char* label, uint8_t axis);
-    bool drawPIDsRoll(DisplayPortBase& displayPort, element_t& element);
-    bool drawPIDsPitch(DisplayPortBase& displayPort, element_t& element);
-    bool drawPIDsYaw(DisplayPortBase& displayPort, element_t& element);
-    bool drawRSSI(DisplayPortBase& displayPort, element_t& element);
-    bool drawMainBatteryVoltage(DisplayPortBase& displayPort, element_t& element);
-    bool drawCrosshairs(DisplayPortBase& displayPort, element_t& element);  // only has background, but needs to be over other elements (like artificial horizon)
-    bool drawArtificialHorizon(DisplayPortBase& displayPort, element_t& element);
-    bool drawDebug(DisplayPortBase& displayPort, element_t& element);
-    bool drawAngleRoll(DisplayPortBase& displayPort, element_t& element);
-    bool drawAnglePitch(DisplayPortBase& displayPort, element_t& element);
-    bool drawDebug2(DisplayPortBase& displayPort, element_t& element);
+    void drawPIDsRoll(DisplayPortBase& displayPort);
+    void drawPIDsPitch(DisplayPortBase& displayPort);
+    void drawPIDsYaw(DisplayPortBase& displayPort);
+    void drawRSSI(DisplayPortBase& displayPort);
+    void drawMainBatteryVoltage(DisplayPortBase& displayPort);
+    void drawCrosshairs(DisplayPortBase& displayPort);  // only has background, but needs to be over other elements (like artificial horizon)
+    void drawArtificialHorizon(DisplayPortBase& displayPort);
+    void drawDebug(DisplayPortBase& displayPort);
+    void drawAngleRoll(DisplayPortBase& displayPort);
+    void drawAnglePitch(DisplayPortBase& displayPort);
+    void drawRC_Channels(DisplayPortBase& displayPort);
+    void drawDebug2(DisplayPortBase& displayPort);
 // element background drawing functions
-    bool drawBackgroundHorizonSidebars(DisplayPortBase& displayPort, element_t& element);
+    void drawBackgroundHorizonSidebars(DisplayPortBase& displayPort);
 private:
     const OSD& _osd;
     const FlightController& _flightController;
     const Cockpit& _cockpit;
     const AHRS_MessageQueue& _ahrsMessageQueue;
     const Debug& _debug;
+    AHRS::ahrs_data_t _ahrsData {};
+    float _rollAngleDegrees {};
+    float _pitchAngleDegrees {};
     element_t _activeElement {};
     uint8_t _activeElementIndex = 0;
     uint8_t _activeElementCount = 0;
@@ -207,6 +214,7 @@ private:
     bool _sideBarRenderLevel {false};
     enum { AH_SIDEBAR_WIDTH_POS = 7, AH_SIDEBAR_HEIGHT_POS = 3 };
     int8_t _sidbarPosY {AH_SIDEBAR_HEIGHT_POS};
+    uint8_t _rcChannel {};
 
     config_t _config {};
     std::array<uint8_t, OSD_ITEM_COUNT> _activeElementArray;

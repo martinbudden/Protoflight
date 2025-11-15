@@ -3,8 +3,10 @@
 #include "OSD_Symbols.h"
 
 #include "AHRS_MessageQueue.h"
+#include "Cockpit.h"
 #include "Debug.h"
 #include "FlightController.h"
+#include "ReceiverBase.h"
 
 //
 // Drawing functions
@@ -30,7 +32,7 @@ void OSD_Elements::initDrawFunctions()
     elementDrawFunctions[OSD_PITCH_ANGLE]       = &OSD_Elements::drawAnglePitch;
     elementDrawFunctions[OSD_ROLL_ANGLE]        = &OSD_Elements::drawAngleRoll;
     elementDrawFunctions[OSD_DEBUG2]            = &OSD_Elements::drawDebug2;
-
+    elementDrawFunctions[OSD_RC_CHANNELS]       = &OSD_Elements::drawRC_Channels;
     elementDrawBackgroundFunctions[OSD_HORIZON_SIDEBARS]    = &OSD_Elements::drawBackgroundHorizonSidebars;
 };
 
@@ -46,76 +48,101 @@ void OSD_Elements::formatPID(char * buf, const char * label, uint8_t axis) // NO
     );
 }
 
-bool OSD_Elements::drawPIDsRoll(DisplayPortBase& displayPort, element_t&element)
+void OSD_Elements::drawPIDsRoll(DisplayPortBase& displayPort)
 {
     (void)displayPort;
-    formatPID(&element.buf[0], "PIDR", FlightController::ROLL_RATE_DPS);
-    return true;
+    formatPID(&_activeElement.buf[0], "PIDR", FlightController::ROLL_RATE_DPS);
 }
 
-bool OSD_Elements::drawPIDsPitch(DisplayPortBase& displayPort, element_t& element)
+void OSD_Elements::drawPIDsPitch(DisplayPortBase& displayPort)
 {
     (void)displayPort;
-    formatPID(&element.buf[0], "PIDP", FlightController::PITCH_RATE_DPS);
-    return true;
+    formatPID(&_activeElement.buf[0], "PIDP", FlightController::PITCH_RATE_DPS);
 }
 
-bool OSD_Elements::drawPIDsYaw(DisplayPortBase& displayPort, element_t&element)
+void OSD_Elements::drawPIDsYaw(DisplayPortBase& displayPort)
 {
     (void)displayPort;
-    formatPID(&element.buf[0], "PIDY", FlightController::YAW_RATE_DPS);
-    return true;
+    formatPID(&_activeElement.buf[0], "PIDY", FlightController::YAW_RATE_DPS);
 }
 
-bool OSD_Elements::drawAngleRoll(DisplayPortBase& displayPort, element_t&element)
+void OSD_Elements::drawAngleRoll(DisplayPortBase& displayPort)
 {
     (void)displayPort;
-    AHRS::ahrs_data_t ahrsData {};
-    _ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
-    const float rollAngleDegrees = ahrsData.orientation.calculateRollDegrees();
-    sprintf(&element.buf[0], "ROL %3.1f", rollAngleDegrees);
-    return true;
+#if defined(M5_UNIFIED)
+    sprintf(&_activeElement.buf[0], "ro:%4.0f", _rollAngleDegrees);
+#else
+    sprintf(&_activeElement.buf[0], "ROL%5.1f", _rollAngleDegrees);
+#endif
 }
 
-bool OSD_Elements::drawAnglePitch(DisplayPortBase& displayPort, element_t&element)
+void OSD_Elements::drawAnglePitch(DisplayPortBase& displayPort)
 {
     (void)displayPort;
-    AHRS::ahrs_data_t ahrsData {};
-    _ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
-    const float pitchAngleDegrees = ahrsData.orientation.calculatePitchDegrees();
-    sprintf(&element.buf[0], "PIT %3.1f", pitchAngleDegrees);
-    return true;
+#if defined(M5_UNIFIED)
+    sprintf(&_activeElement.buf[0], "pi:%4.0f", _pitchAngleDegrees);
+#else
+    sprintf(&_activeElement.buf[0], "PIT%5.1f", _pitchAngleDegrees);
+#endif
 }
 
-bool OSD_Elements::drawRSSI(DisplayPortBase& displayPort, element_t&element)
+void OSD_Elements::drawRC_Channels(DisplayPortBase& displayPort)
 {
-    (void)element;
-    (void)displayPort;
-    return true;
+    const ReceiverBase::controls_pwm_t controlsPWM = _cockpit.getReceiver().getControlsPWM();
+    switch (_rcChannel) {
+    case 0:
+        sprintf(&_activeElement.buf[0], "T:%5d", controlsPWM.throttle);
+        _activeElement.offsetX = 0;
+        _activeElement.offsetY = 0;
+        break;
+    case 1:
+        sprintf(&_activeElement.buf[0], "R:%5d", controlsPWM.roll);
+        _activeElement.offsetX = displayPort.getColumnCount()/2;
+        _activeElement.offsetY = 0;
+        break;
+    case 2:
+        sprintf(&_activeElement.buf[0], "P:%5d", controlsPWM.pitch);
+        _activeElement.offsetX = displayPort.getColumnCount()/2;
+        _activeElement.offsetY = 1;
+        break;
+    default:
+        sprintf(&_activeElement.buf[0], "Y:%5d", controlsPWM.yaw);
+        _activeElement.offsetX = 0;
+        _activeElement.offsetY = 1;
+        break;
+    }
+
+    if (++_rcChannel == ReceiverBase::STICK_COUNT) {
+        _rcChannel = 0;
+        _activeElement.rendered = true;
+    } else {
+        // rendering not complete until all 4 channels rendered
+        _activeElement.rendered = false;
+    }
 }
 
-bool OSD_Elements::drawMainBatteryVoltage(DisplayPortBase& displayPort, element_t&element)
+void OSD_Elements::drawRSSI(DisplayPortBase& displayPort)
 {
     (void)displayPort;
-    (void)element;
-    return true;
 }
 
-bool OSD_Elements::drawCrosshairs(DisplayPortBase& displayPort, element_t&element)
+void OSD_Elements::drawMainBatteryVoltage(DisplayPortBase& displayPort)
 {
     (void)displayPort;
-    element.buf[0] = '-';//SYM_AH_CENTER_LINE;
-    element.buf[1] = '+';//SYM_AH_CENTER;
-    element.buf[2] = '-';//SYM_AH_CENTER_LINE_RIGHT;
-    element.buf[3] = 0;
-    return true;
 }
 
-bool OSD_Elements::drawArtificialHorizon(DisplayPortBase& displayPort, element_t& element)
+void OSD_Elements::drawCrosshairs(DisplayPortBase& displayPort)
 {
     (void)displayPort;
+    _activeElement.buf[0] = SYM_AH_CENTER_LINE;
+    _activeElement.buf[1] = SYM_AH_CENTER;
+    _activeElement.buf[2] = SYM_AH_CENTER_LINE_RIGHT;
+    _activeElement.buf[3] = 0;
+}
 
-    bool ret = true;
+void OSD_Elements::drawArtificialHorizon(DisplayPortBase& displayPort)
+{
+    (void)displayPort;
 
     enum { AH_SYMBOL_COUNT = 9 };
     enum { AH_SYMBOL_SIDE_COUNT = 4 };
@@ -135,12 +162,12 @@ bool OSD_Elements::drawArtificialHorizon(DisplayPortBase& displayPort, element_t
 
     const int y = ((-static_cast<int>(rollAngle) * x) / 64) - static_cast<int>(pitchAngle);
     if (y >= 0 && y <= 81) {
-        element.offsetX = static_cast<uint8_t>(x);
-        element.offsetY = static_cast<uint8_t>(y / AH_SYMBOL_COUNT);
+        _activeElement.offsetX = static_cast<uint8_t>(x);
+        _activeElement.offsetY = static_cast<uint8_t>(y / AH_SYMBOL_COUNT);
 
-        sprintf(&element.buf[0], "%c", (SYM_AH_BAR9_0 + (y % AH_SYMBOL_COUNT)));
+        sprintf(&_activeElement.buf[0], "%c", (SYM_AH_BAR9_0 + (y % AH_SYMBOL_COUNT)));
     } else {
-        ret = false;  // element does not need to be rendered
+        _activeElement.drawElement = false;  // element does not need to be rendered
     }
 
     if (x == AH_SYMBOL_SIDE_COUNT) {
@@ -148,14 +175,12 @@ bool OSD_Elements::drawArtificialHorizon(DisplayPortBase& displayPort, element_t
         x = -AH_SYMBOL_SIDE_COUNT;
     } else {
         // Rendering not yet complete
-        element.rendered = false;
+        _activeElement.rendered = false;
         ++x;
     }
-
-    return ret;
 }
 
-bool OSD_Elements::drawBackgroundHorizonSidebars(DisplayPortBase& displayPort, element_t& element)
+void OSD_Elements::drawBackgroundHorizonSidebars(DisplayPortBase& displayPort)
 {
     // Draw AH sides
     const int8_t width = AH_SIDEBAR_WIDTH_POS;
@@ -163,12 +188,12 @@ bool OSD_Elements::drawBackgroundHorizonSidebars(DisplayPortBase& displayPort, e
 
     if (_sideBarRenderLevel) {
         // AH level indicators
-        displayPort.writeChar(element.posX - width + 1, element.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_LEFT);
-        displayPort.writeChar(element.posX + width - 1, element.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_RIGHT);
+        displayPort.writeChar(_activeElement.posX - width + 1, _activeElement.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_LEFT);
+        displayPort.writeChar(_activeElement.posX + width - 1, _activeElement.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_RIGHT);
         _sideBarRenderLevel = false;
     } else {
-        displayPort.writeChar(element.posX - width, element.posY + static_cast<uint8_t>(_sidbarPosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
-        displayPort.writeChar(element.posX + width, element.posY + static_cast<uint8_t>(_sidbarPosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
+        displayPort.writeChar(_activeElement.posX - width, _activeElement.posY + static_cast<uint8_t>(_sidbarPosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
+        displayPort.writeChar(_activeElement.posX + width, _activeElement.posY + static_cast<uint8_t>(_sidbarPosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
         if (_sidbarPosY == height) {
             // Rendering is complete, so prepare to start again
             _sidbarPosY = -height;
@@ -178,22 +203,20 @@ bool OSD_Elements::drawBackgroundHorizonSidebars(DisplayPortBase& displayPort, e
             ++_sidbarPosY;
         }
         // Rendering not yet complete
-        element.rendered = false;
+        _activeElement.rendered = false;
     }
 
-    return false;  // element already drawn
+    _activeElement.drawElement = false;  // element already drawn
 }
 
-bool OSD_Elements::drawDebug(DisplayPortBase& displayPort, element_t& element)
+void OSD_Elements::drawDebug(DisplayPortBase& displayPort)
 {
     (void)displayPort;
-    sprintf(&element.buf[0], "DBG %5d %5d %5d %5d", _debug.get(0), _debug.get(1),_debug.get(2),_debug.get(3));
-    return true;
+    sprintf(&_activeElement.buf[0], "DBG %5d %5d %5d %5d", _debug.get(0), _debug.get(1),_debug.get(2),_debug.get(3));
 }
 
-bool OSD_Elements::drawDebug2(DisplayPortBase& displayPort, element_t& element)
+void OSD_Elements::drawDebug2(DisplayPortBase& displayPort)
 {
     (void)displayPort;
-    sprintf(&element.buf[0], "DBG %5d %5d %5d %5d", _debug.get(4), _debug.get(5),_debug.get(6),_debug.get(7));
-    return true;
+    sprintf(&_activeElement.buf[0], "DBG %5d %5d %5d %5d", _debug.get(4), _debug.get(5),_debug.get(6),_debug.get(7));
 }

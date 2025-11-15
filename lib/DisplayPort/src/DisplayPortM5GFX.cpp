@@ -9,6 +9,8 @@ DisplayPortM5GFX::DisplayPortM5GFX(M5Canvas& canvas, uint32_t screenWidthPixels,
     _screenHeightPixels(screenHeightPixels),
     _canvas(canvas)
 {
+    _rowCount = 16;
+    _columnCount = 26;
     _canvas.fillSprite(TFT_WHITE);
     _canvas.setTextColor(TFT_BLACK);
     _canvas.setTextSize(2);

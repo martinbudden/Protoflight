@@ -9,9 +9,9 @@ struct display_canvas_t;
 struct osdCharacter_t;
 
 enum display_transaction_option_e {
-    DISPLAY_TRANSACTION_OPT_NONE = 0x00,
-    DISPLAY_TRANSACTION_OPT_PROFILED = 0x01,
-    DISPLAY_TRANSACTION_OPT_RESET_DRAWING = 0x02,
+    DISPLAY_TRANSACTION_OPTION_NONE = 0x00,
+    DISPLAY_TRANSACTION_OPTION_PROFILED = 0x01,
+    DISPLAY_TRANSACTION_OPTION_RESET_DRAWING = 0x02,
 } ;
 
 enum display_clear_option_e {
@@ -110,8 +110,8 @@ public:
     virtual bool getCanvas(display_canvas_t* canvas) const { (void)canvas; return false; }
     virtual void setBackgroundType(background_e backgroundType) { (void)backgroundType; }
 
-    uint8_t getRowCount() const { return _rows; }
-    uint8_t getColumnCount() const { return _cols; }
+    uint8_t getRowCount() const { return _rowCount; }
+    uint8_t getColumnCount() const { return _columnCount; }
 
     uint8_t getPosX() const { return _posX; }
     void setPosX(uint8_t posX) { _posX = posX; }
@@ -124,8 +124,8 @@ public:
 protected:
     device_type_e _deviceType {};
 
-    uint8_t _rows {};
-    uint8_t _cols {};
+    uint8_t _rowCount {};
+    uint8_t _columnCount {};
     uint8_t _posX {};
     uint8_t _posY {};
 

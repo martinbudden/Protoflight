@@ -1,3 +1,4 @@
+#include "AHRS_MessageQueue.h"
 #include "DisplayPortBase.h"
 #include "OSD_Elements.h"
 
@@ -76,10 +77,13 @@ void OSD_Elements::setDefaultConfig()
     _config.element_pos[OSD_HORIZON_SIDEBARS]   = OSD_POS(midCol - 1,  midRow - 1);
     _config.element_pos[OSD_CAMERA_FRAME]       = OSD_POS(midCol - 12, midRow - 6);
     _config.element_pos[OSD_UP_DOWN_REFERENCE]  = OSD_POS(midCol - 2,  midRow - 1);
-    _config.element_pos[OSD_ROLL_ANGLE]         = OSD_POS(2, 1);
-    _config.element_pos[OSD_PITCH_ANGLE]        = OSD_POS(2, 2);
+#if defined(M5_UNIFIED)
+    _config.element_pos[OSD_ROLL_ANGLE]         = OSD_POS(0, 2);
+    _config.element_pos[OSD_PITCH_ANGLE]        = OSD_POS(8, 2);
     _config.element_pos[OSD_ROLL_PIDS]          = OSD_POS(2, 12);
     _config.element_pos[OSD_PITCH_PIDS]         = OSD_POS(2, 13);
+    _config.element_pos[OSD_RC_CHANNELS]        = OSD_POS(0, 6);
+#endif
 }
 
 int OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  element, uint8_t x, uint8_t y, uint8_t attr, const char *s)
@@ -118,6 +122,14 @@ void OSD_Elements::addActiveElements()
     addActiveElement(OSD_CROSSHAIRS);
     addActiveElement(OSD_ROLL_ANGLE);
     addActiveElement(OSD_PITCH_ANGLE);
+    addActiveElement(OSD_RC_CHANNELS);
+}
+
+void OSD_Elements::updateAHRS_data()
+{
+    _ahrsMessageQueue.PEEK_AHRS_DATA(_ahrsData);
+    _rollAngleDegrees = _ahrsData.orientation.calculateRollDegrees();
+    _pitchAngleDegrees = _ahrsData.orientation.calculatePitchDegrees();
 }
 
 bool OSD_Elements::drawNextActiveElement(DisplayPortBase& displayPort)
@@ -196,13 +208,15 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
     _activeElement.offsetX = 0;
     _activeElement.offsetY = 0;
     _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
+    _activeElement.drawElement = true;
 
     // Call the element drawing function
     if (isSysOSD_Element(elementIndex)) {
         displayPort.writeSys(_activeElement.posX, _activeElement.posY, static_cast<DisplayPortBase::system_element_e>(elementIndex - OSD_SYS_GOGGLE_VOLTAGE + DisplayPortBase::SYS_GOGGLE_VOLTAGE));
     } else {
         //Serial.print("calling draw fn\r\n");
-        if ((this->*elementDrawFunctions[elementIndex])(displayPort, _activeElement)) {
+        (this->*elementDrawFunctions[elementIndex])(displayPort);
+        if (_activeElement.drawElement) {
             _displayPendingForeground = true;
         }
     }
@@ -228,7 +242,8 @@ bool OSD_Elements::drawSingleElementBackground(DisplayPortBase& displayPort, uin
     _activeElement.offsetY = 0;
     _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
 
-    if ((this->*elementDrawBackgroundFunctions[elementIndex])(displayPort, _activeElement)) {
+    (this->*elementDrawBackgroundFunctions[elementIndex])(displayPort);
+    if (_activeElement.drawElement) {
         _displayPendingBackground = true;
     }
     // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)

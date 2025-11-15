@@ -13,7 +13,7 @@ void Display::init(DisplayPortBase::device_type_e deviceType)
     _displayPort._useFullscreen = false;
     _displayPort.releaseAll();
 
-    beginTransaction(DISPLAY_TRANSACTION_OPT_NONE);
+    beginTransaction(DISPLAY_TRANSACTION_OPTION_NONE);
     clearScreen(DISPLAY_CLEAR_WAIT);
     commitTransaction();
 }

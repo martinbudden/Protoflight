@@ -22,8 +22,8 @@ public:
 private:
     uint32_t _screenWidthPixels;
     uint32_t _screenHeightPixels;
-    int32_t _xScale {320/30}; //10
-    int32_t _yScale {240/16+1}; //15+1
+    int32_t _xScale {12};//{320/30}; //10
+    int32_t _yScale {20};//{240/16}; //15
     //int32_t _xScale {320/53}; //6
     //int32_t _yScale {240/20}; //12
 #if defined(M5_UNIFIED)
