@@ -89,6 +89,8 @@ public:
     bool isGrabbed() const { return _grabCount > 0; }
     void release() { --_grabCount; }
     void releaseAll() { _grabCount = 0; }
+    bool isCleared() const { return _cleared; }
+    void setCleared(bool cleared) { _cleared = cleared; }
 
     virtual int screenSize() const { return 0; }
     virtual int writeSys(uint8_t x, uint8_t y, system_element_e systemElement) { (void)x; (void)y; (void)systemElement; return 0; }
@@ -112,6 +114,8 @@ public:
 
     uint8_t getRowCount() const { return _rowCount; }
     uint8_t getColumnCount() const { return _columnCount; }
+    int8_t getCursorRow() const { return _cursorRow; }
+    void setCursorRow(int8_t cursorRow) { _cursorRow = cursorRow; }
 
     uint8_t getPosX() const { return _posX; }
     void setPosX(uint8_t posX) { _posX = posX; }
@@ -121,6 +125,7 @@ public:
     device_type_e getDeviceType() const { return _deviceType; }
     void setDeviceType(device_type_e deviceType) { _deviceType = deviceType; }
     bool getUseDeviceBlink() const { return _useDeviceBlink; }
+    bool supportsOsdSymbols() const { return _supportsOsdSymbols; }
 protected:
     device_type_e _deviceType {};
 
@@ -136,4 +141,5 @@ protected:
     int8_t _grabCount {0};
     bool _cleared {};
     bool _useFullscreen {};
+    bool _supportsOsdSymbols {false};
 };

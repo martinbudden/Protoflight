@@ -2,6 +2,7 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
 #include "DisplayPortBase.h"
+#include "OSD_Symbols.h"
 
 
 //NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -34,6 +35,152 @@ uint8_t CMSX::cursorAbsolute() const
 { 
     return _currentCtx.cursorRow + _currentCtx.page * _maxMenuItems;
 }
+
+// Check if overridden by slider, used by simplified PID tuning
+bool CMSX::rowSliderOverride(const uint16_t flags)
+{
+    (void)flags;
+    return false;
+}
+
+bool CMSX::rowIsSkippable(const OSD_Entry* row)
+{
+    const uint16_t type = row->flags & OME_MASK;
+
+    if (type == OME_Label) {
+        return true;
+    }
+    if (type == OME_String) {
+        return true;
+    }
+    if ((row->flags == DYNAMIC) || rowSliderOverride(row->flags)) {
+        if (type == OME_UINT8  || type == OME_INT8 || type == OME_UINT16  || type == OME_INT16) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs)
+{
+    (void)currentTimeUs;
+    if (!_pageTop || !_inMenu) {
+        return;
+    }
+    const bool displayWasCleared = displayPort.isCleared();
+    displayPort.setCleared(false);
+
+    bool drawPolled = false;
+    if (currentTimeUs > _lastPolledUs + CMS_POLL_INTERVAL_US) {
+        drawPolled = true;
+        _lastPolledUs = currentTimeUs;
+    }
+
+    uint32_t room = displayPort.txBytesFree();
+
+    uint8_t i = 0;
+    if (displayWasCleared) {
+        for (const OSD_Entry* p = _pageTop; (p <= _pageTop + _pageMaxRow); p++, i++) {
+            _runtimeEntryFlags[i] |= PRINT_LABEL;
+            _runtimeEntryFlags[i] |= PRINT_VALUE;
+        }
+    } else if (drawPolled) {
+        for (const OSD_Entry* p = _pageTop; (p <= _pageTop + _pageMaxRow); p++, i++) {
+            if (p->flags & DYNAMIC) {
+                _runtimeEntryFlags[i] |= PRINT_VALUE;
+            }
+        }
+    }
+    while (rowIsSkippable(_pageTop + _currentCtx.cursorRow)) { // skip labels, strings and dynamic read-only entries
+        ++_currentCtx.cursorRow;
+    }
+
+    //const uint8_t top = smallScreen ? 1 : (pDisplay->rows - pageMaxRow)/2;
+    const uint8_t top = 1;
+
+    if (_currentCtx.cursorRow != displayPort.getCursorRow()) {
+        room -= displayPort.writeString(_leftMenuColumn, top + displayPort.getCursorRow() * _linesPerMenuItem, DisplayPortBase::SEVERITY_NORMAL, " ");
+    }
+
+    if (room < 30) {
+        return;
+    }
+
+    if (displayPort.getCursorRow() != _currentCtx.cursorRow) {
+        room -= displayPort.writeString(_leftMenuColumn, top + _currentCtx.cursorRow * _linesPerMenuItem, DisplayPortBase::SEVERITY_NORMAL, ">");
+        displayPort.setCursorRow(_currentCtx.cursorRow);
+    }
+
+    if (room < 30) {
+        return;
+    }
+
+    if (_currentCtx.menu->onDisplayUpdate) {
+        const void* result = _currentCtx.menu->onDisplayUpdate(*this, displayPort, _pageTop + _currentCtx.cursorRow);
+        if (result == &_menuChainBack) {
+            menuBack(*this, displayPort, nullptr);
+            return;
+        }
+    }
+    // Print text labels
+    i = 0;
+    for (const OSD_Entry* p = _pageTop; (p <= _pageTop + _pageMaxRow); i++, p++) {
+        if (_runtimeEntryFlags[i] & PRINT_LABEL) {
+            uint8_t coloff = _leftMenuColumn;
+            coloff += ((p->flags & OME_MASK) == OME_Label) ? 0 : 1;
+            room -= displayPort.writeString(coloff, top + i * _linesPerMenuItem, DisplayPortBase::SEVERITY_NORMAL, p->text);
+            _runtimeEntryFlags[i] &= ~PRINT_LABEL;
+            if (room < 30) {
+                return;
+            }
+        }
+        // Highlight values overridden by sliders
+        if (rowSliderOverride(p->flags)) {
+            displayPort.writeChar(_leftMenuColumn - 1, top + i * _linesPerMenuItem, DisplayPortBase::SEVERITY_NORMAL, 'S');
+        }
+
+    // Print values
+
+    // XXX Polled values at latter positions in the list may not be
+    // XXX printed if not enough room in the middle of the list.
+
+        if ((_runtimeEntryFlags[i] & PRINT_VALUE) || (_runtimeEntryFlags[i] & SCROLLING_TICKER)) {
+            bool selectedRow = (i == _currentCtx.cursorRow);
+            room -= drawMenuEntry(displayPort, p, top + i * _linesPerMenuItem, selectedRow, &_runtimeEntryFlags[i], &_runtimeTableTicker[i]);
+            if (room < 30) {
+                return;
+            }
+        }
+    }
+    // Draw the up/down page indicators if the display has space.
+    // Only draw the symbols when necessary after the screen has been cleared. Otherwise they're static.
+    // If the device supports OSD symbols then use the up/down arrows. Otherwise assume it's a
+    // simple text device and use the '^' (carat) and 'V' for arrow approximations.
+    if (displayWasCleared && _leftMenuColumn > 0) {      // make sure there's room to draw the symbol
+        if (_currentCtx.page > 0) {
+            const uint8_t symbol = displayPort.supportsOsdSymbols() ? SYM_ARROW_SMALL_UP : '^';
+            displayPort.writeChar(_leftMenuColumn - 1, top, DisplayPortBase::SEVERITY_NORMAL, symbol);
+        }
+         if (_currentCtx.page < _pageCount - 1) {
+            const uint8_t symbol = displayPort.supportsOsdSymbols() ? SYM_ARROW_SMALL_DOWN : 'v';
+            displayPort.writeChar(_leftMenuColumn - 1, top + _pageMaxRow, DisplayPortBase::SEVERITY_NORMAL, symbol);
+        }
+    }
+
+}
+
+int CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *p, uint8_t row, bool selectedRow, uint8_t *flags, table_ticker_t* ticker)
+{
+    (void)displayPort;
+    (void)p;
+    (void)row;
+    (void)selectedRow;
+    (void)flags;
+    (void)ticker;
+
+    return 0;
+}
+
 
 void CMSX::addMenuEntry(CMSX::OSD_Entry& menuEntry, const char* text, uint32_t flags, CMSX::entryFnPtr fnPtr, void* data)
 {
@@ -126,7 +273,7 @@ void CMSX::pageSelect(DisplayPortBase& displayPort, int8_t newpage)
 
     const OSD_Entry* entry = _pageTop;
     for (uint8_t ii = 0; ii <= _pageMaxRow; ++ii) {
-        runtimeEntryFlags[ii] = entry->flags;
+        _runtimeEntryFlags[ii] = entry->flags;
         ++entry; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     }
     displayPort.clearScreen(DISPLAY_CLEAR_WAIT);

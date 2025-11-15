@@ -20,7 +20,27 @@ static constexpr uint8_t SYM_AH_CENTER_LINE_RIGHT = 0x74;
 static constexpr uint8_t SYM_AH_RIGHT           = 0x02;
 static constexpr uint8_t SYM_AH_LEFT            = 0x03;
 static constexpr uint8_t SYM_AH_DECORATION      = 0x13;
-
 // Artificial horizon bars
 static constexpr uint8_t SYM_AH_BAR9_0          = 0x80;
 #endif
+
+// Direction arrows
+static constexpr uint8_t SYM_ARROW_SOUTH        = 0x60;
+static constexpr uint8_t SYM_ARROW_2            = 0x61;
+static constexpr uint8_t SYM_ARROW_3            = 0x62;
+static constexpr uint8_t SYM_ARROW_4            = 0x63;
+static constexpr uint8_t SYM_ARROW_EAST         = 0x64;
+static constexpr uint8_t SYM_ARROW_6            = 0x65;
+static constexpr uint8_t SYM_ARROW_7            = 0x66;
+static constexpr uint8_t SYM_ARROW_8            = 0x67;
+static constexpr uint8_t SYM_ARROW_NORTH        = 0x68;
+static constexpr uint8_t SYM_ARROW_10           = 0x69;
+static constexpr uint8_t SYM_ARROW_11           = 0x6A;
+static constexpr uint8_t SYM_ARROW_12           = 0x6B;
+static constexpr uint8_t SYM_ARROW_WEST         = 0x6C;
+static constexpr uint8_t SYM_ARROW_14           = 0x6D;
+static constexpr uint8_t SYM_ARROW_15           = 0x6E;
+static constexpr uint8_t SYM_ARROW_16           = 0x6F;
+
+static constexpr uint8_t SYM_ARROW_SMALL_UP     = 0x75;
+static constexpr uint8_t SYM_ARROW_SMALL_DOWN   = 0x76;

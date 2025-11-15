@@ -27,43 +27,6 @@ enum { U_ID_0 = 0 };
 enum { U_ID_1 = 1 };
 enum { U_ID_2 = 2 };
 
-enum  armingDisableFlags_e {
-    ARMING_DISABLED_NO_GYRO         = (1U << 0U),
-    ARMING_DISABLED_FAILSAFE        = (1U << 1U),
-    ARMING_DISABLED_RX_FAILSAFE     = (1U << 2U),
-    ARMING_DISABLED_NOT_DISARMED    = (1U << 3U),
-    ARMING_DISABLED_BOXFAILSAFE     = (1U << 4U),
-    ARMING_DISABLED_RUNAWAY_TAKEOFF = (1U << 5U),
-    ARMING_DISABLED_CRASH_DETECTED  = (1U << 6U),
-    ARMING_DISABLED_THROTTLE        = (1U << 7U),
-    ARMING_DISABLED_ANGLE           = (1U << 8U),
-    ARMING_DISABLED_BOOT_GRACE_TIME = (1U << 9U),
-    ARMING_DISABLED_NOPREARM        = (1U << 10U),
-    ARMING_DISABLED_LOAD            = (1U << 11U),
-    ARMING_DISABLED_CALIBRATING     = (1U << 12U),
-    ARMING_DISABLED_CLI             = (1U << 13U),
-    ARMING_DISABLED_CMS_MENU        = (1U << 14U),
-    ARMING_DISABLED_BST             = (1U << 15U),
-    ARMING_DISABLED_MSP             = (1U << 16U),
-    ARMING_DISABLED_PARALYZE        = (1U << 17U),
-    ARMING_DISABLED_GPS             = (1U << 18U),
-    ARMING_DISABLED_RESC            = (1U << 19U),
-    ARMING_DISABLED_DSHOT_TELEM     = (1U << 20U),
-    ARMING_DISABLED_REBOOT_REQUIRED = (1U << 21U),
-    ARMING_DISABLED_DSHOT_BITBANG   = (1U << 22U),
-    ARMING_DISABLED_ACC_CALIBRATION = (1U << 23U),
-    ARMING_DISABLED_MOTOR_PROTOCOL  = (1U << 24U),
-    ARMING_DISABLED_CRASHFLIP       = (1U << 25U),
-    ARMING_DISABLED_ARM_SWITCH      = (1U << 26U), // Needs to be the last element, since it's always activated if one of the others is active when arming
-};
-
-enum { ARMING_DISABLE_FLAGS_COUNT = 27 };
-
-static armingDisableFlags_e getArmingDisableFlags()
-{
-    return ARMING_DISABLED_ARM_SWITCH;
-}
-
 
 static const char* const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; // 4 UPPER CASE alpha numeric characters that identify the flight controller.
 static const char* const TARGET_BOARD_IDENTIFIER = "A405";
@@ -140,7 +103,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         // 1 byte, flag count
         dst.writeU8(ARMING_DISABLE_FLAGS_COUNT);
         // 4 bytes, flags
-        const uint32_t armingDisableFlags = getArmingDisableFlags();
+        const uint32_t armingDisableFlags = _cockpit.getArmingDisableFlags();
         dst.writeU32(armingDisableFlags);
 
         // config state flags - bits to indicate the state of the configuration, reboot required, etc.

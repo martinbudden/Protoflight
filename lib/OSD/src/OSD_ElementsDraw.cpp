@@ -70,9 +70,9 @@ void OSD_Elements::drawAngleRoll(DisplayPortBase& displayPort)
 {
     (void)displayPort;
 #if defined(M5_UNIFIED)
-    sprintf(&_activeElement.buf[0], "ro:%4.0f", _rollAngleDegrees);
+    sprintf(&_activeElement.buf[0], "ro:%4d", static_cast<int>(_rollAngleDegrees));
 #else
-    sprintf(&_activeElement.buf[0], "ROL%5.1f", _rollAngleDegrees);
+    sprintf(&_activeElement.buf[0], "ROL%4d", static_cast<int>(_rollAngleDegrees));
 #endif
 }
 
@@ -80,9 +80,9 @@ void OSD_Elements::drawAnglePitch(DisplayPortBase& displayPort)
 {
     (void)displayPort;
 #if defined(M5_UNIFIED)
-    sprintf(&_activeElement.buf[0], "pi:%4.0f", _pitchAngleDegrees);
+    sprintf(&_activeElement.buf[0], "pi:%4d", static_cast<int>(_pitchAngleDegrees));
 #else
-    sprintf(&_activeElement.buf[0], "PIT%5.1f", _pitchAngleDegrees);
+    sprintf(&_activeElement.buf[0], "PIT%4d", static_cast<int>(_pitchAngleDegrees));
 #endif
 }
 

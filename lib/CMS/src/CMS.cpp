@@ -43,7 +43,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
     if (_cmsx.isInMenu()) {
         _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
         _rcDelayMs = static_cast<int32_t>(scanKeys(currentTimeMs, _lastCalledMs, _rcDelayMs));
-        drawMenu(currentTimeUs);
+        _cmsx.drawMenu(*_displayPort, currentTimeUs);
         if (currentTimeMs > _lastHeartbeatTimeMs + HEARTBEAT_INTERVAL_MS) {
             // Heart beat for external CMS display device @500ms, timeout @1000ms
             _displayPort->heartbeat();
@@ -82,11 +82,6 @@ uint32_t CMS::handleKey(key_e key)
     return ret;
 }
 
-void CMS::drawMenu(uint32_t currentTimeUs)
-{
-    (void)currentTimeUs;
-}
-
 void CMS::menuOpen()
 {
     const CMSX::menu_t* startMenu = _cmsx._currentCtx.menu;
@@ -110,7 +105,7 @@ void CMS::menuOpen()
         _cmsx.setInMenu(true);
         _cmsx._currentCtx = { nullptr, 0, 0 };
         _cmsx._menuStackIndex = 0;
-        //setArmingDisabled(ARMING_DISABLED_CMS_MENU);
+        _cockpit.setArmingDisabledFlags(ARMING_DISABLED_CMS_MENU);
         _displayPort->layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }
     //!!other stuff here

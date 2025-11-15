@@ -18,6 +18,8 @@ private:
     CMSX& operator=(CMSX&&) = delete;
 public:
     enum { MAX_ROWS = 31 };
+    enum { CMS_POLL_INTERVAL_US = 100000 };  // Interval for polling dynamic values
+
     struct menu_t;
     typedef const void* (*entryFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu);
     struct OSD_Entry {
@@ -38,10 +40,22 @@ public:
         uint8_t page;       // page in the menu
         int8_t cursorRow;   // cursorRow in the page
     };
+    struct table_ticker_t {
+        uint8_t loopCounter;
+        uint8_t state;
+    };
+
+
+
 public:
     uint8_t cursorAbsolute() const;
     void setInMenu(bool inMenu);
     bool isInMenu() const;
+
+    bool rowSliderOverride(const uint16_t flags);
+    bool rowIsSkippable(const OSD_Entry* row);
+    void drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs);
+    int drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *p, uint8_t row, bool selectedRow, uint8_t *flags, table_ticker_t* ticker);
 
     void addMenuEntry(OSD_Entry& menuEntry, const char* text, uint32_t flags, entryFnPtr fnPtr, void* data);
     void traverseGlobalExit(const menu_t* menu);
@@ -66,13 +80,18 @@ private:
     std::array<ctx_t, MAX_MENU_STACK_DEPTH> _menuStack {};
     const OSD_Entry* _pageTop {}; // First entry for the current page
     
+    uint32_t _lastPolledUs {};
     int _menuChainBack {}; // Special return value for function chaining by menu function pointer
     uint8_t _maxMenuItems {};
     int8_t _pageCount {};         // Number of pages in the current menu
     uint8_t _pageMaxRow {};       // Max row in the current page
+    uint8_t _leftMenuColumn {};
+    uint8_t _rightMenuColumn {};
+    uint8_t _linesPerMenuItem {};
     bool _saveMenuInhibited {};
     bool _inMenu {};
-    std::array<uint8_t, MAX_ROWS> runtimeEntryFlags {};
+    std::array<uint8_t, MAX_ROWS> _runtimeEntryFlags {};
+    std::array<table_ticker_t, MAX_ROWS> _runtimeTableTicker {};
 public:
     // MenuExit special pointer values
     static const menu_t* MENU_NULL_PTR;
