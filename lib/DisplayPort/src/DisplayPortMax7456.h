@@ -45,10 +45,10 @@ private:
         std::array<uint8_t, VIDEO_BUFFER_PAL_CHARACTER_COUNT> buffer;
     };
 public:
-    virtual int clearScreen(display_clear_option_e options) override;
+    virtual uint32_t clearScreen(display_clear_option_e options) override;
     virtual bool drawScreen() override;
-    virtual int writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) override;
-    virtual int writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) override;
+    virtual uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) override;
+    virtual uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) override;
     virtual bool layerSupported(layer_e layer) override;
     virtual bool layerSelect(layer_e layer) override;
     virtual bool layerCopy(layer_e destLayer, layer_e sourceLayer) override;
@@ -76,12 +76,12 @@ public:
     void reInit();
 private:
     BUS_SPI _bus; //!< SPI bus interface
-    uint8_t  videoSignalCfg {};
-    uint8_t  videoSignalReg {OSD_ENABLE}; // OSD_ENABLE required to trigger first ReInit
-    uint8_t  displayMemoryModeReg {0};
+    uint8_t videoSignalCfg {};
+    uint8_t videoSignalReg {OSD_ENABLE}; // OSD_ENABLE required to trigger first ReInit
+    uint8_t displayMemoryModeReg {0};
 
-    uint8_t  hosRegValue {}; // HOS (Horizontal offset register) value
-    uint8_t  vosRegValue {}; // VOS (Vertical offset register) value
+    uint8_t hosRegValue {}; // HOS (Horizontal offset register) value
+    uint8_t vosRegValue {}; // VOS (Vertical offset register) value
 
     bool fontIsLoading {false};
 

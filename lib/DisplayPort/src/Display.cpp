@@ -72,7 +72,7 @@ int Display::sys(uint8_t x, uint8_t y, DisplayPortBase::system_element_e systemE
     return _displayPort.writeSys(x, y, systemElement);
 }
 
-int Display::write(uint8_t x, uint8_t y, uint8_t attr, const char *text)
+uint32_t Display::write(uint8_t x, uint8_t y, uint8_t attr, const char *text)
 {
     _displayPort.setPosX(x + static_cast<uint8_t>(strlen(text)));
     _displayPort.setPosY(y);
@@ -85,7 +85,7 @@ int Display::write(uint8_t x, uint8_t y, uint8_t attr, const char *text)
     return _displayPort.writeString(x, y, attr, text);
 }
 
-int Display::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
+uint32_t Display::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
 {
     _displayPort.setPosX(x + 1);
     _displayPort.setPosY(y);

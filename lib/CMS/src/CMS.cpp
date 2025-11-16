@@ -167,7 +167,7 @@ DisplayPortBase* CMS::displayPortSelectNext()
     if (_currentDeviceIndex == static_cast<int32_t>(_deviceCount)) {
         _currentDeviceIndex = 0;
     }
-    return _displayPorts[_currentDeviceIndex];
+    return _displayPorts[static_cast<size_t>(_currentDeviceIndex)];
 }
 
 bool CMS::displayPortSelect(const DisplayPortBase* displayPort)

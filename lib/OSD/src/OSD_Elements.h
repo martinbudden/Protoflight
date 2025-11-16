@@ -175,8 +175,8 @@ public:
     bool drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex);
     bool drawSingleElementBackground(DisplayPortBase& displayPort, uint8_t elementIndex);
 
-    int displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, const char* s);
-    int displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, uint8_t c);
+    uint32_t displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, const char* s);
+    uint32_t displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, uint8_t c);
 
 // element drawing functions
     void formatPID(char* buf, const char* label, uint8_t axis);

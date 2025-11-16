@@ -70,8 +70,8 @@ public:
     void menuOpen(DisplayPortBase& displayPort);
     const void* menuBack(DisplayPortBase& displayPort);
     void drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs);
-    int32_t drawMenuItemValue(DisplayPortBase& displayPort, uint8_t* buf, uint8_t row, uint8_t maxSize);
-    int32_t drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, bool selectedRow, uint8_t index);
+    uint32_t drawMenuItemValue(DisplayPortBase& displayPort, uint8_t* buf, uint8_t row, uint8_t maxSize);
+    uint32_t drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, bool selectedRow, uint8_t index);
 
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key);
 

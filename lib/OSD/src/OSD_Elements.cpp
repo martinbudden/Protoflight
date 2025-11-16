@@ -86,7 +86,7 @@ void OSD_Elements::setDefaultConfig()
 #endif
 }
 
-int OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  element, uint8_t x, uint8_t y, uint8_t attr, const char *s)
+uint32_t OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  element, uint8_t x, uint8_t y, uint8_t attr, const char *s)
 {
     if (_blinkBits[element.index]) {
         attr |= DisplayPortBase::BLINK;
@@ -94,7 +94,7 @@ int OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  e
     return displayPort.writeString(x, y, attr, s);
 }
 
-int OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
+uint32_t OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
 {
     if (_blinkBits[element.index]) {
         attr |= DisplayPortBase::BLINK;

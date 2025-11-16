@@ -24,8 +24,8 @@ public:
     int screenSize() const;
     void setXY(uint8_t x, uint8_t y);
     int sys(uint8_t x, uint8_t y, DisplayPortBase::system_element_e systemElement);
-    int write(uint8_t x, uint8_t y, uint8_t attr, const char *text);
-    int writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c);
+    uint32_t write(uint8_t x, uint8_t y, uint8_t attr, const char *text);
+    uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c);
     bool isTransferInProgress() const;
     bool heartbeat();
     void redraw();

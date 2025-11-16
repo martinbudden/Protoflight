@@ -425,14 +425,14 @@ void DisplayPortMax7456::brightness(uint8_t black, uint8_t white)
     }
 }
 
-int DisplayPortMax7456::clearScreen(display_clear_option_e options)
+uint32_t DisplayPortMax7456::clearScreen(display_clear_option_e options)
 {
     (void)options;
     clearLayer(activeLayer);
     return 0;
 }
 
-int DisplayPortMax7456::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
+uint32_t DisplayPortMax7456::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
 {
     (void)attr;
     uint8_t *buffer = getActiveLayerBuffer();
@@ -442,7 +442,7 @@ int DisplayPortMax7456::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
     return 0;
 }
 
-int DisplayPortMax7456::writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text)
+uint32_t DisplayPortMax7456::writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text)
 {
     (void)attr;
     if (y < VIDEO_LINES_PAL) {

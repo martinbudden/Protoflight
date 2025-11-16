@@ -228,8 +228,8 @@ static std::array<const char * const, 4> rateProfileNames { "1", "2", "3", "4" }
 //
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryPID_Profile = OSD_TABLE_t  { nullptr, 3, &pidProfileNames[0] };
-static auto entryRateProfile = OSD_TABLE_t  { nullptr, 3, &rateProfileNames[0] };
+static auto entryPID_Profile = OSD_TABLE_t { nullptr, 3, &pidProfileNames[0] };
+static auto entryRateProfile = OSD_TABLE_t { nullptr, 3, &rateProfileNames[0] };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 8> menuProfileEntries

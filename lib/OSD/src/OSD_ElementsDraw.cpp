@@ -36,7 +36,7 @@ void OSD_Elements::initDrawFunctions()
     elementDrawBackgroundFunctions[OSD_HORIZON_SIDEBARS]    = &OSD_Elements::drawBackgroundHorizonSidebars;
 };
 
-void OSD_Elements::formatPID(char * buf, const char * label, uint8_t axis) // NOLINT(readability-non-const-parameter)
+void OSD_Elements::formatPID(char* buf, const char* label, uint8_t axis) // NOLINT(readability-non-const-parameter)
 {
     const FlightController::PIDF_uint16_t pid = _flightController.getPID_MSP(axis);
     sprintf(buf, "%s %3d %3d %3d %3d %3d", label,

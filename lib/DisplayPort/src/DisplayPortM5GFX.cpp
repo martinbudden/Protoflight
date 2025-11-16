@@ -55,7 +55,7 @@ void DisplayPortM5GFX::commitTransaction()
     }
 }
 
-int DisplayPortM5GFX::writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text)
+uint32_t DisplayPortM5GFX::writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text)
 {
     (void)attr;
     _canvas.setCursor(x*_xScale, y*_yScale);
@@ -63,7 +63,7 @@ int DisplayPortM5GFX::writeString(uint8_t x, uint8_t y, uint8_t attr, const char
     return 0;
 }
 
-int DisplayPortM5GFX::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
+uint32_t DisplayPortM5GFX::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
 {
     (void)attr;
     std::array<char, 2> text = { c, 0 };

@@ -39,7 +39,7 @@ bool CMSX::isInMenu() const
 
 uint8_t CMSX::cursorAbsolute() const
 { 
-    return _currentCtx.cursorRow + _currentCtx.page * _maxMenuItems;
+    return _currentCtx.cursorRow + static_cast<uint8_t>(_currentCtx.page * _maxMenuItems);
 }
 
 // Check if overridden by slider, used by simplified PID tuning
@@ -103,14 +103,15 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
     }
     //const uint8_t top = smallScreen ? 1 : (displayPort->rows - pageMaxRow)/2;
     const uint8_t top = 1;
+    const uint8_t y = top + static_cast<uint8_t>(displayPort.getCursorRow() * _linesPerMenuItem);
     if (_currentCtx.cursorRow != displayPort.getCursorRow()) {
-        room -= displayPort.writeString(_leftMenuColumn, top + displayPort.getCursorRow() * _linesPerMenuItem, DisplayPortBase::SEVERITY_NORMAL, " ");
+        room -= displayPort.writeString(_leftMenuColumn, y, DisplayPortBase::SEVERITY_NORMAL, " ");
     }
     if (room < 30) {
         return;
     }
     if (displayPort.getCursorRow() != _currentCtx.cursorRow) {
-        room -= displayPort.writeString(_leftMenuColumn, top + _currentCtx.cursorRow * _linesPerMenuItem, DisplayPortBase::SEVERITY_NORMAL, ">");
+        room -= displayPort.writeString(_leftMenuColumn, y, DisplayPortBase::SEVERITY_NORMAL, ">");
         displayPort.setCursorRow(_currentCtx.cursorRow);
     }
     if (room < 30) {
@@ -125,26 +126,27 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
     }
     // Print text labels
     i = 0;
-    for (const OSD_Entry* p = _pageTop; (p <= _pageTop + _pageMaxRow); i++, p++) {
+    for (const OSD_Entry* p = _pageTop; (p <= _pageTop + _pageMaxRow); ++i, ++p) {
+        const uint8_t yVal = top + static_cast<uint8_t>(i * _linesPerMenuItem);
         if (_runtimeEntryFlags[i] & PRINT_LABEL) {
             uint8_t coloff = _leftMenuColumn;
             coloff += ((p->flags & OME_MASK) == OME_Label) ? 0 : 1;
-            room -= displayPort.writeString(coloff, top + i * _linesPerMenuItem, DisplayPortBase::SEVERITY_NORMAL, p->text);
-            _runtimeEntryFlags[i] &= ~PRINT_LABEL;
+            room -= displayPort.writeString(coloff, yVal, DisplayPortBase::SEVERITY_NORMAL, p->text);
+            _runtimeEntryFlags[i] &= static_cast<uint16_t>(~PRINT_LABEL);
             if (room < 30) {
                 return;
             }
         }
         // Highlight values overridden by sliders
         if (rowSliderOverride(p->flags)) {
-            displayPort.writeChar(_leftMenuColumn - 1, top + i * _linesPerMenuItem, DisplayPortBase::SEVERITY_NORMAL, 'S');
+            displayPort.writeChar(_leftMenuColumn - 1, yVal, DisplayPortBase::SEVERITY_NORMAL, 'S');
         }
         // Print values
         // XXX Polled values at latter positions in the list may not be
         // XXX printed if not enough room in the middle of the list.
         if ((_runtimeEntryFlags[i] & PRINT_VALUE) || (_runtimeEntryFlags[i] & SCROLLING_TICKER)) {
             const bool selectedRow = (i == _currentCtx.cursorRow);
-            room -= drawMenuEntry(displayPort, p, top + i * _linesPerMenuItem, selectedRow, i);
+            room -= drawMenuEntry(displayPort, p, yVal, selectedRow, i);
             if (room < 30) {
                 return;
             }
@@ -167,7 +169,7 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
 }
 // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-int32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, uint8_t* buf, uint8_t row, uint8_t maxSize)
+uint32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, uint8_t* buf, uint8_t row, uint8_t maxSize)
 {
     //cmsPadToSize(buf, maxSize);
 //#if defined(CMS_OSD_RIGHT_ALIGNED_VALUES)
@@ -206,11 +208,11 @@ static void i2a(int num, uint8_t* bf)
     ui2a(static_cast<unsigned int>(num), bf);
 }
 
-int32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *entry, uint8_t row, bool selectedRow, uint8_t index)
+uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *entry, uint8_t row, bool selectedRow, uint8_t index)
 {
     (void)selectedRow;
 
-    int32_t count = 0;
+    uint32_t count = 0;
 
     switch (entry->flags & OME_MASK) {
     case OME_INT8:
@@ -218,7 +220,7 @@ int32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *entry
             const OSD_INT8_t* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
-            _runtimeEntryFlags[index] &= ~PRINT_VALUE;
+            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~PRINT_VALUE);
         }
         break;
     case OME_UINT8:
@@ -226,14 +228,14 @@ int32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *entry
             const OSD_UINT8_t* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
-            _runtimeEntryFlags[index] &= ~PRINT_VALUE;
+            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~PRINT_VALUE);
         }
         break;
     case OME_String:
         if ((_runtimeEntryFlags[index] & PRINT_VALUE) && entry->data) {
             strncpy(reinterpret_cast<char*>(&_menuDrawBuf[0]), static_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
             count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, MENU_DRAW_BUFFER_LEN);
-            _runtimeEntryFlags[index] &= ~PRINT_VALUE;
+            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~PRINT_VALUE);
         }
         break;
     }
@@ -689,7 +691,7 @@ void CMSX::updateMaxRow()
 
 void CMSX::pageSelect(DisplayPortBase& displayPort, uint8_t newpage)
 {
-    _currentCtx.page = (newpage + _pageCount) % _pageCount;
+    _currentCtx.page = static_cast<uint8_t>((newpage + _pageCount) % _pageCount);
     _pageTop = &_currentCtx.menu->entries[_currentCtx.page * _maxMenuItems]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic,bugprone-implicit-widening-of-multiplication-result)
     updateMaxRow();
 

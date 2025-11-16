@@ -13,12 +13,12 @@ public:
 #if defined(M5_UNIFIED)
     DisplayPortM5GFX(M5Canvas& _canvas, uint32_t screenWidthPixels, uint32_t screenHeightPixels);
 #endif
-    int clearScreen(display_clear_option_e options) override;
+    uint32_t clearScreen(display_clear_option_e options) override;
     bool drawScreen() override;
     void beginTransaction(display_transaction_option_e options) override;
     void commitTransaction() override;
-    int writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) override;
-    int writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) override;
+    uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) override;
+    uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) override;
 private:
     uint32_t _screenWidthPixels;
     uint32_t _screenHeightPixels;
