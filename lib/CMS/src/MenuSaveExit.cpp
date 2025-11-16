@@ -7,9 +7,9 @@
 static const std::array<CMSX::OSD_Entry, 6> cmsx_menuSaveExitEntries =
 {{
     { "-- SAVE/EXIT --", OME_Label, nullptr, nullptr},
-    { "EXIT",            OME_OSD_Exit, &CMSX::menuExit, CMSX::EXIT_PTR},
-    { "SAVE&EXIT",       OME_OSD_Exit, &CMSX::menuExit, CMSX::POPUP_SAVE_PTR},
-    { "SAVE&REBOOT",     OME_OSD_Exit, &CMSX::menuExit, CMSX::POPUP_SAVE_REBOOT_PTR},
+    { "EXIT",            OME_OSD_Exit, &CMSX::menuExit, CMSX::MENU_EXIT },
+    { "SAVE&EXIT",       OME_OSD_Exit, &CMSX::menuExit, CMSX::MENU_POPUP_SAVE },
+    { "SAVE&REBOOT",     OME_OSD_Exit, &CMSX::menuExit, CMSX::MENU_POPUP_SAVE_REBOOT },
     { "BACK", OME_Back, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
 }};

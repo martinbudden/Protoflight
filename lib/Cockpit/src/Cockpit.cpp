@@ -45,6 +45,16 @@ void Cockpit::setDisarmed()
     _flightController.motorsSwitchOff();
 }
 
+void Cockpit::setArmingDisabledFlag(arming_disabled_flags_e flag)
+{
+    _armingDisabledFlags |= static_cast<uint32_t>(flag);
+}
+
+void Cockpit::clearArmingDisabledFlag(arming_disabled_flags_e flag)
+{
+    _armingDisabledFlags &= ~static_cast<uint32_t>(flag);
+}
+
 bool Cockpit::isFlightModeFlagSet(uint32_t flightModeFlag) const
 {
     return _flightModeFlags & flightModeFlag;

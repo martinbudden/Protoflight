@@ -23,18 +23,6 @@ private:
     CMS(CMS&&) = delete;
     CMS& operator=(CMS&&) = delete;
 public:
-    enum { BUTTON_TIME_MS = 250 };
-    enum { BUTTON_PAUSE_MS = 500 };
-    enum key_e {
-        KEY_NONE,
-        KEY_UP,
-        KEY_DOWN,
-        KEY_LEFT,
-        KEY_RIGHT,
-        KEY_ESC,
-        KEY_MENU,
-        KEY_SAVEMENU,
-    };
     enum { MAX_DISPLAY_PORT_COUNT = 4 };
     enum { HEARTBEAT_INTERVAL_MS = 500 };
 public:
@@ -49,19 +37,19 @@ public:
 
     void updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta); //!< CMS Task function, called by Task
 
-    uint32_t handleKey(key_e key);
+    uint16_t handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount);
     uint32_t scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t rcDelayMs);
-    void setExternKey(key_e externKey);
-
-
-    void drawMenu(uint32_t currentTimeUs);
-    void menuOpen();
+    void setExternKey(CMSX::key_e externKey);
 
     DisplayPortBase* displayPortSelectNext();
+    void setDisplayPort(DisplayPortBase* displayPort) { _displayPort = displayPort; }
     bool displayPortSelect(const DisplayPortBase* displayPort);
     static bool pwmIsHigh(uint16_t x) { return x > 1750; }
     static bool pwmIsLow(uint16_t x) { return x < 1250; }
     static bool pwmIsMid(uint16_t x) { return (x > 1250) && (x <1750); }
+
+    void setArmingDisabled();
+    void clearArmingDisabled();
 
     Cockpit& getCockpit() { return _cockpit; }
 private:
@@ -72,12 +60,15 @@ private:
     IMU_Filters& _imuFilters;
     OSD* _osd;
     config_t _config {};
-    int32_t _rcDelayMs {BUTTON_TIME_MS};
+    uint32_t _rcDelayMs {CMSX::BUTTON_TIME_MS};
     uint32_t _lastCalledMs {};
     uint32_t _lastHeartbeatTimeMs {};
     uint32_t _deviceCount {0};
     int32_t _currentDeviceIndex {-1};
+    uint32_t _holdCount {1};
+    uint32_t _repeatCount {1};
+    uint32_t _repeatBase {0};
+    CMSX::key_e _externKey {};
 
-    key_e _externKey {};
     std::array<DisplayPortBase*, MAX_DISPLAY_PORT_COUNT> _displayPorts {};
 };

@@ -86,7 +86,7 @@ void OSD_Elements::drawAnglePitch(DisplayPortBase& displayPort)
 #endif
 }
 
-void OSD_Elements::drawRC_Channels(DisplayPortBase& displayPort)
+void OSD_Elements::drawRC_Channels(DisplayPortBase& displayPort) // cppcheck-suppress constParameterCallback
 {
     const ReceiverBase::controls_pwm_t controlsPWM = _cockpit.getReceiver().getControlsPWM();
     switch (_rcChannel) {

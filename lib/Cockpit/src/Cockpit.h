@@ -146,6 +146,8 @@ public:
     bool wasEverArmed() const;
     void setArmed();
     void setDisarmed();
+    void setArmingDisabledFlag(arming_disabled_flags_e flag);
+    void clearArmingDisabledFlag(arming_disabled_flags_e flag);
     bool isFlightModeFlagSet(uint32_t flightModeFlag) const;
     void setFlightModeFlag(uint32_t flightModeFlag);
     void clearFlightModeFlag(uint32_t flightModeFlag);
@@ -162,8 +164,7 @@ public:
     void setRatesToPassThrough();
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
-    arming_disabled_flags_e getArmingDisableFlags() const { return _armingDisabledFlags; }
-    void setArmingDisabledFlags(arming_disabled_flags_e armingDisabledFlags) { _armingDisabledFlags = armingDisabledFlags; }
+    uint32_t getArmingDisableFlags() const { return _armingDisabledFlags; }
 private:
     Features _features;
     FlightController& _flightController;
@@ -186,11 +187,11 @@ private:
     float _maxRollAngleDegrees { 60.0F }; // used for angle mode
     float _maxPitchAngleDegrees { 60.0F }; // used for angle mode
     uint32_t _armingFlags {};
+    uint32_t _armingDisabledFlags {};
     uint32_t _flightModeFlags {};
     // failsafe handling
     failsafe_phase_e _failsafePhase {FAILSAFE_IDLE};
     failsafe_t _failsafe {};
-    arming_disabled_flags_e _armingDisabledFlags {};
     int32_t _receiverInUse {false};
     uint32_t _failsafeTickCount {0}; //!< failsafe counter, so the vehicle doesn't fly away if it looses contact with the transmitter (for example by going out of range)
     uint32_t _failsafeTickCountThreshold {1500};

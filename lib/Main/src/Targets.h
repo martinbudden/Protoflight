@@ -55,7 +55,8 @@ Targets
 
     #define USE_BACKCHANNEL
 
-    #define USE_DASHBOARD
+    #define USE_CMS
+    //#define USE_DASHBOARD
     #define USE_SCREEN
     #define USE_BUTTONS
 
@@ -125,6 +126,7 @@ Targets
 
     #define USE_MSP
     #define USE_CMS
+    #define USE_OSD
 
     #define USE_BACKCHANNEL
 
@@ -135,7 +137,6 @@ Targets
     #define USE_DYNAMIC_NOTCH_FILTER
     #define USE_RPM_FILTERS
     #define USE_ALTITUDE_HOLD
-    #define USE_OSD
 
 #elif defined(TARGET_PICO)
 

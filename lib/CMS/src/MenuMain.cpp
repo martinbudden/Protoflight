@@ -38,14 +38,14 @@ static const std::array<CMSX::OSD_Entry, 7> menuMainEntries
 {{
     {"-- MAIN --",  OME_Label, nullptr, nullptr},
 
-    {"PROFILE",     OME_Submenu,  &CMSX::menuChange, &CMSX::menuProfile},
-    {"FEATURES",    OME_Submenu,  &CMSX::menuChange, &CMSX::menuFeatures},
+    {"PROFILE",     OME_Submenu, &CMSX::menuChange, &CMSX::menuProfile},
+    {"FEATURES",    OME_Submenu, &CMSX::menuChange, &CMSX::menuFeatures},
 #if defined(USE_OSD)
-    {"OSD",         OME_Submenu,  &CMS::menuChange, &CMSX::menuOsd},
+    {"OSD",         OME_Submenu, &CMS::menuChange, &CMSX::menuOsd},
 #endif
-    {"FC&FIRMWARE", OME_Submenu,  &CMSX::menuChange, &CMSX::menuFirmware},
-    {"MISC",        OME_Submenu,  &CMSX::menuChange, &CMSX::menuMisc},
-    {"SAVE/EXIT",   OME_Funcall,  &cmsx_SaveExitMenu, nullptr},
+    {"FC&FIRMWARE", OME_Submenu, &CMSX::menuChange, &CMSX::menuFirmware},
+    {"MISC",        OME_Submenu, &CMSX::menuChange, &CMSX::menuMisc},
+    {"SAVE/EXIT",   OME_FunctionCall, &cmsx_SaveExitMenu, nullptr},
     {nullptr, OME_END, nullptr, nullptr},
 }};
 
@@ -55,11 +55,11 @@ static const void* mainMenuOnEnter(CMSX& cmsx, DisplayPortBase& displayPort, con
 #if false
     if (setupPopupMenuBuild()) {
         // If setup issues were found then switch to the dynamically constructed menu
-        CMS::menuChange(cmsx, displayPort, &CMSX::menuSetPopup);
+        CMS::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     }
 #else
 #endif
-    CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetPopup);
+    CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;
 }
 
@@ -70,7 +70,29 @@ CMSX::menu_t CMSX::menuMain = {
     .entries = &menuMainEntries[0]
 };
 
-CMSX::menu_t CMSX::menuSetPopup {};
+static const void* menuSetupPopupOnDisplayUpdate(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* entry)
+{
+    (void)cmsx;
+    (void)displayPort;
+    (void)entry;
+
+    return nullptr;
+}
+
+#ifdef USE_BATTERY_CONTINUE
+enum { SETUP_POPUP_MAX_ENTRIES = 2 };   // Increase as new entries are added
+#else
+enum { SETUP_POPUP_MAX_ENTRIES = 1 };   // Increase as new entries are added
+#endif
+static std::array<CMSX::OSD_Entry, SETUP_POPUP_MAX_ENTRIES + 3> menuSetupPopupEntries;
+
+CMSX::menu_t CMSX::menuSetupPopup = {
+    .onEnter = nullptr,
+    .onExit = nullptr,
+    .onDisplayUpdate = &menuSetupPopupOnDisplayUpdate,
+    .entries = &menuSetupPopupEntries[0],
+};
+
 CMSX::menu_t CMSX::menuBlackbox {};
 CMSX::menu_t CMSX::menuPower {};
 CMSX::menu_t CMSX::menuFirmware {};

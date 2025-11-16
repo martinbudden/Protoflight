@@ -30,6 +30,16 @@ void CMS::setConfig(const config_t& config)
     _config = config;
 }
 
+void CMS::setArmingDisabled()
+{
+    _cockpit.setArmingDisabledFlag(ARMING_DISABLED_CMS_MENU);
+}
+
+void CMS::clearArmingDisabled()
+{
+    _cockpit.clearArmingDisabledFlag(ARMING_DISABLED_CMS_MENU);
+}
+
 void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // NOLINT(readability-function-cognitive-complexity)
 {
     (void)timeMicrosecondsDelta;
@@ -42,7 +52,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
 
     if (_cmsx.isInMenu()) {
         _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
-        _rcDelayMs = static_cast<int32_t>(scanKeys(currentTimeMs, _lastCalledMs, _rcDelayMs));
+        _rcDelayMs = scanKeys(currentTimeMs, _lastCalledMs, _rcDelayMs);
         _cmsx.drawMenu(*_displayPort, currentTimeUs);
         if (currentTimeMs > _lastHeartbeatTimeMs + HEARTBEAT_INTERVAL_MS) {
             // Heart beat for external CMS display device @500ms, timeout @1000ms
@@ -55,8 +65,8 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         if (!_cockpit.isArmed() && !_cockpit.isRcModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
             const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
             if (pwmIsMid(controls.throttle) && pwmIsLow(controls.yaw) && pwmIsHigh(controls.pitch)) {
-                menuOpen();
-                _rcDelayMs = BUTTON_PAUSE_MS; // Tends to overshoot if BUTTON_TIME_MS used
+                _cmsx.menuOpen(*_displayPort);
+                _rcDelayMs = CMSX::BUTTON_PAUSE_MS; // Tends to overshoot if BUTTON_TIME_MS used
             }
         }
     }
@@ -64,60 +74,88 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
     _lastCalledMs = timeMs();
 }
 
-void CMS::setExternKey(key_e externKey)
+void CMS::setExternKey(CMSX::key_e externKey)
 {
-    if (_externKey == KEY_NONE) {
+    if (_externKey == CMSX::KEY_NONE) {
         _externKey = externKey;
     }
 }
 
-uint32_t CMS::handleKey(key_e key)
+uint16_t CMS::handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount)
 {
-    const uint32_t ret = BUTTON_TIME_MS;
-
-    if (key == KEY_MENU) {
-        menuOpen();
-        return BUTTON_PAUSE_MS;
+    uint16_t ret = 0;
+    for (size_t ii = 0; ii < repeatCount ; ++ii) {
+        ret = _cmsx.handleKey(*_displayPort, key);
     }
     return ret;
 }
 
-void CMS::menuOpen()
-{
-    const CMSX::menu_t* startMenu = _cmsx._currentCtx.menu;
-    if (_cmsx.isInMenu()) {
-        // Switch display
-        DisplayPortBase* nextDisplayPort = displayPortSelectNext();
-        if (nextDisplayPort == _displayPort) {
-            return;
-        }
-        // DisplayPort has been changed.
-        _cmsx._currentCtx.cursorRow = _cmsx.cursorAbsolute();
-        _displayPort->setBackgroundType(DisplayPortBase::BACKGROUND_TRANSPARENT); // reset previous displayPort to transparent
-        _displayPort->release();
-        _displayPort = nextDisplayPort;
-    } else {
-        //_displayPort = cmsDisplayPortSelectCurrent();
-        if (!_displayPort) {
-            return;
-        }
-        startMenu = &CMSX::menuMain;
-        _cmsx.setInMenu(true);
-        _cmsx._currentCtx = { nullptr, 0, 0 };
-        _cmsx._menuStackIndex = 0;
-        _cockpit.setArmingDisabledFlags(ARMING_DISABLED_CMS_MENU);
-        _displayPort->layerSelect(DisplayPortBase::LAYER_FOREGROUND);
-    }
-    //!!other stuff here
-    CMSX::menuChange(_cmsx, *_displayPort, startMenu);
-}
-
 uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t rcDelayMs)
 {
-    (void)currentTimeMs;
-    (void)lastCalledMs;
-    (void)rcDelayMs;
-    return 0;
+    CMSX::key_e key = CMSX::KEY_NONE;
+
+    const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+
+    if (_externKey != CMSX::KEY_NONE) {
+        rcDelayMs = _cmsx.handleKey(*_displayPort, _externKey);
+        _externKey = CMSX::KEY_NONE;
+    } else {
+        if (_cockpit.isArmed() == false && pwmIsMid(controls.throttle) && pwmIsLow(controls.yaw) && pwmIsHigh(controls.pitch)) {
+            key = CMSX::KEY_MENU;
+        } else if (pwmIsHigh(controls.pitch)) {
+            key = CMSX::KEY_UP;
+        } else if (pwmIsLow(controls.pitch)) {
+            key = CMSX::KEY_DOWN;
+        } else if (pwmIsHigh(controls.roll)) {
+            key = CMSX::KEY_RIGHT;
+        } else if (pwmIsLow(controls.roll)) {
+            key = CMSX::KEY_LEFT;
+        } else if (pwmIsHigh(controls.yaw)) {
+            key = CMSX::KEY_ESC;
+        } else if (pwmIsLow(controls.yaw)) {
+            key = CMSX::KEY_SAVE_MENU;
+        }
+        if (key == CMSX::KEY_NONE) {
+            // No 'key' pressed, reset repeat control
+            _holdCount = 1;
+            _repeatCount = 1;
+            _repeatBase = 0;
+        } else {
+            // The 'key' is being pressed; keep counting
+            ++_holdCount;
+        }
+
+        if (rcDelayMs > 0) {
+            rcDelayMs -= (currentTimeMs - lastCalledMs);
+        } else if (key) {
+            rcDelayMs = handleKeyWithRepeat(key, _repeatCount);
+            // Key repeat effect is implemented in two phases.
+            // First phase is to decrease rcDelayMs reciprocal to hold time.
+            // When rcDelayMs reached a certain limit (scheduling interval),
+            // repeat rate will not raise anymore, so we call key handler
+            // multiple times (repeatCount).
+            //
+            // XXX Caveat: Most constants are adjusted pragmatically.
+            // XXX Rewrite this someday, so it uses actual hold time instead
+            // of holdCount, which depends on the scheduling interval.
+            if (((key == CMSX::KEY_LEFT) || (key == CMSX::KEY_RIGHT)) && (_holdCount > 20)) {
+                // Decrease rcDelayMs reciprocally
+                rcDelayMs /= (_holdCount - 20);
+                // When we reach the scheduling limit,
+                if (rcDelayMs <= 50) {
+                    // start calling handler multiple times.
+                    if (_repeatBase == 0) {
+                        _repeatBase = _holdCount;
+                    }
+                    _repeatCount += (_holdCount - _repeatBase) / 5;
+                    if (_repeatCount > 5) {
+                        _repeatCount = 5;
+                    }
+                }
+            }
+        }
+    }
+    return rcDelayMs;
 }
 
 DisplayPortBase* CMS::displayPortSelectNext()

@@ -80,7 +80,7 @@ public:
 public:
     virtual ~DisplayPortBase() = default;
     DisplayPortBase() = default;
-    virtual int clearScreen(display_clear_option_e options) { (void)options; _cleared = true; _cursorRow = -1; return 0; }
+    virtual int clearScreen(display_clear_option_e options) { (void)options; _cleared = true; _cursorRow = 255; return 0; }
     virtual bool drawScreen() = 0;
     virtual int writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) = 0;
     virtual int writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) = 0;
@@ -114,8 +114,8 @@ public:
 
     uint8_t getRowCount() const { return _rowCount; }
     uint8_t getColumnCount() const { return _columnCount; }
-    int8_t getCursorRow() const { return _cursorRow; }
-    void setCursorRow(int8_t cursorRow) { _cursorRow = cursorRow; }
+    uint8_t getCursorRow() const { return _cursorRow; }
+    void setCursorRow(uint8_t cursorRow) { _cursorRow = cursorRow; }
 
     uint8_t getPosX() const { return _posX; }
     void setPosX(uint8_t posX) { _posX = posX; }
@@ -137,7 +137,7 @@ protected:
     // Displayport device capability
     bool _useDeviceBlink {};
     // CMS state
-    int8_t _cursorRow {};
+    uint8_t _cursorRow {};
     int8_t _grabCount {0};
     bool _cleared {};
     bool _useFullscreen {};
