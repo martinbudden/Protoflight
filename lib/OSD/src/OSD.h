@@ -26,7 +26,7 @@ public:
     enum { LOGO_ROW_COUNT = 4, LOGO_COLUMN_COUNT = 24 };
     enum { SD_ROWS = 16, SD_COLS = 30 };
     enum { HD_ROWS = 20, HD_COLS = 53 };
-    enum { FRAMERATE_DEFAULT_HZ = 100 }; // 12 };
+    enum { FRAMERATE_DEFAULT_HZ = 12 };
     enum { ESC_RPM_ALARM_OFF = -1, ESC_TEMP_ALARM_OFF = 0, ESC_CURRENT_ALARM_OFF = -1 };
     enum { ELEMENT_BUFFER_LENGTH = 32 };
 
@@ -226,6 +226,7 @@ public:
     const OSD_Elements& getOSD_Elements() const { return _elements; }
 
     void updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta); //!< OSD Task function, called by OSD_Task
+    void updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta);
     void drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity);
 
     void setStatsState(uint8_t statIndex, bool enabled);

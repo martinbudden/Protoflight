@@ -2,7 +2,7 @@
 #include "Cockpit.h"
 #include "FormatInteger.h"
 
-//#include <HardwareSerial.h>
+#include <HardwareSerial.h>
 #include <MSP_Box.h>
 #include <ReceiverBase.h>
 #include <cstring>
@@ -372,7 +372,19 @@ void OSD::drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity)
     }
 }
 
-void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) // NOLINT(readability-function-cognitive-complexity)
+void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
+{
+    if (_state == STATE_IDLE) {
+        _state = STATE_CHECK;
+    } else if (_state != STATE_INIT) {
+        return;
+    }
+    while (_state != STATE_IDLE) {
+        updateDisplayIteration(timeMicroseconds, timeMicrosecondsDelta);
+    }
+}
+
+void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) // NOLINT(readability-function-cognitive-complexity)
 {
     (void)timeMicrosecondsDelta;
 
@@ -524,7 +536,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         break;
     case STATE_IDLE:
         //Serial.printf("STATE_IDLE\r\n");
-        _state = STATE_CHECK;
+        //_state = STATE_CHECK;
         break;
     default:
         //Serial.printf("STATE_default\r\n");
