@@ -156,8 +156,7 @@ public:
     static uint8_t OSD_X(uint16_t x) { return x & XY_POSITION_MASK; }
     static uint8_t OSD_Y(uint16_t x) { return (x >> XY_POSITION_BITS) & XY_POSITION_MASK; }
     static uint16_t OSD_POS(uint8_t x, uint8_t y) { return (x & XY_POSITION_MASK) | ((y & XY_POSITION_MASK) << XY_POSITION_BITS); }
-    static uint16_t IS_VISIBLE(uint16_t x) { (void)x; return true; }
-
+    bool elementVisible(uint16_t value) const;
 
     void addActiveElement(osd_items_e element);
     void addActiveElements();
@@ -215,6 +214,7 @@ private:
     enum { AH_SIDEBAR_WIDTH_POS = 7, AH_SIDEBAR_HEIGHT_POS = 3 };
     int8_t _sidbarPosY {AH_SIDEBAR_HEIGHT_POS};
     uint8_t _rcChannel {};
+    uint8_t _profile {};
 
     config_t _config {};
     std::array<uint8_t, OSD_ITEM_COUNT> _activeElementArray;

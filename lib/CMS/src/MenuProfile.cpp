@@ -70,7 +70,7 @@ CMSX::menu_t CMSX::menuFilters = {
 //
 static std::array<uint8_t, 2> pidProfileIndexString = { '1', '\0' };
 
-static const void* menuPID_onEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+static const void* menuPID_onEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
     pidProfileIndexString[0] = '1' + cmsx.getCMS().getCockpit().getCurrentPidProfileIndex();
     const FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
@@ -80,7 +80,7 @@ static const void* menuPID_onEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
     return nullptr;
 }
 
-static const void* menuPID_onExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+static const void* menuPID_onExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
     flightController.setPID_Constants(FlightController::ROLL_RATE_DPS, data.pids[FlightController::ROLL_RATE_DPS]);
@@ -153,7 +153,7 @@ static const void* menuRatesOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase
     return nullptr;
 }
 
-static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     cmsx.getCMS().getCockpit().setRates(data.rates);
     return nullptr;
@@ -254,7 +254,7 @@ static const void* menuProfileOnEnter(CMSX& cmsx, DisplayPortBase& displayPort)
     return nullptr;
 }
 
-static const void* menuProfileOnExit(CMSX& cmsx, DisplayPortBase& displayPort)
+static const void* menuProfileOnExit(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;

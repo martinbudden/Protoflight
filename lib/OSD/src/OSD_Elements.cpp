@@ -107,9 +107,14 @@ bool OSD_Elements::isRenderPending() const
     return _displayPendingForeground | _displayPendingBackground;
 }
 
+bool OSD_Elements::elementVisible(uint16_t value) const
+{
+    return ((value & PROFILE_MASK) >> PROFILE_BITS_POS) & (1 << _profile);
+}
+
 void OSD_Elements::addActiveElement(osd_items_e element)
 {
-    if (IS_VISIBLE(_config.element_pos[element])) {
+    if (elementVisible(_config.element_pos[element])) {
         _activeElementArray[_activeElementCount++] = element;
     }
 }
@@ -120,6 +125,7 @@ void OSD_Elements::addActiveElements()
     addActiveElement(OSD_ROLL_PIDS);
     addActiveElement(OSD_PITCH_PIDS);
     addActiveElement(OSD_CROSSHAIRS);
+    addActiveElement(OSD_ARTIFICIAL_HORIZON);
     addActiveElement(OSD_ROLL_ANGLE);
     addActiveElement(OSD_PITCH_ANGLE);
     addActiveElement(OSD_RC_CHANNELS);

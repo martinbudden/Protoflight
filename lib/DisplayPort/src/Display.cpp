@@ -10,7 +10,7 @@ void Display::init(DisplayPortBase::device_type_e deviceType)
 {
     _displayPort.setDeviceType(deviceType);
 
-    _displayPort._useFullscreen = false;
+    _displayPort.setUseFullScreen(false);
     _displayPort.releaseAll();
 
     beginTransaction(DISPLAY_TRANSACTION_OPTION_NONE);
@@ -21,8 +21,8 @@ void Display::init(DisplayPortBase::device_type_e deviceType)
 void Display::clearScreen(display_clear_option_e options)
 {
     _displayPort.clearScreen(options);
-    _displayPort._cleared = true;
-    _displayPort._cursorRow = 255;
+    _displayPort.setCleared(true);
+    _displayPort.setCursorRow(255);
 }
 
 // Return true if screen still being transferred
@@ -40,25 +40,24 @@ void Display::grab()
 {
     _displayPort.grab();
     _displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
-    ++_displayPort._grabCount;
+    //++_displayPort._grabCount;
 }
 
 void Display::release()
 {
     _displayPort.release();
-    --_displayPort._grabCount;
+    //--_displayPort._grabCount;
 }
 
 void Display::releaseAll()
 {
-    _displayPort.release();
-    _displayPort._grabCount = 0;
+    _displayPort.releaseAll();
 }
 
 bool Display::isGrabbed() const
 {
     // can be called before initialised
-    return _displayPort._grabCount > 0;
+    return _displayPort.isGrabbed();
 }
 
 void Display::setXY(uint8_t x, uint8_t y)

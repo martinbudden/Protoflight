@@ -28,7 +28,6 @@ enum display_clear_option_e {
 };
 
 class DisplayPortBase {
-friend class Display; //!!FOR NOW
 public:
     enum { BLINK = 0x80 }; // blink attribute bit
 
@@ -85,14 +84,6 @@ public:
     virtual uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) = 0;
     uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const uint8_t* text) { return writeString(x, y, attr, reinterpret_cast<const char*>(text)); }
     virtual uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) = 0;
-
-    void grab() { clearScreen(DISPLAY_CLEAR_WAIT); ++_grabCount; }
-    bool isGrabbed() const { return _grabCount > 0; }
-    void release() { --_grabCount; }
-    void releaseAll() { _grabCount = 0; }
-    bool isCleared() const { return _cleared; }
-    void setCleared(bool cleared) { _cleared = cleared; }
-
     virtual int screenSize() const { return 0; }
     virtual int writeSys(uint8_t x, uint8_t y, system_element_e systemElement) { (void)x; (void)y; (void)systemElement; return 0; }
     virtual bool isTransferInProgress() const { return false; }
@@ -113,8 +104,17 @@ public:
     virtual bool getCanvas(display_canvas_t* canvas) const { (void)canvas; return false; }
     virtual void setBackgroundType(background_e backgroundType) { (void)backgroundType; }
 
+    void grab() { clearScreen(DISPLAY_CLEAR_WAIT); ++_grabCount; }
+    bool isGrabbed() const { return _grabCount > 0; }
+    void release() { --_grabCount; }
+    void releaseAll() { _grabCount = 0; }
+
+    bool isCleared() const { return _cleared; }
+    void setCleared(bool cleared) { _cleared = cleared; }
+
     uint8_t getRowCount() const { return _rowCount; }
     uint8_t getColumnCount() const { return _columnCount; }
+
     uint8_t getCursorRow() const { return _cursorRow; }
     void setCursorRow(uint8_t cursorRow) { _cursorRow = cursorRow; }
 
@@ -122,6 +122,9 @@ public:
     void setPosX(uint8_t posX) { _posX = posX; }
     uint8_t getPosY() const { return _posY; }
     void setPosY(uint8_t posY) { _posY = posY; }
+
+    bool getUseFullScreen() const { return _useFullScreen; }
+    void setUseFullScreen(bool useFullScreen) { _useFullScreen = useFullScreen; }
 
     device_type_e getDeviceType() const { return _deviceType; }
     void setDeviceType(device_type_e deviceType) { _deviceType = deviceType; }
@@ -141,6 +144,6 @@ protected:
     uint8_t _cursorRow {};
     int8_t _grabCount {0};
     bool _cleared {};
-    bool _useFullscreen {};
+    bool _useFullScreen {false}; // tru for DEVICE_TYPE_HOTT, false otherwise
     bool _supportsOsdSymbols {false};
 };

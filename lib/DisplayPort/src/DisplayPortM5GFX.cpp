@@ -16,7 +16,7 @@ DisplayPortM5GFX::DisplayPortM5GFX(M5Canvas& canvas, uint32_t screenWidthPixels,
     _canvas.setTextSize(2);
 }
 
-int DisplayPortM5GFX::clearScreen(display_clear_option_e options)
+uint32_t DisplayPortM5GFX::clearScreen(display_clear_option_e options)
 { 
     (void)options;
     _cleared = true;

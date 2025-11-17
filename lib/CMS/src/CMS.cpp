@@ -90,7 +90,7 @@ uint16_t CMS::handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount)
     return ret;
 }
 
-uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t rcDelayMs)
+uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t rcDelayMs) // NOLINT(readability-function-cognitive-complexity)
 {
     CMSX::key_e key = CMSX::KEY_NONE;
 

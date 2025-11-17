@@ -59,12 +59,19 @@ bool CMSX::rowIsSkippable(const OSD_Entry* row)
     if (type == OME_String) {
         return true;
     }
-    if ((row->flags == OME_DYNAMIC) || rowSliderOverride(row->flags)) {
+    if ((row->flags == OME_DYNAMIC) || rowSliderOverride(row->flags)) { // cppcheck-suppress knownConditionTrueFalse
         if (type == OME_UINT8  || type == OME_INT8 || type == OME_UINT16  || type == OME_INT16) {
             return true;
         }
     }
     return false;
+}
+
+bool CMSX::elementVisible(uint16_t value) const
+{
+    static constexpr uint16_t PROFILE_BITS_POS = 12;
+    static constexpr uint16_t PROFILE_MASK = 0b0011'0000'0000'0000U;
+    return ((value & PROFILE_MASK) >> PROFILE_BITS_POS) & (1U << _profile); // NOLINT(hicpp-signed-bitwise)
 }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -130,13 +137,13 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
             uint8_t coloff = _leftMenuColumn;
             coloff += ((entry->flags & OME_MASK) == OME_Label) ? 0 : 1;
             room -= displayPort.writeString(coloff, yVal, DisplayPortBase::SEVERITY_NORMAL, entry->text);
-            _runtimeEntryFlags[ii] &= static_cast<uint16_t>(~OME_PRINT_LABEL);
+            clearFlag(_runtimeEntryFlags[ii], OME_PRINT_LABEL);
             if (room < 30) {
                 return;
             }
         }
         // Highlight values overridden by sliders
-        if (rowSliderOverride(entry->flags)) {
+        if (rowSliderOverride(entry->flags)) { // cppcheck-suppress knownConditionTrueFalse
             displayPort.writeChar(_leftMenuColumn - 1, yVal, DisplayPortBase::SEVERITY_NORMAL, 'S');
         }
         // Print values
@@ -167,20 +174,63 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
 }
 // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-uint32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, uint8_t* buf, uint8_t row, uint8_t maxSize)
+// Pad buffer to the right, i.e. align left
+void CMSX::padRight(char *buf, uint8_t size)
 {
-    //cmsPadToSize(buf, maxSize);
-//#if defined(CMS_OSD_RIGHT_ALIGNED_VALUES)
-    const uint8_t colpos = _rightMenuColumn - maxSize;
-//#else
-//    colpos = smallScreen ? rightMenuColumn - maxSize : rightMenuColumn;
-//#endif
-    return displayPort.writeString(colpos, row, DisplayPortBase::SEVERITY_NORMAL, reinterpret_cast<char*>(buf));
+    uint8_t ii = 0;
+    while (ii < size) {
+        if (buf[ii] == 0) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            break;
+        }
+        ++ii;
+    }
+    while (ii < size) {
+        buf[ii] = ' '; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        ++ii;
+    }
+    buf[size] = 0; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
-static void ui2a(unsigned int num, uint8_t* bf)
+// Pad buffer to the left, i.e. align right
+void CMSX::padLeft(char *buf, uint8_t size)
 {
-    const bool uc = true;
+    auto len = static_cast<uint8_t>(strlen(buf));
+
+    int32_t ii = size - 1;
+    const int32_t jj = size - len; 
+    while (ii - jj >= 0) {
+        buf[ii] = buf[ii - jj]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        --ii;
+    }
+    while (ii >= 0) {
+        buf[ii] = ' '; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        --ii;
+    }
+    buf[size] = 0; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+}
+
+void CMSX::padToSize(char* buf, uint8_t size) const
+{
+#ifdef CMS_OSD_RIGHT_ALIGNED_VALUES
+    cmsPadLeft(buf, size);
+#else
+    _smallScreen ? padLeft(buf, size) : padRight(buf, size);
+#endif
+}
+
+uint32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, char* buf, uint8_t row, uint8_t maxSize) const
+{
+    padToSize(buf, maxSize);
+#if defined(CMS_OSD_RIGHT_ALIGNED_VALUES)
+    const uint8_t column = _rightMenuColumn - maxSize;
+#else
+    const uint8_t column = _smallScreen ? _rightMenuColumn - maxSize : _rightMenuColumn;
+#endif
+    return displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, buf);
+}
+
+static void ui2a(unsigned int num, char* bf)
+{
     const unsigned int base = 10;
 
     unsigned int d = 1;
@@ -189,7 +239,7 @@ static void ui2a(unsigned int num, uint8_t* bf)
     }
     while (d != 0) {
         const unsigned int dgt = num / d;
-        *bf++ = static_cast<uint8_t>(dgt + (dgt < 10 ? '0' : (uc ? 'A' : 'a') - 10));
+        *bf++ = static_cast<char>(dgt + '0' - 10); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         // Next digit
         num %= d;
         d /= base;
@@ -197,46 +247,151 @@ static void ui2a(unsigned int num, uint8_t* bf)
     *bf = 0;
 }
 
-static void i2a(int num, uint8_t* bf)
+static void i2a(int num, char* bf)
 {
     if (num < 0) {
         num = -num;
-        *bf++ = '-';
+        *bf++ = '-'; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     }
     ui2a(static_cast<unsigned int>(num), bf);
 }
 
-uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *entry, uint8_t row, bool selectedRow, uint8_t index)
+uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *entry, uint8_t row, bool selectedRow, uint8_t index) // NOLINT(readability-function-cognitive-complexity)
 {
     (void)selectedRow;
 
     uint32_t count = 0;
 
+// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast,cppcoreguidelines-pro-bounds-pointer-arithmetic)
     switch (entry->flags & OME_MASK) {
+    case OME_Label:
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
+            // A label with optional string, immediately following text
+            count = displayPort.writeString(static_cast<uint8_t>(_leftMenuColumn + strlen(entry->text) + 1), row, DisplayPortBase::SEVERITY_NORMAL, reinterpret_cast<const uint8_t*>(entry->data));
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
+        }
+        break;
+    case OME_Submenu:
+        [[fallthrough]];
+    case OME_FunctionCall:
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE)) {
+            _menuDrawBuf[0] = 0;
+
+            if ((entry->flags & OME_MASK) == OME_Submenu && entry->fnPtr && _runtimeEntryFlags[index] & OME_OPTSTRING) {
+
+                // Special case of sub menu entry with optional value display.
+
+                const char *str = reinterpret_cast<const char*>(entry->fnPtr(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data)));
+                strncpy(&_menuDrawBuf[0], str, MENU_DRAW_BUFFER_LEN);
+            } else if ((entry->flags & OME_MASK) == OME_FunctionCall && entry->data) {
+                strncpy(&_menuDrawBuf[0], reinterpret_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
+            }
+            strncat(&_menuDrawBuf[0], ">", MENU_DRAW_BUFFER_LEN);
+
+            row = _smallScreen ? row - 1 : row;
+            count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, static_cast<uint8_t>(strlen(&_menuDrawBuf[0])));
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
+        }
+        break;
     case OME_INT8:
         if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
-            const OSD_INT8_t* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
-            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~OME_PRINT_VALUE);
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
         }
         break;
     case OME_UINT8:
         if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
-            const OSD_UINT8_t* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
-            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~OME_PRINT_VALUE);
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
+        }
+        break;
+    case OME_INT16:
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
+            const auto* ptr = reinterpret_cast<const OSD_INT16_t*>(entry->data);
+            i2a(*ptr->val, &_menuDrawBuf[0]);
+            count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
+        }
+        break;
+    case OME_UINT16:
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
+            const auto* ptr = reinterpret_cast<const OSD_UINT16_t*>(entry->data);
+            ui2a(*ptr->val, &_menuDrawBuf[0]);
+            count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
+        }
+        break;
+    case OME_INT32:
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
+            const auto* ptr = reinterpret_cast<const OSD_INT32_t*>(entry->data);
+            i2a(*ptr->val, &_menuDrawBuf[0]);
+            count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
+        }
+        break;
+    case OME_UINT32:
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
+            const auto* ptr = reinterpret_cast<const OSD_UINT32_t*>(entry->data);
+            ui2a(*ptr->val, &_menuDrawBuf[0]);
+            count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
         }
         break;
     case OME_String:
         if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
             strncpy(reinterpret_cast<char*>(&_menuDrawBuf[0]), static_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
             count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, MENU_DRAW_BUFFER_LEN);
-            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~OME_PRINT_VALUE);
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
         }
         break;
+    case OME_TABLE:
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) || (_runtimeEntryFlags[index] & OME_SCROLLING_TICKER)) {
+            const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
+            const size_t labelLength = strlen(entry->text) + 1; // account for the space between label and display data
+            const char* str = static_cast<const char *>(ptr->names[*ptr->val]);   // lookup table display text
+            const size_t displayLength = strlen(str);
+            // Calculate the available space to display the lookup table entry based on the
+            // screen size and the length of the label. Always display at least MENU_DRAW_BUFFER_LEN
+            // characters to prevent really long labels from overriding the data display.
+            const size_t availableSpace = std::max(static_cast<size_t>(MENU_DRAW_BUFFER_LEN), _rightMenuColumn - labelLength - _leftMenuColumn - 1);
+
+            bool drawText = false;
+            table_ticker_t& ticker = _runtimeTableTicker[index];
+            if (_runtimeEntryFlags[index] & OME_PRINT_VALUE) {
+                drawText = true;
+                _runtimeTableTicker[index].state = 0;
+                ticker.loopCounter = 0;
+                if (displayLength > availableSpace) {  // table entry text is longer than the available space so start the ticker
+                    setFlag(_runtimeEntryFlags[index], OME_SCROLLING_TICKER);
+                } else {
+                    clearFlag(_runtimeEntryFlags[index], OME_SCROLLING_TICKER);
+                }
+            } else {
+                ++ticker.loopCounter;
+                const uint8_t loopLimit = (ticker.state == 0 || ticker.state == (displayLength - availableSpace)) ? LOOKUP_TABLE_TICKER_START_CYCLES : LOOKUP_TABLE_TICKER_SCROLL_CYCLES;
+                if (ticker.loopCounter >= loopLimit) {
+                    ticker.loopCounter = 0;
+                    drawText = true;
+                    ticker.state++;
+                    if (ticker.state > (displayLength - availableSpace)) {
+                        ticker.state = 0;
+                    }
+                }
+            }
+            if (drawText) {
+                strncpy(&_menuTableBuf[0], static_cast<const char *>(str + ticker.state), MENU_TABLE_BUFFER_LEN);
+                count = drawMenuItemValue(displayPort, &_menuTableBuf[0], row, static_cast<uint8_t>(availableSpace));
+            }
+            clearFlag(_runtimeEntryFlags[index], OME_PRINT_VALUE);
+        }
+        break;
+
     }
+// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast,cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return count;
 }
 
@@ -249,7 +404,7 @@ void CMSX::addMenuEntry(OSD_Entry& menuEntry, const char* text, uint16_t flags, 
     menuEntry.data = data;
 }
 
-uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
+uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key) // NOLINT(readability-function-cognitive-complexity)
 {
     uint16_t ret = BUTTON_TIME_MS;
     if (!_currentCtx.menu) {
@@ -271,7 +426,6 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
     if (key == KEY_SAVE_MENU && !_saveMenuInhibited) {
         _elementEditing = false;
         menuChange(*this, displayPort, getSaveExitMenu());
-
         return BUTTON_PAUSE_MS;
     }
 
@@ -285,13 +439,13 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
     }
 
     if ((key == KEY_UP) && (!_elementEditing)) {
-        int8_t cursorRow = static_cast<int8_t>(_currentCtx.cursorRow);
+        auto cursorRow = static_cast<int8_t>(_currentCtx.cursorRow);
         --cursorRow;
         // Skip non-title labels, strings and dynamic read-only entries
-        while ((rowIsSkippable(_pageTop + _currentCtx.cursorRow)) && cursorRow > 0) {
+        while ((rowIsSkippable(_pageTop + _currentCtx.cursorRow)) && cursorRow > 0) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             --cursorRow;
         }
-        if (cursorRow == -1 || ((_pageTop + cursorRow)->flags & OME_MASK) == OME_Label) {
+        if (cursorRow == -1 || ((_pageTop + cursorRow)->flags & OME_MASK) == OME_Label) { //NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             // Goto previous page
             pagePrevious(displayPort);
             _currentCtx.cursorRow = _pageMaxRow;
@@ -304,8 +458,16 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
         return ret;
     }
 
-    const OSD_Entry* entry = _pageTop + _currentCtx.cursorRow;
+//NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+    const OSD_Entry* entry = _pageTop + _currentCtx.cursorRow; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     switch (entry->flags & OME_MASK) {
+    case OME_Label:
+        break;
+    case OME_Back:
+        menuBack(displayPort);
+        ret = BUTTON_PAUSE_MS;
+        _elementEditing = false;
+        break;
     case OME_Submenu:
         if (key == KEY_RIGHT) {
             menuChange(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
@@ -331,15 +493,10 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
             ret =BUTTON_PAUSE_MS;
         }
         break;
-    case OME_Back:
-        menuBack(displayPort);
-        ret = BUTTON_PAUSE_MS;
-        _elementEditing = false;
-        break;
 #if defined(USE_OSD) && false
     case OME_VISIBLE:
         if (entry->data) {
-            uint16_t *val = (uint16_t *)entry->data;
+            const auto* val = reinterpret_cast<uint16_t*>(entry->data);
             const uint16_t previousValue = *val;
             if ((key == KEY_RIGHT) && (!_elementEditing)) {
                 _elementEditing = true;
@@ -358,13 +515,13 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                 }
 #endif
                 if (key == KEY_UP) {
-                    *val |= OSD_PROFILE_FLAG(_osdProfileCursor);
+                    setFlag(val, OSD_PROFILE_FLAG(_osdProfileCursor));
                 }
                 if (key == KEY_DOWN) {
-                    *val &= ~OSD_PROFILE_FLAG(_osdProfileCursor);
+                    clearFlag(val, OSD_PROFILE_FLAG(_osdProfileCursor));
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            setFlag(_runtimeEntryFlags[_currentCtx.cursorRow], OME_PRINT_VALUE);
 
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*val != previousValue)) {
                 setRebootRequired();
@@ -374,33 +531,10 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
 #endif
     case OME_Bool:
         if (entry->data) {
-            const OSD_UINT8_t* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
             *ptr->val = (key == KEY_RIGHT) ? 1 : 0;
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
-            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
-                setRebootRequired();
-            }
-            if (entry->fnPtr) {
-                entry->fnPtr(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
-            }
-        }
-        break;
-    case OME_UINT8:
-    case OME_FLOAT:
-        if (entry->data) {
-            const OSD_UINT8_t* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
-            const uint16_t previousValue = *ptr->val;
-            if (key == KEY_RIGHT) {
-                if (*ptr->val < ptr->max) {
-                    *ptr->val += ptr->step;
-                }
-            } else {
-                if (*ptr->val > ptr->min) {
-                    *ptr->val -= ptr->step;
-                }
-            }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            setFlag(_runtimeEntryFlags[_currentCtx.cursorRow], OME_PRINT_VALUE);
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
@@ -411,18 +545,18 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
         break;
     case OME_INT8:
         if (entry->data) {
-            const OSD_INT8_t* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
             const int8_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
-                    *ptr->val += ptr->step;
+                    *ptr->val = static_cast<int8_t>(*ptr->val + ptr->step);
                 }
             } else {
                 if (*ptr->val > ptr->min) {
-                    *ptr->val -= ptr->step;
+                    *ptr->val = static_cast<int8_t>(*ptr->val - ptr->step);
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            setFlag(_runtimeEntryFlags[_currentCtx.cursorRow], OME_PRINT_VALUE);
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
@@ -431,9 +565,11 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
             }
         }
         break;
-    case OME_UINT16:
+    case OME_UINT8:
+        [[fallthrough]];
+    case OME_FLOAT:
         if (entry->data) {
-            const OSD_UINT16_t* ptr = reinterpret_cast<const OSD_UINT16_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -444,7 +580,29 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *ptr->val -= ptr->step;
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            setFlag(_runtimeEntryFlags[_currentCtx.cursorRow], OME_PRINT_VALUE);
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+                setRebootRequired();
+            }
+            if (entry->fnPtr) {
+                entry->fnPtr(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
+            }
+        }
+        break;
+    case OME_UINT16:
+        if (entry->data) {
+            const auto* ptr = reinterpret_cast<const OSD_UINT16_t*>(entry->data);
+            const uint16_t previousValue = *ptr->val;
+            if (key == KEY_RIGHT) {
+                if (*ptr->val < ptr->max) {
+                    *ptr->val += ptr->step;
+                }
+            } else {
+                if (*ptr->val > ptr->min) {
+                    *ptr->val -= ptr->step;
+                }
+            }
+            setFlag(_runtimeEntryFlags[_currentCtx.cursorRow], OME_PRINT_VALUE);
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
@@ -455,18 +613,18 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
         break;
     case OME_INT16:
         if (entry->data) {
-            const OSD_INT16_t* ptr = reinterpret_cast<const OSD_INT16_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const OSD_INT16_t*>(entry->data);
             const int16_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
-                    *ptr->val += ptr->step;
+                    *ptr->val = static_cast<int16_t>(*ptr->val + ptr->step);
                 }
             } else {
                 if (*ptr->val > ptr->min) {
-                    *ptr->val -= ptr->step;
+                    *ptr->val = static_cast<int16_t>(*ptr->val - ptr->step);
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            setFlag(_runtimeEntryFlags[_currentCtx.cursorRow], OME_PRINT_VALUE);
 
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
@@ -478,7 +636,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
         break;
     case OME_UINT32:
         if (entry->data) {
-            const OSD_UINT32_t* ptr = reinterpret_cast<const OSD_UINT32_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const OSD_UINT32_t*>(entry->data);
             const uint32_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -489,7 +647,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *ptr->val -= ptr->step;
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            setFlag(_runtimeEntryFlags[_currentCtx.cursorRow], OME_PRINT_VALUE);
 
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
@@ -501,7 +659,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
         break;
     case OME_INT32:
         if (entry->data) {
-            const OSD_INT32_t* ptr = reinterpret_cast<const OSD_INT32_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const OSD_INT32_t*>(entry->data);
             const int32_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -512,7 +670,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *ptr->val -= ptr->step;
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            setFlag(_runtimeEntryFlags[_currentCtx.cursorRow], OME_PRINT_VALUE);
 
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
@@ -524,7 +682,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
         break;
     case OME_TABLE:
         if ((entry->flags & OME_MASK) == OME_TABLE) {
-            const OSD_TABLE_t* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
             const uint8_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -538,15 +696,13 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
             if (entry->fnPtr) {
                 entry->fnPtr(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            setFlag(_runtimeEntryFlags[_currentCtx.cursorRow], OME_PRINT_VALUE);
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
         }
         break;
     case OME_String:
-        [[fallthrough]];
-   case OME_Label:
         [[fallthrough]];
     case OME_END:
         break;
@@ -555,6 +711,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
         break;
     }
     return ret;
+//NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
 CMSX::menu_t* CMSX::getSaveExitMenu()
@@ -588,7 +745,45 @@ void CMSX::menuOpen(DisplayPortBase& displayPort)
         _cms.setArmingDisabled();
         displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }
-    //!!other stuff here
+    displayPort.grab();
+    //!!TODO: this should probably not have a dependency on the OSD or OSD slave code
+#ifdef USE_OSD
+    resumeRefreshAt = 0;
+#endif
+
+    const uint8_t columnCount = displayPort.getColumnCount();
+    if (columnCount < NORMAL_SCREEN_MIN_COLS) {
+        _smallScreen       = true;
+        _linesPerMenuItem  = 2;
+        _leftMenuColumn    = 0;
+        _rightMenuColumn   = displayPort.getColumnCount();;
+        _maxMenuItems      = (displayPort.getRowCount()) / _linesPerMenuItem;
+    } else {
+        _smallScreen       = false;
+        _linesPerMenuItem  = 1;
+        if (columnCount <= NORMAL_SCREEN_MAX_COLS) {
+            _leftMenuColumn    = 2;
+#ifdef CMS_OSD_RIGHT_ALIGNED_VALUES
+            _rightMenuColumn   = columnCount - 2;
+#else
+            _rightMenuColumn   = columnCount - MENU_DRAW_BUFFER_LEN;
+#endif
+        } else {
+            _leftMenuColumn    = (columnCount / 2) - 13;
+#ifdef CMS_OSD_RIGHT_ALIGNED_VALUES
+            _rightMenuColumn   = (columnCount / 2) + 13;
+#else
+            _rightMenuColumn   = columnCount - MENU_DRAW_BUFFER_LEN;
+#endif
+        }
+        _maxMenuItems = displayPort.getRowCount() - 2;
+    }
+
+    if (displayPort.getUseFullScreen()) {
+        _leftMenuColumn = 0;
+        _rightMenuColumn   = columnCount;
+        _maxMenuItems      = displayPort.getRowCount();
+    }
     CMSX::menuChange(*this, displayPort, startMenu);
 }
 
@@ -760,7 +955,6 @@ const void* CMSX::menuExit(CMSX& cmsx, DisplayPortBase& displayPort, const menu_
 #endif
     }
 
-    //unsetArmingDisabled(ARMING_DISABLED_CMS_MENU);
     cmsx._cms.clearArmingDisabled();
 
     return nullptr;

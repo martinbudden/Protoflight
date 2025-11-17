@@ -23,6 +23,12 @@ public:
     enum { CMS_POLL_INTERVAL_US = 100'000 };  // Interval for polling dynamic values
     enum { BUTTON_TIME_MS = 250 };
     enum { BUTTON_PAUSE_MS = 500 };
+    enum { LOOKUP_TABLE_TICKER_START_CYCLES = 20,  // Task loops for start/end of ticker (1 second delay)
+           LOOKUP_TABLE_TICKER_SCROLL_CYCLES = 3   // Task loops for each scrolling step of the ticker (150ms delay)
+    };
+    enum { NORMAL_SCREEN_MIN_COLS = 18,      // Less is a small screen
+           NORMAL_SCREEN_MAX_COLS = 30      // More is a large screen
+    };
     enum key_e {
         KEY_NONE,
         KEY_UP,
@@ -72,7 +78,10 @@ public:
     void menuOpen(DisplayPortBase& displayPort);
     const void* menuBack(DisplayPortBase& displayPort);
     void drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs);
-    uint32_t drawMenuItemValue(DisplayPortBase& displayPort, uint8_t* buf, uint8_t row, uint8_t maxSize);
+    static void padLeft(char *buf, uint8_t size);
+    static void padRight(char *buf, uint8_t size);
+    void padToSize(char* buf, uint8_t maxSize) const;
+    uint32_t drawMenuItemValue(DisplayPortBase& displayPort, char* buf, uint8_t row, uint8_t maxSize) const;
     uint32_t drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, bool selectedRow, uint8_t index);
 
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key);
@@ -86,6 +95,10 @@ public:
     void pagePrevious(DisplayPortBase& displayPort);
 
     CMS& getCMS() { return _cms; }
+
+    bool elementVisible(uint16_t value) const;
+    static void setFlag(uint16_t& value, uint16_t flag) { value |= flag; }
+    static void clearFlag(uint16_t& value, uint16_t flag) { value &= static_cast<uint16_t>(~flag); }
 
 // static functions with entryFnPtr signature for use by menu system
     static const void* menuChange(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu);
@@ -102,6 +115,7 @@ private:
     const OSD_Entry* _pageTop {}; // First entry for the current page
     uint32_t _lastPolledUs {};
     uint32_t _osdProfileCursor {};
+    uint16_t _profile {0};
     uint8_t _maxMenuItems {};
     uint8_t _pageCount {}; // Number of pages in the current menu
     uint8_t _pageMaxRow {}; // Max row in the current page
@@ -114,8 +128,8 @@ private:
     bool _elementEditing {};
     std::array<uint16_t, MAX_ROWS> _runtimeEntryFlags {};
     std::array<table_ticker_t, MAX_ROWS> _runtimeTableTicker {};
-    std::array<uint8_t, MENU_DRAW_BUFFER_LEN + 2> _menuDrawBuf; // added space for null terminator
-    std::array<uint8_t, MENU_TABLE_BUFFER_LEN + 2> _menuTableBuf; //added space for null terminator
+    std::array<char, MENU_DRAW_BUFFER_LEN + 2> _menuDrawBuf; // added space for null terminator
+    std::array<char, MENU_TABLE_BUFFER_LEN + 2> _menuTableBuf; //added space for null terminator
 public:
     // MenuExit special pointer values
     static const menu_t* MENU_NULL_PTR;
