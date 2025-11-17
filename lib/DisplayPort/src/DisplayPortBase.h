@@ -80,7 +80,7 @@ public:
     virtual ~DisplayPortBase() = default;
     DisplayPortBase() = default;
     virtual uint32_t clearScreen(display_clear_option_e options) { (void)options; _cleared = true; _cursorRow = 255; return 0; }
-    virtual bool drawScreen() = 0;
+    virtual bool drawScreen() = 0; // Returns true if screen still being transferred
     virtual uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) = 0;
     uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const uint8_t* text) { return writeString(x, y, attr, reinterpret_cast<const char*>(text)); }
     virtual uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) = 0;

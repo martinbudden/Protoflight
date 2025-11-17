@@ -31,6 +31,7 @@ void OSD_Elements::initDrawFunctions()
     elementDrawFunctions[OSD_DEBUG]             = &OSD_Elements::drawDebug;
     elementDrawFunctions[OSD_PITCH_ANGLE]       = &OSD_Elements::drawAnglePitch;
     elementDrawFunctions[OSD_ROLL_ANGLE]        = &OSD_Elements::drawAngleRoll;
+    elementDrawFunctions[OSD_DISARMED]          = &OSD_Elements::drawDisarmed;
     elementDrawFunctions[OSD_DEBUG2]            = &OSD_Elements::drawDebug2;
     elementDrawFunctions[OSD_RC_CHANNELS]       = &OSD_Elements::drawRC_Channels;
     elementDrawBackgroundFunctions[OSD_HORIZON_SIDEBARS]    = &OSD_Elements::drawBackgroundHorizonSidebars;
@@ -86,8 +87,19 @@ void OSD_Elements::drawAnglePitch(DisplayPortBase& displayPort)
 #endif
 }
 
+void OSD_Elements::drawDisarmed(DisplayPortBase& displayPort)
+{
+    (void)displayPort;
+    //if (!_cockpit.isArmed()) {
+    //    sprintf(&_activeElement.buf[0], "DISARMED");
+    //}
+    sprintf(&_activeElement.buf[0], _cockpit.isArmed()? "ARMED" : "DISARMED");
+}
+
 void OSD_Elements::drawRC_Channels(DisplayPortBase& displayPort) // cppcheck-suppress constParameterCallback
 {
+    (void)displayPort;
+
     const ReceiverBase::controls_pwm_t controlsPWM = _cockpit.getReceiver().getControlsPWM();
     switch (_rcChannel) {
     case 0:

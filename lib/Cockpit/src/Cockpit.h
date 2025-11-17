@@ -148,11 +148,12 @@ public:
     void setDisarmed();
     void setArmingDisabledFlag(arming_disabled_flags_e flag);
     void clearArmingDisabledFlag(arming_disabled_flags_e flag);
+    uint32_t getArmingDisableFlags() const { return _armingDisabledFlags; }
+
     bool isFlightModeFlagSet(uint32_t flightModeFlag) const;
     void setFlightModeFlag(uint32_t flightModeFlag);
     void clearFlightModeFlag(uint32_t flightModeFlag);
     uint32_t getFlightModeFlags() const;
-    bool isRcModeActive(uint8_t rcMode) const;
 
     virtual void checkFailsafe(uint32_t tickCount) override;
     const failsafe_t& getFailsafe() const { return _failsafe; }
@@ -164,7 +165,12 @@ public:
     void setRatesToPassThrough();
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
-    uint32_t getArmingDisableFlags() const { return _armingDisabledFlags; }
+
+    bool isRcModeActive(uint8_t rcMode) const;
+    static bool pwmIsHigh(uint16_t x) { return x > 1750; }
+    static bool pwmIsLow(uint16_t x) { return x < 1250; }
+    static bool pwmIsMid(uint16_t x) { return (x > 1250) && (x <1750); }
+
 private:
     Features _features;
     FlightController& _flightController;

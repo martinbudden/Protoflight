@@ -64,7 +64,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         // Detect menu invocation
         if (!_cockpit.isArmed() && !_cockpit.isRcModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
             const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
-            if (pwmIsMid(controls.throttle) && pwmIsLow(controls.yaw) && pwmIsHigh(controls.pitch)) {
+            if (Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch)) {// && Cockpit::pwmIsMid(controls.throttle)) {
                 _cmsx.menuOpen(*_displayPort);
                 _rcDelayMs = CMSX::BUTTON_PAUSE_MS; // Tends to overshoot if BUTTON_TIME_MS used
             }
@@ -100,19 +100,19 @@ uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t r
         rcDelayMs = _cmsx.handleKey(*_displayPort, _externKey);
         _externKey = CMSX::KEY_NONE;
     } else {
-        if (_cockpit.isArmed() == false && pwmIsMid(controls.throttle) && pwmIsLow(controls.yaw) && pwmIsHigh(controls.pitch)) {
+        if (_cockpit.isArmed() == false && Cockpit::pwmIsMid(controls.throttle) && Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch)) {
             key = CMSX::KEY_MENU;
-        } else if (pwmIsHigh(controls.pitch)) {
+        } else if (Cockpit::pwmIsHigh(controls.pitch)) {
             key = CMSX::KEY_UP;
-        } else if (pwmIsLow(controls.pitch)) {
+        } else if (Cockpit::pwmIsLow(controls.pitch)) {
             key = CMSX::KEY_DOWN;
-        } else if (pwmIsHigh(controls.roll)) {
+        } else if (Cockpit::pwmIsHigh(controls.roll)) {
             key = CMSX::KEY_RIGHT;
-        } else if (pwmIsLow(controls.roll)) {
+        } else if (Cockpit::pwmIsLow(controls.roll)) {
             key = CMSX::KEY_LEFT;
-        } else if (pwmIsHigh(controls.yaw)) {
+        } else if (Cockpit::pwmIsHigh(controls.yaw)) {
             key = CMSX::KEY_ESC;
-        } else if (pwmIsLow(controls.yaw)) {
+        } else if (Cockpit::pwmIsLow(controls.yaw)) {
             key = CMSX::KEY_SAVE_MENU;
         }
         if (key == CMSX::KEY_NONE) {

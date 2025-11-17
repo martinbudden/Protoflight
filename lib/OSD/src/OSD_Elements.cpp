@@ -62,14 +62,10 @@ void OSD_Elements::setDefaultConfig()
         element_pos = OSD_POS((midCol - 5), midRow); // cppcheck-suppress useStlAlgorithm
     }
 
-    uint16_t profileFlags = 0;
-    for (uint16_t ii = 0; ii <= PROFILE_COUNT; ++ii) {
-        profileFlags |= profileFlag(ii);
-    }
     // Always enable warnings elements by default
 
     enum { OSD_WARNINGS_PREFERRED_SIZE = 12 };
-    _config.element_pos[OSD_WARNINGS] = OSD_POS(midCol - OSD_WARNINGS_PREFERRED_SIZE/2, midRow + 3) | profileFlags;
+    _config.element_pos[OSD_WARNINGS] = OSD_POS(midCol - OSD_WARNINGS_PREFERRED_SIZE/2, midRow + 3);
 
     // Default to old fixed positions for these elements
     _config.element_pos[OSD_CROSSHAIRS]         = OSD_POS(midCol - 2,  midRow - 1);
@@ -77,6 +73,7 @@ void OSD_Elements::setDefaultConfig()
     _config.element_pos[OSD_HORIZON_SIDEBARS]   = OSD_POS(midCol - 1,  midRow - 1);
     _config.element_pos[OSD_CAMERA_FRAME]       = OSD_POS(midCol - 12, midRow - 6);
     _config.element_pos[OSD_UP_DOWN_REFERENCE]  = OSD_POS(midCol - 2,  midRow - 1);
+    _config.element_pos[OSD_DISARMED]           = OSD_POS(0, 0);
 #if defined(M5_UNIFIED)
     _config.element_pos[OSD_ROLL_ANGLE]         = OSD_POS(0, 2);
     _config.element_pos[OSD_PITCH_ANGLE]        = OSD_POS(8, 2);
@@ -84,6 +81,10 @@ void OSD_Elements::setDefaultConfig()
     _config.element_pos[OSD_PITCH_PIDS]         = OSD_POS(2, 13);
     _config.element_pos[OSD_RC_CHANNELS]        = OSD_POS(0, 6);
 #endif
+    // enable elements in all profiles by default
+    for (auto& element : _config.element_pos) {
+        element |= PROFILE_MASK;
+   }
 }
 
 uint32_t OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  element, uint8_t x, uint8_t y, uint8_t attr, const char *s)
@@ -124,11 +125,12 @@ void OSD_Elements::addActiveElements()
     //addActiveElement(OSD_DEBUG);
     addActiveElement(OSD_ROLL_PIDS);
     addActiveElement(OSD_PITCH_PIDS);
-    addActiveElement(OSD_CROSSHAIRS);
-    addActiveElement(OSD_ARTIFICIAL_HORIZON);
+    //addActiveElement(OSD_CROSSHAIRS);
+    //addActiveElement(OSD_ARTIFICIAL_HORIZON);
     addActiveElement(OSD_ROLL_ANGLE);
     addActiveElement(OSD_PITCH_ANGLE);
     addActiveElement(OSD_RC_CHANNELS);
+    addActiveElement(OSD_DISARMED);
 }
 
 void OSD_Elements::updateAHRS_data()

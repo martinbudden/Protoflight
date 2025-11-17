@@ -28,6 +28,7 @@ public:
     enum { HD_ROWS = 20, HD_COLS = 53 };
     enum { FRAMERATE_DEFAULT_HZ = 100 }; // 12 };
     enum { ESC_RPM_ALARM_OFF = -1, ESC_TEMP_ALARM_OFF = 0, ESC_CURRENT_ALARM_OFF = -1 };
+    enum { ELEMENT_BUFFER_LENGTH = 32 };
 
     enum  state_e {
         STATE_INIT,
@@ -38,7 +39,7 @@ public:
         STATE_PROCESS_STATS2,
         STATE_PROCESS_STATS3,
         STATE_UPDATE_ALARMS,
-        STATE_REFRESH_PREARM,
+        STATE_REFRESH_PRE_ARM,
         STATE_UPDATE_CANVAS,
         // Elements are handled in two steps, drawing into a buffer, and then sending to the display
         STATE_DRAW_ELEMENT,
@@ -82,6 +83,13 @@ public:
         STATS_AVG_THROTTLE,
         STATS_COUNT // MUST BE LAST
     };
+    enum refresh_stats_state_e {
+        REFRESH_STATS_STATE_INITIAL_CLEAR_SCREEN = 0,
+        REFRESH_STATS_STATE_COUNT_STATS,
+        REFRESH_STATS_STATE_CLEAR_SCREEN,
+        REFRESH_STATS_STATE_RENDER_STATS,
+    };
+
     enum logo_on_arming_e { LOGO_ARMING_OFF, LOGO_ARMING_ON, LOGO_ARMING_FIRST };
     enum timer_e {
         TIMER_1,
@@ -176,6 +184,14 @@ public:
         uint8_t osd_use_quick_menu;
         uint8_t osd_show_spec_prearm;
     };
+    struct statsConfig_t {
+        uint32_t stats_total_flights;
+        uint32_t stats_total_time_s;
+        uint32_t stats_total_dist_m;
+        int8_t stats_min_armed_time_s;
+        uint32_t stats_mah_used;
+        uint8_t statsSaveMoveLimit; // gyro rate limit for saving stats upon disarm
+    };
     struct stats_t {
         timeUs32_t armed_time;
         float max_g_force;
@@ -200,9 +216,11 @@ public:
     };
 public:
     void init(DisplayPortBase* displayPort, DisplayPortBase::device_type_e displayPortDeviceType);
-    void completeInitialization();
+    void drawLogoAndCompleteInitialization();
     const config_t& getConfig() const { return _config; }
     void setConfig(const config_t& config);
+    const statsConfig_t& getStatsConfig() const { return _statsConfig; }
+    void setStatsConfig(const statsConfig_t& statsConfig);
 
     OSD_Elements& getOSD_Elements() { return _elements; }
     const OSD_Elements& getOSD_Elements() const { return _elements; }
@@ -223,9 +241,12 @@ public:
     bool getVisualBeeperState() const { return _visualBeeperState; }
     void setVisualBeeperState(bool visualBeeperState) { _visualBeeperState = visualBeeperState; }
     const stats_t& getStats() const { return _stats; }
+    void displayStatisticLabel(uint8_t x, uint8_t y, const char * text, const char * value);
+    bool displayStatistic(int statistic, uint8_t displayRow);
+    bool renderStatsContinue();
     bool refreshStats();
     bool processStats1(timeUs32_t currentTimeUs);
-    bool processStats2(timeUs32_t currentTimeUs);
+    void processStats2(timeUs32_t currentTimeUs);
     void processStats3();
     void updateAlarms();
     void syncBlink(timeUs32_t currentTimeUs);
@@ -241,12 +262,16 @@ private:
     std::array<uint32_t, OSD_ITEM_COUNT> _elementDurationFractionUs {};
 
     config_t _config {};
+    statsConfig_t _statsConfig {};
     stats_t _stats {};
     stats_rendering_state_t _statsRenderingState {};
+    refresh_stats_state_e _refreshStatsState {REFRESH_STATS_STATE_INITIAL_CLEAR_SCREEN};
     bool _visualBeeperState {};
     bool _suppressStatsFlag {};
     bool _moreElementsToDraw {};
     bool _backgroundLayerSupported {};
     bool _isReady {false};
     bool _isArmed {};
+    bool _statsVisible {false};
+    bool _statsEnabled {false};
 };

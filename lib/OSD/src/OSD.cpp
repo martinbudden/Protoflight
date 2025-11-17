@@ -1,8 +1,11 @@
 #include "OSD.h"
 #include "Cockpit.h"
+#include "FormatInteger.h"
 
-//#include <Hardware//Serial.h>
+//#include <HardwareSerial.h>
 #include <MSP_Box.h>
+#include <ReceiverBase.h>
+#include <cstring>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
@@ -25,7 +28,7 @@ void OSD::init(DisplayPortBase *displayPort, DisplayPortBase::device_type_e disp
     }
 }
 
-void OSD::completeInitialization()
+void OSD::drawLogoAndCompleteInitialization()
 {
     uint8_t midRow = _displayPort->getRowCount() / 2;
     uint8_t midCol = _displayPort->getColumnCount() / 2;
@@ -37,7 +40,6 @@ void OSD::completeInitialization()
     _backgroundLayerSupported = _displayPort->layerSupported(DisplayPortBase::LAYER_BACKGROUND);
     _displayPort->layerSelect(DisplayPortBase::LAYER_FOREGROUND);
 
-    _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
     _displayPort->clearScreen(DISPLAY_CLEAR_WAIT);
 
     // Display betaflight logo
@@ -67,7 +69,7 @@ void OSD::completeInitialization()
     _elements.init(_backgroundLayerSupported, _displayPort->getRowCount(), _displayPort->getColumnCount());
     analyzeActiveElements();
 
-    _displayPort->commitTransaction();
+    _displayPort->redraw();
 
     _isReady = true;
 }
@@ -82,6 +84,11 @@ void OSD::analyzeActiveElements()
 void OSD::setConfig(const config_t& config)
 {
     _config = config;
+}
+
+void OSD::setStatsConfig(const statsConfig_t& statsConfig)
+{
+    _statsConfig = statsConfig;
 }
 
 void OSD::setStatsState(uint8_t statIndex, bool enabled)
@@ -119,21 +126,204 @@ void OSD::resetStats()
     _stats.min_rsnr = CRSF_SNR_MAX;
 }
 
-bool OSD::refreshStats()
+// Controls the display order of the OSD post-flight statistics.
+// Adjust the ordering here to control how the post-flight stats are presented.
+// Every entry in osd_stats_e should be represented. Any that are missing will not
+// be shown on the the post-flight statistics page.
+// If you reorder the stats it's likely that you'll need to make likewise updates
+// to the unit tests.
+
+// If adding new stats, please add to the osdStatsNeedAccelerometer() function
+// if the statistic utilizes the accelerometer.
+//
+const std::array<OSD::stats_e, OSD::STATS_COUNT> statsDisplayOrder= {
+    OSD::STATS_RTC_DATE_TIME,
+    OSD::STATS_TIMER_1,
+    OSD::STATS_TIMER_2,
+    OSD::STATS_MAX_ALTITUDE,
+    OSD::STATS_MAX_SPEED,
+    OSD::STATS_MAX_DISTANCE,
+    OSD::STATS_FLIGHT_DISTANCE,
+    OSD::STATS_MIN_BATTERY,
+    OSD::STATS_END_BATTERY,
+    OSD::STATS_BATTERY,
+    OSD::STATS_MIN_RSSI,
+    OSD::STATS_MAX_CURRENT,
+    OSD::STATS_USED_MAH,
+    OSD::STATS_BLACKBOX,
+    OSD::STATS_BLACKBOX_NUMBER,
+    OSD::STATS_MAX_G_FORCE,
+    OSD::STATS_MAX_ESC_TEMP,
+    OSD::STATS_MAX_ESC_RPM,
+    OSD::STATS_MIN_LINK_QUALITY,
+    OSD::STATS_MAX_FFT,
+    OSD::STATS_MIN_RSSI_DBM,
+    OSD::STATS_MIN_RSNR,
+    OSD::STATS_TOTAL_FLIGHTS,
+    OSD::STATS_TOTAL_TIME,
+    OSD::STATS_TOTAL_DIST,
+    OSD::STATS_WATT_HOURS_DRAWN,
+    OSD::STATS_BEST_3_CONSEC_LAPS,
+    OSD::STATS_BEST_LAP,
+    OSD::STATS_FULL_THROTTLE_TIME,
+    OSD::STATS_FULL_THROTTLE_COUNTER,
+    OSD::STATS_AVG_THROTTLE,
+};
+
+void OSD::displayStatisticLabel(uint8_t x, uint8_t y, const char * text, const char * value)
 {
+    _displayPort->writeString(x - 13, y, DisplayPortBase::SEVERITY_NORMAL, text);
+    _displayPort->writeString(x + 5, y, DisplayPortBase::SEVERITY_NORMAL, ":");
+    _displayPort->writeString(x + 7, y, DisplayPortBase::SEVERITY_NORMAL, value);
+}
+
+bool OSD::displayStatistic(int statistic, uint8_t displayRow)
+{
+    const uint8_t midCol = _displayPort->getColumnCount() / 2;
+    std::array<char, ELEMENT_BUFFER_LENGTH> buf {};
+
+    switch (statistic) {
+    case STATS_TOTAL_FLIGHTS:
+        ui2a(_statsConfig.stats_total_flights, &buf[0]);
+        displayStatisticLabel(midCol, displayRow, "TOTAL FLIGHTS", &buf[0]);
+        return true;
+    default:
+        return false;
+    }
+}
+/*
+Called repeatedly until it returns true which indicates that all stats have been rendered.
+*/
+bool OSD::renderStatsContinue()
+{
+    const uint8_t midCol = _displayPort->getColumnCount() / 2;
+
+    if (_statsRenderingState.row == 0) {
+        bool displayLabel = false;
+        // if rowCount is 0 then we're running an initial analysis of the active stats items
+        if (_statsRenderingState.rowCount > 0) {
+            const uint8_t availableRows = _displayPort->getRowCount();
+            uint8_t displayRows = std::min(_statsRenderingState.rowCount, availableRows);
+            if (_statsRenderingState.rowCount < availableRows) {
+                displayLabel = true;
+                displayRows++;
+            }
+            _statsRenderingState.row = static_cast<uint8_t>((availableRows - displayRows) / 2);  // center the stats vertically
+        }
+        if (displayLabel) {
+            _displayPort->writeString(midCol - static_cast<uint8_t>(strlen("--- STATS ---") / 2), _statsRenderingState.row, DisplayPortBase::SEVERITY_NORMAL, "--- STATS ---");
+            ++_statsRenderingState.row;
+            return false;
+        }
+    }
+    bool statisticDisplayed = false;
+    while (_statsRenderingState.index < STATS_COUNT) {
+        const uint8_t index = _statsRenderingState.index;
+        // prepare for the next call to the method
+        ++_statsRenderingState.index;
+        // look for something to render
+        if (_config.enabled_stats & (1<< statsDisplayOrder[index])) {
+            if (displayStatistic(statsDisplayOrder[index], _statsRenderingState.row)) {
+                ++_statsRenderingState.row;
+                statisticDisplayed = true;
+                break;
+            }
+        }
+    }
+    const bool moreSpaceAvailable = _statsRenderingState.row < _displayPort->getRowCount();
+    if (statisticDisplayed && moreSpaceAvailable) {
+        return false;
+    }
+    if (_statsRenderingState.rowCount == 0) {
+        _statsRenderingState.rowCount = _statsRenderingState.row;
+    }
     return true;
 }
 
+/*!
+State machine to refresh statistics.
+Returns true when all iterations are complete.
+*/
+bool OSD::refreshStats()
+{
+    switch (_refreshStatsState) {
+    default:
+        [[fallthrough]];
+    case REFRESH_STATS_STATE_INITIAL_CLEAR_SCREEN:
+        //Serial.printf("REFRESH_STATS_STATE_INITIAL_CLEAR_SCREEN\r\n");
+        _statsRenderingState.row = 0;
+        _statsRenderingState.index = 0;
+        if (_statsRenderingState.rowCount > 0) {
+            _refreshStatsState = REFRESH_STATS_STATE_RENDER_STATS;
+        } else {
+            _refreshStatsState = REFRESH_STATS_STATE_COUNT_STATS;
+        }
+        _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+        break;
+    case REFRESH_STATS_STATE_COUNT_STATS:{
+        //Serial.printf("REFRESH_STATS_STATE_COUNT_STATS\r\n");
+        // No stats row count has been set yet.
+        // Go through the logic one time to determine how many stats are actually displayed.
+        bool count_phase_complete = renderStatsContinue();
+        if (count_phase_complete) {
+            _refreshStatsState = REFRESH_STATS_STATE_CLEAR_SCREEN;
+        }
+        break;
+    }
+    case REFRESH_STATS_STATE_CLEAR_SCREEN:
+        //Serial.printf("REFRESH_STATS_STATE_CLEAR_SCREEN\r\n");
+        _statsRenderingState.row = 0;
+        _statsRenderingState.index = 0;
+        // Then clear the screen and commence with normal stats display which will
+        // determine if the heading should be displayed and also center the content vertically.
+        _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+        _refreshStatsState = REFRESH_STATS_STATE_RENDER_STATS;
+        break;
+    case REFRESH_STATS_STATE_RENDER_STATS:
+        //Serial.printf("REFRESH_STATS_STATE_RENDER_STATS\r\n");
+        if (renderStatsContinue()) {
+            _refreshStatsState = REFRESH_STATS_STATE_INITIAL_CLEAR_SCREEN;
+            return true;
+        }
+        break;
+    };
+
+    return false;
+}
+
+/*!
+Returns true if refresh stats is required.
+*/
 bool OSD::processStats1(timeUs32_t currentTimeUs)
 {
     (void)currentTimeUs;
-    return true;
+    return false;
 }
 
-bool OSD::processStats2(timeUs32_t currentTimeUs)
+void OSD::processStats2(timeUs32_t currentTimeUs)
 {
-    (void)currentTimeUs;
-    return true;
+    if (_resumeRefreshAtUs) {
+        if (currentTimeUs < _resumeRefreshAtUs) {
+            // in timeout period, check sticks for activity or CRASH_FLIP switch to resume display.
+            if (!_cockpit.isArmed()) {
+                const ReceiverBase::controls_pwm_t controls = _cockpit.getReceiver().getControlsPWM();
+                if (Cockpit::pwmIsHigh(controls.throttle) || Cockpit::pwmIsHigh(controls.pitch) || _cockpit.isRcModeActive(MSP_Box::BOX_CRASH_FLIP)) {
+                    _resumeRefreshAtUs = currentTimeUs;
+                }
+            }
+            return;
+        }
+        _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+        _resumeRefreshAtUs = 0;
+        _statsEnabled = false;
+        _stats.armed_time = 0;
+        //schedulerIgnoreTaskExecTime();
+    }
+#ifdef USE_ESC_SENSOR
+    if (featureIsEnabled(FEATURE_ESC_SENSOR)) {
+        osdEscDataCombined = getEscSensorData(ESC_SENSOR_COMBINED);
+    }
+#endif
 }
 
 void OSD::processStats3()
@@ -196,8 +386,8 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
                 return;
             }
         }
-        completeInitialization();
-        _displayPort->redraw();
+        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
+        drawLogoAndCompleteInitialization();
         _state = STATE_COMMIT;
         break;
     case STATE_CHECK:
@@ -218,18 +408,19 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         break;
     case STATE_PROCESS_STATS1:
         //Serial.printf("STATE_PROCESS_STATS1\r\n");
+        // transaction begins here since refreshStats draws to the screen
+        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING); 
         _state = processStats1(timeMicroseconds) ? STATE_REFRESH_STATS : STATE_PROCESS_STATS2; // cppcheck-suppress knownConditionTrueFalse
         break;
     case STATE_REFRESH_STATS:
         //Serial.printf("STATE_REFRESH_STATS\r\n");
-        if (refreshStats()) {
+        if (refreshStats()) { // draws the statistics to the screen
             _state = STATE_PROCESS_STATS2;
         }
         break;
     case STATE_PROCESS_STATS2:
         //Serial.printf("STATE_PROCESS_STATS2\r\n");
-        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
-        processStats2(timeMicroseconds);
+        processStats2(timeMicroseconds); // may clear screen
         _state = STATE_PROCESS_STATS3;
         break;
     case STATE_PROCESS_STATS3:
@@ -250,8 +441,8 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         break;
     case STATE_UPDATE_CANVAS:
         //Serial.printf("STATE_UPDATE_CANVAS\r\n");
-        // Hide OSD when OSD SW mode is active
         if (_cockpit.isRcModeActive(MSP_Box::BOX_OSD)) {
+            // Hide OSD when OSD SW mode is active
             _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
             _state = STATE_COMMIT;
             break;
@@ -266,7 +457,7 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
             _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
         }
         syncBlink(timeMicroseconds);
-        _elements.updateAHRS_data();
+        _elements.updateAHRS_data(); // update the AHRS data, so it is only needed to be done once for all elements that require it
         _state = STATE_DRAW_ELEMENT;
         break;
     case STATE_DRAW_ELEMENT: {
@@ -291,26 +482,24 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         if (_moreElementsToDraw) {
             break;
         }
-        _state = (_cockpit.isArmed() && _config.osd_show_spec_prearm) ? STATE_REFRESH_PREARM : STATE_COMMIT;
+        _state = (_cockpit.isArmed() && _config.osd_show_spec_prearm) ? STATE_REFRESH_PRE_ARM : STATE_COMMIT;
         break;
     }
-    case STATE_DISPLAY_ELEMENT:
+    case STATE_DISPLAY_ELEMENT: {
         //Serial.printf("STATE_DISPLAY_ELEMENT\r\n");
-        if (!_elements.displayActiveElement(*_displayPort)) {
+        const bool moreToDisplay = _elements.displayActiveElement(*_displayPort);
+        if (!moreToDisplay) {
+            // finished displaying this element, so move on to the next one if there is one
             if (_moreElementsToDraw) {
-                // There is no more to draw so advance to the next element
                 _state = STATE_DRAW_ELEMENT;
             } else {
-                if (_cockpit.isArmed() && _config.osd_show_spec_prearm) {
-                    _state = STATE_REFRESH_PREARM;
-                } else {
-                    _state = STATE_COMMIT;
-                }
+                _state = (_cockpit.isArmed() && _config.osd_show_spec_prearm) ? STATE_REFRESH_PRE_ARM : STATE_COMMIT;
             }
         }
         break;
-    case STATE_REFRESH_PREARM:
-        //Serial.printf("STATE_REFRESH_PREARM\r\n");
+    }
+    case STATE_REFRESH_PRE_ARM:
+        //Serial.printf("STATE_REFRESH_PRE-ARM\r\n");
         if (_elements.drawSpec(*_displayPort)) {
             // Rendering is complete
             _state = STATE_COMMIT;

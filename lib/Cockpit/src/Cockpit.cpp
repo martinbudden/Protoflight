@@ -81,7 +81,10 @@ bool Cockpit::isRcModeActive(uint8_t rcMode) const
     if (rcMode == MSP_Box::BOX_OSD) {
         return false;
     }
-    return true; // !!TODO rcMode
+    if (rcMode == MSP_Box::BOX_STICK_COMMAND_DISABLE) {
+        return false;
+    }
+    return false; // !!TODO rcMode
 }
 
 void Cockpit::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex)

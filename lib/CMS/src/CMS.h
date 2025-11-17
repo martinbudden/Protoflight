@@ -44,10 +44,6 @@ public:
     DisplayPortBase* displayPortSelectNext();
     void setDisplayPort(DisplayPortBase* displayPort) { _displayPort = displayPort; }
     bool displayPortSelect(const DisplayPortBase* displayPort);
-    static bool pwmIsHigh(uint16_t x) { return x > 1750; }
-    static bool pwmIsLow(uint16_t x) { return x < 1250; }
-    static bool pwmIsMid(uint16_t x) { return (x > 1250) && (x <1750); }
-
     void setArmingDisabled();
     void clearArmingDisabled();
 

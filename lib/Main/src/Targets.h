@@ -68,7 +68,7 @@ Targets
 
     #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
     #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
 #if defined(LIBRARY_SENSORS_IMU_USE_M5_UNIFIED)
     #define USE_IMU_M5_UNIFIED
@@ -90,12 +90,12 @@ Targets
     //#define USE_BLACKBOX_DEBUG
     //#define BLACKBOX_IS_EVENT_DRIVEN
     //#define USE_MSP
-    //#define USE_OSD
+    #define USE_OSD
     //#define USE_CMS
 
     #define USE_BACKCHANNEL
 
-    #define USE_DASHBOARD
+    //#define USE_DASHBOARD
     #define USE_SCREEN
     #define USE_BUTTONS
 

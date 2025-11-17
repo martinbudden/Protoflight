@@ -189,6 +189,7 @@ public:
     void drawDebug(DisplayPortBase& displayPort);
     void drawAngleRoll(DisplayPortBase& displayPort);
     void drawAnglePitch(DisplayPortBase& displayPort);
+    void drawDisarmed(DisplayPortBase& displayPort);
     void drawRC_Channels(DisplayPortBase& displayPort);
     void drawDebug2(DisplayPortBase& displayPort);
 // element background drawing functions

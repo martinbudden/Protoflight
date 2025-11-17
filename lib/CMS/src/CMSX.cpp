@@ -2,6 +2,7 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
 #include "DisplayPortBase.h"
+#include "FormatInteger.h"
 #include "OSD_Symbols.h"
 #include <cstring>
 
@@ -25,11 +26,6 @@ CMSX::CMSX(CMS& cms) :
 
 void CMSX::setRebootRequired()
 {
-}
-
-void CMSX::setInMenu(bool inMenu)
-{
-    _inMenu = inMenu;
 }
 
 bool CMSX::isInMenu() const
@@ -227,33 +223,6 @@ uint32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, char* buf, uint8_
     const uint8_t column = _smallScreen ? _rightMenuColumn - maxSize : _rightMenuColumn;
 #endif
     return displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, buf);
-}
-
-static void ui2a(unsigned int num, char* bf)
-{
-    const unsigned int base = 10;
-
-    unsigned int d = 1;
-    while (num / d >= base) {
-        d *= base;
-    }
-    while (d != 0) {
-        const unsigned int dgt = num / d;
-        *bf++ = static_cast<char>(dgt + '0' - 10); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        // Next digit
-        num %= d;
-        d /= base;
-    }
-    *bf = 0;
-}
-
-static void i2a(int num, char* bf)
-{
-    if (num < 0) {
-        num = -num;
-        *bf++ = '-'; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    }
-    ui2a(static_cast<unsigned int>(num), bf);
 }
 
 uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *entry, uint8_t row, bool selectedRow, uint8_t index) // NOLINT(readability-function-cognitive-complexity)
@@ -724,28 +693,28 @@ void CMSX::menuOpen(DisplayPortBase& displayPort)
     const CMSX::menu_t* startMenu = _currentCtx.menu;
     if (_inMenu) {
         // Switch display
-        DisplayPortBase* nextDisplayPort = _cms.displayPortSelectNext();
-        if (nextDisplayPort == &displayPort) {
-            return;
-        }
+        //DisplayPortBase* nextDisplayPort = _cms.displayPortSelectNext();
+        //if (nextDisplayPort == &displayPort) {
+        //    return;
+        //}
         // DisplayPort has been changed.
         _currentCtx.cursorRow = cursorAbsolute();
         displayPort.setBackgroundType(DisplayPortBase::BACKGROUND_TRANSPARENT); // reset previous displayPort to transparent
-        displayPort.release();
-        _cms.setDisplayPort(nextDisplayPort);
+        //displayPort.release();
+        //_cms.setDisplayPort(nextDisplayPort);
     } else {
         //_displayPort = cmsDisplayPortSelectCurrent();
         //if (!_displayPort) {
         //    return;
         //}
+        _inMenu = true;
+        displayPort.grab();
         startMenu = &CMSX::menuMain;
-        setInMenu(true);
         _currentCtx = { nullptr, 0, 0 };
         _menuStackIndex = 0;
         _cms.setArmingDisabled();
         displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }
-    displayPort.grab();
     //!!TODO: this should probably not have a dependency on the OSD or OSD slave code
 #ifdef USE_OSD
     resumeRefreshAt = 0;
@@ -937,8 +906,8 @@ const void* CMSX::menuExit(CMSX& cmsx, DisplayPortBase& displayPort, const menu_
         //saveConfigAndNotify();
     }
 
-    cmsx.setInMenu(false);
     displayPort.setBackgroundType(DisplayPortBase::BACKGROUND_TRANSPARENT);
+    cmsx._inMenu = false;
     displayPort.release();
     cmsx._currentCtx.menu = nullptr;
 

@@ -30,9 +30,10 @@ uint32_t DisplayPortM5GFX::clearScreen(display_clear_option_e options)
     return 0; 
 }
 
+// Returns true if screen still being transferred
 bool DisplayPortM5GFX::drawScreen()
 {
-    return true;
+    return false;
 }
 
 void DisplayPortM5GFX::beginTransaction(display_transaction_option_e options)

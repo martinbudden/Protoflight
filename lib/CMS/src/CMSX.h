@@ -68,7 +68,6 @@ public:
     };
 public:
     uint8_t cursorAbsolute() const;
-    void setInMenu(bool inMenu);
     bool isInMenu() const;
     void setRebootRequired();
 
