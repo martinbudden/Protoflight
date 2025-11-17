@@ -42,11 +42,13 @@ public:
         entryFnPtr fnPtr;
         const void* data;
     };
-    typedef const void* (*menuFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort, const OSD_Entry* entry);
+    typedef const void* (*menuOnEnterFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort);
+    typedef const void* (*menuOnExitFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort, const OSD_Entry* self);
+    typedef const void* (*menuOnDisplayUpdateFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort, const OSD_Entry* selected);
     struct menu_t {
-        menuFnPtr onEnter;
-        menuFnPtr onExit;
-        menuFnPtr onDisplayUpdate;
+        menuOnEnterFnPtr onEnter;
+        menuOnExitFnPtr onExit;
+        menuOnDisplayUpdateFnPtr onDisplayUpdate;
         const OSD_Entry* entries;
     };
     struct ctx_t {
@@ -106,6 +108,7 @@ private:
     uint8_t _leftMenuColumn {};
     uint8_t _rightMenuColumn {};
     uint8_t _linesPerMenuItem {};
+    bool _smallScreen {false};
     bool _saveMenuInhibited {};
     bool _inMenu {};
     bool _elementEditing {};

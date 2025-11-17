@@ -59,7 +59,7 @@ bool CMSX::rowIsSkippable(const OSD_Entry* row)
     if (type == OME_String) {
         return true;
     }
-    if ((row->flags == DYNAMIC) || rowSliderOverride(row->flags)) {
+    if ((row->flags == OME_DYNAMIC) || rowSliderOverride(row->flags)) {
         if (type == OME_UINT8  || type == OME_INT8 || type == OME_UINT16  || type == OME_INT16) {
             return true;
         }
@@ -85,24 +85,22 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
 
     uint32_t room = displayPort.txBytesFree();
 
-    uint8_t i = 0;
+    uint8_t ii = 0;
     if (displayWasCleared) {
-        for (const OSD_Entry* p = _pageTop; (p <= _pageTop + _pageMaxRow); p++, i++) {
-            _runtimeEntryFlags[i] |= PRINT_LABEL;
-            _runtimeEntryFlags[i] |= PRINT_VALUE;
+        for (const OSD_Entry* entry = _pageTop; entry <= _pageTop + _pageMaxRow; ++entry, ++ii) {
+            _runtimeEntryFlags[ii] |= OME_PRINT_LABEL | OME_PRINT_VALUE;
         }
     } else if (drawPolled) {
-        for (const OSD_Entry* p = _pageTop; (p <= _pageTop + _pageMaxRow); p++, i++) {
-            if (p->flags & DYNAMIC) {
-                _runtimeEntryFlags[i] |= PRINT_VALUE;
+        for (const OSD_Entry* entry = _pageTop; entry <= _pageTop + _pageMaxRow; ++entry, ++ii) {
+            if (entry->flags & OME_DYNAMIC) {
+                _runtimeEntryFlags[ii] |= OME_PRINT_VALUE;
             }
         }
     }
     while (rowIsSkippable(_pageTop + _currentCtx.cursorRow)) { // skip labels, strings and dynamic read-only entries
         ++_currentCtx.cursorRow;
     }
-    //const uint8_t top = smallScreen ? 1 : (displayPort->rows - pageMaxRow)/2;
-    const uint8_t top = 1;
+    const uint8_t top = _smallScreen ? 1 : static_cast<uint8_t>((displayPort.getRowCount() - _pageMaxRow)/2);
     const uint8_t y = top + static_cast<uint8_t>(displayPort.getCursorRow() * _linesPerMenuItem);
     if (_currentCtx.cursorRow != displayPort.getCursorRow()) {
         room -= displayPort.writeString(_leftMenuColumn, y, DisplayPortBase::SEVERITY_NORMAL, " ");
@@ -125,28 +123,28 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
         }
     }
     // Print text labels
-    i = 0;
-    for (const OSD_Entry* p = _pageTop; (p <= _pageTop + _pageMaxRow); ++i, ++p) {
-        const uint8_t yVal = top + static_cast<uint8_t>(i * _linesPerMenuItem);
-        if (_runtimeEntryFlags[i] & PRINT_LABEL) {
+    ii = 0;
+    for (const OSD_Entry* entry = _pageTop; (entry <= _pageTop + _pageMaxRow); ++ii, ++entry) {
+        const uint8_t yVal = top + static_cast<uint8_t>(ii * _linesPerMenuItem);
+        if (_runtimeEntryFlags[ii] & OME_PRINT_LABEL) {
             uint8_t coloff = _leftMenuColumn;
-            coloff += ((p->flags & OME_MASK) == OME_Label) ? 0 : 1;
-            room -= displayPort.writeString(coloff, yVal, DisplayPortBase::SEVERITY_NORMAL, p->text);
-            _runtimeEntryFlags[i] &= static_cast<uint16_t>(~PRINT_LABEL);
+            coloff += ((entry->flags & OME_MASK) == OME_Label) ? 0 : 1;
+            room -= displayPort.writeString(coloff, yVal, DisplayPortBase::SEVERITY_NORMAL, entry->text);
+            _runtimeEntryFlags[ii] &= static_cast<uint16_t>(~OME_PRINT_LABEL);
             if (room < 30) {
                 return;
             }
         }
         // Highlight values overridden by sliders
-        if (rowSliderOverride(p->flags)) {
+        if (rowSliderOverride(entry->flags)) {
             displayPort.writeChar(_leftMenuColumn - 1, yVal, DisplayPortBase::SEVERITY_NORMAL, 'S');
         }
         // Print values
         // XXX Polled values at latter positions in the list may not be
         // XXX printed if not enough room in the middle of the list.
-        if ((_runtimeEntryFlags[i] & PRINT_VALUE) || (_runtimeEntryFlags[i] & SCROLLING_TICKER)) {
-            const bool selectedRow = (i == _currentCtx.cursorRow);
-            room -= drawMenuEntry(displayPort, p, yVal, selectedRow, i);
+        if ((_runtimeEntryFlags[ii] & OME_PRINT_VALUE) || (_runtimeEntryFlags[ii] & OME_SCROLLING_TICKER)) {
+            const bool selectedRow = (ii == _currentCtx.cursorRow);
+            room -= drawMenuEntry(displayPort, entry, yVal, selectedRow, ii);
             if (room < 30) {
                 return;
             }
@@ -216,26 +214,26 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry *entr
 
     switch (entry->flags & OME_MASK) {
     case OME_INT8:
-        if ((_runtimeEntryFlags[index] & PRINT_VALUE) && entry->data) {
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
             const OSD_INT8_t* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
-            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~PRINT_VALUE);
+            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~OME_PRINT_VALUE);
         }
         break;
     case OME_UINT8:
-        if ((_runtimeEntryFlags[index] & PRINT_VALUE) && entry->data) {
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
             const OSD_UINT8_t* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
-            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~PRINT_VALUE);
+            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~OME_PRINT_VALUE);
         }
         break;
     case OME_String:
-        if ((_runtimeEntryFlags[index] & PRINT_VALUE) && entry->data) {
+        if ((_runtimeEntryFlags[index] & OME_PRINT_VALUE) && entry->data) {
             strncpy(reinterpret_cast<char*>(&_menuDrawBuf[0]), static_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
             count = drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, MENU_DRAW_BUFFER_LEN);
-            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~PRINT_VALUE);
+            _runtimeEntryFlags[index] &= static_cast<uint16_t>(~OME_PRINT_VALUE);
         }
         break;
     }
@@ -321,7 +319,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
             if (retval == MENU_CHAIN_BACK) {
                 menuBack(displayPort);
             }
-            if ((entry->flags & REBOOT_REQUIRED)) {
+            if ((entry->flags & OME_REBOOT_REQUIRED)) {
                 setRebootRequired();
             }
             ret =BUTTON_PAUSE_MS;
@@ -366,9 +364,9 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *val &= ~OSD_PROFILE_FLAG(_osdProfileCursor);
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= PRINT_VALUE;
+            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
 
-            if ((entry->flags & REBOOT_REQUIRED) && (*val != previousValue)) {
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*val != previousValue)) {
                 setRebootRequired();
             }
         }
@@ -379,8 +377,8 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
             const OSD_UINT8_t* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
             *ptr->val = (key == KEY_RIGHT) ? 1 : 0;
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= PRINT_VALUE;
-            if ((entry->flags & REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
             if (entry->fnPtr) {
@@ -402,8 +400,8 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *ptr->val -= ptr->step;
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= PRINT_VALUE;
-            if ((entry->flags & REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
             if (entry->fnPtr) {
@@ -424,8 +422,8 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *ptr->val -= ptr->step;
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= PRINT_VALUE;
-            if ((entry->flags & REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
             if (entry->fnPtr) {
@@ -446,8 +444,8 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *ptr->val -= ptr->step;
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= PRINT_VALUE;
-            if ((entry->flags & REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
             if (entry->fnPtr) {
@@ -468,9 +466,9 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *ptr->val -= ptr->step;
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= PRINT_VALUE;
+            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
 
-            if ((entry->flags & REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
             if (entry->fnPtr) {
@@ -491,9 +489,9 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *ptr->val -= ptr->step;
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= PRINT_VALUE;
+            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
 
-            if ((entry->flags & REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
             if (entry->fnPtr) {
@@ -514,9 +512,9 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
                     *ptr->val -= ptr->step;
                 }
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= PRINT_VALUE;
+            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
 
-            if ((entry->flags & REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
             if (entry->fnPtr) {
@@ -540,8 +538,8 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key)
             if (entry->fnPtr) {
                 entry->fnPtr(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
             }
-            _runtimeEntryFlags[_currentCtx.cursorRow] |= PRINT_VALUE;
-            if ((entry->flags & REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+            _runtimeEntryFlags[_currentCtx.cursorRow] |= OME_PRINT_VALUE;
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
         }
@@ -634,7 +632,7 @@ const void* CMSX::menuChange(CMSX& cmsx, DisplayPortBase& displayPort, const men
         cmsx._currentCtx.cursorRow = 0;
 
         if (menu->onEnter) {
-            const void* result = menu->onEnter(cmsx, displayPort, nullptr);
+            const void* result = menu->onEnter(cmsx, displayPort);
             if (result == MENU_CHAIN_BACK) {
                 return menuBack(cmsx, displayPort, menu);
             }

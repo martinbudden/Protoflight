@@ -6,13 +6,13 @@
 
 static Cockpit::failsafe_t failsafe {};
 
-static const void* menuFailsafeOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+static const void* menuFailsafeOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
     failsafe = cmsx.getCMS().getCockpit().getFailsafe();
     return nullptr;
 }
 
-static const void* menuFailsafeOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+static const void* menuFailsafeOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     cmsx.getCMS().getCockpit().setFailsafe(failsafe);
     return nullptr;
@@ -40,10 +40,10 @@ static const std::array<CMSX::OSD_Entry, 7> menuFailsafeEntries
 {{
     { "-- FAILSAFE --", OME_Label, nullptr, nullptr},
 
-    { "PROCEDURE",        OME_TABLE  | REBOOT_REQUIRED, nullptr, &entryFailsafeProcedure },
-    { "GUARD TIME",       OME_FLOAT  | REBOOT_REQUIRED, nullptr, &entryFailsafeDelay },
-    { "LANDING_TIME",     OME_FLOAT  | REBOOT_REQUIRED, nullptr, &entryFailsafeLandingTime },
-    { "STAGE 2 THROTTLE", OME_UINT16 | REBOOT_REQUIRED, nullptr, &entryFailsafeThrottle },
+    { "PROCEDURE",        OME_TABLE  | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeProcedure },
+    { "GUARD TIME",       OME_FLOAT  | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeDelay },
+    { "LANDING_TIME",     OME_FLOAT  | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeLandingTime },
+    { "STAGE 2 THROTTLE", OME_UINT16 | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeThrottle },
     { "BACK", OME_Back, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
 }};

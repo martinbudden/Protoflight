@@ -49,9 +49,8 @@ static const std::array<CMSX::OSD_Entry, 7> menuMainEntries
     {nullptr, OME_END, nullptr, nullptr},
 }};
 
-static const void* mainMenuOnEnter(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* entry)
+static const void* mainMenuOnEnter(CMSX& cmsx, DisplayPortBase& displayPort)
 {
-    (void)entry;
 #if false
     if (setupPopupMenuBuild()) {
         // If setup issues were found then switch to the dynamically constructed menu
@@ -70,16 +69,16 @@ CMSX::menu_t CMSX::menuMain = {
     .entries = &menuMainEntries[0]
 };
 
-static const void* menuSetupPopupOnDisplayUpdate(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* entry)
+static const void* menuSetupPopupOnDisplayUpdate(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* selected)
 {
     (void)cmsx;
     (void)displayPort;
-    (void)entry;
+    (void)selected;
 
     return nullptr;
 }
 
-#ifdef USE_BATTERY_CONTINUE
+#if defined(USE_BATTERY_CONTINUE)
 enum { SETUP_POPUP_MAX_ENTRIES = 2 };   // Increase as new entries are added
 #else
 enum { SETUP_POPUP_MAX_ENTRIES = 1 };   // Increase as new entries are added

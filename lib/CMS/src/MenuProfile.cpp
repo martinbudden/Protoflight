@@ -22,13 +22,13 @@ static data_u data {};
 // Filters
 //
 
-static const void* menuFiltersOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+static const void* menuFiltersOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
     data.imuFiltersConfig = cmsx.getCMS().getIMU_Filters().getConfig(); // NOLINT(cppcoreguidelines-pro-type-union-access)
     return nullptr;
 }
 
-static const void* menuFiltersOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+static const void* menuFiltersOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     cmsx.getCMS().getIMU_Filters().setConfig(data.imuFiltersConfig); // NOLINT(cppcoreguidelines-pro-type-union-access)
     return nullptr;
@@ -47,8 +47,8 @@ static const std::array<CMSX::OSD_Entry, 9> menuFiltersEntries
 {{
     { "-- FILTERS --", OME_Label, nullptr, nullptr },
 
-    { "GYRO LPF1",  OME_UINT16 | SLIDER_GYRO, nullptr, &entryGyroLPF1 },
-    { "GYRO LPF2",  OME_UINT16 | SLIDER_GYRO, nullptr, &entryGyroLPF2 },
+    { "GYRO LPF1",  OME_UINT16 | OME_SLIDER_GYRO, nullptr, &entryGyroLPF1 },
+    { "GYRO LPF2",  OME_UINT16 | OME_SLIDER_GYRO, nullptr, &entryGyroLPF2 },
     { "GYRO NF1",   OME_UINT16, nullptr, &entryGyroNF1 },
     { "GYRO NF1C",  OME_UINT16, nullptr, &entryGyroNF1C },
     { "GYRO NF2",   OME_UINT16, nullptr, &entryGyroNF2 },
@@ -106,20 +106,20 @@ static const std::array<CMSX::OSD_Entry, 15> menuPidEntries
 {{
     { "-- PID --", OME_Label, nullptr, &pidProfileIndexString[0] },
 
-    { "ROLL  P", OME_UINT16 | SLIDER_RP, nullptr, &entryRollPID_P },
-    { "ROLL  I", OME_UINT16 | SLIDER_RP, nullptr, &entryRollPID_I },
-    { "ROLL  D", OME_UINT16 | SLIDER_RP, nullptr, &entryRollPID_D },
-    { "ROLL  K", OME_UINT16 | SLIDER_RP, nullptr, &entryRollPID_K },
+    { "ROLL  P", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_P },
+    { "ROLL  I", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_I },
+    { "ROLL  D", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_D },
+    { "ROLL  K", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_K },
 
-    { "PITCH P", OME_UINT16 | SLIDER_RP, nullptr, &entryPitchPID_P },
-    { "PITCH I", OME_UINT16 | SLIDER_RP, nullptr, &entryPitchPID_I },
-    { "PITCH D", OME_UINT16 | SLIDER_RP, nullptr, &entryPitchPID_D },
-    { "PITCH K", OME_UINT16 | SLIDER_RP, nullptr, &entryPitchPID_K },
+    { "PITCH P", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryPitchPID_P },
+    { "PITCH I", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryPitchPID_I },
+    { "PITCH D", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryPitchPID_D },
+    { "PITCH K", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryPitchPID_K },
 
-    { "YAW   P", OME_UINT16 | SLIDER_RPY, nullptr, &entryYawPID_P },
-    { "YAW   I", OME_UINT16 | SLIDER_RPY, nullptr, &entryYawPID_I },
-    { "YAW   D", OME_UINT16 | SLIDER_RPY, nullptr, &entryYawPID_D },
-    { "YAW   K", OME_UINT16 | SLIDER_RPY, nullptr, &entryYawPID_K },
+    { "YAW   P", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_P },
+    { "YAW   I", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_I },
+    { "YAW   D", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_D },
+    { "YAW   K", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_K },
 
     { "BACK", OME_Back, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
@@ -147,13 +147,13 @@ static std::array<const char * const, 4> pidProfileNames { "1", "2", "3", "4" };
 //
 static std::array<uint8_t, 2> rateProfileIndexString = { '1', '\0' };
 
-static const void* menuRatesOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+static const void* menuRatesOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
     data.rates = cmsx.getCMS().getCockpit().getRates();
     return nullptr;
 }
 
-static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* entry)
+static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
     cmsx.getCMS().getCockpit().setRates(data.rates);
     return nullptr;
@@ -248,16 +248,14 @@ static const std::array<CMSX::OSD_Entry, 8> menuProfileEntries
     {nullptr,       OME_END, nullptr, nullptr}
 }};
 
-static const void* menuProfileOnEnter(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* entry)
+static const void* menuProfileOnEnter(CMSX& cmsx, DisplayPortBase& displayPort)
 {
-    (void)entry;
     CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;
 }
 
-static const void* menuProfileOnExit(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* entry)
+static const void* menuProfileOnExit(CMSX& cmsx, DisplayPortBase& displayPort)
 {
-    (void)entry;
     CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;
 }
