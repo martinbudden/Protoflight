@@ -192,6 +192,8 @@ public:
     void drawDisarmed(DisplayPortBase& displayPort);
     void drawRC_Channels(DisplayPortBase& displayPort);
     void drawDebug2(DisplayPortBase& displayPort);
+    void drawNumericalHeading(DisplayPortBase& displayPort);
+    void drawWarnings(DisplayPortBase& displayPort);
 // element background drawing functions
     void drawBackgroundHorizonSidebars(DisplayPortBase& displayPort);
 private:
@@ -203,6 +205,7 @@ private:
     AHRS::ahrs_data_t _ahrsData {};
     float _rollAngleDegrees {};
     float _pitchAngleDegrees {};
+    float _yawAngleDegrees {};
     element_t _activeElement {};
     uint8_t _activeElementIndex = 0;
     uint8_t _activeElementCount = 0;

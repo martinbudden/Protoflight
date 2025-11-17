@@ -77,9 +77,12 @@ void OSD_Elements::setDefaultConfig()
 #if defined(M5_UNIFIED)
     _config.element_pos[OSD_ROLL_ANGLE]         = OSD_POS(0, 2);
     _config.element_pos[OSD_PITCH_ANGLE]        = OSD_POS(8, 2);
+    _config.element_pos[OSD_NUMERICAL_HEADING]  = OSD_POS(16, 2);
     _config.element_pos[OSD_ROLL_PIDS]          = OSD_POS(2, 12);
     _config.element_pos[OSD_PITCH_PIDS]         = OSD_POS(2, 13);
-    _config.element_pos[OSD_RC_CHANNELS]        = OSD_POS(0, 6);
+    _config.element_pos[OSD_ROLL_PIDS]          = OSD_POS(2, 12);
+    _config.element_pos[OSD_PITCH_PIDS]         = OSD_POS(2, 13);
+    _config.element_pos[OSD_RC_CHANNELS]        = OSD_POS(0, 10);
 #endif
     // enable elements in all profiles by default
     for (auto& element : _config.element_pos) {
@@ -125,12 +128,14 @@ void OSD_Elements::addActiveElements()
     //addActiveElement(OSD_DEBUG);
     addActiveElement(OSD_ROLL_PIDS);
     addActiveElement(OSD_PITCH_PIDS);
-    //addActiveElement(OSD_CROSSHAIRS);
-    //addActiveElement(OSD_ARTIFICIAL_HORIZON);
+    addActiveElement(OSD_CROSSHAIRS);
+    addActiveElement(OSD_ARTIFICIAL_HORIZON);
     addActiveElement(OSD_ROLL_ANGLE);
     addActiveElement(OSD_PITCH_ANGLE);
     addActiveElement(OSD_RC_CHANNELS);
     addActiveElement(OSD_DISARMED);
+    addActiveElement(OSD_NUMERICAL_HEADING);
+    addActiveElement(OSD_WARNINGS);
 }
 
 void OSD_Elements::updateAHRS_data()
@@ -138,6 +143,7 @@ void OSD_Elements::updateAHRS_data()
     _ahrsMessageQueue.PEEK_AHRS_DATA(_ahrsData);
     _rollAngleDegrees = _ahrsData.orientation.calculateRollDegrees();
     _pitchAngleDegrees = _ahrsData.orientation.calculatePitchDegrees();
+    _yawAngleDegrees = _ahrsData.orientation.calculateYawDegrees();
 }
 
 bool OSD_Elements::drawNextActiveElement(DisplayPortBase& displayPort)

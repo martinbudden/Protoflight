@@ -28,12 +28,15 @@ void OSD_Elements::initDrawFunctions()
     elementDrawFunctions[OSD_ROLL_PIDS]         = &OSD_Elements::drawPIDsRoll;
     elementDrawFunctions[OSD_PITCH_PIDS]        = &OSD_Elements::drawPIDsPitch;
     elementDrawFunctions[OSD_YAW_PIDS]          = &OSD_Elements::drawPIDsYaw;
+    elementDrawFunctions[OSD_WARNINGS]          = &OSD_Elements::drawWarnings;
     elementDrawFunctions[OSD_DEBUG]             = &OSD_Elements::drawDebug;
     elementDrawFunctions[OSD_PITCH_ANGLE]       = &OSD_Elements::drawAnglePitch;
     elementDrawFunctions[OSD_ROLL_ANGLE]        = &OSD_Elements::drawAngleRoll;
     elementDrawFunctions[OSD_DISARMED]          = &OSD_Elements::drawDisarmed;
-    elementDrawFunctions[OSD_DEBUG2]            = &OSD_Elements::drawDebug2;
+    elementDrawFunctions[OSD_NUMERICAL_HEADING] = &OSD_Elements::drawNumericalHeading;
     elementDrawFunctions[OSD_RC_CHANNELS]       = &OSD_Elements::drawRC_Channels;
+    elementDrawFunctions[OSD_DEBUG2]            = &OSD_Elements::drawDebug2;
+
     elementDrawBackgroundFunctions[OSD_HORIZON_SIDEBARS]    = &OSD_Elements::drawBackgroundHorizonSidebars;
 };
 
@@ -71,7 +74,7 @@ void OSD_Elements::drawAngleRoll(DisplayPortBase& displayPort)
 {
     (void)displayPort;
 #if defined(M5_UNIFIED)
-    sprintf(&_activeElement.buf[0], "ro:%4d", static_cast<int>(_rollAngleDegrees));
+    sprintf(&_activeElement.buf[0], "r:%4d", static_cast<int>(_rollAngleDegrees));
 #else
     sprintf(&_activeElement.buf[0], "ROL%4d", static_cast<int>(_rollAngleDegrees));
 #endif
@@ -81,7 +84,7 @@ void OSD_Elements::drawAnglePitch(DisplayPortBase& displayPort)
 {
     (void)displayPort;
 #if defined(M5_UNIFIED)
-    sprintf(&_activeElement.buf[0], "pi:%4d", static_cast<int>(_pitchAngleDegrees));
+    sprintf(&_activeElement.buf[0], "p:%4d", static_cast<int>(_pitchAngleDegrees));
 #else
     sprintf(&_activeElement.buf[0], "PIT%4d", static_cast<int>(_pitchAngleDegrees));
 #endif
@@ -163,8 +166,8 @@ void OSD_Elements::drawArtificialHorizon(DisplayPortBase& displayPort)
     const float maxPitch = static_cast<float>(_osd.getConfig().ahMaxPitch) * 10.0F;
     const float maxRoll = static_cast<float>(_osd.getConfig().ahMaxRoll) * 10.0F;
     const float ahSign = _osd.getConfig().ahInvert ? -1.0F : 1.0F;
-    const float rollAngle = std::clamp(_flightController.getRollAngleDegreesRaw() * ahSign, -maxRoll, maxRoll);
-    float pitchAngle = std::clamp(_flightController.getRollAngleDegreesRaw() * ahSign, -maxPitch, maxPitch);
+    const float rollAngle = std::clamp(_rollAngleDegrees * ahSign, -maxRoll, maxRoll);
+    float pitchAngle = std::clamp(_pitchAngleDegrees * ahSign, -maxPitch, maxPitch);
     // Convert pitchAngle to y compensation value
     // (maxPitch / 25) divisor matches previous settings of fixed divisor of 8 and fixed max AHI pitch angle of 20.0 degrees
     if (maxPitch > 0.0F) {
@@ -176,8 +179,12 @@ void OSD_Elements::drawArtificialHorizon(DisplayPortBase& displayPort)
     if (y >= 0 && y <= 81) {
         _activeElement.offsetX = static_cast<uint8_t>(x);
         _activeElement.offsetY = static_cast<uint8_t>(y / AH_SYMBOL_COUNT);
-
+#if defined(M5_UNIFIED)
+        _activeElement.buf[0] = '-';
+        _activeElement.buf[1] = 0;
+#else
         sprintf(&_activeElement.buf[0], "%c", (SYM_AH_BAR9_0 + (y % AH_SYMBOL_COUNT)));
+#endif
     } else {
         _activeElement.drawElement = false;  // element does not need to be rendered
     }
@@ -231,4 +238,19 @@ void OSD_Elements::drawDebug2(DisplayPortBase& displayPort)
 {
     (void)displayPort;
     sprintf(&_activeElement.buf[0], "DBG %5d %5d %5d %5d", _debug.get(4), _debug.get(5),_debug.get(6),_debug.get(7));
+}
+
+void OSD_Elements::drawNumericalHeading(DisplayPortBase& displayPort)
+{
+    (void)displayPort;
+#if defined(M5_UNIFIED)
+    sprintf(&_activeElement.buf[0], "y:%4d", static_cast<int>(_yawAngleDegrees));
+#else
+    sprintf(&_activeElement.buf[0], "PIT%4d", static_cast<int>(_yawAngleDegrees));
+#endif
+}
+
+void OSD_Elements::drawWarnings(DisplayPortBase& displayPort)
+{
+    (void)displayPort;
 }
