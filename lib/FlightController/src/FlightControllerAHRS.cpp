@@ -119,15 +119,15 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
             _ahM.amcs.state = STATE_CALCULATE_PITCH;
         }
 
-        _ahM.amcs.rollSinAngle = -orientation.sinRollClipped(); // sin(x-180) = -sin(x)
+        _ahM.amcs.rollSinAngle = rollSinAngleNED(orientation);
         float rollRateSetpointDPS;
         if (_useQuaternionSpaceForAngleMode) {
             const float rollSinAngleDelta = _sh.dTermFilters1[ROLL_SIN_ANGLE].filter(_ahM.amcs.rollSinAngle - _sh.PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
             rollRateSetpointDPS = _sh.PIDS[ROLL_SIN_ANGLE].updateDelta(_ahM.amcs.rollSinAngle, rollSinAngleDelta, deltaT);
         } else {
-            _ahM.rollAngleDegreesRaw = orientation.calculateRollDegrees() - 180.0F;
-            const float rollAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_ahM.rollAngleDegreesRaw - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
-            rollRateSetpointDPS = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(_ahM.rollAngleDegreesRaw, rollAngleDelta, deltaT) * _maxRollRateDPS;
+            const float rollAngleDegrees = rollAngleDegreesNED(orientation);
+            const float rollAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(rollAngleDegrees - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
+            rollRateSetpointDPS = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(rollAngleDegrees, rollAngleDelta, deltaT) * _maxRollRateDPS;
         }
         // a component of YAW changes roll, so update accordingly !!TODO:check sign
         rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.amcs.rollSinAngle;
@@ -135,15 +135,15 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
     } else {
         _ahM.amcs.state = STATE_CALCULATE_ROLL;
 
-        _ahM.amcs.pitchSinAngle = -orientation.sinPitchClipped(); // this is cheaper to calculate than sinRoll
+        _ahM.amcs.pitchSinAngle = pitchSinAngleNED(orientation);
         float pitchRateSetpointDPS;
         if (_useQuaternionSpaceForAngleMode) {
             const float pitchSinAngleDelta = _sh.dTermFilters1[PITCH_SIN_ANGLE].filter(_ahM.amcs.pitchSinAngle - _sh.PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
             pitchRateSetpointDPS = _sh.PIDS[PITCH_SIN_ANGLE].updateDelta(_ahM.amcs.pitchSinAngle, pitchSinAngleDelta, deltaT);
         } else {
-            _ahM.pitchAngleDegreesRaw = -orientation.calculatePitchDegrees();
-            const float pitchAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(_ahM.pitchAngleDegreesRaw - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
-            pitchRateSetpointDPS = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(_ahM.pitchAngleDegreesRaw, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
+            const float pitchAngleDegrees = pitchAngleDegreesNED(orientation);
+            const float pitchAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(pitchAngleDegrees - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
+            pitchRateSetpointDPS = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(pitchAngleDegrees, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
         }
         // a component of YAW changes roll, so update accordingly !!TODO:check sign
         pitchRateSetpointDPS += yawRateSetpointDPS * _ahM.amcs.pitchSinAngle;
@@ -153,8 +153,8 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
     // the cosRoll and cosPitch functions are reasonably cheap, they both involve taking a square root
     // both are positive in ANGLE mode, since absolute values of both roll and pitch angles are less than 90 degrees
 #if false
-    const float rollCosAngle = orientationENU.cosRoll();
-    const float pitchCosAngle = orientationENU.cosPitch();
+    const float rollCosAngle = rollCosAngleNED(orientation);
+    const float pitchCosAngle = pitchCosAngleNED(orientation);
     const float yawRateSetpointAttenuation = fmaxf(rollCosAngle, pitchCosAngle);
 #else
     const float rollSinAngleSquared = _ahM.amcs.rollSinAngle*_ahM.amcs.rollSinAngle;

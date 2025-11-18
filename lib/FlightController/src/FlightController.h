@@ -203,10 +203,6 @@ public:
     inline control_mode_e getControlMode() const { return _fcC.controlMode; }
     void setControlMode(control_mode_e controlMode);
 
-    float getPitchAngleDegreesRaw() const { return _ahM.pitchAngleDegreesRaw; }
-    float getRollAngleDegreesRaw() const { return _ahM.rollAngleDegreesRaw; }
-    float getYawAngleDegreesRaw() const { return _ahM.yawAngleDegreesRaw; }
-
     virtual uint32_t getOutputPowerTimeMicroseconds() const override; //!!TODO: is this still needed?
 
     const std::string& getPID_Name(pid_index_e pidIndex) const;
@@ -232,9 +228,17 @@ public:
 
     // Functions to calculate roll, pitch, and yaw rates in the NED coordinate frame, converting from gyroRPS in the ENU coordinate frame
     // Note that for NED, roll is about the y-axis and pitch is about the x-axis.
-    static inline float rollRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.y * radiansToDegrees; }
-    static inline float pitchRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.x * radiansToDegrees; }
-    static inline float yawRateNED_DPS(const xyz_t& gyroENU_RPS) { return -gyroENU_RPS.z * radiansToDegrees; }
+    static inline float rollRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.y * FlightController::radiansToDegrees; }
+    static inline float pitchRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.x * FlightController::radiansToDegrees; }
+    static inline float yawRateNED_DPS(const xyz_t& gyroENU_RPS) { return -gyroENU_RPS.z * FlightController::radiansToDegrees; }
+
+    static inline float rollSinAngleNED(const Quaternion& orientation) { return -orientation.sinRollClipped(); } // sin(x-180) = -sin(x)
+    static inline float rollCosAngleNED(const Quaternion& orientation) { return orientation.cosRoll(); }
+    static inline float rollAngleDegreesNED(const Quaternion& orientation) { return orientation.calculateRollDegrees() - 180.0F; };
+
+    static inline float pitchSinAngleNED(const Quaternion& orientation) { return -orientation.sinPitchClipped(); } // NOTE: this is cheaper to calculate than sinRoll
+    static inline float pitchCosAngleNED(const Quaternion& orientation)  { return orientation.cosPitch(); }
+    static inline float pitchAngleDegreesNED(const Quaternion& orientation) { return -orientation.calculatePitchDegrees(); };
 
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
     const MotorMixerBase& getMixer() const { return _mixer; }
@@ -378,9 +382,6 @@ private:
     };
     struct ah_t {
         angle_mode_calculation_state_t amcs;
-        float rollAngleDegreesRaw {0.0F};
-        float pitchAngleDegreesRaw {0.0F};
-        float yawAngleDegreesRaw {0.0F};
         uint32_t sendBlackboxMessageCount {0};
         std::array<float, RP_AXIS_COUNT> dMaxMultiplier {1.0F, 1.0F}; // used even if USE_D_MAX not defined
     }; // ah_t

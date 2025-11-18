@@ -2,7 +2,9 @@
 #include "DisplayPortBase.h"
 #include "OSD_Elements.h"
 
+#if !defined(FRAMEWORK_TEST)
 //#include <HardwareSerial.h>
+#endif
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
 
@@ -86,7 +88,7 @@ void OSD_Elements::setDefaultConfig()
 #endif
     // enable elements in all profiles by default
     for (auto& element : _config.element_pos) {
-        element |= PROFILE_MASK;
+        element |= PROFILE_MASK; // cppcheck-suppress useStlAlgorithm
    }
 }
 

@@ -2,7 +2,7 @@
 #include "Cockpit.h"
 #include "FormatInteger.h"
 
-#include <HardwareSerial.h>
+//#include <HardwareSerial.h>
 #include <MSP_Box.h>
 #include <ReceiverBase.h>
 #include <cstring>
@@ -182,7 +182,7 @@ bool OSD::displayStatistic(int statistic, uint8_t displayRow)
     const uint8_t midCol = _displayPort->getColumnCount() / 2;
     std::array<char, ELEMENT_BUFFER_LENGTH> buf {};
 
-    switch (statistic) {
+    switch (statistic) { // NOLINT(hicpp-multiway-paths-covered)
     case STATS_TOTAL_FLIGHTS:
         ui2a(_statsConfig.stats_total_flights, &buf[0]);
         displayStatisticLabel(midCol, displayRow, "TOTAL FLIGHTS", &buf[0]);

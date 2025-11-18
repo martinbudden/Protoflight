@@ -177,25 +177,30 @@ void ScreenM5::updateReceivedData128x128() const
 
     // M5StickC
     int32_t yPos = 95;
+#if defined(USE_PWM)
+    const char* format = "%6d";
+    const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+#else
+    const char* format = "%7.3f";
     const ReceiverBase::controls_t controls = _receiver.getControls();
-
+#endif
     M5.Lcd.setCursor(12, yPos);
-    M5.Lcd.printf("%7.3f", controls.throttle);
+    M5.Lcd.printf(format, controls.throttle);
     M5.Lcd.setCursor(72, yPos);
-    M5.Lcd.printf("%7.3f", controls.roll);
+    M5.Lcd.printf(format, controls.roll);
 
     yPos += 10;
     M5.Lcd.setCursor(12, yPos);
-    M5.Lcd.printf("%7.3f", controls.yaw);
+    M5.Lcd.printf(format, controls.yaw);
     M5.Lcd.setCursor(72, yPos);
-    M5.Lcd.printf("%7.3f", controls.pitch);
+    M5.Lcd.printf(format, controls.pitch);
 }
 
 void ScreenM5::update128x128(const TD_AHRS::data_t& ahrsData) const
 {
     int32_t yPos = 35;
     M5.Lcd.setCursor(0, yPos);
-    M5.Lcd.printf("r:%4.0f p:%4.0F y:%4.0F",  _flightController.getPitchAngleDegreesRaw(), _flightController.getPitchAngleDegreesRaw(), _flightController.getYawAngleDegreesRaw());
+    M5.Lcd.printf("r:%4.0f p:%4.0F y:%4.0F", ahrsData.pitch, ahrsData.roll, ahrsData.yaw);
 
     yPos += 25;
     M5.Lcd.setCursor(0, yPos);
@@ -247,17 +252,23 @@ void ScreenM5::updateReceivedData320x240() const
     int32_t yPos = 115;
 
     M5.Lcd.setCursor(20, yPos);
+#define USE_PWM
+#if defined(USE_PWM)
+    const char* format = "%6d";
+    const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+#else
+    const char* format = "%8.4f";
     const ReceiverBase::controls_t controls = _receiver.getControls();
-    M5.Lcd.printf("%8.4f", controls.throttle);
+#endif
+    M5.Lcd.printf(format, controls.throttle);
     M5.Lcd.setCursor(180, yPos);
-    M5.Lcd.printf("%8.4f", controls.roll);
+    M5.Lcd.printf(format, controls.roll);
 
     yPos += 20;
     M5.Lcd.setCursor(20, yPos);
-    M5.Lcd.printf("%8.4f", controls.yaw);
+    M5.Lcd.printf(format, controls.yaw);
     M5.Lcd.setCursor(180, yPos);
-    M5.Lcd.printf("%8.4f", controls.pitch);
-
+    M5.Lcd.printf(format, controls.pitch);
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);
     const uint32_t flipButton =_receiver.getSwitch(ReceiverAtomJoyStick::MOTOR_ON_OFF_SWITCH);
@@ -341,9 +352,6 @@ void ScreenM5::updateAHRS_Data() const
     const Quaternion orientation = ahrsData.orientation;
 
     const TD_AHRS::data_t tdAhrsData {
-        //.pitch = _flightController.getPitchAngleDegreesRaw(),
-        //.roll = _flightController.getRollAngleDegreesRaw(),
-        //.yaw = _flightController.getYawAngleDegreesRaw(),
         .roll = orientation.calculateRollDegrees(),
         .pitch = orientation.calculatePitchDegrees(),
         .yaw = orientation.calculateYawDegrees(),
@@ -381,7 +389,6 @@ void ScreenM5::update()
     // update the screen with the AHRS data
     if (_screenMode != ScreenM5::MODE_QRCODE) {
         // update the screen template if it hasn't been updated
-//        const AHRS::data_t ahrsData = _ahrs.getAhrsDataForInstrumentationUsingLock();
         if (_templateIsUpdated == false) {
             updateTemplate();
         }

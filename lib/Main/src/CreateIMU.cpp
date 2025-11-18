@@ -62,6 +62,7 @@ IMU_Base& Main::createIMU()
     static IMU_LSM6DS3TR_C imuSensor(IMU_AXIS_ORDER, BUS_I2C::IMU_I2C_PINS);
 #elif defined(USE_IMU_M5_UNIFIED)
     static IMU_M5_UNIFIED imuSensor(IMU_AXIS_ORDER);
+    //static IMU_M5_UNIFIED imuSensor(IMU_Base::YPOS_XPOS_ZNEG);
 #elif defined(USE_IMU_NULL)
     static IMU_Null imuSensor;
 #else
