@@ -178,7 +178,7 @@ void ScreenM5::updateReceivedData128x128() const
     // M5StickC
     int32_t yPos = 95;
 #if defined(USE_PWM)
-    const char* format = "%6d";
+    const char* format = "%5d";
     const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
 #else
     const char* format = "%7.3f";
@@ -254,7 +254,7 @@ void ScreenM5::updateReceivedData320x240() const
     M5.Lcd.setCursor(20, yPos);
 #define USE_PWM
 #if defined(USE_PWM)
-    const char* format = "%6d";
+    const char* format = "%5d";
     const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
 #else
     const char* format = "%8.4f";

@@ -24,6 +24,7 @@ ReceiverBase& Main::createReceiver()
     enum { RECEIVER_CHANNEL = 3 };
 #endif
     static ReceiverAtomJoyStick receiver(&myMacAddress[0], RECEIVER_CHANNEL);
+    receiver.setPositiveHalfThrottle(true);
     const esp_err_t espErr = receiver.init();
     Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
     assert(espErr == ESP_OK && "Unable to setup receiver.");
