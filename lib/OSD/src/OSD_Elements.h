@@ -1,12 +1,10 @@
 #pragma once
 
-#include <AHRS.h>
 #include <TimeMicroseconds.h>
 #include <array>
 #include <bitset>
 #include <cstdint>
 
-class AHRS_MessageQueue;
 class Cockpit;
 class Debug;
 class DisplayPortBase;
@@ -105,11 +103,10 @@ enum  osd_items_e {
 
 class OSD_Elements {
 public:
-    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, const Debug& debug);
+    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug);
     void init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t columnCount);
     void initDrawFunctions();
 public:
-    enum { PROFILE_COUNT = 2 };
     enum element_type_e{
         OSD_ELEMENT_TYPE_1 = 0,
         OSD_ELEMENT_TYPE_2,
@@ -146,9 +143,11 @@ public:
     static constexpr uint32_t ELEMENT_TYPE_MASK = 0b1100'0000'0000'0000U;  // bits 14-15
     static element_type_e ELEMENT_TYPE(uint32_t x) { return static_cast<element_type_e>((x & ELEMENT_TYPE_MASK) >> ELEMENT_BITS_POS); }
 
+    enum { PROFILE_COUNT = 2 };
     static constexpr uint16_t PROFILE_BITS_POS = 12;
     static constexpr uint16_t PROFILE_MASK = 0b0011'0000'0000'0000U;
     static uint16_t profileFlag(uint16_t x) { return 1U << (x - 1 + PROFILE_BITS_POS); }
+    static bool elementVisible(uint16_t value, uint16_t profile) { return ((value & PROFILE_MASK) >> PROFILE_BITS_POS) & (1 << profile); }
 
     static constexpr uint16_t XY_POSITION_BITS = 6;       // 6 bits gives a range 0-63
     static constexpr uint16_t XY_POSITION_MASK = 0b11'1111U;
@@ -156,7 +155,6 @@ public:
     static uint8_t OSD_X(uint16_t x) { return x & XY_POSITION_MASK; }
     static uint8_t OSD_Y(uint16_t x) { return (x >> XY_POSITION_BITS) & XY_POSITION_MASK; }
     static uint16_t OSD_POS(uint8_t x, uint8_t y) { return (x & XY_POSITION_MASK) | ((y & XY_POSITION_MASK) << XY_POSITION_BITS); }
-    bool elementVisible(uint16_t value) const;
 
     void addActiveElement(osd_items_e element);
     void addActiveElements();
@@ -164,7 +162,7 @@ public:
     uint8_t getActiveElementIndex() const { return _activeElementIndex; }
     uint8_t getActiveElementCount() const { return _activeElementCount; }
 
-    void updateAHRS_data();
+    void updateAttitude(float rollAngleDegrees, float pitchAngleDegrees, float yawAngleDegrees);
     bool drawNextActiveElement(DisplayPortBase& displayPort);
     bool displayActiveElement(DisplayPortBase& displayPort);
     void drawActiveElementsBackground(DisplayPortBase& displayPort);
@@ -200,9 +198,7 @@ private:
     const OSD& _osd;
     const FlightController& _flightController;
     const Cockpit& _cockpit;
-    const AHRS_MessageQueue& _ahrsMessageQueue;
     const Debug& _debug;
-    AHRS::ahrs_data_t _ahrsData {};
     float _rollAngleDegrees {};
     float _pitchAngleDegrees {};
     float _yawAngleDegrees {};

@@ -241,7 +241,8 @@ public:
     static inline float pitchAngleDegreesNED(const Quaternion& orientation) { return -orientation.calculatePitchDegrees(); };
 
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
-    const MotorMixerBase& getMixer() const { return _mixer; }
+    const MotorMixerBase& getMotorMixer() const { return _motorMixer; }
+    MotorMixerBase& getMotorMixer() { return _motorMixer; }
     float getMixerAdjustedThrottle() const { return _fcC.mixerAdjustedThrottle; }
 
     const Debug& getDebug() const { return _debug; }
@@ -298,7 +299,7 @@ public:
 
 private:
     static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
-    MotorMixerBase& _mixer;
+    MotorMixerBase& _motorMixer;
     AHRS_MessageQueue& _ahrsMessageQueue;
     Debug& _debug;
     DynamicNotchFilter* _dynamicNotchFilter {nullptr};

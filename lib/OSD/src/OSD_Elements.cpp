@@ -1,4 +1,3 @@
-#include "AHRS_MessageQueue.h"
 #include "DisplayPortBase.h"
 #include "OSD_Elements.h"
 
@@ -9,11 +8,10 @@
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
 
 
-OSD_Elements::OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, const Debug& debug) :
+OSD_Elements::OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug) :
     _osd(osd),
     _flightController(flightController),
     _cockpit(cockpit),
-    _ahrsMessageQueue(ahrsMessageQueue),
     _debug(debug)
 {
 }
@@ -113,14 +111,9 @@ bool OSD_Elements::isRenderPending() const
     return _displayPendingForeground | _displayPendingBackground;
 }
 
-bool OSD_Elements::elementVisible(uint16_t value) const
-{
-    return ((value & PROFILE_MASK) >> PROFILE_BITS_POS) & (1 << _profile);
-}
-
 void OSD_Elements::addActiveElement(osd_items_e element)
 {
-    if (elementVisible(_config.element_pos[element])) {
+    if (elementVisible(_config.element_pos[element], _profile)) {
         _activeElementArray[_activeElementCount++] = element;
     }
 }
@@ -140,12 +133,11 @@ void OSD_Elements::addActiveElements()
     addActiveElement(OSD_WARNINGS);
 }
 
-void OSD_Elements::updateAHRS_data()
+void OSD_Elements::updateAttitude(float rollAngleDegrees, float pitchAngleDegrees, float yawAngleDegrees)
 {
-    _ahrsMessageQueue.PEEK_AHRS_DATA(_ahrsData);
-    _rollAngleDegrees = _ahrsData.orientation.calculateRollDegrees();
-    _pitchAngleDegrees = _ahrsData.orientation.calculatePitchDegrees();
-    _yawAngleDegrees = _ahrsData.orientation.calculateYawDegrees();
+    _rollAngleDegrees = rollAngleDegrees;
+    _pitchAngleDegrees = pitchAngleDegrees;
+    _yawAngleDegrees = yawAngleDegrees;
 }
 
 bool OSD_Elements::drawNextActiveElement(DisplayPortBase& displayPort)

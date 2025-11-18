@@ -128,9 +128,9 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
         mainState.debug[ii] = _debug.get(ii);
     }
 
-    const MotorMixerBase& mixer = _flightController.getMixer();
-    for (size_t ii = 0; ii < mixer.getMotorCount(); ++ ii) {
-        mainState.motor[ii] = static_cast<int16_t>(std::lroundf(mixer.getMotorOutput(ii)));
+    const MotorMixerBase& motorMixer = _flightController.getMotorMixer();
+    for (size_t ii = 0; ii < motorMixer.getMotorCount(); ++ ii) {
+        mainState.motor[ii] = static_cast<int16_t>(std::lroundf(motorMixer.getMotorOutput(ii)));
 #if defined(USE_DSHOT_TELEMETRY)
         mainState.erpm[ii] = static_cast<int16_t>(mixer.getMotorRPM(ii));
 #endif

@@ -26,7 +26,7 @@ MotorMixer::outputToMotors is called every _outputToMotorsDenominator times Flig
 */
 FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, AHRS_MessageQueue& ahrsMessageQueue, Debug& debug) :
     VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroseconds),
-    _mixer(motorMixer),
+    _motorMixer(motorMixer),
     _ahrsMessageQueue(ahrsMessageQueue),
     _debug(debug),
     _outputToMotorsDenominator(outputToMotorsDenominator),
@@ -146,13 +146,13 @@ void FlightController::setPID_K_MSP(pid_index_e pidIndex, uint16_t kk)
 
 uint32_t FlightController::getOutputPowerTimeMicroseconds() const
 {
-    //return _mixer.getOutputPowerTimeMicroseconds();
+    //return _motorMixer.getOutputPowerTimeMicroseconds();
     return 0;
 }
 
 void FlightController::motorsSwitchOff()
 {
-    _mixer.motorsSwitchOff();
+    _motorMixer.motorsSwitchOff();
     _sh.takeOffCountStart = 0;
     _sh.groundMode = true;
     switchPID_integrationOff();
@@ -162,7 +162,7 @@ void FlightController::motorsSwitchOn()
 {
     // don't allow motors to be switched on if the sensor fusion has not initialized
     if (!_sensorFusionFilterIsInitializing) {
-        _mixer.motorsSwitchOn();
+        _motorMixer.motorsSwitchOn();
         // reset the PID integral values when we switch the motors on
         switchPID_integrationOn();
     }
@@ -170,12 +170,12 @@ void FlightController::motorsSwitchOn()
 
 bool FlightController::motorsIsDisabled() const
 {
-    return _mixer.motorsIsDisabled();
+    return _motorMixer.motorsIsDisabled();
 }
 
 bool FlightController::motorsIsOn() const
 {
-    return _mixer.motorsIsOn();
+    return _motorMixer.motorsIsOn();
 }
 
 /*!
@@ -340,9 +340,9 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
 {
     flight_controller_quadcopter_telemetry_t telemetry;
 
-    for (size_t ii = 0; ii < _mixer.getMotorCount(); ++ ii) {
-        telemetry.motors[ii].power = _mixer.getMotorOutput(ii);
-        telemetry.motors[ii].rpm = _mixer.getMotorRPM(ii);
+    for (size_t ii = 0; ii < _motorMixer.getMotorCount(); ++ ii) {
+        telemetry.motors[ii].power = _motorMixer.getMotorOutput(ii);
+        telemetry.motors[ii].rpm = _motorMixer.getMotorRPM(ii);
     }
     if (motorsIsOn()) {
         const PIDF::error_t rollRateError = _sh.PIDS[ROLL_RATE_DPS].getError();
@@ -397,13 +397,13 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
             .yaw    = _fcM.outputs[FD_YAW] / _yawRateAtMaxPowerDPS
         };
 
-        _mixer.outputToMotors(commands, deltaT, tickCount);
+        _motorMixer.outputToMotors(commands, deltaT, tickCount);
         // the mixer may adjust the throttle value, so save this value for the blackbox record
         _fcM.mixerAdjustedThrottle= commands.throttle;
     }
 
 #if defined(USE_RPM_FILTERS)
     // perform an RPM filter iteration step, even if we have not output to the motors
-    _mixer.rpmFilterSetFrequencyHzIterationStep();
+    _motorMixer.rpmFilterSetFrequencyHzIterationStep();
 #endif
 }

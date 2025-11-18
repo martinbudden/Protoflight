@@ -271,7 +271,7 @@ void ScreenM5::updateReceivedData320x240() const
     M5.Lcd.printf(format, controls.pitch);
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);
-    const uint32_t flipButton =_receiver.getSwitch(ReceiverAtomJoyStick::MOTOR_ON_OFF_SWITCH);
+    const uint32_t flipButton = _receiver.getSwitch(ReceiverAtomJoyStick::MOTOR_ON_OFF_SWITCH);
     const uint32_t mode = _receiver.getSwitch(ReceiverAtomJoyStick::MODE_SWITCH);
     const uint32_t altMode = _receiver.getSwitch(ReceiverAtomJoyStick::ALT_MODE_SWITCH);
     M5.Lcd.printf("M%1d %s A%1d F%1d ", static_cast<int>(mode), mode == ReceiverAtomJoyStick::MODE_STABLE ? "ST" : "SP", static_cast<int>(altMode), static_cast<int>(flipButton));

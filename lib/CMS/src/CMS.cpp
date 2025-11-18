@@ -10,10 +10,9 @@
 
 CMS::CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd) :
     _displayPort(displayPort),
-    _cmsx(*this),
+    _cmsx(*this, imuFilters),
     _receiver(receiver),
     _cockpit(cockpit),
-    _imuFilters(imuFilters),
     _osd(osd)
 {
 }
@@ -52,7 +51,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
 
     if (_cmsx.isInMenu()) {
         _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
-        _rcDelayMs = scanKeys(currentTimeMs, _lastCalledMs, _rcDelayMs);
+        scanKeys(currentTimeMs, _lastCalledMs);
         _cmsx.drawMenu(*_displayPort, currentTimeUs);
         if (currentTimeMs > _lastHeartbeatTimeMs + HEARTBEAT_INTERVAL_MS) {
             // Heart beat for external CMS display device @500ms, timeout @1000ms
@@ -64,9 +63,15 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         // Detect menu invocation
         if (!_cockpit.isArmed() && !_cockpit.isRcModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
             const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
-            if (Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch)) {// && Cockpit::pwmIsMid(controls.throttle)) {
+#if defined(LIBRARY_RECEIVER_USE_ESPNOW )
+            if (Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch)) {
+#else
+            if (Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch) && Cockpit::pwmIsMid(controls.throttle)) {
+#endif
+                _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
                 _cmsx.menuOpen(*_displayPort);
-                _rcDelayMs = CMSX::BUTTON_PAUSE_MS; // Tends to overshoot if BUTTON_TIME_MS used
+                _displayPort->commitTransaction();
+                _keyDelayMs = CMSX::BUTTON_PAUSE_MS; // Tends to overshoot if BUTTON_TIME_MS used
             }
         }
     }
@@ -90,14 +95,14 @@ uint16_t CMS::handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount)
     return ret;
 }
 
-uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t rcDelayMs) // NOLINT(readability-function-cognitive-complexity)
+void CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(readability-function-cognitive-complexity)
 {
     CMSX::key_e key = CMSX::KEY_NONE;
 
     const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
 
     if (_externKey != CMSX::KEY_NONE) {
-        rcDelayMs = _cmsx.handleKey(*_displayPort, _externKey);
+        _keyDelayMs = _cmsx.handleKey(*_displayPort, _externKey);
         _externKey = CMSX::KEY_NONE;
     } else {
         if (_cockpit.isArmed() == false && Cockpit::pwmIsMid(controls.throttle) && Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch)) {
@@ -125,13 +130,13 @@ uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t r
             ++_holdCount;
         }
 
-        if (rcDelayMs > 0) {
-            rcDelayMs -= (currentTimeMs - lastCalledMs);
+        if (_keyDelayMs > 0) {
+            _keyDelayMs -= static_cast<int32_t>(currentTimeMs - lastCalledMs);
         } else if (key) {
-            rcDelayMs = handleKeyWithRepeat(key, _repeatCount);
+            _keyDelayMs = handleKeyWithRepeat(key, _repeatCount);
             // Key repeat effect is implemented in two phases.
-            // First phase is to decrease rcDelayMs reciprocal to hold time.
-            // When rcDelayMs reached a certain limit (scheduling interval),
+            // First phase is to decrease keyDelayMs reciprocal to hold time.
+            // When keyDelayMs reached a certain limit (scheduling interval),
             // repeat rate will not raise anymore, so we call key handler
             // multiple times (repeatCount).
             //
@@ -139,10 +144,10 @@ uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t r
             // XXX Rewrite this someday, so it uses actual hold time instead
             // of holdCount, which depends on the scheduling interval.
             if (((key == CMSX::KEY_LEFT) || (key == CMSX::KEY_RIGHT)) && (_holdCount > 20)) {
-                // Decrease rcDelayMs reciprocally
-                rcDelayMs /= (_holdCount - 20);
+                // Decrease keyDelayMs reciprocally
+                _keyDelayMs /= static_cast<int32_t>(_holdCount - 20);
                 // When we reach the scheduling limit,
-                if (rcDelayMs <= 50) {
+                if (_keyDelayMs <= 50) {
                     // start calling handler multiple times.
                     if (_repeatBase == 0) {
                         _repeatBase = _holdCount;
@@ -155,7 +160,6 @@ uint32_t CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t r
             }
         }
     }
-    return rcDelayMs;
 }
 
 DisplayPortBase* CMS::displayPortSelectNext()

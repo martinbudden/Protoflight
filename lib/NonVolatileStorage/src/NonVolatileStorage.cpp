@@ -712,13 +712,13 @@ int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
 int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile)
 {
 #if defined(USE_DYNAMIC_IDLE)
-    const DynamicIdleController* dynamicIdleController = flightController.getMixer().getDynamicIdleController();
+    const DynamicIdleController* dynamicIdleController = flightController.getMotorMixer().getDynamicIdleController();
     if (dynamicIdleController) {
         storeDynamicIdleControllerConfig(dynamicIdleController->getConfig(), pidProfile);
     }
 #endif
 #if defined(USE_RPM_FILTERS)
-    const RPM_Filters* rpmFilters = flightController.getMixer().getRPM_Filters();
+    const RPM_Filters* rpmFilters = flightController.getMotorMixer().getRPM_Filters();
     if (rpmFilters) {
         storeRPM_FiltersConfig(rpmFilters->getConfig());
     }
@@ -760,4 +760,20 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
     storeRates(cockpit.getRates(), ratesProfile);
 
     return OK;
+}
+
+void Cockpit::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex)
+{
+    _currentRateProfileIndex = currentRateProfileIndex;
+    _rates = _nvs.loadRates(currentRateProfileIndex);
+}
+
+void Cockpit::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex)
+{
+    _currentPidProfileIndex = currentPidProfileIndex;
+}
+
+void Cockpit::storeAllToNonVolatileStorage()
+{
+    _nvs.storeAll(_imuFilters, _flightController, *this, _autopilot, _currentPidProfileIndex, _currentRateProfileIndex);
 }

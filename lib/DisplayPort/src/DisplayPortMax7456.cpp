@@ -161,10 +161,12 @@ enum max7456InitStatus_e {
 DisplayPortMax7456::DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::stm32_spi_pins_t& pins) :
     _bus(MAX7456_INIT_MAX_SPI_CLK_HZ, SPI_index, pins)
 {
+    _smallArrowUp = 0x75;
 }
 DisplayPortMax7456::DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::spi_pins_t& pins) :
     _bus(MAX7456_INIT_MAX_SPI_CLK_HZ, SPI_index, pins)
 {
+    _smallArrowUp = 0x75;
 }
 #endif
 

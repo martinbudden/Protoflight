@@ -38,13 +38,13 @@ static auto entryFailsafeThrottle    = OSD_UINT16_t { &failsafe.throttle, PWM_PU
 // NOLINTBEGIN(hicpp-signed-bitwise)
 static const std::array<CMSX::OSD_Entry, 7> menuFailsafeEntries
 {{
-    { "-- FAILSAFE --", OME_Label, nullptr, nullptr},
+    { "-- FAILSAFE --", OME_LABEL, nullptr, nullptr},
 
     { "PROCEDURE",        OME_TABLE  | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeProcedure },
     { "GUARD TIME",       OME_FLOAT  | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeDelay },
     { "LANDING_TIME",     OME_FLOAT  | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeLandingTime },
     { "STAGE 2 THROTTLE", OME_UINT16 | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeThrottle },
-    { "BACK", OME_Back, nullptr, nullptr },
+    { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
 }};
 // NOLINTEND(hicpp-signed-bitwise)

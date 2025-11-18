@@ -40,7 +40,7 @@ Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
 
     const Cockpit::rates_t rates = _cockpit.getRates();
 
-    const MotorMixerBase& motorMixer = _flightController.getMixer();
+    const MotorMixerBase& motorMixer = _flightController.getMotorMixer();
 #if defined(USE_DYNAMIC_IDLE)
     const DynamicIdleController* dynamicIdleController = motorMixer.getDynamicIdleController();
     const DynamicIdleController::config_t* dynamicIdleControllerConfig = dynamicIdleController ? &dynamicIdleController->getConfig() : nullptr;

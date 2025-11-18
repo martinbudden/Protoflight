@@ -1,6 +1,7 @@
-#include "OSD.h"
+#include "AHRS_MessageQueue.h"
 #include "Cockpit.h"
 #include "FormatInteger.h"
+#include "OSD.h"
 
 //#include <HardwareSerial.h>
 #include <MSP_Box.h>
@@ -10,8 +11,9 @@
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
 OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug) : // cppcheck-suppress constParameterReference
-    _elements(*this, flightController, cockpit, ahrsMessageQueue, debug),
-    _cockpit(cockpit)
+    _elements(*this, flightController, cockpit, debug),
+    _cockpit(cockpit),
+    _ahrsMessageQueue(ahrsMessageQueue)
 {
 }
 
@@ -451,7 +453,7 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
         //!!_state = _resumeRefreshAtUs ? STATE_TRANSFER : STATE_UPDATE_CANVAS;
         _state = STATE_UPDATE_CANVAS;
         break;
-    case STATE_UPDATE_CANVAS:
+    case STATE_UPDATE_CANVAS: {
         //Serial.printf("STATE_UPDATE_CANVAS\r\n");
         if (_cockpit.isRcModeActive(MSP_Box::BOX_OSD)) {
             // Hide OSD when OSD SW mode is active
@@ -469,9 +471,12 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
             _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
         }
         syncBlink(timeMicroseconds);
-        _elements.updateAHRS_data(); // update the AHRS data, so it is only needed to be done once for all elements that require it
+        AHRS::ahrs_data_t ahrsData {};
+        _ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
+        _elements.updateAttitude(ahrsData.orientation.calculateRollDegrees(), ahrsData.orientation.calculatePitchDegrees(), ahrsData.orientation.calculateYawDegrees()); // update the AHRS data, so it is only needed to be done once for all elements that require it
         _state = STATE_DRAW_ELEMENT;
         break;
+    }
     case STATE_DRAW_ELEMENT: {
         const uint8_t activeElementIndex = _elements.getActiveElementIndex();
 

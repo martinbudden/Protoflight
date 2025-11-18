@@ -79,7 +79,7 @@ public:
 public:
     virtual ~DisplayPortBase() = default;
     DisplayPortBase() = default;
-    virtual uint32_t clearScreen(display_clear_option_e options) { (void)options; _cleared = true; _cursorRow = 255; return 0; }
+    virtual uint32_t clearScreen(display_clear_option_e options) { (void)options; _cleared = true; return 0; }
     virtual bool drawScreen() = 0; // Returns true if screen still being transferred
     virtual uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) = 0;
     uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const uint8_t* text) { return writeString(x, y, attr, reinterpret_cast<const char*>(text)); }
@@ -99,7 +99,7 @@ public:
     virtual bool layerCopy(layer_e destLayer, layer_e sourceLayer) { return (sourceLayer == destLayer) ? false : true; }
     virtual bool writeFontCharacter(uint16_t addr, const struct osd_character_t* chr) { (void)addr; (void)chr; return false; }
     virtual bool checkReady(bool rescan) { (void)rescan; return true; }
-    virtual void beginTransaction(display_transaction_option_e options) {(void)options;}
+    virtual void beginTransaction(display_transaction_option_e option) { (void)option; }
     virtual void commitTransaction() {}
     virtual bool getCanvas(display_canvas_t* canvas) const { (void)canvas; return false; }
     virtual void setBackgroundType(background_e backgroundType) { (void)backgroundType; }
@@ -115,14 +115,13 @@ public:
     uint8_t getRowCount() const { return _rowCount; }
     uint8_t getColumnCount() const { return _columnCount; }
 
-    uint8_t getCursorRow() const { return _cursorRow; }
-    void setCursorRow(uint8_t cursorRow) { _cursorRow = cursorRow; }
-
     uint8_t getPosX() const { return _posX; }
     void setPosX(uint8_t posX) { _posX = posX; }
     uint8_t getPosY() const { return _posY; }
     void setPosY(uint8_t posY) { _posY = posY; }
 
+    uint8_t getSmallArrowUp() const { return _smallArrowUp; }
+    uint8_t getSmallArrowDown() const { return _smallArrowDown; }
     bool getUseFullScreen() const { return _useFullScreen; }
     void setUseFullScreen(bool useFullScreen) { _useFullScreen = useFullScreen; }
 
@@ -137,11 +136,12 @@ protected:
     uint8_t _columnCount {};
     uint8_t _posX {};
     uint8_t _posY {};
+    uint8_t _smallArrowUp {'^'};
+    uint8_t _smallArrowDown {'v'};
 
     // Displayport device capability
     bool _useDeviceBlink {};
     // CMS state
-    uint8_t _cursorRow {};
     int8_t _grabCount {0};
     bool _cleared {};
     bool _useFullScreen {false}; // tru for DEVICE_TYPE_HOTT, false otherwise

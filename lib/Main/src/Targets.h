@@ -90,8 +90,8 @@ Targets
     //#define USE_BLACKBOX_DEBUG
     //#define BLACKBOX_IS_EVENT_DRIVEN
     //#define USE_MSP
-    #define USE_OSD
-    //#define USE_CMS
+    //#define USE_OSD
+    #define USE_CMS
 
     #define USE_BACKCHANNEL
 

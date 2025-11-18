@@ -10,7 +10,9 @@ class AHRS_MessageQueue;
 class Cockpit;
 class Debug;
 
-
+/*!
+On Screen Display.
+*/
 class OSD {
 public:
     OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug);
@@ -238,7 +240,6 @@ public:
 
     void setWarningState(uint8_t warningIndex, bool enabled);
     bool getWarningState(uint8_t warningIndex) const;
-    bool elementVisible(uint16_t value) const;
     bool getVisualBeeperState() const { return _visualBeeperState; }
     void setVisualBeeperState(bool visualBeeperState) { _visualBeeperState = visualBeeperState; }
     const stats_t& getStats() const { return _stats; }
@@ -257,6 +258,7 @@ private:
     DisplayPortBase::device_type_e _displayPortDeviceType {};
     OSD_Elements _elements;
     const Cockpit& _cockpit;
+    const AHRS_MessageQueue& _ahrsMessageQueue;
     uint32_t  _resumeRefreshAtUs {};
     state_e _state { STATE_INIT };
     std::array<uint16_t, STATE_COUNT> _stateDurationFractionUs {};

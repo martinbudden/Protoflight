@@ -5,11 +5,12 @@
 
 class CMS;
 class DisplayPortBase;
+class IMU_Filters;
 
 
 class CMSX {
 public:
-    CMSX(CMS& cms);
+    CMSX(CMS& cms, IMU_Filters& imuFilters);
 private:
     // CMS is not copyable or moveable
     CMSX(const CMSX&) = delete;
@@ -17,10 +18,12 @@ private:
     CMSX(CMSX&&) = delete;
     CMSX& operator=(CMSX&&) = delete;
 public:
+    enum { CURSOR_ROW_NOT_SET = 255 };
+
     enum { MAX_ROWS = 31 };
     enum { MENU_DRAW_BUFFER_LEN = 12, MENU_TABLE_BUFFER_LEN = 30 };
     enum { NUMBER_FIELD_LEN = 5 };
-    enum { CMS_POLL_INTERVAL_US = 100'000 };  // Interval for polling dynamic values
+    enum { DYNAMIC_VALUES_POLLING_INTERVAL_US = 100'000 };
     enum { BUTTON_TIME_MS = 250 };
     enum { BUTTON_PAUSE_MS = 500 };
     enum { LOOKUP_TABLE_TICKER_START_CYCLES = 20,  // Task loops for start/end of ticker (1 second delay)
@@ -29,6 +32,11 @@ public:
     enum { NORMAL_SCREEN_MIN_COLS = 18,      // Less is a small screen
            NORMAL_SCREEN_MAX_COLS = 30      // More is a large screen
     };
+#if defined(USE_BATTERY_CONTINUE)
+    enum { SETUP_POPUP_MAX_ENTRIES = 5 };   // Increase as new entries are added
+#else
+    enum { SETUP_POPUP_MAX_ENTRIES = 4 };   // Increase as new entries are added
+#endif
     enum key_e {
         KEY_NONE,
         KEY_UP,
@@ -57,60 +65,74 @@ public:
         menuOnDisplayUpdateFnPtr onDisplayUpdate;
         const OSD_Entry* entries;
     };
-    struct ctx_t {
+    struct menu_context_t {
         const menu_t* menu; // menu for this context
         uint8_t page;       // page in the menu
-        uint8_t cursorRow;   // cursorRow in the page
+        uint8_t cursorRow;  // cursorRow in the page
     };
     struct table_ticker_t {
         uint8_t loopCounter;
         uint8_t state;
     };
 public:
-    uint8_t cursorAbsolute() const;
-    bool isInMenu() const;
+    bool isInMenu() const { return _inMenu; }
+    void menuOpen(DisplayPortBase& displayPort);
+    void drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs);
+    bool setupPopupMenuBuild();
+    menu_t* getSaveExitMenu();
+    uint16_t handleKey(DisplayPortBase& displayPort, key_e key);
+    uint16_t handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entry* entry, uint16_t& entryFlags);
+    CMS& getCMS() { return _cms; }
+    IMU_Filters& getIMU_Filters() { return _imuFilters; };
+
+private:
     void setRebootRequired();
+    bool getRebootRequired() const;
 
     bool rowSliderOverride(const uint16_t flags);
     bool rowIsSkippable(const OSD_Entry* row);
 
-    void menuOpen(DisplayPortBase& displayPort);
-    const void* menuBack(DisplayPortBase& displayPort);
-    void drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs);
     static void padLeft(char *buf, uint8_t size);
     static void padRight(char *buf, uint8_t size);
     void padToSize(char* buf, uint8_t maxSize) const;
     uint32_t drawMenuItemValue(DisplayPortBase& displayPort, char* buf, uint8_t row, uint8_t maxSize) const;
-    uint32_t drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, bool selectedRow, uint8_t index);
+    uint32_t drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
 
-    uint16_t handleKey(DisplayPortBase& displayPort, key_e key);
+    enum { MAX_MENU_STACK_DEPTH = 10 };
+    enum menu_stack_e { MENU_STACK_NOTHING_TO_POP, MENU_STACK_NO_ROOM_TO_PUSH, MENU_STACK_OK }; 
+    void menuStackReset();
+    menu_stack_e menuStackPush();
+    menu_stack_e menuStackPop();
 
-    void addMenuEntry(OSD_Entry& menuEntry, const char* text, uint16_t flags, entryFnPtr fnPtr, void* data);
     void traverseGlobalExit(const menu_t* menu);
-    void menuCountPage();
-    void updateMaxRow();
-    void pageSelect(DisplayPortBase& displayPort, uint8_t newpage);
-    void pageNext(DisplayPortBase& displayPort);
-    void pagePrevious(DisplayPortBase& displayPort);
+    void pageSelect(uint8_t newpage);
+    void pageNext();
+    void pagePrevious();
 
-    CMS& getCMS() { return _cms; }
-
-    bool elementVisible(uint16_t value) const;
     static void setFlag(uint16_t& value, uint16_t flag) { value |= flag; }
     static void clearFlag(uint16_t& value, uint16_t flag) { value &= static_cast<uint16_t>(~flag); }
+    const void* menuChange(DisplayPortBase& displayPort, const menu_t* menu);
+    const void* menuBack(DisplayPortBase& displayPort, const menu_t* menu);
+    const void* menuExit(DisplayPortBase& displayPort, const  menu_t* menu);
 
+public:
 // static functions with entryFnPtr signature for use by menu system
-    static const void* menuChange(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu);
-    static const void* menuBack(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu);
-    static const void* menuExit(CMSX& cmsx, DisplayPortBase& displayPort, const  menu_t* menu);
-    static menu_t* getSaveExitMenu();
+    static const void* menuChange(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu) { return cmsx.menuChange(displayPort, menu); }
+    static const void* menuBack(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu) { return cmsx.menuBack(displayPort, menu); }
+    static const void* menuExit(CMSX& cmsx, DisplayPortBase& displayPort, const  menu_t* menu) { return cmsx.menuExit(displayPort, menu); }
+    static const void* menuCalibrateGyro(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
+    static const void* menuCalibrateAcc(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
+    enum { CALIBRATION_STATUS_MAX_LENGTH = 6 };
+    static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> GyroCalibrationStatus;
+    static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> AccCalibrationStatus;
 
 private:
     CMS& _cms;
-    enum { MAX_MENU_STACK_DEPTH = 10 };
-    ctx_t _currentCtx {};
+    IMU_Filters& _imuFilters;
+    menu_t& _menuMain;
+    menu_context_t _currentMenuContext {};
     uint8_t _menuStackIndex {};
-    std::array<ctx_t, MAX_MENU_STACK_DEPTH> _menuStack {};
+    std::array<menu_context_t, MAX_MENU_STACK_DEPTH> _menuStack {};
     const OSD_Entry* _pageTop {}; // First entry for the current page
     uint32_t _lastPolledUs {};
     uint32_t _osdProfileCursor {};
@@ -118,14 +140,16 @@ private:
     uint8_t _maxMenuItems {};
     uint8_t _pageCount {}; // Number of pages in the current menu
     uint8_t _pageMaxRow {}; // Max row in the current page
+    uint8_t _cursorRow {CURSOR_ROW_NOT_SET};
     uint8_t _leftMenuColumn {};
     uint8_t _rightMenuColumn {};
-    uint8_t _linesPerMenuItem {};
+    uint8_t _linesPerMenuItem {}; // normally 1, but may be 2 for narrow screens
     bool _smallScreen {false};
+    bool _rightAligned {false};
     bool _saveMenuInhibited {};
     bool _inMenu {};
     bool _elementEditing {};
-    std::array<uint16_t, MAX_ROWS> _runtimeEntryFlags {};
+    std::array<uint16_t, MAX_ROWS> _entryFlags {};
     std::array<table_ticker_t, MAX_ROWS> _runtimeTableTicker {};
     std::array<char, MENU_DRAW_BUFFER_LEN + 2> _menuDrawBuf; // added space for null terminator
     std::array<char, MENU_TABLE_BUFFER_LEN + 2> _menuTableBuf; //added space for null terminator
@@ -138,7 +162,9 @@ public:
     static const menu_t* MENU_POPUP_SAVE;
     static const menu_t* MENU_POPUP_SAVE_REBOOT;
     static const menu_t* MENU_POPUP_EXIT_REBOOT;
-    static const menu_t* MENU_CHAIN_BACK;
+    static const menu_t* MENU_BACK;
+
+    static std::array<OSD_Entry, SETUP_POPUP_MAX_ENTRIES> menuSetupPopupEntries;
 
     // Menus
     static menu_t menuSetupPopup;
@@ -157,4 +183,6 @@ public:
             // display info
             static menu_t menuCalibrate;
         static menu_t menuMisc;
+        static menu_t menuSaveExit;
+        static menu_t menuSaveExitReboot;
 };

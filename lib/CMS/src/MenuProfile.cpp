@@ -24,13 +24,13 @@ static data_u data {};
 
 static const void* menuFiltersOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
-    data.imuFiltersConfig = cmsx.getCMS().getIMU_Filters().getConfig(); // NOLINT(cppcoreguidelines-pro-type-union-access)
+    data.imuFiltersConfig = cmsx.getIMU_Filters().getConfig(); // NOLINT(cppcoreguidelines-pro-type-union-access)
     return nullptr;
 }
 
 static const void* menuFiltersOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    cmsx.getCMS().getIMU_Filters().setConfig(data.imuFiltersConfig); // NOLINT(cppcoreguidelines-pro-type-union-access)
+    cmsx.getIMU_Filters().setConfig(data.imuFiltersConfig); // NOLINT(cppcoreguidelines-pro-type-union-access)
     return nullptr;
 }
 
@@ -45,7 +45,7 @@ static auto entryGyroNF2C = OSD_UINT16_t { &data.imuFiltersConfig.gyro_notch2_cu
 
 static const std::array<CMSX::OSD_Entry, 9> menuFiltersEntries
 {{
-    { "-- FILTERS --", OME_Label, nullptr, nullptr },
+    { "-- FILTERS --", OME_LABEL, nullptr, nullptr },
 
     { "GYRO LPF1",  OME_UINT16 | OME_SLIDER_GYRO, nullptr, &entryGyroLPF1 },
     { "GYRO LPF2",  OME_UINT16 | OME_SLIDER_GYRO, nullptr, &entryGyroLPF2 },
@@ -54,7 +54,7 @@ static const std::array<CMSX::OSD_Entry, 9> menuFiltersEntries
     { "GYRO NF2",   OME_UINT16, nullptr, &entryGyroNF2 },
     { "GYRO NF2C",  OME_UINT16, nullptr, &entryGyroNF2C },
 
-    {"BACK",        OME_Back, nullptr, nullptr},
+    {"BACK",        OME_BACK, nullptr, nullptr},
     {nullptr,       OME_END, nullptr, nullptr}
 }};
 
@@ -104,7 +104,7 @@ static auto entryYawPID_K   = OSD_UINT16_t { &data.pids[2].kk, 0, 200, 1 };
 
 static const std::array<CMSX::OSD_Entry, 15> menuPidEntries
 {{
-    { "-- PID --", OME_Label, nullptr, &pidProfileIndexString[0] },
+    { "-- PID --", OME_LABEL, nullptr, &pidProfileIndexString[0] },
 
     { "ROLL  P", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_P },
     { "ROLL  I", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_I },
@@ -121,7 +121,7 @@ static const std::array<CMSX::OSD_Entry, 15> menuPidEntries
     { "YAW   D", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_D },
     { "YAW   K", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_K },
 
-    { "BACK", OME_Back, nullptr, nullptr },
+    { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
 }};
 
@@ -132,6 +132,7 @@ CMSX::menu_t CMSX::menuPID = {
     .entries = &menuPidEntries[0]
 };
 
+#if false
 static const void* pidProfileIndexOnChange(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu)
 {
     (void)cmsx;
@@ -141,7 +142,7 @@ static const void* pidProfileIndexOnChange(CMSX& cmsx, DisplayPortBase& displayP
 }
 
 static std::array<const char * const, 4> pidProfileNames { "1", "2", "3", "4" };
-
+#endif
 //
 // Rates
 //
@@ -162,17 +163,17 @@ static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
 static std::array<const char * const, 3> lookupTableThrottleLimitType { "OFF", "SCALE", "CLIP" };
 
-static auto entryRcRatesRoll  = OSD_FLOAT_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 255, 1, 10 };
-static auto entryRcRatesPitch = OSD_FLOAT_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 255, 1, 10 };
-static auto entryRcRatesYaw   = OSD_FLOAT_t { &data.rates.rcRates[FlightController::FD_YAW], 1, 255, 1, 10 };
+static auto entryRcRatesRoll  = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 255, 1 };
+static auto entryRcRatesPitch = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 255, 1 };
+static auto entryRcRatesYaw   = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_YAW], 1, 255, 1 };
 
-static auto entryRatesRoll    = OSD_FLOAT_t { &data.rates.rates[FlightController::FD_ROLL], 1, 255, 1, 10 };
-static auto entryRatesPitch   = OSD_FLOAT_t { &data.rates.rates[FlightController::FD_PITCH], 1, 255, 1, 10 };
-static auto entryRatesYaw     = OSD_FLOAT_t { &data.rates.rates[FlightController::FD_YAW], 1, 255, 1, 10 };
+static auto entryRatesRoll    = OSD_UINT8_t { &data.rates.rates[FlightController::FD_ROLL], 1, 255, 1 };
+static auto entryRatesPitch   = OSD_UINT8_t { &data.rates.rates[FlightController::FD_PITCH], 1, 255, 1 };
+static auto entryRatesYaw     = OSD_UINT8_t { &data.rates.rates[FlightController::FD_YAW], 1, 255, 1 };
 
-static auto entryRcExpoRoll   = OSD_FLOAT_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 100, 1, 10 };
-static auto entryRcExpoPitch  = OSD_FLOAT_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 100, 1, 10 };
-static auto entryRcExpoYaw    = OSD_FLOAT_t { &data.rates.rcRates[FlightController::FD_YAW], 1, 100, 1, 10 };
+static auto entryRcExpoRoll   = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 100, 1 };
+static auto entryRcExpoPitch  = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 100, 1 };
+static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_YAW], 1, 100, 1 };
 
 static auto entryThrottleMid  = OSD_UINT8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
 static auto entryThrottleExpo = OSD_UINT8_t { &data.rates.throttleExpo, 1, 100, 1 };
@@ -182,19 +183,19 @@ static auto entryThrottleLimitPercent = OSD_UINT8_t { &data.rates.throttleLimitP
 
 static const std::array<CMSX::OSD_Entry, 16> menuRatesEntries
 {{
-    { "-- RATE --",  OME_Label, nullptr, &rateProfileIndexString[0] },
+    { "-- RATE --",  OME_LABEL, nullptr, &rateProfileIndexString[0] },
 
-    { "ROLL RATE",   OME_FLOAT,  nullptr, &entryRcRatesRoll },
-    { "PITCH RATE",  OME_FLOAT,  nullptr, &entryRcRatesPitch },
-    { "YAW RATE",    OME_FLOAT,  nullptr, &entryRcRatesYaw },
+    { "ROLL RATE",   OME_UINT8,  nullptr, &entryRcRatesRoll },
+    { "PITCH RATE",  OME_UINT8,  nullptr, &entryRcRatesPitch },
+    { "YAW RATE",    OME_UINT8,  nullptr, &entryRcRatesYaw },
 
-    { "ROLL SUPER",  OME_FLOAT,  nullptr, &entryRatesRoll },
-    { "PITCH SUPER", OME_FLOAT,  nullptr, &entryRatesPitch },
-    { "YAW SUPER",   OME_FLOAT,  nullptr, &entryRatesYaw },
+    { "ROLL SUPER",  OME_UINT8,  nullptr, &entryRatesRoll },
+    { "PITCH SUPER", OME_UINT8,  nullptr, &entryRatesPitch },
+    { "YAW SUPER",   OME_UINT8,  nullptr, &entryRatesYaw },
 
-    { "ROLL EXPO",   OME_FLOAT,  nullptr, &entryRcExpoRoll },
-    { "PITCH EXPO",  OME_FLOAT,  nullptr, &entryRcExpoPitch },
-    { "YAW EXPO",    OME_FLOAT,  nullptr, &entryRcExpoYaw },
+    { "ROLL EXPO",   OME_UINT8,  nullptr, &entryRcExpoRoll },
+    { "PITCH EXPO",  OME_UINT8,  nullptr, &entryRcExpoPitch },
+    { "YAW EXPO",    OME_UINT8,  nullptr, &entryRcExpoYaw },
 
     { "THR MID",     OME_UINT8,  nullptr, &entryThrottleMid },
     { "THR EXPO",    OME_UINT8,  nullptr, &entryThrottleExpo },
@@ -202,17 +203,9 @@ static const std::array<CMSX::OSD_Entry, 16> menuRatesEntries
     { "THR LIM TYPE",OME_TABLE,  nullptr, &entryThrottleLimitType },
     { "THR LIM %",   OME_UINT8,  nullptr, &entryThrottleLimitPercent },
 
-    { "BACK", OME_Back, nullptr, nullptr },
+    { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
 }};
-
-static const void* rateProfileIndexOnChange(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu)
-{
-    (void)cmsx;
-    (void)displayPort;
-    (void)menu;
-    return nullptr;
-}
 
 CMSX::menu_t CMSX::menuRates = {
     .onEnter = menuRatesOnEnter,
@@ -220,6 +213,15 @@ CMSX::menu_t CMSX::menuRates = {
     .onDisplayUpdate = nullptr,
     .entries = &menuRatesEntries[0]
 };
+
+#if false
+static const void* rateProfileIndexOnChange(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu)
+{
+    (void)cmsx;
+    (void)displayPort;
+    (void)menu;
+    return nullptr;
+}
 
 static std::array<const char * const, 4> rateProfileNames { "1", "2", "3", "4" };
 
@@ -231,32 +233,37 @@ static std::array<const char * const, 4> rateProfileNames { "1", "2", "3", "4" }
 static auto entryPID_Profile = OSD_TABLE_t { nullptr, 3, &pidProfileNames[0] };
 static auto entryRateProfile = OSD_TABLE_t { nullptr, 3, &rateProfileNames[0] };
 // NOLINTEND(fuchsia-statically-constructed-objects)
+#endif
 
-static const std::array<CMSX::OSD_Entry, 8> menuProfileEntries
+static const std::array<CMSX::OSD_Entry, 6> menuProfileEntries
 {{
-    {"-- PROFILE --",  OME_Label, nullptr, nullptr},
+    {"-- PROFILE --",  OME_LABEL, nullptr, nullptr},
 
-    {"PID PROF",    OME_TABLE, &pidProfileIndexOnChange, &entryPID_Profile},
-    {"PID",         OME_Submenu, &CMSX::menuChange, &CMSX::menuPID},
+    //{"PID PROF",    OME_TABLE, &pidProfileIndexOnChange, &entryPID_Profile},
+    {"PID",         OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID},
 
-    {"RATE PROF",   OME_TABLE, &rateProfileIndexOnChange, &entryRateProfile},
-    {"RATES",       OME_Submenu, &CMSX::menuChange, &CMSX::menuRates},
+    //{"RATE PROF",   OME_TABLE, &rateProfileIndexOnChange, &entryRateProfile},
+    {"RATES",       OME_SUBMENU, &CMSX::menuChange, &CMSX::menuRates},
 
-    {"FILTERS",     OME_Submenu, &CMSX::menuChange, &CMSX::menuFilters},
+    {"FILTERS",     OME_SUBMENU, &CMSX::menuChange, &CMSX::menuFilters},
 
-    {"BACK",        OME_Back, nullptr, nullptr},
+    {"BACK",        OME_BACK, nullptr, nullptr},
     {nullptr,       OME_END, nullptr, nullptr}
 }};
 
 static const void* menuProfileOnEnter(CMSX& cmsx, DisplayPortBase& displayPort)
 {
-    CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
+    (void)cmsx;
+    (void)displayPort;
+    //CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;
 }
 
 static const void* menuProfileOnExit(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
+    (void)cmsx;
+    (void)displayPort;
+    //CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;
 }
 

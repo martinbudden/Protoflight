@@ -3,51 +3,35 @@
 #include "CMS_Types.h"
 
 
-// NOLINT_BEGIN(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
-static const std::array<CMSX::OSD_Entry, 6> cmsx_menuSaveExitEntries =
+static const std::array<CMSX::OSD_Entry, 6> menuSaveExitEntries =
 {{
-    { "-- SAVE/EXIT --", OME_Label, nullptr, nullptr},
-    { "EXIT",            OME_OSD_Exit, &CMSX::menuExit, CMSX::MENU_EXIT },
-    { "SAVE&EXIT",       OME_OSD_Exit, &CMSX::menuExit, CMSX::MENU_POPUP_SAVE },
-    { "SAVE&REBOOT",     OME_OSD_Exit, &CMSX::menuExit, CMSX::MENU_POPUP_SAVE_REBOOT },
-    { "BACK", OME_Back, nullptr, nullptr },
+    { "-- SAVE/EXIT --", OME_LABEL, nullptr, nullptr},
+    { "EXIT",            OME_OSD_EXIT, &CMSX::menuExit, CMSX::MENU_EXIT },
+    { "SAVE&EXIT",       OME_OSD_EXIT, &CMSX::menuExit, CMSX::MENU_POPUP_SAVE },
+    { "SAVE&REBOOT",     OME_OSD_EXIT, &CMSX::menuExit, CMSX::MENU_POPUP_SAVE_REBOOT },
+    { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
 }};
 
-static CMSX::menu_t cmsx_menuSaveExit = {
-    .onEnter = nullptr,
-    .onExit = nullptr,
-    .onDisplayUpdate = nullptr,
-    .entries = &cmsx_menuSaveExitEntries[0]
-};
-
-#if false
-static const std::array<CMSX::OSD_Entry, 5> cmsx_menuSaveExitRebootEntries =
-{
-    { "-- SAVE/EXIT (REBOOT REQD)", OME_Label, nullptr, nullptr},
-    { "EXIT&REBOOT", OME_OSD_Exit, CMSX::menuExit, CMSX::POPUP_EXITREBOOT_PTR},
-    { "SAVE&REBOOT", OME_OSD_Exit, CMSX::menuExit, CMSX::POPUP_SAVEREBOOT_PTR},
-    { "BACK", OME_Back, nullptr, nullptr },
+static const std::array<CMSX::OSD_Entry, 5> menuSaveExitRebootEntries =
+{{
+    { "-- SAVE/EXIT (REBOOT REQD)", OME_LABEL, nullptr, nullptr },
+    { "EXIT&REBOOT", OME_OSD_EXIT, CMSX::menuExit, CMSX::MENU_POPUP_EXIT_REBOOT },
+    { "SAVE&REBOOT", OME_OSD_EXIT, CMSX::menuExit, CMSX::MENU_POPUP_SAVE_REBOOT },
+    { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
-};
+}};
 
-static CMSX::menu_t cmsx_menuSaveExitReboot = {
+CMSX::menu_t CMSX::menuSaveExit {
     .onEnter = nullptr,
     .onExit = nullptr,
     .onDisplayUpdate = nullptr,
-    .entries = cmsx_menuSaveExitRebootEntries
+    .entries = &menuSaveExitEntries[0]
 };
-#endif
-// NOLINT_BEGIN(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
 
-CMSX::menu_t* CMSX::getSaveExitMenu()
-{
-#if false
-    if (getRebootRequired()) {
-        return &cmsx_menuSaveExitReboot;
-    } else {
-        return &cmsx_menuSaveExit;
-    }
-#endif
-    return &cmsx_menuSaveExit;
-}
+CMSX::menu_t CMSX::menuSaveExitReboot {
+    .onEnter = nullptr,
+    .onExit = nullptr,
+    .onDisplayUpdate = nullptr,
+    .entries = &menuSaveExitRebootEntries[0]
+};

@@ -171,6 +171,8 @@ public:
     static bool pwmIsLow(uint16_t x) { return x < 1250; }
     static bool pwmIsMid(uint16_t x) { return (x > 1250) && (x <1750); }
 
+    void setRebootRequired();
+    bool getRebootRequired() const;
 private:
     Features _features;
     FlightController& _flightController;
@@ -204,4 +206,5 @@ private:
     uint32_t _failsafeTickCountSwitchOffThreshold {5000};
     uint8_t _currentPidProfileIndex {0};
     uint8_t _currentRateProfileIndex {0};
+    bool _rebootRequired {false};
 };

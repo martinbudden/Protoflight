@@ -12,6 +12,9 @@ class IMU_Filters;
 class OSD;
 class ReceiverBase;
 
+/*!
+Custom Menu System.
+*/
 class CMS {
 public:
     CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd);
@@ -33,12 +36,10 @@ public:
     const config_t& getConfig() const { return _config; }
     void setConfig(const config_t& config);
 
-    IMU_Filters& getIMU_Filters() { return _imuFilters; };
-
     void updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta); //!< CMS Task function, called by Task
 
     uint16_t handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount);
-    uint32_t scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs, uint32_t rcDelayMs);
+    void scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs);
     void setExternKey(CMSX::key_e externKey);
 
     DisplayPortBase* displayPortSelectNext();
@@ -53,10 +54,9 @@ private:
     CMSX _cmsx;
     const ReceiverBase& _receiver;
     Cockpit& _cockpit;
-    IMU_Filters& _imuFilters;
     OSD* _osd;
     config_t _config {};
-    uint32_t _rcDelayMs {CMSX::BUTTON_TIME_MS};
+    int32_t _keyDelayMs {CMSX::BUTTON_TIME_MS};
     uint32_t _lastCalledMs {};
     uint32_t _lastHeartbeatTimeMs {};
     uint32_t _deviceCount {0};

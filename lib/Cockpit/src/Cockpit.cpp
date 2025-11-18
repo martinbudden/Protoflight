@@ -11,7 +11,6 @@
 
 #include <cmath>
 
-
 Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs) :
     CockpitBase(receiver),
     _flightController(flightController),
@@ -21,6 +20,16 @@ Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Aut
     _nvs(nvs)
 {
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
+}
+
+void Cockpit::setRebootRequired()
+{
+    _rebootRequired = true;
+}
+
+bool Cockpit::getRebootRequired() const
+{
+    return _rebootRequired;
 }
 
 bool Cockpit::isArmed() const
@@ -87,22 +96,6 @@ bool Cockpit::isRcModeActive(uint8_t rcMode) const
     return false; // !!TODO rcMode
 }
 
-void Cockpit::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex)
-{
-    _currentRateProfileIndex = currentRateProfileIndex;
-    //!!_rates = _nvs.loadRates(currentRateProfileIndex);
-}
-
-void Cockpit::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex)
-{
-    _currentPidProfileIndex = currentPidProfileIndex;
-}
-
-void Cockpit::storeAllToNonVolatileStorage()
-{
-    //_nvs.storeAll(_imuFilters, _flightController, *this, _autopilot, _currentPidProfileIndex, _currentRateProfileIndex);
-}
-
 void Cockpit::setRatesToPassThrough()
 {
     _rates.rcRates = { 100, 100, 100 }; // center sensitivity
@@ -162,8 +155,8 @@ void Cockpit::handleOnOffSwitch()
                 if (_blackbox) {
                     _blackbox->start(Blackbox::start_t{
                         .debugMode = static_cast<uint16_t>(_debug.getMode()),
-                        .motorCount = static_cast<uint8_t>(_flightController.getMixer().getMotorCount()),
-                        .servoCount = static_cast<uint8_t>(_flightController.getMixer().getServoCount())
+                        .motorCount = static_cast<uint8_t>(_flightController.getMotorMixer().getMotorCount()),
+                        .servoCount = static_cast<uint8_t>(_flightController.getMotorMixer().getServoCount())
                     });
                     _flightController.setBlackboxActive(true);
                 }

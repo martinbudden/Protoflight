@@ -22,7 +22,7 @@ void Display::clearScreen(display_clear_option_e options)
 {
     _displayPort.clearScreen(options);
     _displayPort.setCleared(true);
-    _displayPort.setCursorRow(255);
+//    _displayPort.setCursorRow(255);
 }
 
 // Return true if screen still being transferred
