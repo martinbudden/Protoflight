@@ -5,6 +5,7 @@
 #include "DisplayPortBase.h"
 #include "FormatInteger.h"
 #include "OSD_Elements.h"
+#include <algorithm>
 #include <cstring>
 
 
@@ -25,6 +26,7 @@ CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters) :
     _imuFilters(imuFilters),
     _menuMain(menuMain)
     //_menuMain(menuFilters)
+    //_menuMain(menuRates)
 {
 }
 
@@ -157,7 +159,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             // A label with optional string, immediately following text
             strncpy(&_menuDrawBuf[0], reinterpret_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, static_cast<uint8_t>(strlen(&_menuDrawBuf[0])));
+            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, static_cast<uint8_t>(strnlen(&_menuDrawBuf[0], MENU_DRAW_BUFFER_LEN)));
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -175,7 +177,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
             }
             strncat(&_menuDrawBuf[0], ">", MENU_DRAW_BUFFER_LEN);
             row = _smallScreen ? row - 1 : row;
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, static_cast<uint8_t>(strlen(&_menuDrawBuf[0])));
+            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, static_cast<uint8_t>(strnlen(&_menuDrawBuf[0], MENU_DRAW_BUFFER_LEN)));
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -191,7 +193,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
     case OME_UINT8:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
-            i2a(*ptr->val, &_menuDrawBuf[0]);
+            ui2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
@@ -247,8 +249,9 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) || (entryFlags & OME_SCROLLING_TICKER)) {
             const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
             const size_t labelLength = strlen(entry->text) + 1; // account for the space between label and display data
-            const char* str = static_cast<const char *>(ptr->names[*ptr->val]);   // lookup table display text
-            const size_t displayLength = strlen(str);
+            const uint8_t index = std::clamp(*ptr->val, static_cast<uint8_t>(0), ptr->max);
+            const char* str = static_cast<const char *>(ptr->names[index]);   // lookup table display text
+            const size_t displayLength = std::strlen(str);
             // Calculate the available space to display the lookup table entry based on the
             // screen size and the length of the label. Always display at least MENU_DRAW_BUFFER_LEN
             // characters to prevent really long labels from overriding the data display.
@@ -371,7 +374,7 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
 
     // Draw the up/down page indicators if the display has space.
     // Only draw the symbols when necessary after the screen has been cleared. Otherwise they're static.
-    if (displayWasCleared && _leftMenuColumn > 0) {      // make sure there's room to draw the symbol
+    if (displayWasCleared && _leftMenuColumn > 0) { // make sure there's room to draw the symbol
         if (_currentMenuContext.page > 0) {
             displayPort.writeChar(_leftMenuColumn - 1, topRow, DisplayPortBase::SEVERITY_NORMAL, displayPort.getSmallArrowUp());
         }

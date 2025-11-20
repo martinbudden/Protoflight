@@ -150,6 +150,7 @@ static std::array<uint8_t, 2> rateProfileIndexString = { '1', '\0' };
 
 static const void* menuRatesOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
+    rateProfileIndexString[0] = '1';
     data.rates = cmsx.getCMS().getCockpit().getRates();
     return nullptr;
 }
@@ -161,7 +162,7 @@ static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static std::array<const char * const, 3> lookupTableThrottleLimitType { "OFF", "SCALE", "CLIP" };
+static std::array<const char * const, Cockpit::THROTTLE_LIMIT_TYPE_COUNT> lookupTableThrottleLimitType = { "OFF", "SCALE", "CLIP" };
 
 static auto entryRcRatesRoll  = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 255, 1 };
 static auto entryRcRatesPitch = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 255, 1 };
@@ -177,11 +178,11 @@ static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcRates[FlightControll
 
 static auto entryThrottleMid  = OSD_UINT8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
 static auto entryThrottleExpo = OSD_UINT8_t { &data.rates.throttleExpo, 1, 100, 1 };
-static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, 2, &lookupTableThrottleLimitType[0] };
+static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, Cockpit::THROTTLE_LIMIT_TYPE_COUNT - 1, &lookupTableThrottleLimitType[0] };
 static auto entryThrottleLimitPercent = OSD_UINT8_t { &data.rates.throttleLimitPercent, 25, 100, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 16> menuRatesEntries
+static const std::array<CMSX::OSD_Entry, 15> menuRatesEntries
 {{
     { "-- RATE --",  OME_LABEL, nullptr, &rateProfileIndexString[0] },
 
@@ -200,7 +201,7 @@ static const std::array<CMSX::OSD_Entry, 16> menuRatesEntries
     { "THR MID",     OME_UINT8,  nullptr, &entryThrottleMid },
     { "THR EXPO",    OME_UINT8,  nullptr, &entryThrottleExpo },
 
-    { "THR LIM TYPE",OME_TABLE,  nullptr, &entryThrottleLimitType },
+//    { "THR LIM TYPE",OME_TABLE,  nullptr, &entryThrottleLimitType },
     { "THR LIM %",   OME_UINT8,  nullptr, &entryThrottleLimitPercent },
 
     { "BACK", OME_BACK, nullptr, nullptr },
