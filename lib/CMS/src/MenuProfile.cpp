@@ -162,7 +162,7 @@ static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static std::array<const char * const, Cockpit::THROTTLE_LIMIT_TYPE_COUNT> lookupTableThrottleLimitType = { "OFF", "SCALE", "CLIP" };
+static std::array<const char * const, Cockpit::THROTTLE_LIMIT_TYPE_COUNT> throttleLimitTypeNames = { "OFF", "SCALE", "CLIP" };
 
 static auto entryRcRatesRoll  = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 255, 1 };
 static auto entryRcRatesPitch = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 255, 1 };
@@ -178,18 +178,18 @@ static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcRates[FlightControll
 
 static auto entryThrottleMid  = OSD_UINT8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
 static auto entryThrottleExpo = OSD_UINT8_t { &data.rates.throttleExpo, 1, 100, 1 };
-static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, Cockpit::THROTTLE_LIMIT_TYPE_COUNT - 1, &lookupTableThrottleLimitType[0] };
+static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, Cockpit::THROTTLE_LIMIT_TYPE_COUNT - 1, &throttleLimitTypeNames[0] };
 static auto entryThrottleLimitPercent = OSD_UINT8_t { &data.rates.throttleLimitPercent, 25, 100, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 15> menuRatesEntries
+static const std::array<CMSX::OSD_Entry, 10> menuRatesEntries
 {{
     { "-- RATE --",  OME_LABEL, nullptr, &rateProfileIndexString[0] },
 
     { "ROLL RATE",   OME_UINT8,  nullptr, &entryRcRatesRoll },
     { "PITCH RATE",  OME_UINT8,  nullptr, &entryRcRatesPitch },
     { "YAW RATE",    OME_UINT8,  nullptr, &entryRcRatesYaw },
-
+#if false
     { "ROLL SUPER",  OME_UINT8,  nullptr, &entryRatesRoll },
     { "PITCH SUPER", OME_UINT8,  nullptr, &entryRatesPitch },
     { "YAW SUPER",   OME_UINT8,  nullptr, &entryRatesYaw },
@@ -197,11 +197,11 @@ static const std::array<CMSX::OSD_Entry, 15> menuRatesEntries
     { "ROLL EXPO",   OME_UINT8,  nullptr, &entryRcExpoRoll },
     { "PITCH EXPO",  OME_UINT8,  nullptr, &entryRcExpoPitch },
     { "YAW EXPO",    OME_UINT8,  nullptr, &entryRcExpoYaw },
-
+#endif
     { "THR MID",     OME_UINT8,  nullptr, &entryThrottleMid },
     { "THR EXPO",    OME_UINT8,  nullptr, &entryThrottleExpo },
 
-//    { "THR LIM TYPE",OME_TABLE,  nullptr, &entryThrottleLimitType },
+    { "THR LIM TYP", OME_TABLE,  nullptr, &entryThrottleLimitType },
     { "THR LIM %",   OME_UINT8,  nullptr, &entryThrottleLimitPercent },
 
     { "BACK", OME_BACK, nullptr, nullptr },

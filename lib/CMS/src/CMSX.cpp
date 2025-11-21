@@ -27,18 +27,30 @@ CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters) :
     _menuMain(menuMain)
     //_menuMain(menuFilters)
     //_menuMain(menuRates)
+    //_menuMain(menuRcPreview)
 {
+}
+
+Cockpit& CMSX::getCockpit()
+{
+    return _cms.getCockpit();
+}
+
+const Cockpit& CMSX::getCockpit() const
+{
+    return _cms.getCockpit();
 }
 
 void CMSX::setRebootRequired()
 {
-    _cms.getCockpit().setRebootRequired();
+    getCockpit().setRebootRequired();
 }
 
 bool CMSX::getRebootRequired() const
 {
-    return _cms.getCockpit().getRebootRequired();
+    return getCockpit().getRebootRequired();
 }
+
 CMSX::menu_t* CMSX::getSaveExitMenu()
 {
     if (getRebootRequired()) {
@@ -112,7 +124,7 @@ void CMSX::padRight(char *buf, uint8_t size)
 // Pad buffer to the left, i.e. align right
 void CMSX::padLeft(char *buf, uint8_t size)
 {
-    auto len = static_cast<uint8_t>(strlen(buf));
+    auto len = static_cast<uint8_t>(strnlen(buf, size));
 
     int32_t ii = size - 1;
     const int32_t jj = size - len; 
@@ -246,9 +258,9 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         }
         break;
     case OME_TABLE:
-        if ((entryFlags & OME_PRINT_VALUE) || (entryFlags & OME_SCROLLING_TICKER)) {
+        if (((entryFlags & OME_PRINT_VALUE) || (entryFlags & OME_SCROLLING_TICKER)) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
-            const size_t labelLength = strlen(entry->text) + 1; // account for the space between label and display data
+            const size_t labelLength = strnlen(entry->text , MENU_DRAW_BUFFER_LEN) + 1; // account for the space between label and display data
             const uint8_t index = std::clamp(*ptr->val, static_cast<uint8_t>(0), ptr->max);
             const char* str = static_cast<const char *>(ptr->names[index]);   // lookup table display text
             const size_t displayLength = std::strlen(str);

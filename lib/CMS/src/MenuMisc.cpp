@@ -11,14 +11,7 @@ static uint16_t motorIdle;
 static uint8_t fpvCamAngleDegrees;
 static uint8_t crashFlipRate;
 
-
-static const void* menuRcOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
-{
-    //inhibitSaveMenu();
-    (void)cmsx;
-    return nullptr;
-}
-
+#if false
 static const void* menuRcConfirmBack(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     (void)cmsx;
@@ -27,10 +20,11 @@ static const void* menuRcConfirmBack(CMSX& cmsx, [[maybe_unused]] DisplayPortBas
     }
     return CMSX::MENU_BACK;
 }
+#endif
 
 static const void* menuRcOnDisplayUpdate(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    const ReceiverBase& receiver = cmsx.getCMS().getCockpit().getReceiver();
+    const ReceiverBase& receiver = cmsx.getCockpit().getReceiver();
     size_t ii = 0;
     for (auto& rc : rcData) {
         rc = receiver.getChannelRaw(ii);
@@ -50,7 +44,7 @@ static auto entryRcAux3     = OSD_UINT16_t { &rcData[6], 1, 2500, 0 };
 static auto entryRcAux4     = OSD_UINT16_t { &rcData[7], 1, 2500, 0 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 11> menuRcEntries
+static const std::array<CMSX::OSD_Entry, 9> menuRcEntries
 {{
     { "-- RC PREV --", OME_LABEL, nullptr, nullptr},
 
@@ -60,23 +54,24 @@ static const std::array<CMSX::OSD_Entry, 11> menuRcEntries
     { "YAW",   OME_UINT16 | OME_DYNAMIC, nullptr, &entryRcYaw },
     { "AUX1",  OME_UINT16 | OME_DYNAMIC, nullptr, &entryRcAux1 },
     { "AUX2",  OME_UINT16 | OME_DYNAMIC, nullptr, &entryRcAux2 },
+#if false
     { "AUX3",  OME_UINT16 | OME_DYNAMIC, nullptr, &entryRcAux3 },
     { "AUX4",  OME_UINT16 | OME_DYNAMIC, nullptr, &entryRcAux4 },
-
+#endif
     { "BACK",  OME_BACK, nullptr, nullptr},
     { nullptr, OME_END, nullptr, nullptr}
 }};
 
-static CMSX::menu_t menuRcPreview {
-    .onEnter = menuRcOnEnter,
-    .onExit = menuRcConfirmBack,
+CMSX::menu_t CMSX::menuRcPreview {
+    .onEnter = CMSX::inhibitSaveMenu,
+    .onExit = nullptr,
     .onDisplayUpdate = menuRcOnDisplayUpdate,
     .entries = &menuRcEntries[0]
 };
 
 static const void* menuMiscOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
-    const MotorMixerBase& motorMixer = cmsx.getCMS().getCockpit().getFlightController().getMotorMixer();
+    const MotorMixerBase& motorMixer = cmsx.getCockpit().getFlightController().getMotorMixer();
     motorIdle = motorMixer.getMotorConfig().motorIdle;
     fpvCamAngleDegrees = 0;
     crashFlipRate = 0;
@@ -86,11 +81,10 @@ static const void* menuMiscOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 
 static const void* menuMiscOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    MotorMixerBase& motorMixer = cmsx.getCMS().getCockpit().getFlightController().getMotorMixer();
+    MotorMixerBase& motorMixer = cmsx.getCockpit().getFlightController().getMotorMixer();
     MotorMixerBase::motorConfig_t motorConfig =  motorMixer.getMotorConfig();
     motorConfig.motorIdle =  motorIdle;
     motorMixer.setMotorConfig(motorConfig);
-
 
     return nullptr;
 }
@@ -106,10 +100,10 @@ static const std::array<CMSX::OSD_Entry, 8> menuMiscEntries
 {{
     { "-- MISC --", OME_LABEL, nullptr, nullptr },
 
-    { "IDLE OFFSET",    OME_UINT16 | OME_REBOOT_REQUIRED,    nullptr, &entryMotorIdle },
-    { "FPV CAM ANGLE",  OME_UINT8,                           nullptr, &entryFpvCamAngle },
-    { "CRASHFLIP RATE", OME_UINT8  | OME_REBOOT_REQUIRED,    nullptr, &entryCrashFlipRate },
-    { "RC PREV",        OME_SUBMENU, CMSX::menuChange, &menuRcPreview},
+    { "IDLE OFFSET",    OME_UINT16 | OME_REBOOT_REQUIRED,   nullptr, &entryMotorIdle },
+    { "FPV CAM ANGLE",  OME_UINT8,                          nullptr, &entryFpvCamAngle },
+    { "CRASHFLIP RATE", OME_UINT8  | OME_REBOOT_REQUIRED,   nullptr, &entryCrashFlipRate },
+    { "RC PREV",        OME_SUBMENU,                        CMSX::menuChange, &CMSX::menuRcPreview},
 #if defined(USE_GPS_LAP_TIMER)
     { "GPS LAP TIMER",  OME_SUBMENU, CMSX::menuChange, &menuGpsLapTimer },
 #endif // USE_GPS_LAP_TIMER

@@ -97,65 +97,66 @@ uint16_t CMS::handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount)
 
 void CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(readability-function-cognitive-complexity)
 {
-    CMSX::key_e key = CMSX::KEY_NONE;
-
-    const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
-
     if (_externKey != CMSX::KEY_NONE) {
         _keyDelayMs = _cmsx.handleKey(*_displayPort, _externKey);
         _externKey = CMSX::KEY_NONE;
-    } else {
-        if (_cockpit.isArmed() == false && Cockpit::pwmIsMid(controls.throttle) && Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch)) {
-            key = CMSX::KEY_MENU;
-        } else if (Cockpit::pwmIsHigh(controls.pitch)) {
-            key = CMSX::KEY_UP;
-        } else if (Cockpit::pwmIsLow(controls.pitch)) {
-            key = CMSX::KEY_DOWN;
-        } else if (Cockpit::pwmIsHigh(controls.roll)) {
-            key = CMSX::KEY_RIGHT;
-        } else if (Cockpit::pwmIsLow(controls.roll)) {
-            key = CMSX::KEY_LEFT;
-        } else if (Cockpit::pwmIsHigh(controls.yaw)) {
-            key = CMSX::KEY_ESC;
-        } else if (Cockpit::pwmIsLow(controls.yaw)) {
-            key = CMSX::KEY_SAVE_MENU;
-        }
-        if (key == CMSX::KEY_NONE) {
-            // No 'key' pressed, reset repeat control
-            _holdCount = 1;
-            _repeatCount = 1;
-            _repeatBase = 0;
-        } else {
-            // The 'key' is being pressed; keep counting
-            ++_holdCount;
-        }
+        return;
+    }
 
-        if (_keyDelayMs > 0) {
-            _keyDelayMs -= static_cast<int32_t>(currentTimeMs - lastCalledMs);
-        } else if (key) {
-            _keyDelayMs = handleKeyWithRepeat(key, _repeatCount);
-            // Key repeat effect is implemented in two phases.
-            // First phase is to decrease keyDelayMs reciprocal to hold time.
-            // When keyDelayMs reached a certain limit (scheduling interval),
-            // repeat rate will not raise anymore, so we call key handler
-            // multiple times (repeatCount).
-            //
-            // XXX Caveat: Most constants are adjusted pragmatically.
-            // XXX Rewrite this someday, so it uses actual hold time instead
-            // of holdCount, which depends on the scheduling interval.
-            if (((key == CMSX::KEY_LEFT) || (key == CMSX::KEY_RIGHT)) && (_holdCount > 20)) {
-                // Decrease keyDelayMs reciprocally
-                _keyDelayMs /= static_cast<int32_t>(_holdCount - 20);
-                // When we reach the scheduling limit,
-                if (_keyDelayMs <= 50) {
-                    // start calling handler multiple times.
-                    if (_repeatBase == 0) {
-                        _repeatBase = _holdCount;
-                    }
-                    _repeatCount += (_holdCount - _repeatBase) / 5;
-                    if (_repeatCount > 5) {
-                        _repeatCount = 5;
-                    }
+    const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+
+    CMSX::key_e key = CMSX::KEY_NONE;
+    if (_cockpit.isArmed() == false && Cockpit::pwmIsMid(controls.throttle) && Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch)) {
+        key = CMSX::KEY_MENU;
+    } else if (Cockpit::pwmIsHigh(controls.pitch)) {
+        key = CMSX::KEY_UP;
+    } else if (Cockpit::pwmIsLow(controls.pitch)) {
+        key = CMSX::KEY_DOWN;
+    } else if (Cockpit::pwmIsHigh(controls.roll)) {
+        key = CMSX::KEY_RIGHT;
+    } else if (Cockpit::pwmIsLow(controls.roll)) {
+        key = CMSX::KEY_LEFT;
+    } else if (Cockpit::pwmIsHigh(controls.yaw)) {
+        key = CMSX::KEY_ESC;
+    } else if (Cockpit::pwmIsLow(controls.yaw)) {
+        key = CMSX::KEY_SAVE_MENU;
+    }
+    if (key == CMSX::KEY_NONE) {
+        // No 'key' pressed, reset repeat control
+        _holdCount = 1;
+        _repeatCount = 1;
+        _repeatBase = 0;
+    } else {
+        // The 'key' is being pressed; keep counting
+        ++_holdCount;
+    }
+    if (_keyDelayMs > 0) {
+        _keyDelayMs -= static_cast<int32_t>(currentTimeMs - lastCalledMs);
+        return;
+    }
+    if (key) {
+        _keyDelayMs = handleKeyWithRepeat(key, _repeatCount);
+        // Key repeat effect is implemented in two phases.
+        // First phase is to decrease keyDelayMs reciprocal to hold time.
+        // When keyDelayMs reached a certain limit (scheduling interval),
+        // repeat rate will not raise anymore, so we call key handler
+        // multiple times (repeatCount).
+        //
+        // XXX Caveat: Most constants are adjusted pragmatically.
+        // XXX Rewrite this someday, so it uses actual hold time instead
+        // of holdCount, which depends on the scheduling interval.
+        if (((key == CMSX::KEY_LEFT) || (key == CMSX::KEY_RIGHT)) && (_holdCount > 20)) {
+            // Decrease keyDelayMs reciprocally
+            _keyDelayMs /= static_cast<int32_t>(_holdCount - 20);
+            // When we reach the scheduling limit,
+            if (_keyDelayMs <= 50) {
+                // start calling handler multiple times.
+                if (_repeatBase == 0) {
+                    _repeatBase = _holdCount;
+                }
+                _repeatCount += (_holdCount - _repeatBase) / 5;
+                if (_repeatCount > 5) {
+                    _repeatCount = 5;
                 }
             }
         }

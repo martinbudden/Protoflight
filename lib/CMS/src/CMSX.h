@@ -4,6 +4,7 @@
 #include <cstdint>
 
 class CMS;
+class Cockpit;
 class DisplayPortBase;
 class IMU_Filters;
 
@@ -80,9 +81,12 @@ public:
     void drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs);
     bool setupPopupMenuBuild();
     menu_t* getSaveExitMenu();
+    void inhibitSaveMenu() { _saveMenuInhibited = true; }
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key);
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entry* entry, uint16_t& entryFlags);
     CMS& getCMS() { return _cms; }
+    Cockpit& getCockpit();
+    const Cockpit& getCockpit() const;
     IMU_Filters& getIMU_Filters() { return _imuFilters; };
 
 private:
@@ -122,6 +126,7 @@ public:
     static const void* menuExit(CMSX& cmsx, DisplayPortBase& displayPort, const  menu_t* menu) { return cmsx.menuExit(displayPort, menu); }
     static const void* menuCalibrateGyro(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
     static const void* menuCalibrateAcc(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
+    static const void* inhibitSaveMenu(CMSX& cmsx, DisplayPortBase& displayPort) { (void)displayPort; cmsx.inhibitSaveMenu(); return nullptr; }
     enum { CALIBRATION_STATUS_MAX_LENGTH = 6 };
     static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> GyroCalibrationStatus;
     static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> AccCalibrationStatus;
@@ -146,7 +151,7 @@ private:
     uint8_t _linesPerMenuItem {}; // normally 1, but may be 2 for narrow screens
     bool _smallScreen {false};
     bool _rightAligned {false};
-    bool _saveMenuInhibited {};
+    bool _saveMenuInhibited {false};
     bool _inMenu {};
     bool _elementEditing {};
     std::array<uint16_t, MAX_ROWS> _entryFlags {};
@@ -183,6 +188,7 @@ public:
             // display info
             static menu_t menuCalibrate;
         static menu_t menuMisc;
+            static menu_t menuRcPreview;
         static menu_t menuSaveExit;
         static menu_t menuSaveExitReboot;
 };
