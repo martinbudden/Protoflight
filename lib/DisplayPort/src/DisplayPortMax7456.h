@@ -11,8 +11,11 @@ public:
 #else
 #include <BUS_SPI.h>
 #endif
+
+#include <TimeMicroseconds.h>
 #include <array>
 
+class Debug;
 
 enum video_system_e {
     VIDEO_SYSTEM_AUTO = 0,
@@ -26,9 +29,55 @@ public:
 #if defined(FRAMEWORK_TEST)
     DisplayPortMax7456() = default;
 #else
-    DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::stm32_spi_pins_t& pins);
-    DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::spi_pins_t& pins);
+    DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::stm32_spi_pins_t& pins, Debug& debug);
+    DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::spi_pins_t& pins, Debug& debug);
 #endif
+    enum init_status_e {
+        INIT_OK = 0, // IO defined and MAX7456 was detected
+        INIT_NOT_FOUND = -1, // IO defined, but MAX7456 could not be detected (maybe not yet powered on)
+        INIT_NOT_CONFIGURED = -2, // No MAX7456 IO defined, which means either the we don't have it or it's not properly configured
+    };
+    enum {
+        CLOCK_CONFIG_HALF,      // Force half clock
+        CLOCK_CONFIG_NOMINAL,   // Nominal clock (default)
+        CLOCK_CONFIG_DOUBLE     // Double clock
+    };
+    enum {
+        SIGNAL_CHECK_INTERVAL_MS = 1000,
+        STALL_CHECK_INTERVAL_MS = 1000
+    };
+    struct config_t {
+        uint8_t clockConfig; // SPI clock modifier
+        //ioTag_t csTag;
+        uint8_t spiDevice;
+        bool preInitOPU;
+    };
+    struct vcd_profile_t {
+        uint8_t video_system;
+        int8_t h_offset;
+        int8_t v_offset;
+    };
+    struct extDevice_t;
+    enum bus_status_e {
+        BUS_READY,
+        BUS_BUSY,
+        BUS_ABORT
+    };
+    struct bus_segment_t {
+        union {
+            struct {
+                uint8_t* txData; // Transmit buffer
+                uint8_t* rxData; // Receive buffer
+            } buffers;
+            struct {
+                const extDevice_t* dev; // Link to the device associated with the next transfer
+                volatile bus_segment_t* segments; // Segments to process in the next transfer.
+            } link;
+        } u;
+        int len;
+        bool negateCS; // Should CS be negated at the end of this segment
+        bus_status_e (*callbackFn)(uint32_t arg);
+    };
 private:
     // VM0 bits
     
@@ -56,16 +105,21 @@ public:
 
     void hardwareReset();
     //void    Preinit(const struct Config_s *Config);
-    //InitStatus_e Init(const struct Config_s *Config, const struct vcdProfile_s *vcdProfile, bool cpuOverclock);
+    init_status_e init(const config_t* config, const vcd_profile_t* vcdProfile, bool cpuOverclock);
+    void preinit(const config_t& config);
     void invert(bool invert);
     void brightness(uint8_t black, uint8_t white);
     bool reInitIfRequired(bool forceStallCheck);
     bool writeNvm(uint8_t char_address, const uint8_t *font_data);
     uint8_t getRowsCount();
     void refreshAll();
-    bool dmaInProgress() const;
+    static bool dmaInProgress();
     bool buffersSynced() const;
     bool isDeviceDetected();
+    void concludeCurrentSPI_Transaction();
+    static bus_status_e callbackReady(uint32_t arg);
+    inline uint32_t compareTimeUs(timeUs32_t a, timeUs32_t b) { return static_cast<uint32_t>(a - b); }
+
 private:
     uint8_t* getLayerBuffer(layer_e layer);
     uint8_t* getActiveLayerBuffer();
@@ -76,6 +130,16 @@ public:
     void reInit();
 private:
     BUS_SPI _bus; //!< SPI bus interface
+    Debug& _debug;
+    timeMs32_t lastSigCheckMs {0};
+    timeMs32_t videoDetectTimeMs {0};
+    timeMs32_t lastStallCheckMs {STALL_CHECK_INTERVAL_MS / 2}; // offset so that it doesn't coincide with the signal check
+    std::array<bus_segment_t, 2> segments {
+        bus_segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = callbackReady},
+        bus_segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = nullptr},
+    };
+    uint16_t reInitCount {0};
+    uint16_t pos {0};
     uint8_t videoSignalCfg {};
     uint8_t videoSignalReg {OSD_ENABLE}; // OSD_ENABLE required to trigger first ReInit
     uint8_t displayMemoryModeReg {0};
@@ -99,7 +163,7 @@ private:
 
     bool max7456DeviceDetected {false};
     uint16_t max7456SpiClockDiv {};
-    volatile bool max7456ActiveDma {false};
+    static volatile bool ActiveDMA;
 
     uint16_t maxScreenSize {VIDEO_BUFFER_PAL_CHARACTER_COUNT};
 
@@ -109,4 +173,6 @@ private:
     std::array<uint8_t, VIDEO_BUFFER_PAL_CHARACTER_COUNT> shadowBuffer {};
     std::array<layer_t, MAX7456_SUPPORTED_LAYER_COUNT> displayLayers {};
     std::array<uint8_t, 32> buf {};
+    enum { MAX_BYTES_TO_SEND = 250 };
+    /*DMA_DATA*/ uint8_t spiBuf[MAX_BYTES_TO_SEND];
 };
