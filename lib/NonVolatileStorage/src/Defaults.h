@@ -2,7 +2,9 @@
 
 #include <Autopilot.h>
 #include <Cockpit.h>
+#if defined(USE_OSD)
 #include <DisplayPortBase.h>
+#endif
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #include <MotorMixerBase.h>

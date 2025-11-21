@@ -5,6 +5,7 @@
 #include "AHRS_MessageQueue.h"
 #include "Cockpit.h"
 #include "Debug.h"
+#include "DisplayPortBase.h"
 #include "FlightController.h"
 #include "ReceiverBase.h"
 

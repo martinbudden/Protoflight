@@ -197,6 +197,10 @@ Targets
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
     //#define MOTOR_PINS          motor_pins_t{.m0=2,.m1=3,.m2=4,.m3=5}
 
+    #define USE_MAX7456
+    #define MAX7456_SPI_PINS    spi_pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
+    #define MAX7456_SPI_INDEX   BUS_INDEX_1
+
 #elif defined(TARGET_MADFLIGHT_FC2)
 
     #define BOARD_IDENTIFIER    "Madflight_FC2"

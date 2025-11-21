@@ -1,4 +1,3 @@
-#include <Display.h>
 #include <DisplayPortNull.h>
 #include <unity.h>
 
@@ -16,8 +15,7 @@ void test_display()
     //BUS_SPI::spi_pins_t spiPins{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=0xFF};
     //static DisplayPortMax7456 displayPortMax7456(BUS_SPI::BUS_INDEX_0, spiPins);
     static DisplayPortNull displayPortNull;
-    static Display display(displayPortNull);
-    (void)display;
+    (void)displayPortNull;
 }
 
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)

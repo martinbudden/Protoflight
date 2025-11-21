@@ -24,14 +24,14 @@
 Libraries
 ├── Filters @ 0.9.4
 ├── PIDF @ 0.4.1
-├── TaskBase @ 0.0.11
+├── TaskBase @ 0.0.12
 ├── VectorQuaternionMatrix @ 0.4.5
 ├── FlashKLV @ 0.0.3
 │
 ├── SensorFusion @ 0.2.9
 │   └── VectorQuaternionMatrix @ 0.4.5
 │
-├── Sensors @ 0.0.1
+├── Sensors @ 0.0.2
 │   └── VectorQuaternionMatrix @ 0.4.5
 │
 ├── MotorMixers @ 0.0.3

@@ -1,5 +1,6 @@
 #include "AHRS_MessageQueue.h"
 #include "Cockpit.h"
+#include "DisplayPortBase.h"
 #include "FormatInteger.h"
 #include "OSD.h"
 
@@ -17,10 +18,9 @@ OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const
 {
 }
 
-void OSD::init(DisplayPortBase *displayPort, DisplayPortBase::device_type_e displayPortDeviceType)
+void OSD::init(DisplayPortBase* displayPort)
 {
     _displayPort = displayPort;
-    _displayPortDeviceType = displayPortDeviceType;
 
     const uint8_t rowCount = displayPort->getRowCount();
     const uint8_t columnCount = displayPort->getColumnCount();
@@ -45,7 +45,7 @@ void OSD::drawLogoAndCompleteInitialization()
     _displayPort->clearScreen(DISPLAY_CLEAR_WAIT);
 
     // Display betaflight logo
-    drawLogo(midCol - (LOGO_COLUMN_COUNT) / 2, midRow - 5, DisplayPortBase::SEVERITY_NORMAL);
+    drawLogo(midCol - (LOGO_COLUMN_COUNT) / 2, midRow - 5);
 
     std::array<char, 30> string_buffer;
     sprintf(&string_buffer[0], "V%s", "0.0.1");//FC_VERSION_STRING);
@@ -356,7 +356,7 @@ bool OSD::getWarningState(uint8_t warningIndex) const
     return _config.enabled_warnings & (1U << warningIndex);
 }
 
-void OSD::drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity)
+void OSD::drawLogo(uint8_t x, uint8_t y)
 {
     // the logo is in the font characters starting at 160
     enum { START_CHARACTER = 160 };
@@ -367,7 +367,7 @@ void OSD::drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity)
     for (uint8_t row = 0; row < LOGO_ROW_COUNT; ++row) {
         for (uint8_t column = 0; column < LOGO_COLUMN_COUNT; ++column) {
             if (characterCode < END_OF_FONT) {
-                _displayPort->writeChar(x + column, y + row, severity, characterCode);
+                _displayPort->writeChar(x + column, y + row, DisplayPortBase::SEVERITY_NORMAL, characterCode);
                 ++characterCode;
             }
         }
@@ -395,7 +395,7 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
         //Serial.printf("STATE_INIT\r\n");
         if (!_displayPort->checkReady(false)) {
             // Frsky OSD needs a display redraw after search for MAX7456 devices
-            if (_displayPortDeviceType == DisplayPortBase::DEVICE_TYPE_FRSKY_OSD) {
+            if (_displayPort->getDeviceType() == DisplayPortBase::DEVICE_TYPE_FRSKY_OSD) {
                 _displayPort->redraw();
                 return;
             }

@@ -1,13 +1,19 @@
-#include "Debug.h"
 #include "DisplayPortMax7456.h"
+#if !defined(FRAMEWORK_TEST)
+#include <Debug.h>
 #include <TimeMicroseconds.h>
+#else
+typedef uint32_t timeMs32_t; // NOLINT(modernize-use-using)
+typedef uint32_t timeUs32_t; // NOLINT(modernize-use-using)
+typedef int32_t timeUsDelta_t; // NOLINT(modernize-use-using)
+inline timeUs32_t timeMs() { return 1000; }
+inline timeUs32_t timeUs() { return 1000000; }
+inline timeUsDelta_t compareTimeUs(timeUs32_t a, timeUs32_t b) { return static_cast<timeUsDelta_t>(a - b); }
+#endif
 #include <cstring>
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,modernize-macro-to-enum,cppcoreguidelines-macro-usage)
 
-// 10 MHz max SPI frequency
-#define MAX7456_MAX_SPI_CLK_HZ 10000000
-#define MAX7456_INIT_MAX_SPI_CLK_HZ 5000000
 
 // DEBUG_MAX7456_SIGNAL
 #define DEBUG_MAX7456_SIGNAL_MODEREG       0
@@ -15,7 +21,7 @@
 #define DEBUG_MAX7456_SIGNAL_REINIT        2
 #define DEBUG_MAX7456_SIGNAL_ROWS          3
 
-// DEBUG_MAX7456_SPICLOCK
+// DEBUG_MAX7456_SPI_CLOCK
 #define DEBUG_MAX7456_SPI_CLOCK_OVERCLOCK   0
 #define DEBUG_MAX7456_SPI_CLOCK_DEVTYPE     1
 #define DEBUG_MAX7456_SPI_CLOCK_DIVISOR     2
@@ -77,13 +83,13 @@
 // DMM register bits
 #define DMM_AUTO_INC 0x01
 
-// Kluege warning!
+// Kludge warning!
 // There are occasions that NTSC is not detected even with !LOS (AB7456 specific?)
 // When this happens, lower 3 bits of STAT register is read as zero.
 // To cope with this case, this macro defines !LOS && !PAL as NTSC.
 // Should be compatible with MAX7456 and non-problematic case.
 
-#define VIN_IS_NTSC_alt(val)  (!STAT_IS_LOS(val) && !STAT_IS_PAL(val))
+#define VIN_IS_NTSC_ALT(val)  (!STAT_IS_LOS(val) && !STAT_IS_PAL(val))
 
 
 // DMM special bits
@@ -150,37 +156,39 @@ volatile bool DisplayPortMax7456::ActiveDMA {false};
 
 #if !defined(FRAMEWORK_TEST)
 DisplayPortMax7456::DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::stm32_spi_pins_t& pins, Debug& debug) :
-    _bus(MAX7456_INIT_MAX_SPI_CLK_HZ, SPI_index, pins),
+    _bus(INITIAL_SPI_CLOCK_FREQUENCY_HZ, SPI_index, pins),
     _debug(debug)
 {
+    _maxScreenSize = VIDEO_BUFFER_PAL_CHARACTER_COUNT;
     _smallArrowUp = 0x75;
 }
 
 DisplayPortMax7456::DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::spi_pins_t& pins, Debug& debug) :
-    _bus(MAX7456_INIT_MAX_SPI_CLK_HZ, SPI_index, pins),
+    _bus(INITIAL_SPI_CLOCK_FREQUENCY_HZ, SPI_index, pins),
     _debug(debug)
 {
+    _maxScreenSize = VIDEO_BUFFER_PAL_CHARACTER_COUNT;
     _smallArrowUp = 0x75;
 }
 #endif
 
 uint8_t* DisplayPortMax7456::getLayerBuffer(layer_e layer)
 {
-    return &displayLayers[layer].buffer[0];
+    return &_displayLayers[layer].buffer[0];
 }
 
 uint8_t* DisplayPortMax7456::getActiveLayerBuffer()
 {
-    return getLayerBuffer(activeLayer);
+    return getLayerBuffer(_activeLayer);
 }
 
 void DisplayPortMax7456::setRegisterVM1()
 {
     uint8_t backgroundGray = BACKGROUND_BRIGHTNESS_28; // this is the device default background gray level
     uint8_t vm1Register = BLINK_TIME_1 | BLINK_DUTY_CYCLE_75_25; // device defaults
-    if (deviceBackgroundType != BACKGROUND_TRANSPARENT) {
+    if (_backgroundType != BACKGROUND_TRANSPARENT) {
         vm1Register |= BACKGROUND_MODE_GRAY;
-        switch (deviceBackgroundType) {
+        switch (_backgroundType) {
         case BACKGROUND_BLACK:
             backgroundGray = BACKGROUND_BRIGHTNESS_0;
             break;
@@ -199,16 +207,11 @@ void DisplayPortMax7456::setRegisterVM1()
     _bus.writeRegister(MAX7456ADD_VM1, vm1Register);
 }
 
-uint8_t DisplayPortMax7456::getRowsCount() // NOLINT(readability-make-member-function-const)
-{
-    return (videoSignalReg & VIDEO_MODE_PAL) ? VIDEO_LINES_PAL : VIDEO_LINES_NTSC;
-}
-
 // When clearing the shadow buffer we fill with 0 so that the characters will
 // be flagged as changed when compared to the 0x20 used in the layer buffers.
 void DisplayPortMax7456::clearShadowBuffer()
 {
-    memset(&shadowBuffer[0], 0, maxScreenSize);
+    _shadowBuffer.fill(0);
 }
 
 // Buffer is filled with the whitespace character (0x20)
@@ -219,35 +222,37 @@ void DisplayPortMax7456::clearLayer(layer_e layer)
 
 void DisplayPortMax7456::reInit()
 {
-    switch (videoSignalCfg) {
+    switch (_videoSignalCfg) {
     case VIDEO_SYSTEM_AUTO: {
         const uint8_t data = _bus.readRegister(MAX7456ADD_STAT);
         if (VIN_IS_NTSC(data)) {
-            videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
+            _videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
         } else if (VIN_IS_PAL(data)) {
-            videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
+            _videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
         } else {
             // No valid input signal, fallback to default (PAL)
-            videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
+            _videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
         }
         break;
     }
     case VIDEO_SYSTEM_PAL:
-        videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
+        _videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
+        _rowCount = VIDEO_LINES_PAL;
         break;
     case VIDEO_SYSTEM_NTSC:
-        videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
+        _videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
+        _rowCount = VIDEO_LINES_NTSC;
         break;
     }
 
-    if (videoSignalReg & VIDEO_MODE_PAL) {
-        maxScreenSize = VIDEO_BUFFER_PAL_CHARACTER_COUNT;
+    if (_videoSignalReg & VIDEO_MODE_PAL) {
+        _maxScreenSize = VIDEO_BUFFER_PAL_CHARACTER_COUNT;
     } else {
-        maxScreenSize = VIDEO_BUFFER_NTSC_CHARACTER_COUNT;
+        _maxScreenSize = VIDEO_BUFFER_NTSC_CHARACTER_COUNT;
     }
 
     // Set all rows to same character black/white level
-    previousBlackWhiteRegister = INVALID_PREVIOUS_REGISTER_STATE;
+    _previousBlackWhiteRegister = INVALID_PREVIOUS_REGISTER_STATE;
     brightness(0, 2);
     // Re-enable MAX7456 (last function call disables it)
 
@@ -255,9 +260,9 @@ void DisplayPortMax7456::reInit()
     //spiWriteReg(dev, MAX7456ADD_VM0, videoSignalReg);
     //spiWriteReg(dev, MAX7456ADD_HOS, hosRegValue);
     //spiWriteReg(dev, MAX7456ADD_VOS, vosRegValue);
-    _bus.writeRegister(MAX7456ADD_VM0, videoSignalReg);
-    _bus.writeRegister(MAX7456ADD_HOS, hosRegValue);
-    _bus.writeRegister(MAX7456ADD_VOS, vosRegValue);
+    _bus.writeRegister(MAX7456ADD_VM0, _videoSignalReg);
+    _bus.writeRegister(MAX7456ADD_HOS, _hosRegValue);
+    _bus.writeRegister(MAX7456ADD_VOS, _vosRegValue);
     setRegisterVM1();
 
     // Clear shadow to force redraw all screen
@@ -275,8 +280,8 @@ void DisplayPortMax7456::preinit(const config_t& config)
 
 DisplayPortMax7456::init_status_e DisplayPortMax7456::init(const config_t* max7456Config, const vcd_profile_t* pVcdProfile, bool cpuOverclock)
 {
-    max7456DeviceDetected = false;
-    deviceBackgroundType = DisplayPortBase::BACKGROUND_TRANSPARENT;
+    _deviceDetected = false;
+    _backgroundType = DisplayPortBase::BACKGROUND_TRANSPARENT;
 
     // initialize all layers
     for (size_t ii = 0; ii < MAX7456_SUPPORTED_LAYER_COUNT; ++ii) {
@@ -300,36 +305,34 @@ DisplayPortMax7456::init_status_e DisplayPortMax7456::init(const config_t* max74
     IOConfigGPIO(dev->busType_u.spi.csnPin, SPI_IO_CS_CFG);
     IOHi(dev->busType_u.spi.csnPin);
 
+#endif
     // Detect MAX7456 existence and device type. Do this at half the speed for safety.
 
     // Detect MAX7456 and compatible device by reading OSDM (OSD Insertion MUX) register.
     // This register is not modified in this driver, therefore ensured to remain at its default value (0x1B).
 
-    spiSetClkDivisor(dev, spiCalculateDivider(MAX7456_INIT_MAX_SPI_CLK_HZ));
+    _bus.setClockDivisor(_bus.calculateClockDivider(INITIAL_SPI_CLOCK_FREQUENCY_HZ));
     concludeCurrentSPI_Transaction();
-#endif
 
     //uint8_t osdm = spiReadRegMsk(dev, MAX7456ADD_OSDM);
     const uint8_t osdm = _bus.readRegister(MAX7456ADD_OSDM);
 
-    if (osdm != 0x1B) {
+    if (osdm != 0x1B) { // cppcheck-suppress knownConditionTrueFalse
         //IOConfigGPIO(dev->busType_u.spi.csnPin, IOCFG_IPU);
         return INIT_NOT_FOUND;
     }
 
     // At this point, we can claim the ownership of the CS pin
-    max7456DeviceDetected = true;
+    _deviceDetected = true;
     //IOInit(dev->busType_u.spi.csnPin, OWNER_OSD_CS, 0);
 
     // Detect device type by writing and reading CA[8] bit at CMAL[6].
     // This is a bit for accessing second half of character glyph storage, supported only by AT variant.
-
     _bus.writeRegister(MAX7456ADD_CMAL, (1 << 6)); // CA[8] bit
-
     if (_bus.readRegister(MAX7456ADD_CMAL) & (1 << 6)) {
-        max7456DeviceType = MAX7456_DEVICE_TYPE_AT;
+        _max7456DeviceType = MAX7456_DEVICE_TYPE_AT;
     } else {
-        max7456DeviceType = MAX7456_DEVICE_TYPE_MAX;
+        _max7456DeviceType = MAX7456_DEVICE_TYPE_MAX;
     }
 
 #if defined(USE_OVERCLOCK)
@@ -337,30 +340,32 @@ DisplayPortMax7456::init_status_e DisplayPortMax7456::init(const config_t* max74
 
     switch (max7456Config->clockConfig) {
     case CLOCK_CONFIG_HALF:
-        max7456SpiClockDiv = spiCalculateDivider(MAX7456_MAX_SPI_CLK_HZ / 2);
+        _spiClockDiv = _bus.calculateClockDivider(MAX_SPI_CLOCK_FREQUENCY_HZ / 2);
         break;
 
     case CLOCK_CONFIG_NOMINAL:
     default:
-        max7456SpiClockDiv = spiCalculateDivider(MAX7456_MAX_SPI_CLK_HZ);
+        _spiClockDiv = _bus.calculateClockDivider(MAX_SPI_CLOCK_FREQUENCY_HZ);
         break;
 
     case CLOCK_CONFIG_DOUBLE:
-        max7456SpiClockDiv = spiCalculateDivider(MAX7456_MAX_SPI_CLK_HZ * 2);
+        _spiClockDiv = _bus.calculateClockDivider(MAX_SPI_CLOCK_FREQUENCY_HZ * 2);
         break;
     }
 
+#if !defined(FRAMEWORK_TEST)
     _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_OVERCLOCK, cpuOverclock);
-    _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_DEVTYPE, max7456DeviceType);
-    _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_DIVISOR, max7456SpiClockDiv);
-    _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_X100, spiCalculateClock(max7456SpiClockDiv) / 10000);
+    _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_DEVTYPE, _max7456DeviceType);
+    _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_DIVISOR, _spiClockDiv);
+    _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_X100, _bus.calculateClock(_spiClockDiv) / 10000);
+#endif
 #else
     (void)max7456Config;
     (void)cpuOverclock;
-    //max7456SpiClockDiv = spiCalculateDivider(MAX7456_MAX_SPI_CLK_HZ);
+    //max7456SpiClockDiv = spiCalculateDivider(MAX_SPI_CLOCK_FREQUENCY_HZ);
 #endif
 
-    //spiSetClkDivisor(dev, max7456SpiClockDiv);
+    _bus.setClockDivisor(_spiClockDiv);
 
     // force soft reset on Max7456
     _bus.writeRegister(MAX7456ADD_VM0, MAX7456_RESET);
@@ -369,12 +374,13 @@ DisplayPortMax7456::init_status_e DisplayPortMax7456::init(const config_t* max74
     //delayMs(200);
 
     // Wait for reset to complete
-    while ((_bus.readRegister(MAX7456ADD_VM0) & MAX7456_RESET) != 0x00);
+    while ((_bus.readRegister(MAX7456ADD_VM0) & MAX7456_RESET) != 0)
+        {}
 
     // Setup values to write to registers
-    videoSignalCfg = pVcdProfile->video_system;
-    hosRegValue = 32 - pVcdProfile->h_offset;
-    vosRegValue = 16 - pVcdProfile->v_offset;
+    _videoSignalCfg = pVcdProfile->video_system;
+    _hosRegValue = static_cast<uint8_t>(32 - pVcdProfile->h_offset);
+    _vosRegValue = static_cast<uint8_t>(16 - pVcdProfile->v_offset);
 
     // Real init will be made later when driver detect idle.
     return INIT_OK;
@@ -386,18 +392,17 @@ Sets inversion of black and white pixels.
 void DisplayPortMax7456::invert(bool invert)
 {
     if (invert) {
-        displayMemoryModeReg |= INVERT_PIXEL_COLOR;
+        _displayMemoryModeReg |= INVERT_PIXEL_COLOR;
     } else {
-        displayMemoryModeReg &= static_cast<uint8_t>(~INVERT_PIXEL_COLOR);
+        _displayMemoryModeReg &= static_cast<uint8_t>(~INVERT_PIXEL_COLOR);
     }
-
-    if (displayMemoryModeReg != previousInvertRegister) {
+    if (_displayMemoryModeReg != _previousInvertRegister) {
         // clear the shadow buffer so all characters will be
         // redrawn with the proper invert state
         clearShadowBuffer();
-        previousInvertRegister = displayMemoryModeReg;
+        _previousInvertRegister = _displayMemoryModeReg;
         //spiWriteReg(dev, MAX7456ADD_DMM, displayMemoryModeReg);
-        _bus.writeRegister(MAX7456ADD_DMM, displayMemoryModeReg);
+        _bus.writeRegister(MAX7456ADD_DMM, _displayMemoryModeReg);
     }
 }
 
@@ -411,30 +416,30 @@ void DisplayPortMax7456::brightness(uint8_t black, uint8_t white)
 {
     const uint8_t reg = (black << 2) | (3 - white);
 
-    if (reg != previousBlackWhiteRegister) {
-        previousBlackWhiteRegister = reg;
+    if (reg != _previousBlackWhiteRegister) {
+        _previousBlackWhiteRegister = reg;
         for (uint8_t i = MAX7456ADD_RB0, j = 0; i <= MAX7456ADD_RB15; i++) {
-            buf[j++] = i;
-            buf[j++] = reg;
+            _buf[j++] = i;
+            _buf[j++] = reg;
         }
         //spiReadWriteBuf(dev, buf, NULL, sizeof(buf));
-        _bus.writeBytes(&buf[0], sizeof(buf));
+        _bus.writeBytes(&_buf[0], sizeof(_buf));
     }
 }
 
 uint32_t DisplayPortMax7456::clearScreen(display_clear_option_e options)
 {
     (void)options;
-    clearLayer(activeLayer);
+    clearLayer(_activeLayer);
     return 0;
 }
 
 uint32_t DisplayPortMax7456::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
 {
     (void)attr;
-    uint8_t *buffer = getActiveLayerBuffer();
-    if (x < CHARS_PER_LINE && y < VIDEO_LINES_PAL) {
-        buffer[y * CHARS_PER_LINE + x] = c;
+    uint8_t *buf = getActiveLayerBuffer();
+    if (x < CHARACTERS_PER_LINE && y < VIDEO_LINES_PAL) {
+        buf[y * CHARACTERS_PER_LINE + x] = c;
     }
     return 0;
 }
@@ -444,29 +449,12 @@ uint32_t DisplayPortMax7456::writeString(uint8_t x, uint8_t y, uint8_t attr, con
     (void)attr;
     if (y < VIDEO_LINES_PAL) {
         uint8_t *buffer = getActiveLayerBuffer();
-        const uint32_t bufferYOffset = y * CHARS_PER_LINE;
-        for (uint32_t i = 0, bufferXOffset = x; text[i] && bufferXOffset < CHARS_PER_LINE; i++, bufferXOffset++) {
+        const uint32_t bufferYOffset = y * CHARACTERS_PER_LINE;
+        for (uint32_t i = 0, bufferXOffset = x; text[i] && bufferXOffset < CHARACTERS_PER_LINE; i++, bufferXOffset++) {
             buffer[bufferYOffset + bufferXOffset] = static_cast<uint8_t>(text[i]);
         }
     }
     return 0;
-}
-
-bool DisplayPortMax7456::layerSupported(layer_e layer)
-{
-    if (layer == LAYER_FOREGROUND) {
-        return true;
-    }
-    return false;
-}
-
-bool DisplayPortMax7456::layerSelect(layer_e layer)
-{
-    if (layerSupported(layer)) {
-        activeLayer = layer;
-        return true;
-    }
-    return false;
 }
 
 bool DisplayPortMax7456::layerCopy(layer_e destLayer, layer_e sourceLayer)
@@ -485,8 +473,8 @@ bool DisplayPortMax7456::dmaInProgress()
 
 bool DisplayPortMax7456::buffersSynced() const
 {
-    for (uint16_t ii = 0; ii < maxScreenSize; ++ii) {
-        if (displayLayers[LAYER_FOREGROUND].buffer[ii] != shadowBuffer[ii]) {
+    for (size_t ii = 0; ii < _maxScreenSize; ++ii) {
+        if (_displayLayers[LAYER_FOREGROUND].buffer[ii] != _shadowBuffer[ii]) {
             return false;
         }
     }
@@ -502,70 +490,68 @@ void DisplayPortMax7456::concludeCurrentSPI_Transaction()
 
 bool DisplayPortMax7456::reInitIfRequired(bool forceStallCheck)
 {
-    (void)forceStallCheck;
-
     const timeMs32_t timeNowMs = timeMs();
 
     bool stalled = false;
-    if (forceStallCheck || (lastStallCheckMs + STALL_CHECK_INTERVAL_MS < timeNowMs)) {
-        lastStallCheckMs = timeNowMs;
+    if (forceStallCheck || (_lastStallCheckMs + STALL_CHECK_INTERVAL_MS < timeNowMs)) { // cppcheck-suppress knownConditionTrueFalse
+        _lastStallCheckMs = timeNowMs;
         concludeCurrentSPI_Transaction();
-        stalled = (_bus.readRegister(MAX7456ADD_VM0) != videoSignalReg);
+        stalled = (_bus.readRegister(MAX7456ADD_VM0) != _videoSignalReg);
     }
-
     if (stalled) {
         reInit();
-    } else if ((videoSignalCfg == VIDEO_SYSTEM_AUTO) && ((timeNowMs - lastSigCheckMs) > SIGNAL_CHECK_INTERVAL_MS)) {
+    } else if ((_videoSignalCfg == VIDEO_SYSTEM_AUTO) && ((timeNowMs - _lastSigCheckMs) > SIGNAL_CHECK_INTERVAL_MS)) { // cppcheck-suppress knownConditionTrueFalse
         concludeCurrentSPI_Transaction();
         // Adjust output format based on the current input format.
         const uint8_t videoSense = _bus.readRegister(MAX7456ADD_STAT);
-        _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_MODEREG, videoSignalReg & VIDEO_MODE_MASK);
+#if !defined(FRAMEWORK_TEST)
+        _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_MODEREG, _videoSignalReg & VIDEO_MODE_MASK);
         _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_SENSE, videoSense & 0x7);
         _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_ROWS, getRowCount());
+#endif
         if (videoSense & STAT_LOS) {
-            videoDetectTimeMs = 0;
+            _videoDetectTimeMs = 0;
         } else {
-            if ((VIN_IS_PAL(videoSense) && VIDEO_MODE_IS_NTSC(videoSignalReg))
-              || (VIN_IS_NTSC_alt(videoSense) && VIDEO_MODE_IS_PAL(videoSignalReg))) {
-                if (videoDetectTimeMs) {
-                    if (timeMs() - videoDetectTimeMs > VIDEO_SIGNAL_DEBOUNCE_MS) {
+            if ((VIN_IS_PAL(videoSense) && VIDEO_MODE_IS_NTSC(_videoSignalReg))
+              || (VIN_IS_NTSC_ALT(videoSense) && VIDEO_MODE_IS_PAL(_videoSignalReg))) {
+                if (_videoDetectTimeMs) {
+                    if (timeMs() - _videoDetectTimeMs > VIDEO_SIGNAL_DEBOUNCE_MS) {
                         reInit();
-                        _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_REINIT, ++reInitCount);
+                        ++_reInitCount;
+#if !defined(FRAMEWORK_TEST)
+                        _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_REINIT, _reInitCount);
+#endif
                     }
                 } else {
                     // Wait for signal to stabilize
-                    videoDetectTimeMs = timeMs();
+                    _videoDetectTimeMs = timeMs();
                 }
             }
         }
-        lastSigCheckMs = timeNowMs;
+        _lastSigCheckMs = timeNowMs;
     }
-
     return stalled;
 }
 
 /*!
 Called in ISR context
 */
-DisplayPortMax7456::bus_status_e DisplayPortMax7456::callbackReady(uint32_t arg)
+BUS_SPI::bus_status_e DisplayPortMax7456::callbackReady(uint32_t arg)
 {
     (void)arg;
-
     DisplayPortMax7456::ActiveDMA = false;
-
-    return BUS_READY;
+    return BUS_SPI::BUS_READY;
 }
 
 // Return true if screen still being transferred
-bool DisplayPortMax7456::drawScreen()
+bool DisplayPortMax7456::drawScreen() // NOLINT(readability-function-cognitive-complexity)
 {
-
-    if (!fontIsLoading) {
+    if (!_fontIsLoading) {
         uint8_t *buffer = getActiveLayerBuffer();
         int spiBufIndex = 0;
         bool setAddress = true;
         bool autoInc = false;
-        int posLimit = pos + (maxScreenSize / 2);
+        int posLimit = _pos + (_maxScreenSize / 2);
 #if defined(USE_DMA)
         const bool useDma = spiUseSDO_DMA(dev);
 #else
@@ -573,13 +559,13 @@ bool DisplayPortMax7456::drawScreen()
 #endif
         int maxSpiBufStartIndex = useDma ? MAX_BYTES2SEND : MAX_BYTES2SEND_POLLED;
         //timeDelta_t maxEncodeTime;
-        const uint32_t maxEncodeTime = useDma ? MAX_ENCODE_US : MAX_ENCODE_US_POLLED;
+        const int32_t maxEncodeTime = useDma ? MAX_ENCODE_US : MAX_ENCODE_US_POLLED;
 
         // Abort for now if the bus is still busy
-        //!!if (spiIsBusy(dev)) {
-        //    // Not finished yet
-        //    return true;
-        //}
+        if (_bus.dmaIsBusy()) {
+            // Not finished yet
+            return true;
+        }
 
         timeUs32_t startTime = timeUs();
 
@@ -587,76 +573,62 @@ bool DisplayPortMax7456::drawScreen()
         maxSpiBufStartIndex -= 4;
 
         // Initialise the transfer buffer
-        while ((spiBufIndex < maxSpiBufStartIndex) && (pos < posLimit) && (compareTimeUs(timeUs(), startTime) < maxEncodeTime)) {
-            if (buffer[pos] != shadowBuffer[pos]) {
-                if (buffer[pos] == 0xff) {
-                    buffer[pos] = ' ';
+        while ((spiBufIndex < maxSpiBufStartIndex) && (_pos < posLimit) && (compareTimeUs(timeUs(), startTime) < maxEncodeTime)) { // cppcheck-suppress knownConditionTrueFalse
+            if (buffer[_pos] != _shadowBuffer[_pos]) {
+                if (buffer[_pos] == 0xff) {
+                    buffer[_pos] = ' ';
                 }
-
                 if (setAddress || !autoInc) {
-                    if (buffer[pos + 1] != shadowBuffer[pos + 1]) {
+                    if (buffer[_pos + 1] != _shadowBuffer[_pos + 1]) {
                         // It's worth auto incrementing
-                        spiBuf[spiBufIndex++] = MAX7456ADD_DMM;
-                        spiBuf[spiBufIndex++] = displayMemoryModeReg | DMM_AUTO_INC;
+                        _spiBuf[spiBufIndex++] = MAX7456ADD_DMM;
+                        _spiBuf[spiBufIndex++] = _displayMemoryModeReg | DMM_AUTO_INC;
                         autoInc = true;
                     } else {
                         // It's not worth auto incrementing
-                        spiBuf[spiBufIndex++] = MAX7456ADD_DMM;
-                        spiBuf[spiBufIndex++] = displayMemoryModeReg;
+                        _spiBuf[spiBufIndex++] = MAX7456ADD_DMM;
+                        _spiBuf[spiBufIndex++] = _displayMemoryModeReg;
                         autoInc = false;
                     }
-
-                    spiBuf[spiBufIndex++] = MAX7456ADD_DMAH;
-                    spiBuf[spiBufIndex++] = pos >> 8;
-                    spiBuf[spiBufIndex++] = MAX7456ADD_DMAL;
-                    spiBuf[spiBufIndex++] = pos & 0xff;
-
+                    _spiBuf[spiBufIndex++] = MAX7456ADD_DMAH;
+                    _spiBuf[spiBufIndex++] = static_cast<uint8_t>(_pos >> 8U);
+                    _spiBuf[spiBufIndex++] = MAX7456ADD_DMAL;
+                    _spiBuf[spiBufIndex++] = _pos & 0xFFU;
                     setAddress = false;
                 }
-
-                spiBuf[spiBufIndex++] = MAX7456ADD_DMDI;
-                spiBuf[spiBufIndex++] = buffer[pos];
-
-                shadowBuffer[pos] = buffer[pos];
+                _spiBuf[spiBufIndex++] = MAX7456ADD_DMDI;
+                _spiBuf[spiBufIndex++] = buffer[_pos];
+                _shadowBuffer[_pos] = buffer[_pos];
             } else {
                 if (!setAddress) {
                     setAddress = true;
                     if (autoInc) {
-                        spiBuf[spiBufIndex++] = MAX7456ADD_DMDI;
-                        spiBuf[spiBufIndex++] = END_STRING;
+                        _spiBuf[spiBufIndex++] = MAX7456ADD_DMDI;
+                        _spiBuf[spiBufIndex++] = END_STRING;
                     }
                 }
             }
-
-            if (++pos >= maxScreenSize) {
-                pos = 0;
+            if (++_pos >= _maxScreenSize) {
+                _pos = 0;
                 break;
             }
         }
-
         if (autoInc) {
             if (!setAddress) {
-                spiBuf[spiBufIndex++] = MAX7456ADD_DMDI;
-                spiBuf[spiBufIndex++] = END_STRING;
+                _spiBuf[spiBufIndex++] = MAX7456ADD_DMDI;
+                _spiBuf[spiBufIndex++] = END_STRING;
             }
-
-            spiBuf[spiBufIndex++] = MAX7456ADD_DMM;
-            spiBuf[spiBufIndex++] = displayMemoryModeReg;
+            _spiBuf[spiBufIndex++] = MAX7456ADD_DMM;
+            _spiBuf[spiBufIndex++] = _displayMemoryModeReg;
         }
-
         if (spiBufIndex) {
-            segments[0].u.buffers.txData = spiBuf;
-            segments[0].len = spiBufIndex;
-
+            _segments[0].u.buffers.txData = &_spiBuf[0];
+            _segments[0].len = spiBufIndex;
             ActiveDMA = true;
-
-            //spiSequence(dev, &segments[0]);
-
-            // Non-blocking, so transfer stay in progress if using DMA
+            _bus.dmaSequence(&_segments[0]); // Non-blocking, so transfer stay in progress if using DMA
         }
     }
-
-    return (pos != 0);
+    return (_pos != 0);
 }
 
 // should not be used when armed
@@ -668,20 +640,20 @@ void DisplayPortMax7456::refreshAll()
 
 bool DisplayPortMax7456::writeNvm(uint8_t char_address, const uint8_t *font_data)
 {
-    if (!max7456DeviceDetected) {
+    if (!_deviceDetected) {
         return false;
     }
 
     // Block pending completion of any prior SPI access
-    //spiWait(dev);
+    _bus.dmaWait();
 
     // disable display
-    fontIsLoading = true;
+    _fontIsLoading = true;
     _bus.writeRegister(MAX7456ADD_VM0, 0);
 
     _bus.writeRegister(MAX7456ADD_CMAH, char_address); // set start address high
 
-    for (int x = 0; x < 54; x++) {
+    for (uint8_t x = 0; x < 54; ++x) {
         _bus.writeRegister(MAX7456ADD_CMAL, x); //set start address low
         _bus.writeRegister(MAX7456ADD_CMDI, font_data[x]);
 #if defined(LED0_TOGGLE)
@@ -697,7 +669,8 @@ bool DisplayPortMax7456::writeNvm(uint8_t char_address, const uint8_t *font_data
 
     // Wait until bit 5 in the status register returns to 0 (12ms)
 
-    while ((_bus.readRegister(MAX7456ADD_STAT) & STAT_NVR_BUSY) != 0x00);
+    while ((_bus.readRegister(MAX7456ADD_STAT) & STAT_NVR_BUSY) != 0)
+        {}
     return true;
 }
 
@@ -727,12 +700,12 @@ void DisplayPortMax7456::hardwareReset()
 
 bool DisplayPortMax7456::isDeviceDetected() // NOLINT(readability-make-member-function-const)
 {
-    return max7456DeviceDetected;
+    return _deviceDetected;
 }
 
 void DisplayPortMax7456::setBackgroundType(background_e backgroundType)
 {
-    deviceBackgroundType = backgroundType;
+    _backgroundType = backgroundType;
 
     setRegisterVM1();
 }

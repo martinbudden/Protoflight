@@ -1,6 +1,5 @@
 #pragma once
 
-#include "DisplayPortBase.h"
 #include "OSD_Elements.h"
 #include <TimeMicroseconds.h>
 #include <array>
@@ -217,7 +216,7 @@ public:
         uint8_t rowCount;
     };
 public:
-    void init(DisplayPortBase* displayPort, DisplayPortBase::device_type_e displayPortDeviceType);
+    void init(DisplayPortBase* displayPort);
     void drawLogoAndCompleteInitialization();
     const config_t& getConfig() const { return _config; }
     void setConfig(const config_t& config);
@@ -229,7 +228,7 @@ public:
 
     void updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta); //!< OSD Task function, called by OSD_Task
     void updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta);
-    void drawLogo(uint8_t x, uint8_t y, DisplayPortBase::severity_e severity);
+    void drawLogo(uint8_t x, uint8_t y);
 
     void setStatsState(uint8_t statIndex, bool enabled);
     bool getStatsState(uint8_t statIndex) const;
@@ -255,7 +254,6 @@ public:
     static int printFloat(char* buffer, char leadingSymbol, float value, char *formatString, unsigned decimalPlaces, bool round, char trailingSymbol);
 private:
     DisplayPortBase* _displayPort {};
-    DisplayPortBase::device_type_e _displayPortDeviceType {};
     OSD_Elements _elements;
     const Cockpit& _cockpit;
     const AHRS_MessageQueue& _ahrsMessageQueue;

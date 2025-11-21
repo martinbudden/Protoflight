@@ -91,12 +91,14 @@ public:
     virtual void redraw() {}
     virtual bool isSynced() const {return true;}
     virtual uint32_t txBytesFree() const {return 0;}
+
     virtual bool layerSupported(layer_e layer) {
         if (layer == LAYER_FOREGROUND) { return true; } // Every device must support the foreground (default) layer
         return false;
     }
-    virtual bool layerSelect(layer_e layer) { (void)layer; return false; }
+    virtual bool layerSelect(layer_e layer) { if (layerSupported(layer)) { _activeLayer = layer; return true; } return false; }
     virtual bool layerCopy(layer_e destLayer, layer_e sourceLayer) { return (sourceLayer == destLayer) ? false : true; }
+
     virtual bool writeFontCharacter(uint16_t addr, const struct osd_character_t* chr) { (void)addr; (void)chr; return false; }
     virtual bool checkReady(bool rescan) { (void)rescan; return true; }
     virtual void beginTransaction(display_transaction_option_e option) { (void)option; }
@@ -128,9 +130,12 @@ public:
     device_type_e getDeviceType() const { return _deviceType; }
     void setDeviceType(device_type_e deviceType) { _deviceType = deviceType; }
     bool getUseDeviceBlink() const { return _useDeviceBlink; }
-    bool supportsOsdSymbols() const { return _supportsOsdSymbols; }
+
 protected:
     device_type_e _deviceType {};
+    background_e _backgroundType {BACKGROUND_TRANSPARENT};
+    layer_e _activeLayer {LAYER_FOREGROUND};
+    uint16_t _maxScreenSize {};
 
     uint8_t _rowCount {};
     uint8_t _columnCount {};
@@ -145,5 +150,4 @@ protected:
     int8_t _grabCount {0};
     bool _cleared {};
     bool _useFullScreen {false}; // tru for DEVICE_TYPE_HOTT, false otherwise
-    bool _supportsOsdSymbols {false};
 };

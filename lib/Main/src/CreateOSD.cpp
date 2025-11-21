@@ -12,7 +12,7 @@ OSD& Main::createOSD(DisplayPortBase* displayPort, const FlightController& fligh
     static OSD osd(flightController, cockpit, ahrsMessageQueue, debug);
 
 #if defined(USE_OSD)
-    osd.init(displayPort, DisplayPortBase::DEVICE_TYPE_OLED);
+    osd.init(displayPort);
     osd.setConfig(nvs.loadOSD_Config());
 
     OSD_Elements& osdElements = osd.getOSD_Elements();

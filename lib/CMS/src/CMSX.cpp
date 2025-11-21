@@ -343,16 +343,16 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
 
     // position the menu in the bottom half of the screen
     const uint8_t topRow = _smallScreen ? 1 : static_cast<uint8_t>((displayPort.getRowCount() - _pageMaxRow)/2);
-    uint32_t spaceLeft = displayPort.txBytesFree();
+    auto spaceLeft = static_cast<int32_t>(displayPort.txBytesFree());
 
     if (_cursorRow != _currentMenuContext.cursorRow) {
         // cursor position has changed, so:
         // clear the old cursor
         if (_cursorRow != CURSOR_ROW_NOT_SET) {
-            spaceLeft -= displayPort.writeString(_leftMenuColumn, topRow + static_cast<uint8_t>(_cursorRow * _linesPerMenuItem), DisplayPortBase::SEVERITY_NORMAL, " *");
+            spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, topRow + static_cast<uint8_t>(_cursorRow * _linesPerMenuItem), DisplayPortBase::SEVERITY_NORMAL, " *"));
         }
         // and draw the new one
-        spaceLeft -= displayPort.writeString(_leftMenuColumn, topRow + static_cast<uint8_t>(_currentMenuContext.cursorRow * _linesPerMenuItem), DisplayPortBase::SEVERITY_NORMAL, ">");
+        spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, topRow + static_cast<uint8_t>(_currentMenuContext.cursorRow * _linesPerMenuItem), DisplayPortBase::SEVERITY_NORMAL, ">"));
         _cursorRow = _currentMenuContext.cursorRow;
     }
     if (_currentMenuContext.menu->onDisplayUpdate) {
@@ -378,7 +378,8 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
         if ((_entryFlags[ii] & OME_PRINT_VALUE) || (_entryFlags[ii] & OME_SCROLLING_TICKER)) {
             //const bool selectedRow = (ii == _currentMenuContext.cursorRow);
             spaceLeft -= drawMenuEntry(displayPort, entry, row, _entryFlags[ii], _runtimeTableTicker[ii]);
-            if (spaceLeft < 30) {
+            enum { CHARACTERS_PER_LINE };
+            if (spaceLeft < CHARACTERS_PER_LINE) {
                 return;
             }
         }

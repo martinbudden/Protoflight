@@ -13,6 +13,7 @@
 #include <DashboardTask.h>
 #include <Debug.h>
 #include <DisplayPortM5GFX.h>
+#include <DisplayPortMax7456.h>
 #include <DisplayPortNull.h>
 #include <FlightController.h>
 #include <IMU_Filters.h>
@@ -126,7 +127,11 @@ void Main::setup()
     _buttons = &buttons;
 #endif
 #else
+#if defined(USE_MAX7456)
+    [[maybe_unused]] static DisplayPortMax7456 displayPort(BUS_SPI::MAX7456_SPI_INDEX, BUS_SPI::MAX7456_SPI_PINS, debug);
+#else
     [[maybe_unused]] static DisplayPortNull displayPort;
+#endif
     // no buttons defined, so always broadcast address for binding on startup
     receiver.broadcastMyEUI();
     ReceiverWatcher* receiverWatcher = nullptr;

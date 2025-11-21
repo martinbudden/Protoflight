@@ -2,17 +2,40 @@
 
 #include "DisplayPortBase.h"
 #if defined(FRAMEWORK_TEST)
+// cannot find BUS_SPI.h in test builds
 class BUS_SPI {
 public:
+    enum bus_status_e { BUS_READY, BUS_BUSY, BUS_ABORT };
+    struct segment_t {
+        union {
+            struct {
+                uint8_t* txData; // Transmit buffer
+                uint8_t* rxData; // Receive buffer
+            } buffers;
+            struct {
+                const BUS_SPI* dev; // Link to the device associated with the next transfer
+                volatile segment_t* segments; // Segments to process in the next transfer.
+            } link;
+        } u;
+        int len;
+        bool negateCS; // Should CS be negated at the end of this segment
+        bus_status_e (*callbackFn)(uint32_t arg);
+    };
     uint8_t readRegister(uint8_t reg) const { (void)reg; return 0; }
     uint8_t writeRegister(uint8_t reg, uint8_t data) { (void)reg; (void)data; return 0; }
     uint8_t writeBytes(const uint8_t* data, size_t length) { (void)data; (void)length; return 0; }
+    void setClockDivisor(uint16_t divisor) { (void)divisor; }
+    uint16_t calculateClockDivider(uint32_t frequencyHz) { (void)frequencyHz; return 1; }
+    void dmaSequence(segment_t* segments) { (void)segments; }
+    void dmaWait() {}
+    bool dmaIsBusy() { return false; }
 };
+typedef uint32_t timeMs32_t;
 #else
 #include <BUS_SPI.h>
+#include <TimeMicroseconds.h>
 #endif
 
-#include <TimeMicroseconds.h>
 #include <array>
 
 class Debug;
@@ -46,6 +69,8 @@ public:
         SIGNAL_CHECK_INTERVAL_MS = 1000,
         STALL_CHECK_INTERVAL_MS = 1000
     };
+    enum { MAX7456_DEVICE_TYPE_MAX = 0, MAX7456_DEVICE_TYPE_AT = 1 };
+
     struct config_t {
         uint8_t clockConfig; // SPI clock modifier
         //ioTag_t csTag;
@@ -57,38 +82,18 @@ public:
         int8_t h_offset;
         int8_t v_offset;
     };
-    struct extDevice_t;
-    enum bus_status_e {
-        BUS_READY,
-        BUS_BUSY,
-        BUS_ABORT
-    };
-    struct bus_segment_t {
-        union {
-            struct {
-                uint8_t* txData; // Transmit buffer
-                uint8_t* rxData; // Receive buffer
-            } buffers;
-            struct {
-                const extDevice_t* dev; // Link to the device associated with the next transfer
-                volatile bus_segment_t* segments; // Segments to process in the next transfer.
-            } link;
-        } u;
-        int len;
-        bool negateCS; // Should CS be negated at the end of this segment
-        bus_status_e (*callbackFn)(uint32_t arg);
-    };
 private:
     // VM0 bits
-    
     static constexpr uint8_t VIDEO_BUFFER_DISABLE       = 0x01;
     static constexpr uint8_t MAX7456_RESET              = 0x02;
     static constexpr uint8_t VERTICAL_SYNC_NEXT_VSYNC   = 0x04;
     static constexpr uint8_t OSD_ENABLE                 = 0x08;
-    enum { CHARS_PER_LINE = 30 };
+    enum { CHARACTERS_PER_LINE = 30 };
     enum { VIDEO_BUFFER_NTSC_CHARACTER_COUNT = 390 };
     enum { VIDEO_BUFFER_PAL_CHARACTER_COUNT = 480 };
     enum { MAX7456_SUPPORTED_LAYER_COUNT = LAYER_COUNT };
+    // 10 MHz max SPI frequency
+    enum { MAX_SPI_CLOCK_FREQUENCY_HZ = 1'0000'000, INITIAL_SPI_CLOCK_FREQUENCY_HZ = 5'000'000 };
 
     struct layer_t {
         std::array<uint8_t, VIDEO_BUFFER_PAL_CHARACTER_COUNT> buffer;
@@ -98,8 +103,6 @@ public:
     virtual bool drawScreen() override;
     virtual uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) override;
     virtual uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) override;
-    virtual bool layerSupported(layer_e layer) override;
-    virtual bool layerSelect(layer_e layer) override;
     virtual bool layerCopy(layer_e destLayer, layer_e sourceLayer) override;
     virtual void setBackgroundType(background_e backgroundType) override;
 
@@ -111,15 +114,12 @@ public:
     void brightness(uint8_t black, uint8_t white);
     bool reInitIfRequired(bool forceStallCheck);
     bool writeNvm(uint8_t char_address, const uint8_t *font_data);
-    uint8_t getRowsCount();
     void refreshAll();
     static bool dmaInProgress();
     bool buffersSynced() const;
     bool isDeviceDetected();
     void concludeCurrentSPI_Transaction();
-    static bus_status_e callbackReady(uint32_t arg);
-    inline uint32_t compareTimeUs(timeUs32_t a, timeUs32_t b) { return static_cast<uint32_t>(a - b); }
-
+    static BUS_SPI::bus_status_e callbackReady(uint32_t arg);
 private:
     uint8_t* getLayerBuffer(layer_e layer);
     uint8_t* getActiveLayerBuffer();
@@ -131,48 +131,45 @@ public:
 private:
     BUS_SPI _bus; //!< SPI bus interface
     Debug& _debug;
-    timeMs32_t lastSigCheckMs {0};
-    timeMs32_t videoDetectTimeMs {0};
-    timeMs32_t lastStallCheckMs {STALL_CHECK_INTERVAL_MS / 2}; // offset so that it doesn't coincide with the signal check
-    std::array<bus_segment_t, 2> segments {
-        bus_segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = callbackReady},
-        bus_segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = nullptr},
+    timeMs32_t _lastSigCheckMs {0};
+    timeMs32_t _videoDetectTimeMs {0};
+    timeMs32_t _lastStallCheckMs {STALL_CHECK_INTERVAL_MS / 2}; // offset so that it doesn't coincide with the signal check
+    std::array<BUS_SPI::segment_t, 2> _segments {
+        BUS_SPI::segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = callbackReady},
+        BUS_SPI::segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = nullptr},
     };
-    uint16_t reInitCount {0};
-    uint16_t pos {0};
-    uint8_t videoSignalCfg {};
-    uint8_t videoSignalReg {OSD_ENABLE}; // OSD_ENABLE required to trigger first ReInit
-    uint8_t displayMemoryModeReg {0};
+    uint16_t _reInitCount {0};
+    uint16_t _pos {0};
+    uint8_t _max7456DeviceType {};
+    uint8_t _videoSignalCfg {};
+    uint8_t _videoSignalReg {OSD_ENABLE}; // OSD_ENABLE required to trigger first ReInit
+    uint8_t _displayMemoryModeReg {0};
 
-    uint8_t hosRegValue {}; // HOS (Horizontal offset register) value
-    uint8_t vosRegValue {}; // VOS (Vertical offset register) value
+    uint8_t _hosRegValue {}; // HOS (Horizontal offset register) value
+    uint8_t _vosRegValue {}; // VOS (Vertical offset register) value
 
-    bool fontIsLoading {false};
+    bool _fontIsLoading {false};
 
-    uint8_t max7456DeviceType {};
-    background_e deviceBackgroundType {BACKGROUND_TRANSPARENT};
 
     // previous states initialized outside the valid range to force update on first call
     enum { INVALID_PREVIOUS_REGISTER_STATE = 255 };
-    uint8_t previousBlackWhiteRegister {INVALID_PREVIOUS_REGISTER_STATE};
-    uint8_t previousInvertRegister {INVALID_PREVIOUS_REGISTER_STATE};
-    layer_e activeLayer {LAYER_FOREGROUND};
+    uint8_t _previousBlackWhiteRegister {INVALID_PREVIOUS_REGISTER_STATE};
+    uint8_t _previousInvertRegister {INVALID_PREVIOUS_REGISTER_STATE};
 
     //extDevice_t max7456Device;
     //extDevice_t *dev = &max7456Device;
 
-    bool max7456DeviceDetected {false};
-    uint16_t max7456SpiClockDiv {};
+    bool _deviceDetected {false};
+    uint16_t _spiClockDiv {};
     static volatile bool ActiveDMA;
 
-    uint16_t maxScreenSize {VIDEO_BUFFER_PAL_CHARACTER_COUNT};
 
     // We write everything to the active layer and then compare
     // it to shadowBuffer and update only changed characters.
     // This is faster than redrawing entire screen.
-    std::array<uint8_t, VIDEO_BUFFER_PAL_CHARACTER_COUNT> shadowBuffer {};
-    std::array<layer_t, MAX7456_SUPPORTED_LAYER_COUNT> displayLayers {};
-    std::array<uint8_t, 32> buf {};
+    std::array<uint8_t, VIDEO_BUFFER_PAL_CHARACTER_COUNT> _shadowBuffer {};
+    std::array<layer_t, MAX7456_SUPPORTED_LAYER_COUNT> _displayLayers {};
+    std::array<uint8_t, 32> _buf {};
     enum { MAX_BYTES_TO_SEND = 250 };
-    /*DMA_DATA*/ uint8_t spiBuf[MAX_BYTES_TO_SEND];
+    /*DMA_DATA*/ uint8_t _spiBuf[MAX_BYTES_TO_SEND] {};
 };
