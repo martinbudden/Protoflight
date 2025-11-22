@@ -43,6 +43,7 @@ public:
     virtual ~FlightController() = default;
     FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, AHRS_MessageQueue& ahrsMessageQueue, Debug& debug);
     const AHRS_MessageQueue& getAHRS_MessageQueue() const { return _ahrsMessageQueue; }
+    AHRS_MessageQueue& getAHRS_MessageQueue() { return _ahrsMessageQueue; }
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;

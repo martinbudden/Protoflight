@@ -63,35 +63,28 @@ void Main::setup()
     // create the IMU and get its sample rate
     static IMU_Base& imuSensor = createIMU();
     const uint32_t imuSampleRateHz = imuSensor.getGyroSampleRateHz();
+    const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSampleRateHz);
+
     std::array<char, 128> buf;
     sprintf(&buf[0], "\r\n**** IMU sample rate:%dHz\r\n\r\n", static_cast<int>(imuSampleRateHz));
     print(&buf[0]);
 
-    // Statically allocate the debug object
     static Debug debug;
 
-    // Statically allocate the IMU_Filters
-    const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSampleRateHz);
-    static IMU_Filters imuFilters(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug, AHRS_taskIntervalSeconds);
-    imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
-#if defined(USE_DYNAMIC_NOTCH_FILTER)
-    imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
-#endif
+    FlightController& flightController = createFlightController(AHRS_taskIntervalSeconds, debug, nvs);
 
-    const auto AHRS_taskIntervalMicroSeconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
-    static AHRS_MessageQueue AHRS_MessageQueue;
-    FlightController& flightController = createFlightController(AHRS_taskIntervalMicroSeconds, AHRS_MessageQueue, imuFilters, debug, nvs);
+    IMU_Filters& imuFilters = createIMU_Filters(AHRS_taskIntervalSeconds, flightController.getMotorMixer(), debug, nvs); 
 
     AHRS& ahrs = createAHRS(flightController, imuSensor, imuFilters);
 
     ReceiverBase& receiver = createReceiver();
 
-    Cockpit& cockpit = createCockpit(receiver, flightController, debug, AHRS_MessageQueue, imuFilters, nvs);
+    Cockpit& cockpit = createCockpit(receiver, flightController, debug, imuFilters, nvs);
 #if defined(USE_MSP)
     MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs);
 #endif
 #if defined(USE_BLACKBOX)
-    Blackbox& blackbox = createBlackBox(ahrs, flightController, AHRS_MessageQueue, cockpit, receiver, imuFilters, debug);
+    Blackbox& blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
 #endif
 
 #if defined(M5_UNIFIED)
@@ -138,7 +131,7 @@ void Main::setup()
 #endif // M5_UNIFIED
 
 #if defined(USE_OSD)
-    OSD& osd = createOSD(displayPort, flightController, cockpit, AHRS_MessageQueue, debug, nvs);
+    OSD& osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
 #endif
 #if defined(USE_CMS)
 #if defined(USE_OSD)
@@ -157,7 +150,8 @@ void Main::setup()
     TaskBase::task_info_t taskInfo {};
 
 #if defined(AHRS_TASK_IS_TIMER_DRIVEN)
-    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroSeconds);
+    const auto AHRS_taskIntervalMicroseconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
+    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroseconds);
 #else
     _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, 0);
 #endif
@@ -177,7 +171,7 @@ void Main::setup()
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BLACKBOX)
-    _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, AHRS_MessageQueue, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
+    _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, flightController.getAHRS_MessageQueue(), BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_OSD)

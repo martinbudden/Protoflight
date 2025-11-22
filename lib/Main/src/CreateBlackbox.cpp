@@ -15,9 +15,9 @@
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, AHRS_MessageQueue& ahrsMessageQueue, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) // cppcheck-suppress constParameterReference 
+Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) // cppcheck-suppress constParameterReference 
 {
-    static BlackboxCallbacks            blackboxCallbacks(ahrsMessageQueue, ahrs, flightController, cockpit, receiver, debug);
+    static BlackboxCallbacks            blackboxCallbacks(flightController.getAHRS_MessageQueue(), ahrs, flightController, cockpit, receiver, debug);
     static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
     static BlackboxProtoFlight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, blackboxSerialDevice, flightController, cockpit, imuFilters);

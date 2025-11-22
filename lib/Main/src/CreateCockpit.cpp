@@ -8,14 +8,14 @@
 #include <NonVolatileStorage.h>
 
 
-Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, const AHRS_MessageQueue& ahrsMessageQueue, IMU_Filters& imuFilters, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
+Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_BAROMETER_BMP280)
     static BarometerBMP280 barometer(BUS_I2C::BAROMETER_I2C_PINS);
     barometer.init();
-    static Autopilot autopilot(ahrsMessageQueue, barometer);
+    static Autopilot autopilot(flightController.getAHRS_MessageQueue(), barometer);
 #else
-    static Autopilot autopilot(ahrsMessageQueue);
+    static Autopilot autopilot(flightController.getAHRS_MessageQueue());
 #endif
 #if defined USE_ALTITUDE_HOLD
     autopilot.setAutopilotConfig(nvs.loadAutopilotConfig());
