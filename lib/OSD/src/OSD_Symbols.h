@@ -24,6 +24,14 @@ static constexpr uint8_t SYM_AH_DECORATION      = 0x13;
 static constexpr uint8_t SYM_AH_BAR9_0          = 0x80;
 #endif
 
+// Stick overlays
+static constexpr uint8_t SYM_STICK_OVERLAY_SPRITE_HIGH = 0x08;
+static constexpr uint8_t SYM_STICK_OVERLAY_SPRITE_MID  = 0x09;
+static constexpr uint8_t SYM_STICK_OVERLAY_SPRITE_LOW  = 0x0A;
+static constexpr uint8_t SYM_STICK_OVERLAY_CENTER      = 0x0B;
+static constexpr uint8_t SYM_STICK_OVERLAY_VERTICAL    = 0x16;
+static constexpr uint8_t SYM_STICK_OVERLAY_HORIZONTAL  = 0x17;
+
 // Direction arrows
 static constexpr uint8_t SYM_ARROW_SOUTH        = 0x60;
 static constexpr uint8_t SYM_ARROW_2            = 0x61;

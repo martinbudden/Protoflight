@@ -145,21 +145,21 @@ void OSD_Elements::drawBackground_HORIZON_SIDEBARS(DisplayPortBase& displayPort)
     const int8_t width = AH_SIDEBAR_WIDTH_POS;
     const int8_t height = AH_SIDEBAR_HEIGHT_POS;
 
-    if (_sideBarRenderLevel) {
+    if (_HORIZON_SIDEBARS_RenderLevel) {
         // AH level indicators
         displayPort.writeChar(_activeElement.posX - width + 1, _activeElement.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_LEFT);
         displayPort.writeChar(_activeElement.posX + width - 1, _activeElement.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_RIGHT);
-        _sideBarRenderLevel = false;
+        _HORIZON_SIDEBARS_RenderLevel = false;
     } else {
-        displayPort.writeChar(_activeElement.posX - width, _activeElement.posY + static_cast<uint8_t>(_sidbarPosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
-        displayPort.writeChar(_activeElement.posX + width, _activeElement.posY + static_cast<uint8_t>(_sidbarPosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
-        if (_sidbarPosY == height) {
+        displayPort.writeChar(_activeElement.posX - width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
+        displayPort.writeChar(_activeElement.posX + width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
+        if (_HORIZON_SIDEBARS_PosY == height) {
             // Rendering is complete, so prepare to start again
-            _sidbarPosY = -height;
+            _HORIZON_SIDEBARS_PosY = -height;
             // On next pass render the level markers
-            _sideBarRenderLevel = true;
+            _HORIZON_SIDEBARS_RenderLevel = true;
         } else {
-            ++_sidbarPosY;
+            ++_HORIZON_SIDEBARS_PosY;
         }
         // Rendering not yet complete
         _activeElement.rendered = false;
@@ -175,6 +175,36 @@ void OSD_Elements::drawBackground_CRAFT_NAME(DisplayPortBase& displayPort)
 void OSD_Elements::drawBackground_STICK_OVERLAY(DisplayPortBase& displayPort)
 {
     (void)displayPort;
+
+    if (_STICK_OVERLAY_RenderPhase == VERTICAL) {
+        sprintf(&_activeElement.buf[0], "%c", SYM_STICK_OVERLAY_VERTICAL);
+        _activeElement.offsetX = ((STICK_OVERLAY_WIDTH - 1) / 2);
+        _activeElement.offsetY = _STICK_OVERLAY_Y;
+
+        ++_STICK_OVERLAY_Y;
+
+        if (_STICK_OVERLAY_Y == (STICK_OVERLAY_HEIGHT - 1) / 2) {
+            // Skip over horizontal
+            ++_STICK_OVERLAY_Y;
+        }
+
+        if (_STICK_OVERLAY_Y == STICK_OVERLAY_HEIGHT) {
+            _STICK_OVERLAY_Y = 0;
+            _STICK_OVERLAY_RenderPhase = HORIZONTAL;
+        }
+
+        _activeElement.rendered = false;
+    } else {
+        for (uint8_t i = 0; i < STICK_OVERLAY_WIDTH; i++) {
+            _activeElement.buf[i] = SYM_STICK_OVERLAY_HORIZONTAL;
+        }
+        _activeElement.buf[((STICK_OVERLAY_WIDTH - 1) / 2)] = SYM_STICK_OVERLAY_CENTER;
+        _activeElement.buf[STICK_OVERLAY_WIDTH] = 0;  // string terminator
+
+        _activeElement.offsetY = ((STICK_OVERLAY_HEIGHT - 1) / 2);
+
+        _STICK_OVERLAY_RenderPhase = VERTICAL;
+    }
 }
 
 void OSD_Elements::drawBackground_PILOT_NAME(DisplayPortBase& displayPort)
@@ -516,7 +546,7 @@ void OSD_Elements::draw_RC_CHANNELS(DisplayPortBase& displayPort) // cppcheck-su
     (void)displayPort;
 
     const ReceiverBase::controls_pwm_t controlsPWM = _cockpit.getReceiver().getControlsPWM();
-    switch (_rcChannel) {
+    switch (_RC_CHANNELS_channel) {
     case 0:
         sprintf(&_activeElement.buf[0], "T:%5d", controlsPWM.throttle);
         _activeElement.offsetX = 0;
@@ -539,8 +569,8 @@ void OSD_Elements::draw_RC_CHANNELS(DisplayPortBase& displayPort) // cppcheck-su
         break;
     }
 
-    if (++_rcChannel == ReceiverBase::STICK_COUNT) {
-        _rcChannel = 0;
+    if (++_RC_CHANNELS_channel == ReceiverBase::STICK_COUNT) {
+        _RC_CHANNELS_channel = 0;
         _activeElement.rendered = true;
     } else {
         // rendering not complete until all 4 channels rendered

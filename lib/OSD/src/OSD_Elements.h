@@ -123,6 +123,7 @@ public:
         OSD_ELEMENT_TYPE_3,
         OSD_ELEMENT_TYPE_4
     };
+    enum { STICK_OVERLAY_WIDTH = 7, STICK_OVERLAY_HEIGHT = 5 };
     struct config_t {
         std::array<uint16_t, OSD_ITEM_COUNT> element_pos; // 2 bits for type, 2 bits for profile, 6 bits for y, 6 bits for x
     };
@@ -271,21 +272,26 @@ private:
     element_t _activeElement {};
     uint8_t _activeElementIndex = 0;
     uint8_t _activeElementCount = 0;
+    uint8_t _profile {};
     bool _displayPendingForeground {};
     bool _displayPendingBackground {};
     //bool _blinkState {true};
     bool _backgroundRendered {false};
     bool _backgroundLayerSupported {false};
-    bool _sideBarRenderLevel {false};
+
+    // data 'local' to specific draw functions
+    bool _HORIZON_SIDEBARS_RenderLevel {false};
     enum { AH_SIDEBAR_WIDTH_POS = 7, AH_SIDEBAR_HEIGHT_POS = 3 };
-    int8_t _sidbarPosY {AH_SIDEBAR_HEIGHT_POS};
-    uint8_t _rcChannel {};
-    uint8_t _profile {};
+    int8_t _HORIZON_SIDEBARS_PosY {AH_SIDEBAR_HEIGHT_POS};
+    uint8_t _RC_CHANNELS_channel {};
+    enum {VERTICAL, HORIZONTAL} _STICK_OVERLAY_RenderPhase {VERTICAL};
+    uint8_t _STICK_OVERLAY_Y {0};
 
     config_t _config {};
     std::array<uint8_t, OSD_ITEM_COUNT> _activeElements;
     std::bitset<OSD_ITEM_COUNT> _blinkBits {};
 
+    // drawing functions
     static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> DrawFunctions;
     static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> DrawBackgroundFunctions;
 };
