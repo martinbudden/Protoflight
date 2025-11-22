@@ -137,7 +137,7 @@ public:
     const config_t& getConfig() const { return _config; }
     config_t& getConfig() { return _config; }
     void setConfig(const config_t& config);
-    void setDefaultConfig();
+    void setDefaultConfig(uint8_t rowCount, uint8_t columnCount);
 
     static constexpr uint16_t ELEMENT_BITS_POS = 14;
     static constexpr uint32_t ELEMENT_TYPE_MASK = 0b1100'0000'0000'0000U;  // bits 14-15
@@ -217,9 +217,9 @@ private:
     uint8_t _profile {};
 
     config_t _config {};
-    std::array<uint8_t, OSD_ITEM_COUNT> _activeElementArray;
+    std::array<uint8_t, OSD_ITEM_COUNT> _activeElements;
     std::bitset<OSD_ITEM_COUNT> _blinkBits {};
 
-    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> elementDrawFunctions;
-    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> elementDrawBackgroundFunctions;
+    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> DrawFunctions;
+    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> DrawBackgroundFunctions;
 };

@@ -5,7 +5,6 @@
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
 #include <Debug.h>
-#include <Defaults.h>
 #include <IMU_FiltersBase.h>
 #include <IMU_Null.h>
 #include <NonVolatileStorage.h>
@@ -86,9 +85,10 @@ void test_flight_controller()
     fc.setTPA_Config(tpaConfig);
 
     tpaConfig = fc.getTPA_Config();
-    TEST_ASSERT_EQUAL(DEFAULTS::flightControllerTPA_Config.tpa_breakpoint, tpaConfig.tpa_breakpoint);
-    TEST_ASSERT_EQUAL(DEFAULTS::flightControllerTPA_Config.tpa_mode, tpaConfig.tpa_mode);
-    TEST_ASSERT_EQUAL(DEFAULTS::flightControllerTPA_Config.tpa_rate, tpaConfig.tpa_rate);
+
+    TEST_ASSERT_EQUAL(1350, tpaConfig.tpa_breakpoint);
+    TEST_ASSERT_EQUAL(FlightController::TPA_MODE_D, tpaConfig.tpa_mode);
+    TEST_ASSERT_EQUAL(65, tpaConfig.tpa_rate);
 }
 
 void test_flight_controller_pid_indexes()

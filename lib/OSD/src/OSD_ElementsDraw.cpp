@@ -13,32 +13,32 @@
 // Drawing functions
 //
 
-std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> OSD_Elements::elementDrawFunctions {};
-std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> OSD_Elements::elementDrawBackgroundFunctions {};
+std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> OSD_Elements::DrawFunctions {};
+std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> OSD_Elements::DrawBackgroundFunctions {};
 
 
 void OSD_Elements::initDrawFunctions()
 {
-    elementDrawFunctions.fill(nullptr);
-    elementDrawBackgroundFunctions.fill(nullptr);
+    DrawFunctions.fill(nullptr);
+    DrawBackgroundFunctions.fill(nullptr);
 
-    elementDrawFunctions[OSD_RSSI_VALUE]        = &OSD_Elements::drawRSSI;
-    elementDrawFunctions[OSD_MAIN_BATT_VOLTAGE] = &OSD_Elements::drawMainBatteryVoltage;
-    elementDrawFunctions[OSD_CROSSHAIRS]        = &OSD_Elements::drawCrosshairs;
-    elementDrawFunctions[OSD_ARTIFICIAL_HORIZON] = &OSD_Elements::drawArtificialHorizon,
-    elementDrawFunctions[OSD_ROLL_PIDS]         = &OSD_Elements::drawPIDsRoll;
-    elementDrawFunctions[OSD_PITCH_PIDS]        = &OSD_Elements::drawPIDsPitch;
-    elementDrawFunctions[OSD_YAW_PIDS]          = &OSD_Elements::drawPIDsYaw;
-    elementDrawFunctions[OSD_WARNINGS]          = &OSD_Elements::drawWarnings;
-    elementDrawFunctions[OSD_DEBUG]             = &OSD_Elements::drawDebug;
-    elementDrawFunctions[OSD_PITCH_ANGLE]       = &OSD_Elements::drawAnglePitch;
-    elementDrawFunctions[OSD_ROLL_ANGLE]        = &OSD_Elements::drawAngleRoll;
-    elementDrawFunctions[OSD_DISARMED]          = &OSD_Elements::drawDisarmed;
-    elementDrawFunctions[OSD_NUMERICAL_HEADING] = &OSD_Elements::drawNumericalHeading;
-    elementDrawFunctions[OSD_RC_CHANNELS]       = &OSD_Elements::drawRC_Channels;
-    elementDrawFunctions[OSD_DEBUG2]            = &OSD_Elements::drawDebug2;
+    DrawFunctions[OSD_RSSI_VALUE]        = &OSD_Elements::drawRSSI;
+    DrawFunctions[OSD_MAIN_BATT_VOLTAGE] = &OSD_Elements::drawMainBatteryVoltage;
+    DrawFunctions[OSD_CROSSHAIRS]        = &OSD_Elements::drawCrosshairs;
+    DrawFunctions[OSD_ARTIFICIAL_HORIZON] = &OSD_Elements::drawArtificialHorizon,
+    DrawFunctions[OSD_ROLL_PIDS]         = &OSD_Elements::drawPIDsRoll;
+    DrawFunctions[OSD_PITCH_PIDS]        = &OSD_Elements::drawPIDsPitch;
+    DrawFunctions[OSD_YAW_PIDS]          = &OSD_Elements::drawPIDsYaw;
+    DrawFunctions[OSD_WARNINGS]          = &OSD_Elements::drawWarnings;
+    DrawFunctions[OSD_DEBUG]             = &OSD_Elements::drawDebug;
+    DrawFunctions[OSD_PITCH_ANGLE]       = &OSD_Elements::drawAnglePitch;
+    DrawFunctions[OSD_ROLL_ANGLE]        = &OSD_Elements::drawAngleRoll;
+    DrawFunctions[OSD_DISARMED]          = &OSD_Elements::drawDisarmed;
+    DrawFunctions[OSD_NUMERICAL_HEADING] = &OSD_Elements::drawNumericalHeading;
+    DrawFunctions[OSD_RC_CHANNELS]       = &OSD_Elements::drawRC_Channels;
+    DrawFunctions[OSD_DEBUG2]            = &OSD_Elements::drawDebug2;
 
-    elementDrawBackgroundFunctions[OSD_HORIZON_SIDEBARS]    = &OSD_Elements::drawBackgroundHorizonSidebars;
+    DrawBackgroundFunctions[OSD_HORIZON_SIDEBARS]    = &OSD_Elements::drawBackgroundHorizonSidebars;
 };
 
 void OSD_Elements::formatPID(char* buf, const char* label, uint8_t axis) // NOLINT(readability-non-const-parameter)

@@ -138,13 +138,13 @@ void Main::setup()
 #endif // M5_UNIFIED
 
 #if defined(USE_OSD)
-    OSD& osd = createOSD(&displayPort, flightController, cockpit, AHRS_MessageQueue, debug, nvs);
+    OSD& osd = createOSD(displayPort, flightController, cockpit, AHRS_MessageQueue, debug, nvs);
 #endif
 #if defined(USE_CMS)
 #if defined(USE_OSD)
-    CMS& cms = createCMS(&displayPort, receiver, cockpit, imuFilters, &osd);
+    CMS& cms = createCMS(displayPort, receiver, cockpit, imuFilters, &osd);
 #else
-    CMS& cms = createCMS(&displayPort, receiver, cockpit, imuFilters, nullptr);
+    CMS& cms = createCMS(displayPort, receiver, cockpit, imuFilters, nullptr);
 #endif
 #endif
 

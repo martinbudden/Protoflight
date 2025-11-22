@@ -1,7 +1,14 @@
 #pragma once
 
-#include "Defaults.h"
 
+#include <Autopilot.h>
+#include <Cockpit.h>
+#include <FlightController.h>
+#include <IMU_Filters.h>
+#include <MotorMixerBase.h>
+#if defined(USE_OSD)
+#include <OSD.h>
+#endif
 
 #if defined(USE_FLASH_KLV)
 

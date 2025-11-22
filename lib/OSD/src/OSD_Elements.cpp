@@ -46,16 +46,10 @@ void OSD_Elements::setConfig(const config_t& config)
     _config = config;
 }
 
-void OSD_Elements::setDefaultConfig()
+void OSD_Elements::setDefaultConfig(uint8_t rowCount, uint8_t columnCount)
 {
-// If user includes OSD_HD in the build assume they want to use it as default
-#if defined(USE_OSD_HD)
-    uint8_t midRow = 10;
-    uint8_t midCol = 26;
-#else
-    uint8_t midRow = 7;
-    uint8_t midCol = 15;
-#endif
+    const uint8_t midRow = rowCount/2;
+    const uint8_t midCol = columnCount/2;
 
     // Position elements near centre of screen and disabled by default
     for (auto& element_pos : _config.element_pos) { 
@@ -114,7 +108,7 @@ bool OSD_Elements::isRenderPending() const
 void OSD_Elements::addActiveElement(osd_items_e element)
 {
     if (elementVisible(_config.element_pos[element], _profile)) {
-        _activeElementArray[_activeElementCount++] = element;
+        _activeElements[_activeElementCount++] = element;
     }
 }
 
@@ -148,9 +142,9 @@ bool OSD_Elements::drawNextActiveElement(DisplayPortBase& displayPort)
         return false;
     }
 
-    const uint8_t item = _activeElementArray[_activeElementIndex];
+    const uint8_t item = _activeElements[_activeElementIndex];
 
-    if (!_backgroundLayerSupported && elementDrawBackgroundFunctions[item] && !_backgroundRendered) {
+    if (!_backgroundLayerSupported && DrawBackgroundFunctions[item] && !_backgroundRendered) {
         // If the background layer isn't supported then we
         // have to draw the element's static layer as well.
         _backgroundRendered = drawSingleElementBackground(displayPort, item);
@@ -201,7 +195,7 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
     _activeElement.rendered = true;
 
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
-    if (!elementDrawFunctions[elementIndex]) {
+    if (!DrawFunctions[elementIndex]) {
         // Element has no drawing function
         return true;
     }
@@ -223,7 +217,7 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
         displayPort.writeSys(_activeElement.posX, _activeElement.posY, static_cast<DisplayPortBase::system_element_e>(elementIndex - OSD_SYS_GOGGLE_VOLTAGE + DisplayPortBase::SYS_GOGGLE_VOLTAGE));
     } else {
         //Serial.print("calling draw fn\r\n");
-        (this->*elementDrawFunctions[elementIndex])(displayPort);
+        (this->*DrawFunctions[elementIndex])(displayPort);
         if (_activeElement.drawElement) {
             _displayPendingForeground = true;
         }
@@ -238,7 +232,7 @@ bool OSD_Elements::drawSingleElementBackground(DisplayPortBase& displayPort, uin
     (void)displayPort;
 
      // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
-    if (!elementDrawBackgroundFunctions[elementIndex]) {
+    if (!DrawBackgroundFunctions[elementIndex]) {
         return true;
     }
 
@@ -250,7 +244,7 @@ bool OSD_Elements::drawSingleElementBackground(DisplayPortBase& displayPort, uin
     _activeElement.offsetY = 0;
     _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
 
-    (this->*elementDrawBackgroundFunctions[elementIndex])(displayPort);
+    (this->*DrawBackgroundFunctions[elementIndex])(displayPort);
     if (_activeElement.drawElement) {
         _displayPendingBackground = true;
     }
@@ -265,7 +259,7 @@ void OSD_Elements::drawActiveElementsBackground(DisplayPortBase& displayPort) //
         displayPort.layerSelect(DisplayPortBase::LAYER_BACKGROUND);
         displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
         for (size_t ii = 0; ii < _activeElementCount; ++ii) {
-            while (!drawSingleElementBackground(displayPort, _activeElementArray[ii])) {};
+            while (!drawSingleElementBackground(displayPort, _activeElements[ii])) {};
         }
         displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }
