@@ -377,7 +377,7 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
         // XXX printed if not enough room in the middle of the list.
         if ((_entryFlags[ii] & OME_PRINT_VALUE) || (_entryFlags[ii] & OME_SCROLLING_TICKER)) {
             //const bool selectedRow = (ii == _currentMenuContext.cursorRow);
-            spaceLeft -= drawMenuEntry(displayPort, entry, row, _entryFlags[ii], _runtimeTableTicker[ii]);
+            spaceLeft -= static_cast<int32_t>(drawMenuEntry(displayPort, entry, row, _entryFlags[ii], _runtimeTableTicker[ii]));
             enum { CHARACTERS_PER_LINE };
             if (spaceLeft < CHARACTERS_PER_LINE) {
                 return;
