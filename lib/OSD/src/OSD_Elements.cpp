@@ -105,7 +105,7 @@ bool OSD_Elements::isRenderPending() const
     return _displayPendingForeground | _displayPendingBackground;
 }
 
-void OSD_Elements::addActiveElement(osd_items_e element)
+void OSD_Elements::addActiveElement(osd_elements_e element)
 {
     if (elementVisible(_config.element_pos[element], _profile)) {
         _activeElements[_activeElementCount++] = element;
@@ -114,17 +114,137 @@ void OSD_Elements::addActiveElement(osd_items_e element)
 
 void OSD_Elements::addActiveElements()
 {
-    //addActiveElement(OSD_DEBUG);
+    addActiveElement(OSD_ARTIFICIAL_HORIZON);
+    addActiveElement(OSD_G_FORCE);
+    addActiveElement(OSD_UP_DOWN_REFERENCE);
+
+    addActiveElement(OSD_MAIN_BATTERY_VOLTAGE);
+    addActiveElement(OSD_RSSI_VALUE);
+    addActiveElement(OSD_CROSSHAIRS);
+    addActiveElement(OSD_HORIZON_SIDEBARS);
+    addActiveElement(OSD_UP_DOWN_REFERENCE);
+    addActiveElement(OSD_ITEM_TIMER_1);
+    addActiveElement(OSD_ITEM_TIMER_2);
+    addActiveElement(OSD_REMAINING_TIME_ESTIMATE);
+    addActiveElement(OSD_FLYMODE);
+    addActiveElement(OSD_THROTTLE_POS);
+    addActiveElement(OSD_VTX_CHANNEL);
+    addActiveElement(OSD_CURRENT_DRAW);
+    addActiveElement(OSD_MAH_DRAWN);
+    addActiveElement(OSD_WATT_HOURS_DRAWN);
+    addActiveElement(OSD_CRAFT_NAME);
+    addActiveElement(OSD_CUSTOM_MSG0);
+    addActiveElement(OSD_CUSTOM_MSG1);
+    addActiveElement(OSD_CUSTOM_MSG2);
+    addActiveElement(OSD_CUSTOM_MSG3);
+    addActiveElement(OSD_ALTITUDE);
     addActiveElement(OSD_ROLL_PIDS);
     addActiveElement(OSD_PITCH_PIDS);
-    addActiveElement(OSD_CROSSHAIRS);
-    addActiveElement(OSD_ARTIFICIAL_HORIZON);
-    addActiveElement(OSD_ROLL_ANGLE);
+    addActiveElement(OSD_YAW_PIDS);
+    addActiveElement(OSD_POWER);
+    addActiveElement(OSD_PID_RATE_PROFILE);
+    addActiveElement(OSD_WARNINGS);
+    addActiveElement(OSD_AVG_CELL_VOLTAGE);
+    addActiveElement(OSD_DEBUG);
+    addActiveElement(OSD_DEBUG2);
     addActiveElement(OSD_PITCH_ANGLE);
-    addActiveElement(OSD_RC_CHANNELS);
+    addActiveElement(OSD_ROLL_ANGLE);
+    addActiveElement(OSD_MAIN_BATTERY_USAGE);
     addActiveElement(OSD_DISARMED);
     addActiveElement(OSD_NUMERICAL_HEADING);
-    addActiveElement(OSD_WARNINGS);
+    addActiveElement(OSD_READY_MODE);
+#if defined(USE_VARIO)
+    addActiveElement(OSD_NUMERICAL_VARIO);
+#endif
+    addActiveElement(OSD_COMPASS_BAR);
+    addActiveElement(OSD_ANTI_GRAVITY);
+#if defined(USE_BLACKBOX)
+    addActiveElement(OSD_LOG_STATUS);
+#endif
+    addActiveElement(OSD_MOTOR_DIAGNOSTICS);
+    addActiveElement(OSD_FLIP_ARROW);
+    addActiveElement(OSD_PILOT_NAME);
+#if defined(USE_RTC_TIME)
+    addActiveElement(OSD_RTC_DATETIME);
+#endif
+#if defined(USE_OSD_ADJUSTMENTS)
+    addActiveElement(OSD_ADJUSTMENT_RANGE);
+#endif
+#if defined(USE_ADC_INTERNAL)
+    addActiveElement(OSD_CORE_TEMPERATURE);
+#endif
+#if defined(USE_RX_LINK_QUALITY_INFO)
+    addActiveElement(OSD_LINK_QUALITY);
+#endif
+#if defined(USE_RX_LINK_UPLINK_POWER)
+    addActiveElement(OSD_TX_UPLINK_POWER);
+#endif
+#if defined(USE_RX_RSSI_DBM)
+    addActiveElement(OSD_RSSI_DBM_VALUE);
+#endif
+#if defined(USE_RX_RSNR)
+    addActiveElement(OSD_RSNR_VALUE);
+#endif
+#if defined(USE_OSD_STICK_OVERLAY)
+    addActiveElement(OSD_STICK_OVERLAY_LEFT);
+    addActiveElement(OSD_STICK_OVERLAY_RIGHT);
+#endif
+#if defined(USE_PROFILE_NAMES)
+    addActiveElement(OSD_RATE_PROFILE_NAME);
+    addActiveElement(OSD_PID_PROFILE_NAME);
+#endif
+#if defined(USE_OSD_PROFILES)
+    addActiveElement(OSD_PROFILE_NAME);
+#endif
+    addActiveElement(OSD_RC_CHANNELS);
+    addActiveElement(OSD_CAMERA_FRAME);
+#if defined(USE_PERSISTENT_STATS)
+    addActiveElement(OSD_TOTAL_FLIGHTS);
+#endif
+    addActiveElement(OSD_AUX_VALUE);
+#if defined(USE_OSD_HD)
+    addActiveElement(OSD_SYS_GOGGLE_VOLTAGE);
+    addActiveElement(OSD_SYS_VTX_VOLTAGE);
+    addActiveElement(OSD_SYS_BITRATE);
+    addActiveElement(OSD_SYS_DELAY);
+    addActiveElement(OSD_SYS_DISTANCE);
+    addActiveElement(OSD_SYS_LQ);
+    addActiveElement(OSD_SYS_GOGGLE_DVR);
+    addActiveElement(OSD_SYS_VTX_DVR);
+    addActiveElement(OSD_SYS_WARNINGS);
+    addActiveElement(OSD_SYS_VTX_TEMP);
+    addActiveElement(OSD_SYS_FAN_SPEED);
+#endif
+#if defined(USE_RANGEFINDER)
+    addActiveElement(OSD_LIDAR_DISTANCE);
+#endif
+#if defined(USE_GPS)
+    if (sensors(SENSOR_GPS)) {
+        addActiveElement(OSD_GPS_SATS);
+        addActiveElement(OSD_GPS_SPEED);
+        addActiveElement(OSD_GPS_LAT);
+        addActiveElement(OSD_GPS_LON);
+        addActiveElement(OSD_HOME_DISTANCE);
+        addActiveElement(OSD_HOME_DIRECTION);
+        addActiveElement(OSD_FLIGHT_DIST);
+        addActiveElement(OSD_EFFICIENCY);
+    }
+#endif
+#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
+    if ((featureIsEnabled(FEATURE_ESC_SENSOR)) || useDshotTelemetry) {
+        addActiveElement(OSD_ESC_TMP);
+        addActiveElement(OSD_ESC_RPM);
+        addActiveElement(OSD_ESC_RPM_FREQ);
+    }
+#endif
+#if defined(USE_GPS_LAP_TIMER)
+    if (sensors(SENSOR_GPS)) {
+        addActiveElement(OSD_GPS_LAP_TIME_CURRENT);
+        addActiveElement(OSD_GPS_LAP_TIME_PREVIOUS);
+        addActiveElement(OSD_GPS_LAP_TIME_BEST3);
+    }
+#endif // USE_GPS_LAP_TIMER
+    addActiveElement(OSD_TOTAL_FLIGHTS);
 }
 
 void OSD_Elements::updateAttitude(float rollAngleDegrees, float pitchAngleDegrees, float yawAngleDegrees)

@@ -11,9 +11,9 @@ class DisplayPortBase;
 class FlightController;
 class OSD;
 
-enum  osd_items_e {
+enum  osd_elements_e {
     OSD_RSSI_VALUE,
-    OSD_MAIN_BATT_VOLTAGE,
+    OSD_MAIN_BATTERY_VOLTAGE,
     OSD_CROSSHAIRS,
     OSD_ARTIFICIAL_HORIZON,
     OSD_HORIZON_SIDEBARS,
@@ -40,14 +40,14 @@ enum  osd_items_e {
     OSD_DEBUG,
     OSD_PITCH_ANGLE,
     OSD_ROLL_ANGLE,
-    OSD_MAIN_BATT_USAGE,
+    OSD_MAIN_BATTERY_USAGE,
     OSD_DISARMED,
-    OSD_HOME_DIR,
-    OSD_HOME_DIST,
+    OSD_HOME_DIRECTION,
+    OSD_HOME_DISTANCE,
     OSD_NUMERICAL_HEADING,
     OSD_NUMERICAL_VARIO,
     OSD_COMPASS_BAR,
-    OSD_ESC_TMP,
+    OSD_ESC_TEMPERATURE,
     OSD_ESC_RPM,
     OSD_REMAINING_TIME_ESTIMATE,
     OSD_RTC_DATETIME,
@@ -55,7 +55,7 @@ enum  osd_items_e {
     OSD_CORE_TEMPERATURE,
     OSD_ANTI_GRAVITY,
     OSD_G_FORCE,
-    OSD_MOTOR_DIAG,
+    OSD_MOTOR_DIAGNOSTICS,
     OSD_LOG_STATUS,
     OSD_FLIP_ARROW,
     OSD_LINK_QUALITY,
@@ -63,7 +63,7 @@ enum  osd_items_e {
     OSD_STICK_OVERLAY_LEFT,
     OSD_STICK_OVERLAY_RIGHT,
     OSD_PILOT_NAME,
-    OSD_ESC_RPM_FREQ,
+    OSD_ESC_RPM_FREQUENCY,
     OSD_RATE_PROFILE_NAME,
     OSD_PID_PROFILE_NAME,
     OSD_PROFILE_NAME,
@@ -97,10 +97,20 @@ enum  osd_items_e {
     OSD_CUSTOM_MSG1,
     OSD_CUSTOM_MSG2,
     OSD_CUSTOM_MSG3,
-    OSD_LIDAR_DIST,
+    OSD_LIDAR_DISTANCE,
     OSD_ITEM_COUNT // MUST BE LAST
 };
 
+/*!
+How to add a new OSD element:
+
+1. Create a new enum, say, `OSD_MY_ELEMENT`, and add it to the `osd_elements_e` enumeration list above.
+2. Create a drawing function `void OSD::Elements::draw_MY_ELEMENT(DisplayPortBase& displayPort)`
+   and optionally a background drawing function `void OSD::Elements::drawBackground_MY_ELEMENT(DisplayPortBase& displayPort)`.
+3. Add the drawing function to the `DrawFunctions` array in `OSD_Elements::initDrawFunctions()`.
+4. If you created a background drawing function then add it to the `DrawBackgroundFunctions` array.
+5. Add `OSD_MY_ELEMENT` to the active elements in `OSD_Elements::addActiveElements()`.
+*/
 class OSD_Elements {
 public:
     OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug);
@@ -156,7 +166,7 @@ public:
     static uint8_t OSD_Y(uint16_t x) { return (x >> XY_POSITION_BITS) & XY_POSITION_MASK; }
     static uint16_t OSD_POS(uint8_t x, uint8_t y) { return (x & XY_POSITION_MASK) | ((y & XY_POSITION_MASK) << XY_POSITION_BITS); }
 
-    void addActiveElement(osd_items_e element);
+    void addActiveElement(osd_elements_e element);
     void addActiveElements();
     bool isRenderPending() const;
     uint8_t getActiveElementIndex() const { return _activeElementIndex; }
@@ -177,23 +187,79 @@ public:
 
 // element drawing functions
     void formatPID(char* buf, const char* label, uint8_t axis);
-    void drawPIDsRoll(DisplayPortBase& displayPort);
-    void drawPIDsPitch(DisplayPortBase& displayPort);
-    void drawPIDsYaw(DisplayPortBase& displayPort);
-    void drawRSSI(DisplayPortBase& displayPort);
-    void drawMainBatteryVoltage(DisplayPortBase& displayPort);
-    void drawCrosshairs(DisplayPortBase& displayPort);  // only has background, but needs to be over other elements (like artificial horizon)
-    void drawArtificialHorizon(DisplayPortBase& displayPort);
-    void drawDebug(DisplayPortBase& displayPort);
-    void drawAngleRoll(DisplayPortBase& displayPort);
-    void drawAnglePitch(DisplayPortBase& displayPort);
-    void drawDisarmed(DisplayPortBase& displayPort);
-    void drawRC_Channels(DisplayPortBase& displayPort);
-    void drawDebug2(DisplayPortBase& displayPort);
-    void drawNumericalHeading(DisplayPortBase& displayPort);
-    void drawWarnings(DisplayPortBase& displayPort);
+    void draw_RSSI_VALUE(DisplayPortBase& displayPort);
+    void draw_MAIN_BATTERY_VOLTAGE(DisplayPortBase& displayPort);
+    void draw_CROSSHAIRS(DisplayPortBase& displayPort); // only has background, but needs to be over other elements (like artificial horizon)
+    void draw_ARTIFICIAL_HORIZON(DisplayPortBase& displayPort);
+    void draw_ITEM_TIMER(DisplayPortBase& displayPort);
+    void draw_FLYMODE(DisplayPortBase& displayPort);
+    void draw_THROTTLE_POS(DisplayPortBase& displayPort);
+    void draw_VTX_CHANNEL(DisplayPortBase& displayPort);
+    void draw_CURRENT_DRAW(DisplayPortBase& displayPort);
+    void draw_MAH_DRAWN(DisplayPortBase& displayPort);
+    void draw_GPS_SPEED(DisplayPortBase& displayPort);
+    void draw_GPS_SATS(DisplayPortBase& displayPort);
+    void draw_ALTITUDE(DisplayPortBase& displayPort);
+    void draw_ROLL_PIDS(DisplayPortBase& displayPort);
+    void draw_PITCH_PIDS(DisplayPortBase& displayPort);
+    void draw_YAW_PIDS(DisplayPortBase& displayPort);
+    void draw_POWER(DisplayPortBase& displayPort);
+    void draw_PID_RATE_PROFILE(DisplayPortBase& displayPort);
+    void draw_WARNINGS(DisplayPortBase& displayPort);
+    void draw_AVG_CELL_VOLTAGE(DisplayPortBase& displayPort);
+    void draw_GPS_LAT_LONG(DisplayPortBase& displayPort);
+    void draw_DEBUG(DisplayPortBase& displayPort);
+    void draw_PITCH_ANGLE(DisplayPortBase& displayPort);
+    void draw_ROLL_ANGLE(DisplayPortBase& displayPort);
+    void draw_MAIN_BATTERY_USAGE(DisplayPortBase& displayPort);
+    void draw_DISARMED(DisplayPortBase& displayPort);
+    void draw_HOME_DIRECTION(DisplayPortBase& displayPort);
+    void draw_HOME_DISTANCE(DisplayPortBase& displayPort);
+    void draw_NUMERICAL_HEADING(DisplayPortBase& displayPort);
+    void draw_NUMERICAL_VARIO(DisplayPortBase& displayPort);
+    void draw_COMPASS_BAR(DisplayPortBase& displayPort);
+    void draw_ESC_TEMPERATURE(DisplayPortBase& displayPort);
+    void draw_ESC_RPM(DisplayPortBase& displayPort);
+    void draw_REMAINING_TIME_ESTIMATE(DisplayPortBase& displayPort);
+    void draw_RTC_DATETIME(DisplayPortBase& displayPort);
+    void draw_ADJUSTMENT_RANGE(DisplayPortBase& displayPort);
+    void draw_CORE_TEMPERATURE(DisplayPortBase& displayPort);
+    void draw_ANTI_GRAVITY(DisplayPortBase& displayPort);
+    void draw_G_FORCE(DisplayPortBase& displayPort);
+    void draw_MOTOR_DIAGNOSTICS(DisplayPortBase& displayPort);
+    void draw_LOG_STATUS(DisplayPortBase& displayPort);
+    void draw_FLIP_ARROW(DisplayPortBase& displayPort);
+    void draw_LINK_QUALITY(DisplayPortBase& displayPort);
+    void draw_FLIGHT_DIST(DisplayPortBase& displayPort);
+    void draw_STICK_OVERLAY(DisplayPortBase& displayPort);
+    void draw_PILOT_NAME(DisplayPortBase& displayPort);
+    void draw_ESC_RPM_FREQUENCY(DisplayPortBase& displayPort);
+    void draw_RATE_PROFILE_NAME(DisplayPortBase& displayPort);
+    void draw_PID_PROFILE_NAME(DisplayPortBase& displayPort);
+    void draw_PROFILE_NAME(DisplayPortBase& displayPort);
+    void draw_RSSI_DBM_VALUE(DisplayPortBase& displayPort);
+    void draw_RC_CHANNELS(DisplayPortBase& displayPort);
+    void draw_EFFICIENCY(DisplayPortBase& displayPort);
+    void draw_TOTAL_FLIGHTS(DisplayPortBase& displayPort);
+    void draw_UP_DOWN_REFERENCE(DisplayPortBase& displayPort);
+    void draw_TX_UPLINK_POWER(DisplayPortBase& displayPort);
+    void draw_WATT_HOURS_DRAWN(DisplayPortBase& displayPort);
+    void draw_AUX_VALUE(DisplayPortBase& displayPort);
+    void draw_READY_MODE(DisplayPortBase& displayPort);
+    void draw_RSNR_VALUE(DisplayPortBase& displayPort);
+    void draw_SYS(DisplayPortBase& displayPort);
+    void draw_GPS_LAP_TIME_CURRENT(DisplayPortBase& displayPort);
+    void draw_GPS_LAP_TIME_PREVIOUS(DisplayPortBase& displayPort);
+    void draw_GPS_LAP_TIME_BEST3(DisplayPortBase& displayPort);
+    void draw_DEBUG2(DisplayPortBase& displayPort);
+    void draw_CUSTOM_MSG(DisplayPortBase& displayPort);
+    void draw_LIDAR_DISTANCE(DisplayPortBase& displayPort);
 // element background drawing functions
-    void drawBackgroundHorizonSidebars(DisplayPortBase& displayPort);
+    void drawBackground_HORIZON_SIDEBARS(DisplayPortBase& displayPort);
+    void drawBackground_CRAFT_NAME(DisplayPortBase& displayPort);
+    void drawBackground_STICK_OVERLAY(DisplayPortBase& displayPort);
+    void drawBackground_PILOT_NAME(DisplayPortBase& displayPort);
+    void drawBackground_CAMERA_FRAME(DisplayPortBase& displayPort);
 private:
     const OSD& _osd;
     const FlightController& _flightController;
