@@ -1,38 +1,9 @@
 #pragma once
 
 #include "DisplayPortBase.h"
-#if defined(FRAMEWORK_TEST)
-// cannot find BUS_SPI.h in test builds
-class BUS_SPI {
-public:
-    enum bus_status_e { BUS_READY, BUS_BUSY, BUS_ABORT };
-    struct segment_t {
-        union {
-            struct {
-                uint8_t* txData; // Transmit buffer
-                uint8_t* rxData; // Receive buffer
-            } buffers;
-            struct {
-                const BUS_SPI* dev; // Link to the device associated with the next transfer
-                volatile segment_t* segments; // Segments to process in the next transfer.
-            } link;
-        } u;
-        int len;
-        bool negateCS; // Should CS be negated at the end of this segment
-        bus_status_e (*callbackFn)(uint32_t arg);
-    };
-    uint8_t readRegister(uint8_t reg) const { (void)reg; return 0; }
-    uint8_t writeRegister(uint8_t reg, uint8_t data) { (void)reg; (void)data; return 0; }
-    uint8_t writeBytes(const uint8_t* data, size_t length) { (void)data; (void)length; return 0; }
-    void setClockDivisor(uint16_t divisor) { (void)divisor; }
-    uint16_t calculateClockDivider(uint32_t frequencyHz) { (void)frequencyHz; return 1; }
-    void dmaSequence(segment_t* segments) { (void)segments; }
-    void dmaWait() {}
-    bool dmaIsBusy() { return false; }
-};
-typedef uint32_t timeMs32_t;
-#else
+#if !defined(FRAMEWORK_TEST)
 #include <BUS_SPI.h>
+#include <Debug.h>
 #include <TimeMicroseconds.h>
 #endif
 
@@ -119,7 +90,9 @@ public:
     bool buffersSynced() const;
     bool isDeviceDetected();
     void concludeCurrentSPI_Transaction();
+#if !defined(FRAMEWORK_TEST)
     static BUS_SPI::bus_status_e callbackReady(uint32_t arg);
+#endif
 private:
     uint8_t* getLayerBuffer(layer_e layer);
     uint8_t* getActiveLayerBuffer();
@@ -129,6 +102,7 @@ private:
 public:
     void reInit();
 private:
+#if !defined(FRAMEWORK_TEST)
     BUS_SPI _bus; //!< SPI bus interface
     Debug& _debug;
     timeMs32_t _lastSigCheckMs {0};
@@ -138,6 +112,7 @@ private:
         BUS_SPI::segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = callbackReady},
         BUS_SPI::segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = nullptr},
     };
+#endif
     uint16_t _reInitCount {0};
     uint16_t _pos {0};
     uint8_t _max7456DeviceType {};

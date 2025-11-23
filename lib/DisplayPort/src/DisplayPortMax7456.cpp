@@ -1,15 +1,4 @@
 #include "DisplayPortMax7456.h"
-#if !defined(FRAMEWORK_TEST)
-#include <Debug.h>
-#include <TimeMicroseconds.h>
-#else
-typedef uint32_t timeMs32_t; // NOLINT(modernize-use-using)
-typedef uint32_t timeUs32_t; // NOLINT(modernize-use-using)
-typedef int32_t timeUsDelta_t; // NOLINT(modernize-use-using)
-inline timeUs32_t timeMs() { return 1000; }
-inline timeUs32_t timeUs() { return 1000000; }
-inline timeUsDelta_t compareTimeUs(timeUs32_t a, timeUs32_t b) { return static_cast<timeUsDelta_t>(a - b); }
-#endif
 #include <cstring>
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,modernize-macro-to-enum,cppcoreguidelines-macro-usage)
@@ -170,7 +159,6 @@ DisplayPortMax7456::DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BU
     _maxScreenSize = VIDEO_BUFFER_PAL_CHARACTER_COUNT;
     _smallArrowUp = 0x75;
 }
-#endif
 
 uint8_t* DisplayPortMax7456::getLayerBuffer(layer_e layer)
 {
@@ -353,12 +341,10 @@ DisplayPortMax7456::init_status_e DisplayPortMax7456::init(const config_t* max74
         break;
     }
 
-#if !defined(FRAMEWORK_TEST)
     _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_OVERCLOCK, cpuOverclock);
     _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_DEVTYPE, _max7456DeviceType);
     _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_DIVISOR, _spiClockDiv);
     _debug.set(DEBUG_MAX7456_SPI_CLOCK, DEBUG_MAX7456_SPI_CLOCK_X100, _bus.calculateClock(_spiClockDiv) / 10000);
-#endif
 #else
     (void)max7456Config;
     (void)cpuOverclock;
@@ -504,11 +490,9 @@ bool DisplayPortMax7456::reInitIfRequired(bool forceStallCheck)
         concludeCurrentSPI_Transaction();
         // Adjust output format based on the current input format.
         const uint8_t videoSense = _bus.readRegister(MAX7456ADD_STAT);
-#if !defined(FRAMEWORK_TEST)
         _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_MODEREG, _videoSignalReg & VIDEO_MODE_MASK);
         _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_SENSE, videoSense & 0x7);
         _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_ROWS, getRowCount());
-#endif
         if (videoSense & STAT_LOS) {
             _videoDetectTimeMs = 0;
         } else {
@@ -518,9 +502,7 @@ bool DisplayPortMax7456::reInitIfRequired(bool forceStallCheck)
                     if (timeMs() - _videoDetectTimeMs > VIDEO_SIGNAL_DEBOUNCE_MS) {
                         reInit();
                         ++_reInitCount;
-#if !defined(FRAMEWORK_TEST)
                         _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_REINIT, _reInitCount);
-#endif
                     }
                 } else {
                     // Wait for signal to stabilize
@@ -710,3 +692,5 @@ void DisplayPortMax7456::setBackgroundType(background_e backgroundType)
     setRegisterVM1();
 }
 // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,modernize-macro-to-enum,cppcoreguidelines-macro-usage)
+
+#endif // FRAMEWORK_TESt
