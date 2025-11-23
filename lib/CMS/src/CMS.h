@@ -8,6 +8,7 @@
 
 class Cockpit;
 class DisplayPortBase;
+class IMU_Base;
 class IMU_Filters;
 class OSD;
 class ReceiverBase;
@@ -17,7 +18,7 @@ Custom Menu System.
 */
 class CMS {
 public:
-    CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd);
+    CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, OSD* osd);
     void init();
 private:
     // CMS is not copyable or moveable

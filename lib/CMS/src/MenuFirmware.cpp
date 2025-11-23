@@ -1,6 +1,6 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
-
+#include <IMU_Base.h>
 
 std::array<char, CMSX::CALIBRATION_STATUS_MAX_LENGTH> CMSX::GyroCalibrationStatus {};
 std::array<char, CMSX::CALIBRATION_STATUS_MAX_LENGTH> CMSX::AccCalibrationStatus {};
@@ -14,8 +14,12 @@ const void* CMSX::menuCalibrateGyro(CMSX& cmsx, DisplayPortBase& displayPort, [[
 
 static const void* calibrateAcc(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
 {
+#if defined(FRAMEWORK_TEST)
     (void)cmsx;
-    //accStartCalibration();
+#else
+    enum { CALIBRATION_COUNT = 5000 };
+    cmsx.getIMU().calibrate(IMU_Base::CALIBRATE_ACC_AND_GYRO, CALIBRATION_COUNT);
+#endif
 
     return CMSX::MENU_BACK;
 }

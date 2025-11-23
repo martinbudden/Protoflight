@@ -2,6 +2,7 @@
 
 #include "Targets.h"
 
+#include <IMU_Base.h>
 #include <TaskBase.h>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
@@ -32,7 +33,6 @@ class DashboardTask;
 class Debug;
 class DisplayPortBase;
 class FlightController;
-class IMU_Base;
 class IMU_Filters;
 class IMU_FiltersBase;
 class MSP_Task;
@@ -130,7 +130,6 @@ class Main {
 public:
     enum {PA=0, PB=1, PC=2, PD=3, PE=4, PF=5, PG=6, PH=7}; // Note: defining PI=8 will cause conflict with Arduino's #define of PI (3.14..)
     enum {P0=0, P1=1, P2=2, P3=3, P4=4, P5=5, P6=6, P7=7};
-    enum calibration_type_e { CALIBRATE_ACC_AND_GYRO, CALIBRATE_GYRO_ONLY };
 public:
     void setup();
     void loop();
@@ -144,14 +143,13 @@ private:
     static MSP_SerialBase& createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs);
     static Blackbox& createBlackBox(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
     static OSD& createOSD(DisplayPortBase& displayPort, const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
-    static CMS& createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, OSD* osd);
+    static CMS& createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, OSD* osd);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, const TaskBase* dashboardTask, NonVolatileStorage& nvs);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
 
-    static void checkIMU_Calibration(NonVolatileStorage& nvs, AHRS& ahrs);
-    static void runIMU_Calibration(NonVolatileStorage& nvs, AHRS& ahrs, calibration_type_e calibrationType);
-    static void calibrateIMU(NonVolatileStorage& nvs, AHRS& ahrs, calibration_type_e calibrationType);
+    static void checkIMU_Calibration(NonVolatileStorage& nvs, IMU_Base& imu);
+    static void calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, IMU_Base::calibration_type_e calibrationType);
 
     static void loadPID_ProfileFromNonVolatileStorage(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t pidProfile);
     static void print(const char* buf);

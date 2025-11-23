@@ -6,7 +6,7 @@
 #include <RPM_Filters.h>
 
 
-IMU_Filters& Main::createIMU_Filters(float taskIntervalSeconds, MotorMixerBase& motorMixer, Debug& debug, const NonVolatileStorage& nvs)
+IMU_Filters& Main::createIMU_Filters(float taskIntervalSeconds, MotorMixerBase& motorMixer, Debug& debug, const NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
     // Statically allocate the IMU_Filters
     static IMU_Filters imuFilters(motorMixer.getMotorCount(), debug, taskIntervalSeconds);

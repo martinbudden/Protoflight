@@ -90,9 +90,9 @@ void Main::setup()
 #if defined(M5_UNIFIED)
     // Holding BtnA down while switching on enters calibration mode.
     if (M5.BtnA.isPressed()) {
-        calibrateIMU(nvs, ahrs, CALIBRATE_ACC_AND_GYRO);
+        calibrateIMUandSave(nvs, ahrs.getIMU(), IMU_Base::CALIBRATE_ACC_AND_GYRO);
     }
-    checkIMU_Calibration(nvs, ahrs);
+    checkIMU_Calibration(nvs, ahrs.getIMU());
     // Holding BtnC down while switching on resets the nvs.
     if (M5.BtnC.isPressed()) {
         nvs.clear();
@@ -135,9 +135,9 @@ void Main::setup()
 #endif
 #if defined(USE_CMS)
 #if defined(USE_OSD)
-    CMS& cms = createCMS(displayPort, receiver, cockpit, imuFilters, &osd);
+    CMS& cms = createCMS(displayPort, receiver, cockpit, imuFilters, ahrs.getIMU(), nvs, &osd);
 #else
-    CMS& cms = createCMS(displayPort, receiver, cockpit, imuFilters, nullptr);
+    CMS& cms = createCMS(displayPort, receiver, cockpit, imuFilters, ahrs.getIMU(), nvs, nullptr);
 #endif
 #endif
 

@@ -6,12 +6,14 @@
 class CMS;
 class Cockpit;
 class DisplayPortBase;
+class IMU_Base;
 class IMU_Filters;
+class NonVolatileStorage;
 
 
 class CMSX {
 public:
-    CMSX(CMS& cms, IMU_Filters& imuFilters);
+    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs);
 private:
     // CMS is not copyable or moveable
     CMSX(const CMSX&) = delete;
@@ -88,7 +90,9 @@ public:
     Cockpit& getCockpit();
     const Cockpit& getCockpit() const;
     IMU_Filters& getIMU_Filters() { return _imuFilters; };
-
+    NonVolatileStorage& getNonVolatileStorage() { return _nvs; }
+    const IMU_Base& getIMU() const { return _imu; }
+    IMU_Base& getIMU() { return _imu; }
 private:
     void setRebootRequired();
     bool getRebootRequired() const;
@@ -113,6 +117,8 @@ private:
     void pageNext();
     void pagePrevious();
 
+    void saveConfigAndNotify();
+
     static void setFlag(uint16_t& value, uint16_t flag) { value |= flag; }
     static void clearFlag(uint16_t& value, uint16_t flag) { value &= static_cast<uint16_t>(~flag); }
     const void* menuChange(DisplayPortBase& displayPort, const menu_t* menu);
@@ -134,6 +140,8 @@ public:
 private:
     CMS& _cms;
     IMU_Filters& _imuFilters;
+    IMU_Base& _imu;
+    NonVolatileStorage& _nvs;
     menu_t& _menuMain;
     menu_context_t _currentMenuContext {};
     uint8_t _menuStackIndex {};

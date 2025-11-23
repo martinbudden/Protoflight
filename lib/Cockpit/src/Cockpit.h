@@ -134,7 +134,6 @@ public:
 
     uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
     void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex);
-    void storeAllToNonVolatileStorage();
     void handleOnOffSwitch();
     virtual void updateControls(const controls_t& controls) override;
 

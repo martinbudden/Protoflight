@@ -1,4 +1,7 @@
 #include "Defaults.h"
+#if defined(USE_CMS)
+#include "CMS.h"
+#endif
 #include "NonVolatileStorage.h"
 #include <AHRS.h>
 #include <cstring>
@@ -774,7 +777,10 @@ void Cockpit::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex)
     _currentPidProfileIndex = currentPidProfileIndex;
 }
 
-void Cockpit::storeAllToNonVolatileStorage()
+#if defined(USE_CMS)
+void CMSX::saveConfigAndNotify()
 {
-    _nvs.storeAll(_imuFilters, _flightController, *this, _autopilot, _currentPidProfileIndex, _currentRateProfileIndex);
+    Cockpit& cockpit = _cms.getCockpit();
+    _nvs.storeAll(_imuFilters, cockpit.getFlightController(), cockpit, cockpit.getAutopilot(), cockpit.getCurrentPidProfileIndex(), cockpit.getCurrentRateProfileIndex());
 }
+#endif

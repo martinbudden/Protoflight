@@ -21,9 +21,11 @@ const CMSX::menu_t* CMSX::MENU_BACK              = CMSX::MENU_NULL_PTR + 7;
 //NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 
-CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters) :
+CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs) :
     _cms(cms),
     _imuFilters(imuFilters),
+    _imu(imu),
+    _nvs(nvs),
     _menuMain(menuMain)
     //_menuMain(menuFilters)
     //_menuMain(menuRates)
