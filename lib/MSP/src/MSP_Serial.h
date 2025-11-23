@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MSP_SerialBase.h"
-#include "MSP_Stream.h"
+#include <MSP_SerialBase.h>
+#include <MSP_Stream.h>
 
 #include <array>
 
