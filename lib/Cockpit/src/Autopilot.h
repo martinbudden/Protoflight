@@ -38,9 +38,9 @@ public:
         PIDF_uint16_t altitudePID;
         PIDF_uint16_t positionPID;
         uint16_t landingAltitudeMeters;
-        uint16_t throttleHover;
-        uint16_t throttleMin;
-        uint16_t throttleMax;
+        uint16_t throttle_hover_pwm;
+        uint16_t throttle_min_pwm;
+        uint16_t throttle_max_pwm;
         uint8_t position_lpf_hz100; // cutoff frequency*100 for longitude and latitude position filters
         uint8_t maxAngle;
     };

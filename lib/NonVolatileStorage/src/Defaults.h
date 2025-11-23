@@ -180,9 +180,9 @@ static constexpr Autopilot::autopilot_config_t autopilotConfig = {
     .altitudePID = { 15, 15, 15, 0, 15 },
     .positionPID = { 30, 30, 30, 0, 30 },
     .landingAltitudeMeters = 4,
-    .throttleHover = 1275,
-    .throttleMin = 1100,
-    .throttleMax = 1700,
+    .throttle_hover_pwm = 1275,
+    .throttle_min_pwm = 1100,
+    .throttle_max_pwm = 1700,
     .position_lpf_hz100 = 80, // cutoff frequency*100 for longitude and latitude position filters
     .maxAngle = 50,
 };
@@ -206,7 +206,49 @@ static constexpr OSD::config_t osdConfig = {
     .rcChannels = { -1, -1, -1, -1 },
     .timers = {},
     .enabled_warnings = static_cast<uint32_t>(~(OSD::WARNING_RSSI |OSD::WARNING_LINK_QUALITY | OSD::WARNING_RSSI_DBM |OSD::WARNING_RSNR | OSD::WARNING_OVER_CAP)),
+/*
+        WARNING_ARMING_DISABLE,
+        WARNING_BATTERY_NOT_FULL,
+        WARNING_BATTERY_WARNING,
+        WARNING_BATTERY_CRITICAL,
+        WARNING_VISUAL_BEEPER,
+        WARNING_CRASHFLIP,
+        WARNING_ESC_FAIL,
+        WARNING_CORE_TEMPERATURE,
+        WARNING_RC_SMOOTHING,
+        WARNING_FAIL_SAFE,
+        WARNING_LAUNCH_CONTROL,
+        WARNING_GPS_RESCUE_UNAVAILABLE,
+        WARNING_GPS_RESCUE_DISABLED,
+        WARNING_LOAD,
+        WARNING_POSHOLD_FAILED,
+*/
     .enabled_stats = static_cast<uint32_t>(~(OSD::STATS_MAX_SPEED | OSD::STATS_MIN_BATTERY | OSD::STATS_MIN_RSSI | OSD::STATS_MAX_CURRENT | OSD::STATS_USED_MAH | OSD::STATS_BLACKBOX | OSD::STATS_BLACKBOX_NUMBER | OSD::STATS_TIMER_2)),
+/*
+        STATS_RTC_DATE_TIME,
+        STATS_TIMER_1,
+        STATS_MAX_DISTANCE,
+        STATS_END_BATTERY,
+        STATS_BATTERY,
+        STATS_MAX_ALTITUDE,
+        STATS_MAX_G_FORCE,
+        STATS_MAX_ESC_TEMP,
+        STATS_MAX_ESC_RPM,
+        STATS_MIN_LINK_QUALITY,
+        STATS_FLIGHT_DISTANCE,
+        STATS_MAX_FFT,
+        STATS_TOTAL_FLIGHTS,
+        STATS_TOTAL_TIME,
+        STATS_TOTAL_DIST,
+        STATS_MIN_RSSI_DBM,
+        STATS_WATT_HOURS_DRAWN,
+        STATS_MIN_RSNR,
+        STATS_BEST_3_CONSEC_LAPS,
+        STATS_BEST_LAP,
+        STATS_FULL_THROTTLE_TIME,
+        STATS_FULL_THROTTLE_COUNTER,
+        STATS_AVG_THROTTLE,
+*/    
     .framerate_hz = OSD::FRAMERATE_DEFAULT_HZ,
     .cap_alarm  = 2200,
     .alt_alarm  = 100, // meters or feet depend on configuration
@@ -246,7 +288,7 @@ static constexpr OSD::config_t osdConfig = {
     .osd_craftname_messages = false,   // Insert LQ/RSSI-dBm and warnings into CraftName
     // Make it obvious on the configurator that the FC doesn't support HD
 #if defined(USE_OSD_HD)
-    .displayPortDevice = OSD_DISPLAYPORT_DEVICE_MSP,
+    .displayPortDevice = DisplayPortBase::DEVICE_TYPE_MSP,
     .canvas_column_count = OSD::HD_COLS,
     .canvas_row_count = OSD::HD_ROWS,
 #else

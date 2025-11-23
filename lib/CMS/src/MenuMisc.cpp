@@ -27,7 +27,7 @@ static const void* menuRcOnDisplayUpdate(CMSX& cmsx, [[maybe_unused]] DisplayPor
     const ReceiverBase& receiver = cmsx.getCockpit().getReceiver();
     size_t ii = 0;
     for (auto& rc : rcData) {
-        rc = receiver.getChannelRaw(ii);
+        rc = receiver.getChannelPWM(ii);
         ++ii;
     }
     return nullptr;

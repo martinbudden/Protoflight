@@ -27,8 +27,8 @@ enum { PWM_MIN = 1000, PWM_MAX = 2000 };
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
 static auto entryFailsafeProcedure   = OSD_TABLE_t  { &failsafeConfig.procedure, Cockpit::FAILSAFE_PROCEDURE_COUNT - 1, &failsafeProcedureNames[0] };
-static auto entryFailsafeDelay       = OSD_UINT16_t { &failsafeConfig.delay_deciseconds, 0, 200, 1 };
-static auto entryFailsafeLandingTime = OSD_UINT16_t { &failsafeConfig.landing_time_seconds, 0, 200, 1 };
+static auto entryFailsafeDelay       = OSD_UINT8_t  { &failsafeConfig.delay_deciseconds, 0, 200, 1 };
+static auto entryFailsafeLandingTime = OSD_UINT8_t  { &failsafeConfig.landing_time_seconds, 0, 200, 1 };
 static auto entryFailsafeThrottle    = OSD_UINT16_t { &failsafeConfig.throttle_pwm, PWM_MIN, PWM_MAX, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
@@ -38,8 +38,8 @@ static const std::array<CMSX::OSD_Entry, 7> menuFailsafeEntries
     { "-- FAILSAFE --", OME_LABEL, nullptr, nullptr},
 
     { "PROCEDURE",        OME_TABLE  | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeProcedure },
-    { "GUARD TIME",       OME_UINT16 | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeDelay },
-    { "LANDING_TIME",     OME_UINT16 | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeLandingTime },
+    { "GUARD TIME",       OME_UINT8  | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeDelay },
+    { "LANDING_TIME",     OME_UINT8  | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeLandingTime },
     { "STAGE 2 THROTTLE", OME_UINT16 | OME_REBOOT_REQUIRED, nullptr, &entryFailsafeThrottle },
     { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}

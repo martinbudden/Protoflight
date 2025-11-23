@@ -6,7 +6,7 @@
 void Autopilot::setAutopilotConfig(const autopilot_config_t& autopilotConfig)
 {
     _autopilotConfig = autopilotConfig;
-    _altitude.hoverThrottle = (_autopilotConfig.throttleHover - 1000) * 0.001F;
+    _altitude.hoverThrottle = static_cast<float>(_autopilotConfig.throttle_hover_pwm - 1000) * 0.001F;
 
     static constexpr float ALTITUDE_P_SCALE  = 0.01F;
     static constexpr float ALTITUDE_I_SCALE  = 0.003F;

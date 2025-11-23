@@ -180,12 +180,12 @@ void Cockpit::updateControls(const controls_t& controls)
     handleOnOffSwitch();
     // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
     enum { CONTROL_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_MODE_CHANNEL = ReceiverBase::AUX3 };
-    if (_receiver.getChannelRaw(CONTROL_MODE_CHANNEL)) {
+    if (_receiver.getChannelPWM(CONTROL_MODE_CHANNEL)) {
         _flightModeFlags |= ANGLE_MODE;
     } else {
         _flightModeFlags &= ~ANGLE_MODE;
     }
-    if (_receiver.getChannelRaw(ALTITUDE_MODE_CHANNEL)) {
+    if (_receiver.getChannelPWM(ALTITUDE_MODE_CHANNEL)) {
         if ((_flightModeFlags & ALT_HOLD_MODE) == 0) {
             // not currently in altitude hold mode, so set the altitude hold setpoint
             if (_autopilot.setAltitudeHoldSetpoint()) {

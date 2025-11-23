@@ -58,25 +58,26 @@ void test_msp_set_failsafe_config()
     MSP_Stream::packet_with_header_t pwh;
 
     const uint8_t payloadSize = 8;
-    const uint8_t checksum = 197;
-    const Cockpit::failsafe_t fsIn {
-        .delay = 3,
-        .landing_time = 5,
-        .switch_mode = 9,
+    const uint8_t checksum = 241;
+    const Cockpit::failsafe_config_t fsIn {
+        .throttle_pwm = 1963,
+        .throttle_low_delay_deciseconds = 4107,
+        .recovery_delay_deciseconds = 5, // cppcheck-suppress unusedStructMember
+        .delay_deciseconds = 3,
+        .landing_time_seconds = 5,
         .procedure = 13,
-        .throttle = 2963,
-        .throttle_low_delay = 4107,
-        .failsafe_recovery_delay = 5,
+        .switch_mode = 9,
+        .stick_threshold_percent = 30, // cppcheck-suppress unusedStructMember
     };
     const std::array<uint8_t, 13> inStream = {
         'M', '<', payloadSize, MSP_SET_FAILSAFE_CONFIG,
-        fsIn.delay,
-        fsIn.landing_time,
-        static_cast<uint8_t>(fsIn.throttle & 0xFFU),
-        static_cast<uint8_t>(fsIn.throttle >> 8U),
+        fsIn.delay_deciseconds,
+        fsIn.landing_time_seconds,
+        static_cast<uint8_t>(fsIn.throttle_pwm & 0xFFU),
+        static_cast<uint8_t>(fsIn.throttle_pwm >> 8U),
         fsIn.switch_mode,
-        static_cast<uint8_t>(fsIn.throttle_low_delay & 0xFFU),
-        static_cast<uint8_t>(fsIn.throttle_low_delay >> 8U),
+        static_cast<uint8_t>(fsIn.throttle_low_delay_deciseconds & 0xFFU),
+        static_cast<uint8_t>(fsIn.throttle_low_delay_deciseconds >> 8U),
         fsIn.procedure,
         checksum
     };
@@ -98,13 +99,13 @@ void test_msp_set_failsafe_config()
     TEST_ASSERT_EQUAL(76, pwh.checksum);
     TEST_ASSERT_EQUAL(0, pwh.dataLen);
 
-    const Cockpit::failsafe_t fsOut = cockpit.getFailsafe();
-    TEST_ASSERT_EQUAL(fsIn.delay, fsOut.delay);
-    TEST_ASSERT_EQUAL(fsIn.landing_time, fsOut.landing_time);
-    TEST_ASSERT_EQUAL(fsIn.throttle, fsOut.throttle);
-    TEST_ASSERT_EQUAL(fsIn.switch_mode, fsOut.switch_mode);
-    TEST_ASSERT_EQUAL(fsIn.throttle_low_delay, fsOut.throttle_low_delay);
+    const Cockpit::failsafe_config_t fsOut = cockpit.getFailsafeConfig();
+    TEST_ASSERT_EQUAL(fsIn.throttle_pwm, fsOut.throttle_pwm);
+    TEST_ASSERT_EQUAL(fsIn.throttle_low_delay_deciseconds, fsOut.throttle_low_delay_deciseconds);
+    TEST_ASSERT_EQUAL(fsIn.delay_deciseconds, fsOut.delay_deciseconds);
+    TEST_ASSERT_EQUAL(fsIn.landing_time_seconds, fsOut.landing_time_seconds);
     TEST_ASSERT_EQUAL(fsIn.procedure, fsOut.procedure);
+    TEST_ASSERT_EQUAL(fsIn.switch_mode, fsOut.switch_mode);
 }
 
 void test_msp_pid_in()

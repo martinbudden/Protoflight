@@ -90,8 +90,8 @@ public:
         uint16_t throttle_pwm;
         uint16_t throttle_low_delay_deciseconds;
         uint16_t recovery_delay_deciseconds; // time of valid rx data needed to allow recovery from failsafe and re-arming
-        uint16_t delay_deciseconds;
-        uint16_t landing_time_seconds; // time allowed in landing phase before disarm
+        uint8_t delay_deciseconds;
+        uint8_t landing_time_seconds; // time allowed in landing phase before disarm
         uint8_t procedure;
         uint8_t switch_mode;
         uint8_t stick_threshold_percent; // Stick deflection percentage to exit GPS Rescue procedure
