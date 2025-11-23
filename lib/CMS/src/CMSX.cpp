@@ -561,9 +561,9 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
             }
         }
         break;
-    case OME_UINT8:
-        [[fallthrough]];
     case OME_FLOAT:
+        [[fallthrough]];
+    case OME_UINT8:
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
@@ -751,7 +751,7 @@ void CMSX::menuOpen(DisplayPortBase& displayPort)
         _linesPerMenuItem  = 2;
         _leftMenuColumn    = 0;
         _rightMenuColumn   = columnCount;
-        _maxMenuItems      = (displayPort.getRowCount()) / _linesPerMenuItem;
+        _maxMenuItems      = displayPort.getRowCount() / _linesPerMenuItem;
     } else {
         _smallScreen       = false;
         _rightAligned      = false;
