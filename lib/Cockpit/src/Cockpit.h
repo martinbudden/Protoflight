@@ -68,28 +68,33 @@ public:
     enum failsafe_phase_e {
         FAILSAFE_IDLE = 0,
         FAILSAFE_RX_LOSS_DETECTED,
-        FAILSAFE_LANDING,
-        FAILSAFE_LANDED,
         FAILSAFE_RX_LOSS_MONITORING,
         FAILSAFE_RX_LOSS_RECOVERED,
+        FAILSAFE_LANDING,
+        FAILSAFE_LANDED,
         FAILSAFE_GPS_RESCUE
     };
     enum failsafe_procedure_e {
-        FAILSAFE_PROCEDURE_AUTO_LANDING = 0,
-        FAILSAFE_PROCEDURE_DROP_IT,
+        FAILSAFE_PROCEDURE_DROP_IT = 0,
+        FAILSAFE_PROCEDURE_AUTO_LANDING,
         FAILSAFE_PROCEDURE_GPS_RESCUE,
-        FAILSAFE_PROCEDURE_COUNT   // must be last
+        FAILSAFE_PROCEDURE_COUNT
     };
-    enum { PERIOD_RX_DATA_RECOVERY_MS = 100 };
+    enum failsafe_switch_mode_e {
+        FAILSAFE_SWITCH_MODE_STAGE1 = 0,
+        FAILSAFE_SWITCH_MODE_STAGE2,
+        FAILSAFE_SWITCH_MODE_KILL,
+    };
     // MSP compatible failsafe parameters
-    struct failsafe_t {
-        uint8_t delay;
-        uint8_t landing_time;
-        uint8_t switch_mode;
+    struct failsafe_config_t {
+        uint16_t throttle_pwm;
+        uint16_t throttle_low_delay_deciseconds;
+        uint16_t recovery_delay_deciseconds; // time of valid rx data needed to allow recovery from failsafe and re-arming
+        uint16_t delay_deciseconds;
+        uint16_t landing_time_seconds; // time allowed in landing phase before disarm
         uint8_t procedure;
-        uint16_t throttle;
-        uint16_t throttle_low_delay;
-        uint16_t failsafe_recovery_delay;
+        uint8_t switch_mode;
+        uint8_t stick_threshold_percent; // Stick deflection percentage to exit GPS Rescue procedure
     };
     // arming flags
     static constexpr uint32_t ARMED = 0x01;
@@ -155,8 +160,8 @@ public:
     uint32_t getFlightModeFlags() const;
 
     virtual void checkFailsafe(uint32_t tickCount) override;
-    const failsafe_t& getFailsafe() const { return _failsafe; }
-    void setFailsafe(const failsafe_t& failsafe);
+    const failsafe_config_t& getFailsafeConfig() const { return _failsafeConfig; }
+    void setFailsafeConfig(const failsafe_config_t& failsafeConfig);
     failsafe_phase_e getFailsafePhase() const { return _failsafePhase; }
 
     const rates_t& getRates() const { return _rates; }
@@ -198,7 +203,7 @@ private:
     uint32_t _flightModeFlags {};
     // failsafe handling
     failsafe_phase_e _failsafePhase {FAILSAFE_IDLE};
-    failsafe_t _failsafe {};
+    failsafe_config_t _failsafeConfig {};
     int32_t _receiverInUse {false};
     uint32_t _failsafeTickCount {0}; //!< failsafe counter, so the vehicle doesn't fly away if it looses contact with the transmitter (for example by going out of range)
     uint32_t _failsafeTickCountThreshold {1500};

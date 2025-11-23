@@ -152,14 +152,15 @@ static constexpr RPM_Filters::config_t rpmFiltersConfig = {
 };
 #endif
 
-static constexpr Cockpit::failsafe_t cockpitFailSafe = {
-    .delay = 15,
-    .landing_time = 60,
-    .switch_mode = 0,
-    .procedure = 0,
-    .throttle = 1000,
-    .throttle_low_delay = 100,
-    .failsafe_recovery_delay = 5, // 500ms of valid rx data needed to allow recovery from failsafe and re-arming
+static constexpr Cockpit::failsafe_config_t cockpitFailSafeConfig = {
+    .throttle_pwm = 1000, // throttle off
+    .throttle_low_delay_deciseconds = 100,
+    .recovery_delay_deciseconds = 5,
+    .delay_deciseconds = 15,
+    .landing_time_seconds = 60,
+    .procedure = Cockpit::FAILSAFE_PROCEDURE_DROP_IT,
+    .switch_mode = Cockpit::FAILSAFE_SWITCH_MODE_STAGE1,
+    .stick_threshold_percent = 30,
 };
 
 static constexpr Cockpit::rates_t cockpitRates = {

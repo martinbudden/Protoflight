@@ -225,9 +225,9 @@ void Cockpit::updateControls(const controls_t& controls)
     _flightController.updateSetpoints(flightControls);
 }
 
-void Cockpit::setFailsafe(const failsafe_t& failsafe)
+void Cockpit::setFailsafeConfig(const failsafe_config_t& failsafeConfig)
 {
-    _failsafe = failsafe;
+    _failsafeConfig = failsafeConfig;
 }
 
 void Cockpit::checkFailsafe(uint32_t tickCount)
@@ -246,7 +246,7 @@ void Cockpit::checkFailsafe(uint32_t tickCount)
             // failsafe detected, so zero all sticks and set throttle to 25%
             const FlightController::controls_t flightControls = {
                 .tickCount = tickCount,
-                .throttleStick = 0.25F,
+                .throttleStick = (static_cast<float>(_failsafeConfig.throttle_pwm) - ReceiverBase::CHANNEL_LOW_F) / ReceiverBase::CHANNEL_RANGE_F,
                 .rollStickDPS = 0.0F,
                 .pitchStickDPS = 0.0F,
                 .yawStickDPS = 0.0F,

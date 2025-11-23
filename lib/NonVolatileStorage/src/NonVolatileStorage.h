@@ -162,8 +162,8 @@ public:
     IMU_Filters::config_t loadIMU_FiltersConfig() const;
     int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
 
-    Cockpit::failsafe_t loadFailsafe();
-    int32_t storeFailsafe(const Cockpit::failsafe_t& failsafe);
+    Cockpit::failsafe_config_t loadFailsafeConfig();
+    int32_t storeFailsafeConfig(const Cockpit::failsafe_config_t& config);
 
     Cockpit::rates_t loadRates(uint8_t rateProfileIndex) const;
     int32_t storeRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex);

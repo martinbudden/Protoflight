@@ -56,13 +56,14 @@ constexpr uint16_t OSD_ConfigKey = 0x0424;
 constexpr uint16_t OSD_ElementsConfigKey = 0x0428;
 
 constexpr uint16_t RatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
-constexpr uint16_t IMU_FiltersConfigKey = 0x0504;
-constexpr uint16_t RPM_FiltersConfigKey = 0x0505;
-constexpr uint16_t FailsafeKey = 0x0506;
-constexpr uint16_t AutopilotConfigKey = 0x507;
-constexpr uint16_t AutopilotPositionConfigKey = 0x508;
-constexpr uint16_t AltitudeHoldConfigKey = 0x509;
-constexpr uint16_t MotorConfigKey = 0x50A;
+
+constexpr uint16_t IMU_FiltersConfigKey = 0x0600;
+constexpr uint16_t RPM_FiltersConfigKey = 0x0601;
+constexpr uint16_t FailsafeConfigKey = 0x0602;
+constexpr uint16_t AutopilotConfigKey = 0x603;
+constexpr uint16_t AutopilotPositionConfigKey = 0x604;
+constexpr uint16_t AltitudeHoldConfigKey = 0x605;
+constexpr uint16_t MotorConfigKey = 0x606;
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
@@ -557,17 +558,17 @@ int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& 
 }
 
 
-Cockpit::failsafe_t NonVolatileStorage::loadFailsafe() // NOLINT(readability-make-member-function-const)
+Cockpit::failsafe_config_t NonVolatileStorage::loadFailsafeConfig() // NOLINT(readability-make-member-function-const)
 {
-    {Cockpit::failsafe_t failsafe {};
-    if (loadItem(FailsafeKey, &failsafe, sizeof(failsafe))) { // cppcheck-suppress knownConditionTrueFalse
+    {Cockpit::failsafe_config_t config {};
+    if (loadItem(FailsafeConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
     }}
-    return DEFAULTS::cockpitFailSafe;
+    return DEFAULTS::cockpitFailSafeConfig;
 }
 
-int32_t NonVolatileStorage::storeFailsafe(const Cockpit::failsafe_t& failsafe)
+int32_t NonVolatileStorage::storeFailsafeConfig(const Cockpit::failsafe_config_t& config)
 {
-    return storeItem(FailsafeKey, &failsafe, sizeof(failsafe), &DEFAULTS::cockpitFailSafe);
+    return storeItem(FailsafeConfigKey, &config, sizeof(config), &DEFAULTS::cockpitFailSafeConfig);
 }
 
 Cockpit::rates_t NonVolatileStorage::loadRates(uint8_t rateProfileIndex) const

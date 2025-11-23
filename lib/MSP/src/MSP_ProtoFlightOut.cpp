@@ -115,13 +115,13 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_FAILSAFE_CONFIG: {
-        const Cockpit::failsafe_t failsafe = _cockpit.getFailsafe();
-        dst.writeU8(failsafe.delay);
-        dst.writeU8(failsafe.landing_time);
-        dst.writeU16(failsafe.throttle);
-        dst.writeU8(failsafe.switch_mode);
-        dst.writeU16(failsafe.throttle_low_delay);
-        dst.writeU8(failsafe.procedure);
+        const Cockpit::failsafe_config_t failsafeConfig = _cockpit.getFailsafeConfig();
+        dst.writeU8(failsafeConfig.delay_deciseconds);
+        dst.writeU8(failsafeConfig.landing_time_seconds);
+        dst.writeU16(failsafeConfig.throttle_pwm);
+        dst.writeU8(failsafeConfig.switch_mode);
+        dst.writeU16(failsafeConfig.throttle_low_delay_deciseconds);
+        dst.writeU8(failsafeConfig.procedure);
         break;
     }
     case MSP_SET_MIXER_CONFIG: {

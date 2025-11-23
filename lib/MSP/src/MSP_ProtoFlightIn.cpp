@@ -21,14 +21,14 @@ MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& 
         break;
 
     case MSP_SET_FAILSAFE_CONFIG: {
-        Cockpit::failsafe_t failsafe{};
-        failsafe.delay = src.readU8();
-        failsafe.landing_time = src.readU8();
-        failsafe.throttle = src.readU16();
-        failsafe.switch_mode = src.readU8();
-        failsafe.throttle_low_delay = src.readU16();
-        failsafe.procedure = src.readU8();
-        _cockpit.setFailsafe(failsafe);
+        Cockpit::failsafe_config_t failsafeConfig{};
+        failsafeConfig.delay_deciseconds = src.readU8();
+        failsafeConfig.landing_time_seconds = src.readU8();
+        failsafeConfig.throttle_pwm = src.readU16();
+        failsafeConfig.switch_mode = src.readU8();
+        failsafeConfig.throttle_low_delay_deciseconds = src.readU16();
+        failsafeConfig.procedure = src.readU8();
+        _cockpit.setFailsafeConfig(failsafeConfig);
         break;
     }
     case MSP_SET_MIXER_CONFIG:
