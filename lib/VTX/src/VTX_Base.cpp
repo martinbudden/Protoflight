@@ -62,3 +62,82 @@ const std::array <uint8_t, VTX_Base::POWER_LEVEL_COUNT> VTX_Base::PowerIndexSmar
     SMART_AUDIO_POWER_800,  // 601 - max
     SMART_AUDIO_POWER_200   // Manual
 };
+
+/*!
+Converts frequencyMHz to band and channel values.
+If frequency not found then band and channel are set to 0.
+*/
+void VTX_Base::lookupBandChannel(uint8_t& band, uint8_t& channel, uint16_t frequencyMHz)
+{
+    if (frequencyMHz == 5880) {
+        // 5880Mhz returns Raceband 7 rather than Fatshark 8.
+        band = BAND_RACEBAND;
+        channel = 7;
+        return;
+    }
+    for (band = 0; band < BAND_COUNT ; ++band) {
+        for (channel = 0 ; channel < CHANNEL_COUNT ; ++channel) {
+            if (Frequencies[band][channel] == frequencyMHz) { // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+                ++band;
+                ++channel;
+                return;
+            }
+        }
+    }
+    band = 0;
+    channel = 0;
+}
+
+/*!
+Converts band and channel values to a frequency (in MHz) value.
+band:  Band value (1 to 5).
+channel:  Channel value (1 to 8).
+Returns frequency value (in MHz), or 0 if band/channel out of range.
+*/
+uint16_t VTX_Base::lookupFrequency(uint8_t band, uint8_t channel)
+{
+    if (band > 0 && band <= BAND_COUNT && channel > 0 && channel <= CHANNEL_COUNT) {
+        return Frequencies[band - 1][channel - 1]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    }
+
+    return 0;
+}
+
+bool VTX_Base::lookupPowerValue(size_t index, uint16_t& powerValue) const
+{
+    switch (_type) {
+    case RTC6705:
+        break;
+    case SMART_AUDIO:
+        break;
+    case TRAMP:
+        break;
+    case MSP:
+        return false;
+    default:
+        return false;
+    }
+
+    const std::array <uint8_t, VTX_Base::POWER_LEVEL_COUNT>& powerValues = 
+        (_type == RTC6705) ? PowerIndexRTC670 :
+        (_type == SMART_AUDIO) ? PowerIndexSmartAudio : PowerIndexTramp;
+
+
+    if (index > 0 && index <= _powerLevelCount) {
+        powerValue = powerValues[index - 1];
+        return true;
+    }
+    return false;
+}
+
+void VTX_Base::setPowerByIndex(uint8_t index)
+{
+    uint16_t powerValue {};
+
+    if (lookupPowerValue(index, powerValue)) {
+        if (powerValue != _powerValue) {
+            _configChanged = true;
+        }
+        _powerValue = powerValue;
+    }
+}

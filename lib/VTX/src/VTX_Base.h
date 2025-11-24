@@ -13,7 +13,7 @@ public:
         UNSUPPORTED = 0,
         RTC6705     = 1,
         RESERVED    = 2,
-        SMARTAUDIO  = 3,
+        SMART_AUDIO = 3,
         TRAMP       = 4,
         MSP         = 5,
         UNKNOWN     = 0xFF
@@ -26,7 +26,7 @@ public:
     enum { BAND_COUNT = 5 };
     enum { CHANNEL_COUNT = 8 };
     enum { POWER_LEVEL_COUNT = 8 };
-    enum { BAND_USER = 0, BAND_A = 1, BAND_B = 2, BAND_E = 3, BAND_FS= 4, BAND_RACE = 5, };
+    enum { BAND_USER = 0, BAND_A = 1, BAND_B = 2, BAND_E = 3, BAND_FATSHARK = 4, BAND_RACEBAND = 5, };
 
     // RTC6705 RF Power index 25 or 200 mW
     enum { 
@@ -73,7 +73,7 @@ public:
     virtual void setBandAndChannel(uint8_t band, uint8_t channel) { _band = band; _channel = channel; }
     virtual bool getBandAndChannel(uint8_t& band, uint8_t& channel) const { band = _band; channel = _channel; return true; }
 
-    virtual void setPowerByIndex(uint8_t level) { (void)level; }
+    virtual void setPowerByIndex(uint8_t index);
     virtual bool getPowerIndex(uint8_t& powerIndex) const { powerIndex = _powerIndex; return true; }
     virtual uint8_t getPowerLevels(uint16_t* levels, uint16_t* powers) const { (void)levels; (void)powers; return 0; }
 
@@ -84,9 +84,14 @@ public:
     virtual bool getStatus(unsigned* status) const { (void)status; return false; }
 
     virtual void serializeCustomDeviceStatus(StreamBuf& dst) { (void)dst; }
+    void lookupBandChannel(uint8_t& band, uint8_t& channel, uint16_t frequencyMHz);
+    static uint16_t lookupFrequency(uint8_t band, uint8_t channel);
+    bool lookupPowerValue(size_t index, uint16_t& powerValue) const;
 protected:
     type_e _type;
     uint16_t _powerValue {};
+    bool _configChanged {false};
+    uint8_t _powerLevelCount {};
     uint8_t _pitMode {};
     uint8_t _powerIndex {};
     uint8_t _band {};
