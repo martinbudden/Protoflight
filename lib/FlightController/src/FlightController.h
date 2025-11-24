@@ -1,12 +1,10 @@
 #pragma once
 
 #include "FlightControllerTelemetry.h"
+#include "Targets.h"
 
 #include <Filters.h>
 #include <PIDF.h>
-#if !defined(FRAMEWORK_TEST) || defined(TARGET_NATIVE)
-#include <Targets.h>
-#endif
 #include <VehicleControllerBase.h>
 
 #include <array>

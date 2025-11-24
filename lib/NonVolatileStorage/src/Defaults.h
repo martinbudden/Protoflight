@@ -8,7 +8,12 @@
 #include <FlightController.h>
 #include <IMU_Filters.h>
 #include <MotorMixerBase.h>
+#if defined(USE_OSD)
 #include <OSD.h>
+#endif
+#if defined(USE_VTX)
+#include <VTX_Base.h>
+#endif
 
 enum units_e { UNITS_METRIC = 0, UNIT_IMPERIAL = 1 };
 
@@ -304,5 +309,16 @@ static constexpr OSD_Elements::config_t osdElementsConfig = {};
 
 #endif
 
+#if defined(USE_VTX)
+static constexpr VTX_Base::config_t vtxConfig = {
+    .frequencyMHz = 5740,
+    .pitModeFrequencyMHz = 0,
+    .band =4,
+    .channel = 1,
+    .power = 1,
+    .lowPowerDisarm = 1,
+    .softserialAlt = 0
+};
+#endif
 
 } // END namespace

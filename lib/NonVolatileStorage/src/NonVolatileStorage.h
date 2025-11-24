@@ -9,6 +9,9 @@
 #if defined(USE_OSD)
 #include <OSD.h>
 #endif
+#if defined(USE_VTX)
+#include <VTX_Base.h>
+#endif
 
 #if defined(USE_FLASH_KLV)
 
@@ -144,6 +147,10 @@ public:
 #if defined(USE_RPM_FILTERS)
     RPM_Filters::config_t loadRPM_FiltersConfig() const;
     int32_t storeRPM_FiltersConfig(const RPM_Filters::config_t& config);
+#endif
+#if defined(USE_VTX)
+    VTX_Base::config_t loadVTXConfig() const;
+    int32_t storeVTXConfig(const VTX_Base::config_t& config);
 #endif
 #if defined(USE_OSD)
     OSD::config_t loadOSD_Config() const;

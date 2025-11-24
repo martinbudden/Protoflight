@@ -5,21 +5,7 @@ Targets
 */
 
 
-#if defined(TARGET_CODECELL)
-    #define BOARD_IDENTIFIER    "CodeCell_ESP32C3"
-
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
-    #define USE_IMU_BNO085
-    #define AHRS_TASK_IS_TIMER_DRIVEN
-    #define GYRO_SAMPLE_RATE_HZ 1000
-    #define IMU_I2C_PINS        i2c_pins_t{.sda=8,.scl=9,.irq=BUS_I2C::IRQ_NOT_SET}
-
-    #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
-
-    #define USE_BACKCHANNEL
-
-#elif defined(TARGET_M5STACK_STAMPS3_FLY)
+#if defined(TARGET_M5STACK_STAMPS3_FLY)
 
     #define BOARD_IDENTIFIER    "M5Stack_StampS3_Fly"
 
@@ -33,7 +19,7 @@ Targets
     #define BAROMETER_I2C_PINS  i2c_pins_t{.sda=3,.scl=4,.irq=BUS_I2C::IRQ_NOT_SET}
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
-    //                                       BR       TR       BL       TL
+    //                                       BR     TR     BL     TL
     #define MOTOR_PINS          motor_pins_t{.m0=23,.m1=25,.m2=10,.m3=5}
 
     #define USE_BACKCHANNEL
@@ -92,6 +78,7 @@ Targets
     //#define USE_MSP
     //#define USE_OSD
     #define USE_CMS
+    #define USE_VTX
 
     #define USE_BACKCHANNEL
 
@@ -127,6 +114,7 @@ Targets
     #define USE_MSP
     #define USE_CMS
     #define USE_OSD
+    #define USE_VTX
 
     #define USE_BACKCHANNEL
 
@@ -309,6 +297,52 @@ Targets
 
     #define NEO_PIXEL_PIN               46
 
+#elif defined(TARGET_CODECELL)
+
+    #define BOARD_IDENTIFIER    "CodeCell_ESP32C3"
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define USE_IMU_BNO085
+    #define AHRS_TASK_IS_TIMER_DRIVEN
+    #define GYRO_SAMPLE_RATE_HZ 1000
+    #define IMU_I2C_PINS        i2c_pins_t{.sda=8,.scl=9,.irq=BUS_I2C::IRQ_NOT_SET}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF}
+
+    #define USE_BACKCHANNEL
+
+#elif defined(TARGET_AFROFLIGHT_F301CB)
+
+    #define BOARD_IDENTIFIER    "AfroFlight_F301CB"
+
+    //#define USE_D_MAX
+    //#define USE_ITERM_RELAX
+    //#define USE_YAW_SPIN_RECOVERY
+
+    #define USART_1_PINS        stm32_rx_pins_t{.rx={PA,10},.tx={PA,9}} // TX output is always inverted (for FrSky). Internally connected to USB port via CP2102 IC
+    #define USART_2_PINS        stm32_rx_pins_t{.rx={PA,3},.tx={PA,2}}
+    #define SOFT_SERIAL_1_PINS  stm32_rx_pins_t{.rx={PA,6},.tx={PA,7}}
+    #define SOFT_SERIAL_2_PINS  stm32_rx_pins_t{.rx={PB,0},.tx={PB,1}}
+    #define I2C_1_PINS          stm32_i2c_pins_t{.sda={PB,7},.scl={PB,6}}
+
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    // On afroflight Rev 5 MPU6050 is connected to IC2 index 2
+    #define USE_IMU_MPU6000
+    #define AHRS_TASK_IS_TIMER_DRIVEN
+    #define GYRO_SAMPLE_RATE_HZ 1000
+    #define IMU_I2C_PINS        stm32_i2c_pins_t{.sda={PB,7},.scl={PB,6},.irq={PB,13}}
+
+    #define USE_RECEIVER_SBUS
+    #define RECEIVER_UART_INDEX 0
+    #define RECEIVER_PINS       stm32_rx_pins_t{.rx={PB,10},.tx={PB,9}}
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    #define MOTOR_PINS          stm32_motor_pins_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}}
+
+    //#define USE_MSP
+    // LED0 PB4, LED1 PB3
+
 #elif defined(TARGET_SEED_XIAO_NRF52840_SENSE)
 
     #define BOARD_IDENTIFIER    "NRF52840_Sense"
@@ -390,36 +424,4 @@ Targets
 
     // LED3 PE9 // red
     // LED4 PE8 // blue
-
-#elif defined(TARGET_AFROFLIGHT_F301CB)
-
-    #define BOARD_IDENTIFIER    "AfroFlight_F301CB"
-
-    //#define USE_D_MAX
-    //#define USE_ITERM_RELAX
-    //#define USE_YAW_SPIN_RECOVERY
-
-    #define USART_1_PINS        stm32_rx_pins_t{.rx={PA,10},.tx={PA,9}} // TX output is always inverted (for FrSky). Internally connected to USB port via CP2102 IC
-    #define USART_2_PINS        stm32_rx_pins_t{.rx={PA,3},.tx={PA,2}}
-    #define SOFT_SERIAL_1_PINS  stm32_rx_pins_t{.rx={PA,6},.tx={PA,7}}
-    #define SOFT_SERIAL_2_PINS  stm32_rx_pins_t{.rx={PB,0},.tx={PB,1}}
-    #define I2C_1_PINS          stm32_i2c_pins_t{.sda={PB,7},.scl={PB,6}}
-
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
-    // On afroflight Rev 5 MPU6050 is connected to IC2 index 2
-    #define USE_IMU_MPU6000
-    #define AHRS_TASK_IS_TIMER_DRIVEN
-    #define GYRO_SAMPLE_RATE_HZ 1000
-    #define IMU_I2C_PINS        stm32_i2c_pins_t{.sda={PB,7},.scl={PB,6},.irq={PB,13}}
-
-    #define USE_RECEIVER_SBUS
-    #define RECEIVER_UART_INDEX 0
-    #define RECEIVER_PINS       stm32_rx_pins_t{.rx={PB,10},.tx={PB,9}}
-
-    #define USE_MOTOR_MIXER_QUAD_X_PWM
-    #define MOTOR_PINS          stm32_motor_pins_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}}
-
-    //#define USE_MSP
-    // LED0 PB4, LED1 PB3
-
 #endif

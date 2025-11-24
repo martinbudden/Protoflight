@@ -64,6 +64,7 @@ constexpr uint16_t AutopilotConfigKey = 0x603;
 constexpr uint16_t AutopilotPositionConfigKey = 0x604;
 constexpr uint16_t AltitudeHoldConfigKey = 0x605;
 constexpr uint16_t MotorConfigKey = 0x606;
+constexpr uint16_t VTX_ConfigKey = 0607;
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
@@ -496,6 +497,20 @@ bool NonVolatileStorage::loadOSD_ElementsConfig(OSD_Elements::config_t& config) 
 int32_t NonVolatileStorage::storeOSD_ElementsConfig(const OSD_Elements::config_t& config)
 {
     return storeItem(OSD_ElementsConfigKey, &config, sizeof(config), &DEFAULTS::osdElementsConfig);
+}
+#endif
+#if defined(USE_VTX)
+VTX_Base::config_t NonVolatileStorage::loadVTXConfig() const
+{
+    {VTX_Base::config_t config {};
+    if (loadItem(VTX_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::vtxConfig;
+}
+int32_t NonVolatileStorage::storeVTXConfig(const VTX_Base::config_t& config)
+{
+    return storeItem(VTX_ConfigKey, &config, sizeof(config), &DEFAULTS::vtxConfig);
 }
 #endif
 #if defined(USE_ALTITUDE_HOLD)

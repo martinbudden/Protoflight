@@ -9,6 +9,7 @@ class DisplayPortBase;
 class IMU_Base;
 class IMU_Filters;
 class NonVolatileStorage;
+class VTX_Base;
 
 
 class CMSX {
@@ -86,6 +87,8 @@ public:
     void inhibitSaveMenu() { _saveMenuInhibited = true; }
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key);
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entry* entry, uint16_t& entryFlags);
+    void saveConfigAndNotify();
+
     CMS& getCMS() { return _cms; }
     Cockpit& getCockpit();
     const Cockpit& getCockpit() const;
@@ -93,6 +96,8 @@ public:
     NonVolatileStorage& getNonVolatileStorage() { return _nvs; }
     const IMU_Base& getIMU() const { return _imu; }
     IMU_Base& getIMU() { return _imu; }
+    VTX_Base* getVTX() { return _vtx; }
+
 private:
     void setRebootRequired();
     bool getRebootRequired() const;
@@ -117,15 +122,13 @@ private:
     void pageNext();
     void pagePrevious();
 
-    void saveConfigAndNotify();
-
     static void setFlag(uint16_t& value, uint16_t flag) { value |= flag; }
     static void clearFlag(uint16_t& value, uint16_t flag) { value &= static_cast<uint16_t>(~flag); }
+
+public:
     const void* menuChange(DisplayPortBase& displayPort, const menu_t* menu);
     const void* menuBack(DisplayPortBase& displayPort, const menu_t* menu);
     const void* menuExit(DisplayPortBase& displayPort, const  menu_t* menu);
-
-public:
 // static functions with entryFnPtr signature for use by menu system
     static const void* menuChange(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu) { return cmsx.menuChange(displayPort, menu); }
     static const void* menuBack(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu) { return cmsx.menuBack(displayPort, menu); }
@@ -142,6 +145,7 @@ private:
     IMU_Filters& _imuFilters;
     IMU_Base& _imu;
     NonVolatileStorage& _nvs;
+    VTX_Base* _vtx {};
     menu_t& _menuMain;
     menu_context_t _currentMenuContext {};
     uint8_t _menuStackIndex {};
@@ -189,6 +193,7 @@ public:
             static menu_t menuFilters;
         static menu_t menuFeatures;
             static menu_t menuBlackbox;
+            static menu_t menuVTX;
             static menu_t menuPower;
             static menu_t menuFailsafe;
         //static menu_t menuOsd;
@@ -199,4 +204,7 @@ public:
             static menu_t menuRcPreview;
         static menu_t menuSaveExit;
         static menu_t menuSaveExitReboot;
+
+    static menu_t menuQuick;
+        static menu_t menuRPM_limit;
 };
