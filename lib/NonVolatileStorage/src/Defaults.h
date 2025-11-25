@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Autopilot.h>
-#include <Cockpit.h>
+#include "Autopilot.h"
+#include "Cockpit.h"
 #if defined(USE_OSD)
 #include <DisplayPortBase.h>
 #endif
-#include <FlightController.h>
-#include <IMU_Filters.h>
+#include "FlightController.h"
+#include "IMU_Filters.h"
 #include <MotorMixerBase.h>
 #if defined(USE_OSD)
 #include <OSD.h>

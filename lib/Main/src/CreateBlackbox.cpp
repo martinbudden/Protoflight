@@ -1,3 +1,4 @@
+#include "Cockpit.h"
 #include "Main.h"
 
 #include <AHRS.h>
@@ -5,18 +6,17 @@
 #include <BlackboxCallbacks.h>
 #include <BlackboxProtoFlight.h>
 #include <BlackboxSerialDeviceSDCard.h>
-#include <Cockpit.h>
 #include <Debug.h>
 #include <ReceiverBase.h>
 #include <TimeMicroseconds.h>
 
 
-#if defined(USE_BLACKBOX)
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) // cppcheck-suppress constParameterReference 
+Blackbox* Main::createBlackBox(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) // cppcheck-suppress constParameterReference 
 {
+#if defined(USE_BLACKBOX)
     static BlackboxCallbacks            blackboxCallbacks(flightController.getAHRS_MessageQueue(), ahrs, flightController, cockpit, receiver, debug);
     static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
@@ -33,10 +33,19 @@ Blackbox& Main::createBlackBox(AHRS& ahrs, FlightController& flightController, C
 #if defined(USE_BLACKBOX_DEBUG)
     testBlackbox(blackbox, ahrs, receiver, debug);
 #endif
-    return blackbox;
+    return &blackbox;
+#else
+    (void)ahrs;
+    (void)flightController;
+    (void)cockpit;
+    (void)receiver;
+    (void)imuFilters;
+    (void)debug;
+    return nullptr;
+#endif
 }
 
-
+#if defined(USE_BLACKBOX)
 void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug)
 {
     static uint32_t timeMicrosecondsPrevious = 0;

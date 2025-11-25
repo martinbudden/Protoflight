@@ -1,13 +1,13 @@
 #include "Cockpit.h"
 #include "FC_TelemetryData.h"
 #include "FlightController.h"
+#include "NonVolatileStorage.h"
 
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
 #include <Debug.h>
 #include <IMU_FiltersBase.h>
 #include <IMU_Null.h>
-#include <NonVolatileStorage.h>
 #include <ReceiverNull.h>
 #include <SensorFusion.h>
 

@@ -21,7 +21,7 @@
 
 #include "MSP_ProtoFlightBox.h"
 
-#include <Cockpit.h>
+#include "Cockpit.h"
 
 /*!
 return state of given boxId box, handling ARM and FLIGHT_MODE

@@ -1,10 +1,10 @@
 #include "BlackboxCallbacks.h"
-#include "AHRS_MessageQueue.h"
+#include "Cockpit.h"
+#include "FlightController.h"
 
 #include <AHRS.h>
-#include <Cockpit.h>
+#include <AHRS_MessageQueue.h>
 #include <Debug.h>
-#include <FlightController.h>
 #include <MotorMixerBase.h>
 #include <ReceiverBase.h>
 #include <cmath>

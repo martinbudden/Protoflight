@@ -1,9 +1,9 @@
-#include "AHRS_MessageQueue.h"
 #include "Cockpit.h"
 #include "DisplayPortBase.h"
 #include "FormatInteger.h"
 #include "OSD.h"
 
+#include <AHRS_MessageQueue.h>
 //#include <HardwareSerial.h>
 #include <MSP_Box.h>
 #include <ReceiverBase.h>

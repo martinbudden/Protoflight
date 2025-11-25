@@ -19,7 +19,7 @@ Custom Menu System.
 */
 class CMS {
 public:
-    CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, OSD* osd);
+    CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, OSD* osd, VTX_Base* vtx);
     void init();
 private:
     // CMS is not copyable or moveable

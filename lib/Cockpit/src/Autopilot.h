@@ -1,11 +1,13 @@
 #pragma once
 
+#include "FlightController.h"
+#include "Geodetic.h"
+
 #include <AHRS_MessageQueue.h>
 #include <CockpitBase.h>
 #include <Filters.h>
-#include <FlightController.h>
-#include <Geodetic.h>
 #include <PIDF.h>
+
 
 class BarometerBase;
 

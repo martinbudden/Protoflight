@@ -1,11 +1,11 @@
 #if defined(M5_UNIFIED)
 
+#include "FlightController.h"
 #include "ScreenM5.h"
 
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
 #include <DisplayPortBase.h>
-#include <FlightController.h>
 #include <M5Unified.h>
 #include <ReceiverAtomJoyStick.h>
 #include <SV_TelemetryData.h>

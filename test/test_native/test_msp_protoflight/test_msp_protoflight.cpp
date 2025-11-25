@@ -1,18 +1,18 @@
-#include "AHRS_MessageQueue.h"
+#include "Cockpit.h"
 #include "FC_TelemetryData.h"
 #include "FlightController.h"
+#include "IMU_Filters.h"
+#include "MSP_ProtoFlight.h"
+#include "NonVolatileStorage.h"
 
 #include <AHRS.h>
-#include <Cockpit.h>
+#include <AHRS_MessageQueue.h>
 #include <Debug.h>
-#include <IMU_Filters.h>
 #include <IMU_Null.h>
-#include <MSP_ProtoFlight.h>
 #include <MSP_Protocol.h>
 #include <MSP_Serial.h>
 #include <MSP_Stream.h>
 #include <MotorMixerBase.h>
-#include <NonVolatileStorage.h>
 #include <ReceiverNull.h>
 #include <SensorFusion.h>
 
@@ -50,7 +50,7 @@ void test_msp_set_failsafe_config()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
 
-    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
     static MSP_Stream mspStream(msp);
 
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
@@ -124,7 +124,7 @@ void test_msp_pid_in()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
 
-    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -170,7 +170,7 @@ void test_msp_features()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
 
-    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -198,7 +198,7 @@ void test_msp_raw_imu()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
 
-    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs);
+    static MSP_ProtoFlight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
     static MSP_Stream mspStream(msp);
     //static const MSP_Serial mspSerial(mspStream, msp);
 

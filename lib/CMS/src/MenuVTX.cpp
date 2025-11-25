@@ -2,7 +2,7 @@
 #include "CMS_Types.h"
 #include "Targets.h"
 #if defined(USE_VTX)
-#include "VTX_Base.h"
+#include "VTX_Base.h" // test code won't build if VTX_Base included here
 #endif
 
 struct data_t {
@@ -73,7 +73,7 @@ static auto entryPitMode = OSD_TABLE_t {};
 #endif
 static auto entryBand = OSD_TABLE_t {}; // set up dynamically in menuVTX_OnEnter
 static auto entryChannel = OSD_TABLE_t {}; // set up dynamically in menuVTX_OnEnter
-static auto entryFrequency = OSD_UINT16_t { &data.frequency, 5600, 5900, 0};
+static auto entryFrequency = OSD_UINT16_t { &data.frequency, 5600, 5900, 0 };
 static auto entryPower = OSD_TABLE_t {}; // set up dynamically in menuVTX_OnEnter
 static auto entryTemperature = OSD_INT16_t { &data.temperature, -100, 300, 0 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
@@ -115,6 +115,7 @@ CMSX::menu_t menuConfig = {
     .entries = nullptr
 };
 
+// RTC6705 does not support bands and channels, only frequencies.
 static const std::array<CMSX::OSD_Entry, 12> menuVTX_Entries
 {{
     { "- VTX -", OME_LABEL, nullptr, nullptr }, // dynamically changed according to VTX type

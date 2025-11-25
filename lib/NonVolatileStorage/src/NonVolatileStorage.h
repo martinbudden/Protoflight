@@ -1,17 +1,17 @@
 #pragma once
 
 
-#include <Autopilot.h>
-#include <Cockpit.h>
-#include <FlightController.h>
-#include <IMU_Filters.h>
-#include <MotorMixerBase.h>
+#include "Autopilot.h"
+#include "Cockpit.h"
+#include "FlightController.h"
+#include "IMU_Filters.h"
 #if defined(USE_OSD)
-#include <OSD.h>
+#include "OSD.h"
 #endif
 #if defined(USE_VTX)
-#include <VTX_Base.h>
+#include "VTX_Base.h"
 #endif
+#include <MotorMixerBase.h>
 
 #if defined(USE_FLASH_KLV)
 
@@ -30,7 +30,7 @@
 #include <Preferences.h>
 #endif
 
-#endif
+#endif // USE_FLASH_KLV
 
 #include <cstdint>
 #include <string>

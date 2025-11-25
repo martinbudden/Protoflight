@@ -1,34 +1,32 @@
 #include "Main.h"
 
+#if defined(M5_UNIFIED)
+#include "ButtonsM5.h"
+#endif
+#include "CMS_Task.h"
+#include "Cockpit.h"
+#include "Dashboard.h"
+#include "DashboardTask.h"
+#include "FlightController.h"
+#include "IMU_Filters.h"
+#include "MSP_ProtoFlight.h"
+#include "NonVolatileStorage.h"
+#include "OSD_Task.h"
+#if defined(M5_UNIFIED)
+#include "ScreenM5.h"
+#endif
+
 #include <AHRS.h>
 #include <AHRS_Task.h>
 #include <BackchannelTask.h>
 #include <BlackboxTask.h>
-#if defined(M5_UNIFIED)
-#include <ButtonsM5.h>
-#endif
-#include <CMS_Task.h>
-#include <Cockpit.h>
-#include <Dashboard.h>
-#include <DashboardTask.h>
 #include <Debug.h>
-#include <DisplayPortM5GFX.h>
-#include <DisplayPortMax7456.h>
-#include <DisplayPortNull.h>
-#include <FlightController.h>
-#include <IMU_Filters.h>
 #if defined(M5_UNIFIED)
 #include <M5Unified.h>
 #endif
-#include <MSP_ProtoFlight.h>
 #include <MSP_Task.h>
-#include <NonVolatileStorage.h>
-#include <OSD_Task.h>
 #include <ReceiverBase.h>
 #include <ReceiverTask.h>
-#if defined(M5_UNIFIED)
-#include <ScreenM5.h>
-#endif
 #include <VehicleControllerTask.h>
 
 
@@ -80,12 +78,10 @@ void Main::setup()
     ReceiverBase& receiver = createReceiver();
 
     Cockpit& cockpit = createCockpit(receiver, flightController, debug, imuFilters, nvs);
-#if defined(USE_MSP)
-    MSP_SerialBase& mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs);
-#endif
-#if defined(USE_BLACKBOX)
-    Blackbox& blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
-#endif
+
+    DisplayPortBase& displayPort = createDisplayPort(debug);
+
+    [[maybe_unused]] Blackbox* blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
 
 #if defined(M5_UNIFIED)
     // Holding BtnA down while switching on enters calibration mode.
@@ -97,49 +93,34 @@ void Main::setup()
     if (M5.BtnC.isPressed()) {
         nvs.clear();
     }
-    static M5Canvas canvas(&M5.Display);
-    static DisplayPortM5GFX displayPort(canvas, 320, 240);
-
     // Statically allocate the screen.
     static ScreenM5 screen(displayPort, ahrs, flightController, receiver);
-#if defined(USE_DASHBOARD)
     screen.updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
-#endif
     // Statically allocate the buttons.
     static ButtonsM5 buttons(flightController, receiver, &screen);
-    // Holding BtnB down while switching on initiates binding.
-    // The Atom has no BtnB, so it always broadcasts address for binding on startup.
-    if (M5.getBoard() ==lgfx::board_M5AtomS3 || M5.BtnB.wasPressed()) {
-        receiver.broadcastMyEUI();
-    }
-    ReceiverWatcher* receiverWatcher = &screen;
 #if defined(USE_DASHBOARD)
     static Dashboard dashboard(&screen, &buttons);
 #else
     _screen = &screen;
     _buttons = &buttons;
 #endif
+    // Holding BtnB down while switching on initiates binding.
+    // The Atom has no BtnB, so it always broadcasts address for binding on startup.
+    if (M5.getBoard() ==lgfx::board_M5AtomS3 || M5.BtnB.wasPressed()) {
+        receiver.broadcastMyEUI();
+    }
+    ReceiverWatcher* receiverWatcher = &screen;
 #else
-#if defined(USE_MAX7456)
-    [[maybe_unused]] static DisplayPortMax7456 displayPort(BUS_SPI::MAX7456_SPI_INDEX, BUS_SPI::MAX7456_SPI_PINS, debug);
-#else
-    [[maybe_unused]] static DisplayPortNull displayPort;
-#endif
     // no buttons defined, so always broadcast address for binding on startup
     receiver.broadcastMyEUI();
     ReceiverWatcher* receiverWatcher = nullptr;
 #endif // M5_UNIFIED
 
-#if defined(USE_OSD)
-    OSD& osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
-#endif
-#if defined(USE_CMS)
-#if defined(USE_OSD)
-    CMS& cms = createCMS(displayPort, receiver, cockpit, imuFilters, ahrs.getIMU(), nvs, &osd);
-#else
-    CMS& cms = createCMS(displayPort, receiver, cockpit, imuFilters, ahrs.getIMU(), nvs, nullptr);
-#endif
-#endif
+    // create the optional components according to build flags
+    [[maybe_unused]] VTX_Base* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
+    [[maybe_unused]] OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
+    [[maybe_unused]] MSP_SerialBase* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs, blackbox, vtx, osd);
+    [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, ahrs.getIMU(), nvs, osd, vtx);
 
 
     //
@@ -167,24 +148,28 @@ void Main::setup()
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_MSP)
-    _tasks.mspTask = MSP_Task::createTask(taskInfo, mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
+    assert(mspSerial != nullptr);
+    _tasks.mspTask = MSP_Task::createTask(taskInfo, *mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BLACKBOX)
-    _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, blackbox, flightController.getAHRS_MessageQueue(), BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
+    assert(blackbox != nullptr);
+    _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, *blackbox, flightController.getAHRS_MessageQueue(), BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_OSD)
-    const uint32_t osdTaskIntervalMicroseconds = 1'000'000 / osd.getConfig().framerate_hz;
-    _tasks.osdTask = OSD_Task::createTask(taskInfo, osd, OSD_TASK_PRIORITY, OSD_TASK_CORE, osdTaskIntervalMicroseconds);
+    const uint32_t osdTaskIntervalMicroseconds = 1'000'000 / osd->getConfig().framerate_hz;
+    assert(osd != nullptr);
+    _tasks.osdTask = OSD_Task::createTask(taskInfo, *osd, OSD_TASK_PRIORITY, OSD_TASK_CORE, osdTaskIntervalMicroseconds);
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_CMS)
-    _tasks.cmsTask = CMS_Task::createTask(taskInfo, cms, CMS_TASK_PRIORITY, CMS_TASK_CORE, CMS_TASK_INTERVAL_MICROSECONDS);
+    assert(cms != nullptr);
+    _tasks.cmsTask = CMS_Task::createTask(taskInfo, *cms, CMS_TASK_PRIORITY, CMS_TASK_CORE, CMS_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, _tasks.dashboardTask, nvs);
+    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, nvs, _tasks.dashboardTask);
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif

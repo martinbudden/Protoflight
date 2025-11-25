@@ -1,13 +1,13 @@
+#include "Cockpit.h"
+#include "DisplayPortBase.h"
+#include "FlightController.h"
 #include "OSD.h"
 #include "OSD_Elements.h"
 #include "OSD_Symbols.h"
 
-#include "AHRS_MessageQueue.h"
-#include "Cockpit.h"
-#include "Debug.h"
-#include "DisplayPortBase.h"
-#include "FlightController.h"
-#include "ReceiverBase.h"
+#include <AHRS_MessageQueue.h>
+#include <Debug.h>
+#include <ReceiverBase.h>
 
 //
 // Drawing functions

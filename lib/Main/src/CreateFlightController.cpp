@@ -1,12 +1,12 @@
+#include "FlightController.h"
 #include "Main.h"
+#include "NonVolatileStorage.h"
 
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
-#include <FlightController.h>
 #include <MotorMixerQuadX_DShot.h>
 #include <MotorMixerQuadX_DShotBitbang.h>
 #include <MotorMixerQuadX_PWM.h>
-#include <NonVolatileStorage.h>
 
 
 FlightController& Main::createFlightController(float taskIntervalSeconds, [[maybe_unused]] Debug& debug, const NonVolatileStorage& nvs)

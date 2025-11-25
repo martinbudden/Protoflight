@@ -14,7 +14,7 @@ class VTX_Base;
 
 class CMSX {
 public:
-    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs);
+    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, VTX_Base* vtx);
 private:
     // CMS is not copyable or moveable
     CMSX(const CMSX&) = delete;
@@ -145,7 +145,7 @@ private:
     IMU_Filters& _imuFilters;
     IMU_Base& _imu;
     NonVolatileStorage& _nvs;
-    VTX_Base* _vtx {};
+    VTX_Base* _vtx;
     menu_t& _menuMain;
     menu_context_t _currentMenuContext {};
     uint8_t _menuStackIndex {};

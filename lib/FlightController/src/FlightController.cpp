@@ -1,5 +1,6 @@
-#include "Debug.h"
 #include "FlightController.h"
+
+#include <Debug.h>
 
 #if !defined(FRAMEWORK_TEST)
 //#define SERIAL_OUTPUT

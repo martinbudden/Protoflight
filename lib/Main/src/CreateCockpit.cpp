@@ -1,11 +1,11 @@
+#include "Autopilot.h"
+#include "Cockpit.h"
 #include "Main.h"
+#include "NonVolatileStorage.h"
 
-#include <Autopilot.h>
 #if defined(USE_BAROMETER_BMP280)
 #include <BarometerBMP280.h>
 #endif
-#include <Cockpit.h>
-#include <NonVolatileStorage.h>
 
 
 Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference

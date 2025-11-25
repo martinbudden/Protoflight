@@ -1,8 +1,10 @@
-#include "Debug.h"
 #include "FlightController.h"
+
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
+#include <Debug.h>
 #include <TimeMicroseconds.h>
+
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 // #defines to catch inadvertent use of _fcM or _rxM in this file.

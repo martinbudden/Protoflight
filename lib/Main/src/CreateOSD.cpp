@@ -1,18 +1,16 @@
+#include "DisplayPortBase.h"
 #include "Main.h"
-
-#include <DisplayPortBase.h>
-#include <NonVolatileStorage.h>
-#include <OSD.h>
+#include "NonVolatileStorage.h"
+#include "OSD.h"
 
 
 /*!
-Statically allocate the OSD and associated objects.
+Statically allocate the OSD and load its default configuration.
 */
-OSD& Main::createOSD(DisplayPortBase& displayPort, const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
+OSD* Main::createOSD(DisplayPortBase& displayPort, const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
-    static OSD osd(flightController, cockpit, flightController.getAHRS_MessageQueue(), debug);
-
 #if defined(USE_OSD)
+    static OSD osd(flightController, cockpit, flightController.getAHRS_MessageQueue(), debug);
     osd.init(&displayPort);
     osd.setConfig(nvs.loadOSD_Config());
 
@@ -20,10 +18,14 @@ OSD& Main::createOSD(DisplayPortBase& displayPort, const FlightController& fligh
     if (!nvs.loadOSD_ElementsConfig(osdElements.getConfig())) {
         osdElements.setDefaultConfig(displayPort.getRowCount(), displayPort.getColumnCount());
     }
+    return &osd;
 #else
-    (void)nvs;
     (void)displayPort;
+    (void)flightController;
+    (void)cockpit;
+    (void)debug;
+    (void)nvs;
+    return nullptr;
 #endif
 
-    return osd;
 }

@@ -12,7 +12,7 @@
 #if defined(USE_DEBUG_PRINTF_BACKCHANNEL)
 #include <HardwareSerial.h>
 #endif
-#include <NonVolatileStorage.h>
+#include "NonVolatileStorage.h"
 #include <ReceiverBase.h>
 #include <SV_Telemetry.h>
 #include <SV_TelemetryData.h>

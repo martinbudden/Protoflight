@@ -4,11 +4,18 @@
 #include <array>
 #include <cstdint>
 
-class StreamBuf;
-
 
 class VTX_Base {
 public:
+    VTX_Base() = default;
+private:
+    // VTX_Base is not copyable or moveable
+    VTX_Base(const VTX_Base&) = delete;
+    VTX_Base& operator=(const VTX_Base&) = delete;
+    VTX_Base(VTX_Base&&) = delete;
+    VTX_Base& operator=(VTX_Base&&) = delete;
+public:
+    // RTC6705 does not support bands and channels, only frequencies.
     enum type_e {
         UNSUPPORTED = 0,
         RTC6705     = 1,
@@ -58,7 +65,7 @@ public:
     };
     struct config_t {
         uint16_t frequencyMHz;          // sets freq in MHz if band=0
-        uint16_t pitModeFrequencyMHz;   // sets out-of-range pitmode frequency
+        uint16_t pitModeFrequencyMHz;   // sets out-of-range pit mode frequency
         uint8_t band;           // 1=A, 2=B, 3=E, 4=F(Airwaves/Fatshark), 5=Raceband
         uint8_t channel;        // 1-8
         uint8_t power;          // 0 = lowest
@@ -66,6 +73,9 @@ public:
         uint8_t softserialAlt;  // prepend 0xff before sending frame even with SOFTSERIAL
     };
 public:
+    const config_t& getConfig() { return _config; }
+    void setConfig(const config_t& config);
+
     virtual void process(timeUs32_t currentTimeUs) { (void)currentTimeUs; }
     type_e getDeviceType() const { return _type; }
     virtual bool isReady() const { return true; }
@@ -75,6 +85,7 @@ public:
 
     virtual void setPowerByIndex(uint8_t index);
     virtual bool getPowerIndex(uint8_t& powerIndex) const { powerIndex = _powerIndex; return true; }
+    uint8_t getPowerLevelCount() const { return _powerLevelCount; }
     virtual uint8_t getPowerLevels(uint16_t* levels, uint16_t* powers) const { (void)levels; (void)powers; return 0; }
 
     virtual void setFrequency(uint16_t frequencyMHz) { (void)frequencyMHz; }
@@ -83,12 +94,12 @@ public:
     virtual void setPitMode(uint8_t pitMode) { _pitMode = pitMode; }
     virtual bool getStatus(unsigned* status) const { (void)status; return false; }
 
-    virtual void serializeCustomDeviceStatus(StreamBuf& dst) { (void)dst; }
     void lookupBandChannel(uint8_t& band, uint8_t& channel, uint16_t frequencyMHz);
     static uint16_t lookupFrequency(uint8_t band, uint8_t channel);
     bool lookupPowerValue(size_t index, uint16_t& powerValue) const;
 protected:
     type_e _type;
+    config_t _config;
     uint16_t _powerValue {};
     bool _configChanged {false};
     uint8_t _powerLevelCount {};

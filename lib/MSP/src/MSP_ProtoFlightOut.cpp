@@ -1,16 +1,19 @@
+#include "Cockpit.h"
+#include "Features.h"
+#include "FlightController.h"
+#include "IMU_Filters.h"
 #include "MSP_ProtoFlight.h"
+#include "NonVolatileStorage.h"
+#include "VTX_Base.h"
 #include "version.h"
 
 #include <AHRS.h>
-#include <Cockpit.h>
 #include <Debug.h>
-#include <Features.h>
-#include <FlightController.h>
-#include <IMU_Filters.h>
 #include <MSP_Protocol.h>
-#include <NonVolatileStorage.h>
 #include <RPM_Filters.h>
 #include <ReceiverBase.h>
+#include <cassert>
+
 
 const char* const targetName = "TARGETNAME";
 
@@ -31,28 +34,6 @@ enum { U_ID_2 = 2 };
 static const char* const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; // 4 UPPER CASE alpha numeric characters that identify the flight controller.
 static const char* const TARGET_BOARD_IDENTIFIER = "A405";
 static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
-
-MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs) :
-    _ahrs(ahrs),
-    _flightController(flightController),
-    _cockpit(cockpit),
-    _receiver(receiver),
-    _autopilot(autopilot),
-    _imuFilters(imuFilters),
-    _debug(debug),
-    _nonVolatileStorage(nvs)
-{
-    //_mspBox.init(features, ahrs, flightController);
-    enum { MSP_OVERRIDE_OFF = false, AIRMODE_OFF = false, ANTI_GRAVITY_OFF = false };
-    enum { ACCELEROMETER_AVAILABLE = true };
-    _mspBox.init(
-        ACCELEROMETER_AVAILABLE,
-        _cockpit.featureIsEnabled(Features::FEATURE_INFLIGHT_ACC_CAL),
-        MSP_OVERRIDE_OFF,
-        AIRMODE_OFF,
-        ANTI_GRAVITY_OFF
-    );
-}
 
 /*!
 Returns true if the command was processed, false otherwise.
@@ -437,85 +418,79 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
     return RESULT_ACK;
 }
 
-void MSP_ProtoFlight::rebootFn(serialPort_t* serialPort)
+
+void MSP_ProtoFlight::serializeVTX(StreamBuf& dst)
 {
-    (void)serialPort;
+#if defined(USE_VTX)
+    assert(_vtx != nullptr);
 
-    _flightController.motorsSwitchOff();
+    const VTX_Base::type_e vtxType = _vtx->getDeviceType();
+    const bool deviceReady = _vtx->isReady();
 
-    switch (_rebootMode) {
-    case REBOOT_FIRMWARE:
-        //systemReset();
-        break;
-    case REBOOT_BOOTLOADER_ROM:
-        //systemResetToBootloader(BOOTLOADER_REQUEST_ROM);
-        break;
-    case REBOOT_MSC:
-        [[fallthrough]];
-    case REBOOT_MSC_UTC: {
-        //const int16_t timezoneOffsetMinutes = 0;//(_rebootMode == REBOOT_MSC) ? timeConfig()->tz_offsetMinutes : 0;
-        //systemResetToMsc(timezoneOffsetMinutes);
-        break;
+    uint8_t band = 0;
+    uint8_t channel = 0;
+    const bool bandAndChannelAvailable = _vtx->getBandAndChannel(band, channel);
+
+    uint8_t powerIndex = 0;
+    const bool powerIndexAvailable = _vtx->getPowerIndex(powerIndex);
+
+    uint16_t frequency = 0;
+    const bool frequencyAvailable = _vtx->getFrequency(frequency);
+
+    //uint8_t vtxStatus = 0; // pit mode and/or locked
+    //!!const bool vtxStatusAvailable = _vtx->getStatus();
+
+    dst.writeU8(MSP_PROTOCOL_VERSION);
+
+    dst.writeU8(vtxType);
+    dst.writeU8(deviceReady);
+
+    dst.writeU8(bandAndChannelAvailable);
+    dst.writeU8(band);
+    dst.writeU8(channel);
+
+    dst.writeU8(powerIndexAvailable);
+    dst.writeU8(powerIndex);
+
+    dst.writeU8(frequencyAvailable);
+    dst.writeU16(frequency);
+
+    //dst.writeU8(vtxStatusAvailable);
+    //dst.writeU32(vtxStatus);
+
+    // serialize power levels
+    //vtxCommonSerializePowerLevels(vtxDevice, dst);
+
+    const uint8_t powerLevelCount = _vtx->getPowerLevelCount();
+    dst.writeU8(powerLevelCount);
+
+#if false
+    uint16_t levels[VTX_TABLE_MAX_POWER_LEVELS];
+    uint16_t powers[VTX_TABLE_MAX_POWER_LEVELS];
+    vtxCommonGetVTXPowerLevels(vtxDevice, levels, powers);
+
+    for (int i = 0; i < powerLevelCount; i++) {
+        dst.writeU16(levels[i]);
+        dst.writeU16(powers[i]);
     }
-    case REBOOT_BOOTLOADER_FLASH:
-        //systemResetToBootloader(BOOTLOADER_REQUEST_FLASH);
-        break;
-    default:
-        return;
-    }
-}
+#endif
 
-MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBuf& src)
-{
-    switch (cmdMSP) {
-    case MSP_BOXNAMES: {
-        const size_t page = src.bytesRemaining() ? src.readU8() : 0;
-        _mspBox.serializeBoxReplyBoxName(dst, page);
-        break;
+    // serialize custom device status
+    if (vtxType == VTX_Base::SMART_AUDIO) {
+        dst.writeU8(0);
+#if false
+        //!!TODO custom device status for SmartAudio
+        enum { SMART_AUDIO_CUSTOM_DEVICE_STATUS_SIZE = 5 };
+        dst.writeU8(VTX_CUSTOM_DEVICE_STATUS_SIZE);
+        dst.writeU8(saDevice.version);
+        dst.writeU8(saDevice.mode);
+        dst.writeU16(saDevice.orfreq); // pit frequency
+        dst.writeU8(saDevice.willBootIntoPitMode);
+#endif
+    } else {
+        dst.writeU8(0);
     }
-    case MSP_BOXIDS: {
-        const size_t page = src.bytesRemaining() ? src.readU8() : 0;
-        _mspBox.serializeBoxReplyPermanentId(dst, page);
-        break;
-    }
-    case MSP_REBOOT:
-        if (src.bytesRemaining()) {
-            _rebootMode = src.readU8();
-            if (_rebootMode >= REBOOT_COUNT || _rebootMode == REBOOT_MSC || _rebootMode == REBOOT_MSC_UTC) {
-                return RESULT_ERROR;
-            }
-        } else {
-            _rebootMode = REBOOT_FIRMWARE;
-        }
-
-        dst.writeU8(_rebootMode);
-
-        if (postProcessFn) {
-                *postProcessFn = static_cast<MSP_Base::postProcessFnPtr>(&MSP_ProtoFlight::rebootFn);
-        }
-
-        break;
-    case MSP_RESET_CONF: {
-        if (src.bytesRemaining() >= 1) {
-            // Added in MSP API 1.42
-            src.readU8();
-        }
-
-        const bool success = false;
-        if (!_cockpit.isArmed()) {
-            //success = resetEEPROM(); //!!TODO: implement this
-            //if (success && postProcessFn) {
-            if (postProcessFn) {
-                _rebootMode = REBOOT_FIRMWARE;
-                *postProcessFn = static_cast<MSP_Base::postProcessFnPtr>(&MSP_ProtoFlight::rebootFn);
-            }
-        }
-        // Added in API version 1.42
-        dst.writeU8(success);
-        break;
-    }
-    default:
-        return processOutCommand(cmdMSP, dst, srcDesc, postProcessFn);
-    }
-    return RESULT_ACK;
+#else
+    (void)dst;
+#endif
 }
