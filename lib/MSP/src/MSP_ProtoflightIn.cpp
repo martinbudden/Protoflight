@@ -1,7 +1,7 @@
 #include "Cockpit.h"
 #include "FlightController.h"
 #include "IMU_Filters.h"
-#include "MSP_ProtoFlight.h"
+#include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
 
 #include <AHRS.h>
@@ -9,7 +9,7 @@
 #include <ReceiverBase.h>
 
 
-MSP_Base::result_e MSP_ProtoFlight::processInCommand(int16_t cmdMSP, StreamBuf& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) // NOLINT(readability-function-cognitive-complexity)
+MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBuf& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) // NOLINT(readability-function-cognitive-complexity)
 {
     (void)srcDesc;
     (void)postProcessFn;

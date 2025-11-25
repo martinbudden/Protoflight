@@ -1,7 +1,7 @@
 #include "Cockpit.h"
 #include "FC_TelemetryData.h"
 #include "IMU_Filters.h"
-#include "MSP_ProtoFlight.h"
+#include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
 
 #include <AHRS.h>
@@ -65,7 +65,7 @@ void test_telemetry_msp()
     static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
 
     // statically allocate an MSP object
-    static MSP_ProtoFlight msp(ahrs, flightController, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
+    static MSP_Protoflight msp(ahrs, flightController, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
 //size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, MSP_Base& msp, int16_t cmdMSP)
     static std::array<uint8_t, 256> buf;
     enum { ID = 0x11223344 };

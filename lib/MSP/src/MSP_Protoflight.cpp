@@ -1,11 +1,11 @@
 #include "Cockpit.h"
 #include "FlightController.h"
-#include "MSP_ProtoFlight.h"
+#include "MSP_Protoflight.h"
 
 #include <MSP_Protocol.h>
 
 
-MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx, OSD* osd) :
+MSP_Protoflight::MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx, OSD* osd) :
     _ahrs(ahrs),
     _flightController(flightController),
     _cockpit(cockpit),
@@ -30,7 +30,7 @@ MSP_ProtoFlight::MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController,
     );
 }
 
-void MSP_ProtoFlight::rebootFn(serialPort_t* serialPort)
+void MSP_Protoflight::rebootFn(serialPort_t* serialPort)
 {
     (void)serialPort;
 
@@ -58,7 +58,7 @@ void MSP_ProtoFlight::rebootFn(serialPort_t* serialPort)
     }
 }
 
-MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBuf& src)
+MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBuf& src)
 {
     switch (cmdMSP) {
     case MSP_BOXNAMES: {
@@ -84,7 +84,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(_rebootMode);
 
         if (postProcessFn) {
-                *postProcessFn = static_cast<MSP_Base::postProcessFnPtr>(&MSP_ProtoFlight::rebootFn);
+                *postProcessFn = static_cast<MSP_Base::postProcessFnPtr>(&MSP_Protoflight::rebootFn);
         }
 
         break;
@@ -100,7 +100,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
             //if (success && postProcessFn) {
             if (postProcessFn) {
                 _rebootMode = REBOOT_FIRMWARE;
-                *postProcessFn = static_cast<MSP_Base::postProcessFnPtr>(&MSP_ProtoFlight::rebootFn);
+                *postProcessFn = static_cast<MSP_Base::postProcessFnPtr>(&MSP_Protoflight::rebootFn);
             }
         }
         // Added in API version 1.42

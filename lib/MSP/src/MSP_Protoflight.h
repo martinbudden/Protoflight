@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MSP_ProtoFlightBox.h"
+#include "MSP_ProtoflightBox.h"
 #include <MSP_Base.h>
 
 
@@ -17,10 +17,10 @@ class ReceiverBase;
 class VTX_Base;
 
 
-class MSP_ProtoFlight : public MSP_Base {
+class MSP_Protoflight : public MSP_Base {
 public:
-    virtual ~MSP_ProtoFlight() = default;
-    MSP_ProtoFlight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx, OSD* osd);
+    virtual ~MSP_Protoflight() = default;
+    MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx, OSD* osd);
 public:
     enum { RATEPROFILE_MASK = (1 << 7) };
     enum { RTC_NOT_SUPPORTED = 0xFF };
@@ -37,7 +37,7 @@ public:
 private:
     void serializeVTX(StreamBuf& dst);
 private:
-    MSP_ProtoFlightBox _mspBox;
+    MSP_ProtoflightBox _mspBox;
     AHRS& _ahrs;
     FlightController& _flightController;
     Cockpit& _cockpit;

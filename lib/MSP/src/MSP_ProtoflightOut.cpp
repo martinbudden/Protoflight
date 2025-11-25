@@ -2,7 +2,7 @@
 #include "Features.h"
 #include "FlightController.h"
 #include "IMU_Filters.h"
-#include "MSP_ProtoFlight.h"
+#include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
 #include "VTX_Base.h"
 #include "version.h"
@@ -39,7 +39,7 @@ static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 Returns true if the command was processed, false otherwise.
 May set mspPostProcessFunc to a function to be called once the command has been processed
 */
-MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn)
+MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn)
 {
     (void)srcDesc;
     (void)postProcessFn;
@@ -419,7 +419,7 @@ MSP_Base::result_e MSP_ProtoFlight::processOutCommand(int16_t cmdMSP, StreamBuf&
 }
 
 
-void MSP_ProtoFlight::serializeVTX(StreamBuf& dst)
+void MSP_Protoflight::serializeVTX(StreamBuf& dst)
 {
 #if defined(USE_VTX)
     assert(_vtx != nullptr);

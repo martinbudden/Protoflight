@@ -9,7 +9,7 @@
 #include "DashboardTask.h"
 #include "FlightController.h"
 #include "IMU_Filters.h"
-#include "MSP_ProtoFlight.h"
+#include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
 #include "OSD_Task.h"
 #if defined(M5_UNIFIED)

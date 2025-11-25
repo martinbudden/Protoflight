@@ -1,4 +1,4 @@
-#include "BlackboxProtoFlight.h"
+#include "BlackboxProtoflight.h"
 #include "Cockpit.h"
 #include "IMU_Filters.h"
 #include "MotorMixerBase.h"
@@ -22,7 +22,7 @@
 Transmit a portion of the system information headers. Call the first time with xmitState.headerIndex == 0.
 Returns true iff transmission is complete, otherwise call again later to continue transmission.
 */
-Blackbox::write_e BlackboxProtoFlight::writeSystemInformation()
+Blackbox::write_e BlackboxProtoflight::writeSystemInformation()
 {
     static constexpr float radiansToDegrees {180.0F / static_cast<float>(M_PI)};
     static constexpr float gyroScale {radiansToDegrees * 10.0F};

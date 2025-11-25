@@ -19,14 +19,14 @@
  */
 
 
-#include "MSP_ProtoFlightBox.h"
+#include "MSP_ProtoflightBox.h"
 
 #include "Cockpit.h"
 
 /*!
 return state of given boxId box, handling ARM and FLIGHT_MODE
 */
-bool MSP_ProtoFlightBox::getBoxIdState(const Cockpit& cockpit, box_id_e boxId)
+bool MSP_ProtoflightBox::getBoxIdState(const Cockpit& cockpit, box_id_e boxId)
 {
     static constexpr std::array<uint8_t, BOX_ID_FLIGHTMODE_LAST + 1> boxIdToFlightModeMap = {
         /*[BOX_ARM]*/           0, // not used
@@ -56,7 +56,7 @@ bool MSP_ProtoFlightBox::getBoxIdState(const Cockpit& cockpit, box_id_e boxId)
 pack used flightModeFlags into supplied bitset
 returns number of bits used
 */
-size_t MSP_ProtoFlightBox::packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const Cockpit& cockpit)
+size_t MSP_ProtoflightBox::packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const Cockpit& cockpit)
 {
     // Serialize the flags in the order we delivered them, ignoring BOX NAMES and BOX INDEXES
     flightModeFlags.reset();

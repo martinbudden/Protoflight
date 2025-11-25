@@ -22,7 +22,7 @@
 
 //NOLINTBEGIN(modernize-macro-to-enum)
 
-//#define FC_FIRMWARE_NAME            "ProtoFlight"
+//#define FC_FIRMWARE_NAME            "Protoflight"
 //#define FC_FIRMWARE_IDENTIFIER      "PTFL"
 #define FC_FIRMWARE_NAME            "Betaflight"
 #define FC_FIRMWARE_IDENTIFIER      "BTFL"

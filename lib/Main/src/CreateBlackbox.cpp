@@ -4,7 +4,7 @@
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
 #include <BlackboxCallbacks.h>
-#include <BlackboxProtoFlight.h>
+#include <BlackboxProtoflight.h>
 #include <BlackboxSerialDeviceSDCard.h>
 #include <Debug.h>
 #include <ReceiverBase.h>
@@ -20,7 +20,7 @@ Blackbox* Main::createBlackBox(AHRS& ahrs, FlightController& flightController, C
     static BlackboxCallbacks            blackboxCallbacks(flightController.getAHRS_MessageQueue(), ahrs, flightController, cockpit, receiver, debug);
     static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
-    static BlackboxProtoFlight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, blackboxSerialDevice, flightController, cockpit, imuFilters);
+    static BlackboxProtoflight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, blackboxSerialDevice, flightController, cockpit, imuFilters);
     cockpit.setBlackbox(blackbox);
 
     blackbox.init({

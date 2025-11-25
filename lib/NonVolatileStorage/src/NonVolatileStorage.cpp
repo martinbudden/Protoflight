@@ -67,7 +67,7 @@ constexpr uint16_t MotorConfigKey = 0x606;
 constexpr uint16_t VTX_ConfigKey = 0607;
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
-static const char* nonVolatileStorageNamespace {"PTFL"}; // ProtoFlight
+static const char* nonVolatileStorageNamespace {"PTFL"}; // Protoflight
 #endif
 
 
