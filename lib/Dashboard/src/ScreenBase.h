@@ -10,8 +10,11 @@ class FlightController;
 class ScreenBase : public ReceiverWatcher {
 public:
     virtual ~ScreenBase() = default;
-    ScreenBase(const DisplayPortBase& displayPort, const AHRS& ahrs, const FlightController& flightController, const ReceiverBase& receiver) :
-        _displayPort(displayPort), _ahrs(ahrs), _flightController(flightController), _receiver(receiver) {}
+    ScreenBase(const DisplayPortBase& displayPort, const AHRS& ahrs, const FlightController& flightController, ReceiverBase& receiver) :
+        _displayPort(displayPort), _ahrs(ahrs), _flightController(flightController), _receiver(receiver)
+    {
+        receiver.setReceiverWatcher(this);
+    }
 public:
     virtual void nextScreenMode() = 0;
     virtual void update() = 0;

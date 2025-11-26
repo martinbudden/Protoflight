@@ -1,20 +1,13 @@
 #include "Main.h"
 
-#if defined(M5_UNIFIED)
-#include "ButtonsM5.h"
-#endif
 #include "CMS_Task.h"
 #include "Cockpit.h"
-#include "Dashboard.h"
 #include "DashboardTask.h"
 #include "FlightController.h"
 #include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
 #include "OSD_Task.h"
-#if defined(M5_UNIFIED)
-#include "ScreenM5.h"
-#endif
 
 #include <AHRS.h>
 #include <AHRS_Task.h>
@@ -55,17 +48,18 @@ void Main::setup()
     // Statically allocate and initialize nonvolatile storage
     static NonVolatileStorage nvs;
     nvs.init();
+#if defined(M5_UNIFIED)
+    // Holding BtnC down while switching on resets the nvs.
+    if (M5.BtnC.isPressed()) {
+        nvs.clear();
+    }
+#endif
     nvs.setCurrentPidProfileIndex(nvs.loadPidProfileIndex());
     nvs.setCurrentRateProfileIndex(nvs.loadRateProfileIndex());
 
     // create the IMU and get its sample rate
-    static IMU_Base& imuSensor = createIMU();
-    const uint32_t imuSampleRateHz = imuSensor.getGyroSampleRateHz();
-    const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSampleRateHz);
-
-    std::array<char, 128> buf;
-    sprintf(&buf[0], "\r\n**** IMU sample rate:%dHz\r\n\r\n", static_cast<int>(imuSampleRateHz));
-    print(&buf[0]);
+    static IMU_Base& imuSensor = createIMU(nvs);
+    const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSensor.getGyroSampleRateHz());
 
     static Debug debug;
 
@@ -81,42 +75,10 @@ void Main::setup()
 
     DisplayPortBase& displayPort = createDisplayPort(debug);
 
-    [[maybe_unused]] Blackbox* blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
-
-#if defined(M5_UNIFIED)
-    // Holding BtnA down while switching on enters calibration mode.
-    if (M5.BtnA.isPressed()) {
-        calibrateIMUandSave(nvs, ahrs.getIMU(), IMU_Base::CALIBRATE_ACC_AND_GYRO);
-    }
-    checkIMU_Calibration(nvs, ahrs.getIMU());
-    // Holding BtnC down while switching on resets the nvs.
-    if (M5.BtnC.isPressed()) {
-        nvs.clear();
-    }
-    // Statically allocate the screen.
-    static ScreenM5 screen(displayPort, ahrs, flightController, receiver);
-    screen.updateTemplate(); // Update the screen as soon as we can, to minimize the time the screen is blank
-    // Statically allocate the buttons.
-    static ButtonsM5 buttons(flightController, receiver, &screen);
-#if defined(USE_DASHBOARD)
-    static Dashboard dashboard(&screen, &buttons);
-#else
-    _screen = &screen;
-    _buttons = &buttons;
-#endif
-    // Holding BtnB down while switching on initiates binding.
-    // The Atom has no BtnB, so it always broadcasts address for binding on startup.
-    if (M5.getBoard() ==lgfx::board_M5AtomS3 || M5.BtnB.wasPressed()) {
-        receiver.broadcastMyEUI();
-    }
-    ReceiverWatcher* receiverWatcher = &screen;
-#else
-    // no buttons defined, so always broadcast address for binding on startup
-    receiver.broadcastMyEUI();
-    ReceiverWatcher* receiverWatcher = nullptr;
-#endif // M5_UNIFIED
 
     // create the optional components according to build flags
+    [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
+    [[maybe_unused]] Blackbox* blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
     [[maybe_unused]] VTX_Base* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
     [[maybe_unused]] OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
     [[maybe_unused]] MSP_SerialBase* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs, blackbox, vtx, osd);
@@ -141,10 +103,11 @@ void Main::setup()
     _tasks.flightControllerTask = VehicleControllerTask::createTask(taskInfo, flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
     printTaskInfo(taskInfo);
 
-    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, cockpit, receiverWatcher, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
+    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, receiver, cockpit, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #if defined(USE_DASHBOARD)
-    _tasks.dashboardTask = DashboardTask::createTask(taskInfo, dashboard, DASHBOARD_TASK_PRIORITY, DASHBOARD_TASK_CORE, DASHBOARD_TASK_INTERVAL_MICROSECONDS);
+    assert(dashboard != nullptr);
+    _tasks.dashboardTask = DashboardTask::createTask(taskInfo, *dashboard, DASHBOARD_TASK_PRIORITY, DASHBOARD_TASK_CORE, DASHBOARD_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_MSP)
@@ -230,35 +193,4 @@ void Main::print(const char* buf)
 #else
     Serial.print(&buf[0]);
 #endif
-}
-
-void Main::loop() // NOLINT(readability-make-member-function-const)
-{
-#if !defined(FRAMEWORK_USE_FREERTOS)
-    // simple round-robbin scheduling
-    _tasks.ahrsTask->loop();
-    _tasks.flightControllerTask->loop();
-    _tasks.receiverTask->loop();
-    [[maybe_unused]] const uint32_t tickCount = timeUs() / 1000;
-
-#if defined(USE_DASHBOARD)
-    _tasks.dashboardTask->loop();
-#else
-#if defined(USE_SCREEN)
-    // screen and button update tick counts are coprime, so screen and buttons are not normally updated in same loop
-    // update the screen every 101 ticks (0.1 seconds)
-    if (tickCount - _screenTickCount > 101) {
-        _screenTickCount = tickCount;
-        _screen->update();
-    }
-#endif
-#if defined(USE_BUTTONS)
-    // update the buttons every 149 ticks (0.15 seconds)
-    if (tickCount - _buttonsTickCount > 149) {
-        _buttonsTickCount = tickCount;
-        _buttons->update();
-    }
-#endif
-#endif // USE_DASHBOARD
-#endif // FRAMEWORK_USE_FREERTOS
 }

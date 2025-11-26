@@ -43,8 +43,6 @@ Targets
 
     #define USE_CMS
     //#define USE_DASHBOARD
-    #define USE_SCREEN
-    #define USE_BUTTONS
 
     #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 
@@ -73,18 +71,15 @@ Targets
 
     //#define SDCARD_SPI_PINS     spi_pins_t{.cs=4,.sck=18,.cipo=38,.copi=23,.irq=0xFF}
     //#define USE_BLACKBOX
-    //#define USE_BLACKBOX_DEBUG
-    //#define BLACKBOX_IS_EVENT_DRIVEN
+    //#define USE_BLACKBOX_TEST
     //#define USE_MSP
+    #define USE_DASHBOARD
     //#define USE_OSD
-    #define USE_CMS
+    //#define USE_CMS
     #define USE_VTX
 
     #define USE_BACKCHANNEL
 
-    //#define USE_DASHBOARD
-    #define USE_SCREEN
-    #define USE_BUTTONS
 
     //#define USE_D_MAX
     //#define USE_ITERM_RELAX

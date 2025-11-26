@@ -1,5 +1,8 @@
 #include "Main.h"
 
+#if defined(M5_UNIFIED)
+#include <M5Unified.h>
+#endif
 #include <ReceiverAtomJoyStick.h>
 #include <ReceiverCRSF.h>
 #include <ReceiverIBUS.h>
@@ -37,6 +40,17 @@ ReceiverBase& Main::createReceiver()
 #else
     static ReceiverNull receiver;
 #endif
+
+#if defined(M5_UNIFIED)
+    // Holding BtnB down while switching on initiates binding.
+    // The Atom has no BtnB, so it always broadcasts address for binding on startup.
+    if (M5.getBoard() ==lgfx::board_M5AtomS3 || M5.BtnB.wasPressed()) {
+        receiver.broadcastMyEUI();
+    }
+#else
+    // no buttons defined, so always broadcast address for binding on startup
+    receiver.broadcastMyEUI();
+#endif // M5_UNIFIED
 
     return receiver;
 }

@@ -12,12 +12,14 @@
 #include <M5Unified.h>
 #endif
 
+#include <cstdio>
+
 
 /*!
 Create the IMU using the specified build flags.
 Set the IMU target gyro sample rate to GYRO_SAMPLE_RATE_HZ.
 */
-IMU_Base& Main::createIMU()
+IMU_Base& Main::createIMU(NonVolatileStorage& nvs)
 {
     // Statically allocate the IMU according the the build flags
 #if defined(LIBRARY_SENSORS_IMU_USE_SPI_BUS)
@@ -72,6 +74,19 @@ IMU_Base& Main::createIMU()
 #endif // LIBRARY_SENSORS_IMU_USE_SPI_BUS
 
     static_cast<IMU_Base&>(imuSensor).init(GYRO_SAMPLE_RATE_HZ);
+
+#if defined(M5_UNIFIED)
+    // Holding BtnA down while switching on enters calibration mode.
+    if (M5.BtnA.isPressed()) {
+        calibrateIMUandSave(nvs, imuSensor, IMU_Base::CALIBRATE_ACC_AND_GYRO);
+    }
+#endif
+    checkIMU_Calibration(nvs, imuSensor);
+
+    const uint32_t imuSampleRateHz = imuSensor.getGyroSampleRateHz();
+    std::array<char, 128> buf;
+    sprintf(&buf[0], "\r\n**** IMU sample rate:%dHz\r\n\r\n", static_cast<int>(imuSampleRateHz));
+    print(&buf[0]);
 
     return imuSensor;
 }

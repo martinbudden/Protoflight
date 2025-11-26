@@ -22,10 +22,6 @@ int main()
     mainTask.setup();
 #if defined(FRAMEWORK_USE_FREERTOS)
     vTaskDelete(nullptr); // Deletes the current task (loop task)
-#else
-    while (true) {
-        mainTask.loop();
-    }
 #endif
 }
 
@@ -37,10 +33,6 @@ extern "C" void app_main()
     mainTask.setup();
 #if defined(FRAMEWORK_USE_FREERTOS)
     vTaskDelete(nullptr); // Deletes the current task (loop task)
-#else
-    while (true) {
-        mainTask.loop();
-    }
 #endif
 }
 
@@ -52,10 +44,6 @@ int main()
     mainTask.setup();
 #if defined(FRAMEWORK_USE_FREERTOS)
     vTaskDelete(nullptr); // Deletes the current task (loop task)
-#else
-    while (true) {
-        mainTask.loop();
-    }
 #endif
 }
 
@@ -70,10 +58,6 @@ int main(int argc, char **argv)
     mainTask.setup();
 #if defined(FRAMEWORK_USE_FREERTOS)
     vTaskDelete(nullptr); // Deletes the current task (loop task)
-#else
-    while (true) {
-        mainTask.loop();
-    }
 #endif
 
     return 0;
@@ -83,15 +67,10 @@ int main(int argc, char **argv)
 
 #include <Arduino.h>
 
-namespace { // use anonymous namespace to make items local to this translation unit
-    Main* mainTask;
-} // end namespace
-
 void setup() // cppcheck-suppress unusedFunction
 {
-    static Main mainTaskStatic;
-    mainTask = &mainTaskStatic;
-    mainTask->setup();
+    static Main mainTask;
+    mainTask.setup();
 #if defined(FRAMEWORK_USE_FREERTOS)
     vTaskDelete(nullptr); // Deletes the current task (loop task)
 #endif
@@ -100,9 +79,6 @@ void setup() // cppcheck-suppress unusedFunction
 
 void loop() // cppcheck-suppress unusedFunction
 {
-#if !defined(FRAMEWORK_USE_FREERTOS)
-    mainTask->loop();
-#endif
 }
 
 #endif

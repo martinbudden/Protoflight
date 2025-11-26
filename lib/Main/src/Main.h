@@ -28,6 +28,7 @@ class ButtonsBase;
 class CMS;
 class CMS_Task;
 class Cockpit;
+class Dashboard;
 class DashboardTask;
 class Debug;
 class DisplayPortBase;
@@ -132,9 +133,8 @@ public:
     enum {P0=0, P1=1, P2=2, P3=3, P4=4, P5=5, P6=6, P7=7};
 public:
     void setup();
-    void loop();
 private:
-    static IMU_Base& createIMU();
+    static IMU_Base& createIMU(NonVolatileStorage& nvs);
     static FlightController& createFlightController(float taskIntervalSeconds, Debug& debug, const NonVolatileStorage& nvs);
     static IMU_Filters& createIMU_Filters(float taskIntervalSeconds, MotorMixerBase& motorMixer, Debug& debug, const NonVolatileStorage& nvs);
     static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
@@ -142,6 +142,7 @@ private:
     static Cockpit& createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs);
     static DisplayPortBase& createDisplayPort(Debug& debug);
     // optional components create function return nullptr if component not specified as part of the build
+    static Dashboard* createDashboard(const DisplayPortBase& displayPort, const AHRS& ahrs, FlightController& flightController, ReceiverBase& receiver);
     static Blackbox* createBlackBox(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
     static VTX_Base* createVTX(NonVolatileStorage& nvs);
     static OSD* createOSD(DisplayPortBase& displayPort, const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
@@ -170,10 +171,4 @@ private:
     };
 private:
     tasks_t _tasks {};
-#if !defined(USE_DASHBOARD)
-    ScreenBase* _screen {nullptr};
-    uint32_t _screenTickCount {0};
-    ButtonsBase* _buttons {nullptr};
-    uint32_t _buttonsTickCount {0};
-#endif
 };

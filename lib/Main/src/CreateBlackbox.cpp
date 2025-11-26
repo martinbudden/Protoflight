@@ -30,7 +30,7 @@ Blackbox* Main::createBlackBox(AHRS& ahrs, FlightController& flightController, C
         .mode = Blackbox::MODE_NORMAL // logging starts on arming, file is saved when disarmed
         //.mode = Blackbox::MODE_ALWAYS_ON
     });
-#if defined(USE_BLACKBOX_DEBUG)
+#if defined(USE_BLACKBOX_TEST)
     testBlackbox(blackbox, ahrs, receiver, debug);
 #endif
     return &blackbox;

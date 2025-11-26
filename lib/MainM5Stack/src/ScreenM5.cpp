@@ -31,7 +31,7 @@ enum {
 
 static constexpr float radiansToDegrees {180.0 / M_PI};
 
-ScreenM5::ScreenM5(const DisplayPortBase& displayPort, const AHRS& ahrs, const FlightController& flightController, const ReceiverBase& receiver) :
+ScreenM5::ScreenM5(const DisplayPortBase& displayPort, const AHRS& ahrs, const FlightController& flightController, ReceiverBase& receiver) :
     ScreenBase(displayPort, ahrs, flightController, receiver),
     _screenSize(screenSize()),
     _screenRotationOffset(
