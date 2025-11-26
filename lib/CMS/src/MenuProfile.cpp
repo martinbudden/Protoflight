@@ -172,9 +172,9 @@ static auto entryRatesRoll    = OSD_UINT8_t { &data.rates.rates[FlightController
 static auto entryRatesPitch   = OSD_UINT8_t { &data.rates.rates[FlightController::FD_PITCH], 1, 255, 1 };
 static auto entryRatesYaw     = OSD_UINT8_t { &data.rates.rates[FlightController::FD_YAW], 1, 255, 1 };
 
-static auto entryRcExpoRoll   = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 100, 1 };
-static auto entryRcExpoPitch  = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 100, 1 };
-static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_YAW], 1, 100, 1 };
+static auto entryRcExpoRoll   = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_ROLL], 1, 100, 1 };
+static auto entryRcExpoPitch  = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_PITCH], 1, 100, 1 };
+static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_YAW], 1, 100, 1 };
 
 static auto entryThrottleMid  = OSD_UINT8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
 static auto entryThrottleExpo = OSD_UINT8_t { &data.rates.throttleExpo, 1, 100, 1 };
@@ -201,8 +201,8 @@ static const std::array<CMSX::OSD_Entry, 10> menuRatesEntries
     { "THR MID",     OME_UINT8,  nullptr, &entryThrottleMid },
     { "THR EXPO",    OME_UINT8,  nullptr, &entryThrottleExpo },
 
-    { "THR LIM TYP", OME_TABLE,  nullptr, &entryThrottleLimitType },
-    { "THR LIM %",   OME_UINT8,  nullptr, &entryThrottleLimitPercent },
+    { "THR LM TYP",  OME_TABLE,  nullptr, &entryThrottleLimitType },
+    { "THR LM %",    OME_UINT8,  nullptr, &entryThrottleLimitPercent },
 
     { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}

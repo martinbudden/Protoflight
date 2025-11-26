@@ -151,11 +151,18 @@ void CMSX::padToSize(char* buf, uint8_t size) const
     }
 }
 
-uint32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, char* buf, uint8_t row, uint8_t maxSize) const
+uint32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize)
 {
-    padToSize(buf, maxSize);
+    padToSize(&_menuDrawBuf[0], maxSize < MENU_DRAW_BUFFER_LEN ? maxSize : MENU_DRAW_BUFFER_LEN);
     const uint8_t column = _rightAligned ? _rightMenuColumn - maxSize : _rightMenuColumn;
-    return displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, buf);
+    return displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, &_menuDrawBuf[0]);
+}
+
+uint32_t CMSX::drawMenuTableItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize)
+{
+    padToSize(&_menuTableBuf[0], maxSize < MENU_TABLE_BUFFER_LEN ? maxSize : MENU_TABLE_BUFFER_LEN);
+    const uint8_t column = _rightAligned ? _rightMenuColumn - maxSize : _rightMenuColumn;
+    return displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, &_menuTableBuf[0]);
 }
 
 uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& entryFlags, table_ticker_t& ticker) // NOLINT(readability-function-cognitive-complexity)
@@ -174,7 +181,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             // A label with optional string, immediately following text
             strncpy(&_menuDrawBuf[0], reinterpret_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, static_cast<uint8_t>(strnlen(&_menuDrawBuf[0], MENU_DRAW_BUFFER_LEN)));
+            count += drawMenuItemValue(displayPort, row, static_cast<uint8_t>(strnlen(&_menuDrawBuf[0], MENU_DRAW_BUFFER_LEN)));
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -192,7 +199,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
             }
             strncat(&_menuDrawBuf[0], ">", MENU_DRAW_BUFFER_LEN);
             row = _smallScreen ? row - 1 : row;
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, static_cast<uint8_t>(strnlen(&_menuDrawBuf[0], MENU_DRAW_BUFFER_LEN)));
+            count += drawMenuItemValue(displayPort, row, static_cast<uint8_t>(strnlen(&_menuDrawBuf[0], MENU_DRAW_BUFFER_LEN)));
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -201,7 +208,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
             const auto* ptr = reinterpret_cast<const OSD_BOOL_t*>(entry->data);
             _menuDrawBuf[0] = *ptr->val ? '1' : '0';
             _menuDrawBuf[1] = 0;
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -209,7 +216,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
             ui2a(*ptr->val, &_menuDrawBuf[0]);
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -217,7 +224,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -225,7 +232,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_UINT16_t*>(entry->data);
             ui2a(*ptr->val, &_menuDrawBuf[0]);
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -233,7 +240,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_INT16_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -241,7 +248,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_UINT32_t*>(entry->data);
             ui2a(*ptr->val, &_menuDrawBuf[0]);
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -249,14 +256,14 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_INT32_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, NUMBER_FIELD_LEN);
+            count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
     case OME_STRING:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             strncpy(reinterpret_cast<char*>(&_menuDrawBuf[0]), static_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
-            count += drawMenuItemValue(displayPort, &_menuDrawBuf[0], row, MENU_DRAW_BUFFER_LEN);
+            count += drawMenuItemValue(displayPort, row, MENU_DRAW_BUFFER_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -267,17 +274,14 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
             const uint8_t index = std::clamp(*ptr->val, static_cast<uint8_t>(0), ptr->max);
             const char* str = static_cast<const char *>(ptr->names[index]);   // lookup table display text
             const size_t displayLength = std::strlen(str);
-            // Calculate the available space to display the lookup table entry based on the
-            // screen size and the length of the label. Always display at least MENU_DRAW_BUFFER_LEN
-            // characters to prevent really long labels from overriding the data display.
-            const size_t availableSpace = std::max(static_cast<size_t>(MENU_DRAW_BUFFER_LEN), _rightMenuColumn - labelLength - _leftMenuColumn - 1);
+            const size_t availableSpace = displayPort.getColumnCount() - _rightMenuColumn;
 
             bool drawText = false;
             if (entryFlags & OME_PRINT_VALUE) {
                 drawText = true;
                 ticker.state = 0;
                 ticker.loopCounter = 0;
-                if (displayLength > availableSpace) {  // table entry text is longer than the available space so start the ticker
+                if (displayLength > availableSpace) { // table entry text is longer than the available space so start the ticker
                     setFlag(entryFlags, OME_SCROLLING_TICKER);
                 } else {
                     clearFlag(entryFlags, OME_SCROLLING_TICKER);
@@ -296,7 +300,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
             }
             if (drawText) {
                 strncpy(&_menuTableBuf[0], static_cast<const char *>(str + ticker.state), MENU_TABLE_BUFFER_LEN);
-                count += drawMenuItemValue(displayPort, &_menuTableBuf[0], row, static_cast<uint8_t>(availableSpace));
+                count += drawMenuTableItemValue(displayPort, row, availableSpace);
             }
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
@@ -352,12 +356,14 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
         // cursor position has changed, so:
         // clear the old cursor
         if (_cursorRow != CURSOR_ROW_NOT_SET) {
-            spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, topRow + static_cast<uint8_t>(_cursorRow * _linesPerMenuItem), DisplayPortBase::SEVERITY_NORMAL, " *"));
+            const uint8_t row = topRow + static_cast<uint8_t>(_cursorRow * _linesPerMenuItem);
+            spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, row, DisplayPortBase::SEVERITY_NORMAL, " "));
         }
         // and draw the new one
-        spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, topRow + static_cast<uint8_t>(_currentMenuContext.cursorRow * _linesPerMenuItem), DisplayPortBase::SEVERITY_NORMAL, ">"));
         _cursorRow = _currentMenuContext.cursorRow;
     }
+    const uint8_t row = topRow + static_cast<uint8_t>(_cursorRow * _linesPerMenuItem);
+    spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, row, DisplayPortBase::SEVERITY_NORMAL, ">"));
     if (_currentMenuContext.menu->onDisplayUpdate) {
         if (_currentMenuContext.menu->onDisplayUpdate(*this, displayPort, _pageTop + _currentMenuContext.cursorRow) == MENU_BACK) {
             menuBack(displayPort, nullptr);

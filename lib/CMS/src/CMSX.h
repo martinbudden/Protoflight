@@ -25,7 +25,8 @@ public:
     enum { CURSOR_ROW_NOT_SET = 255 };
 
     enum { MAX_ROWS = 31 };
-    enum { MENU_DRAW_BUFFER_LEN = 12, MENU_TABLE_BUFFER_LEN = 30 };
+    static constexpr uint8_t MENU_DRAW_BUFFER_LEN = 12;
+    static constexpr uint8_t MENU_TABLE_BUFFER_LEN = 30;
     enum { NUMBER_FIELD_LEN = 5 };
     enum { DYNAMIC_VALUES_POLLING_INTERVAL_US = 100'000 };
     enum { BUTTON_TIME_MS = 250 };
@@ -108,7 +109,8 @@ private:
     static void padLeft(char *buf, uint8_t size);
     static void padRight(char *buf, uint8_t size);
     void padToSize(char* buf, uint8_t maxSize) const;
-    uint32_t drawMenuItemValue(DisplayPortBase& displayPort, char* buf, uint8_t row, uint8_t maxSize) const;
+    uint32_t drawMenuItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize);
+    uint32_t drawMenuTableItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize);
     uint32_t drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
 
     enum { MAX_MENU_STACK_DEPTH = 10 };
