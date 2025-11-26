@@ -111,6 +111,7 @@ private:
     void padToSize(char* buf, uint8_t maxSize) const;
     uint32_t drawMenuItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize);
     uint32_t drawMenuTableItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize);
+    uint32_t drawMenuTableEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
     uint32_t drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
 
     enum { MAX_MENU_STACK_DEPTH = 10 };

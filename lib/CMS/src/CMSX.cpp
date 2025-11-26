@@ -165,6 +165,50 @@ uint32_t CMSX::drawMenuTableItemValue(DisplayPortBase& displayPort, uint8_t row,
     return displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, &_menuTableBuf[0]);
 }
 
+uint32_t CMSX::drawMenuTableEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& entryFlags, table_ticker_t& ticker)
+{
+    uint32_t count = 0;
+
+    if (((entryFlags & OME_PRINT_VALUE) || (entryFlags & OME_SCROLLING_TICKER)) && entry->data) {
+        const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
+        //const size_t labelLength = strnlen(entry->text , MENU_DRAW_BUFFER_LEN) + 1; // account for the space between label and display data
+        const uint8_t index = std::clamp(*ptr->val, static_cast<uint8_t>(0), ptr->max);
+        const char* str = static_cast<const char *>(ptr->names[index]);   // lookup table display text
+        const size_t displayLength = std::strlen(str);
+        const size_t availableSpace = displayPort.getColumnCount() - _rightMenuColumn;
+
+        bool drawText = false;
+        if (entryFlags & OME_PRINT_VALUE) {
+            drawText = true;
+            ticker.state = 0;
+            ticker.loopCounter = 0;
+            if (displayLength > availableSpace) { // table entry text is longer than the available space so start the ticker
+                setFlag(entryFlags, OME_SCROLLING_TICKER);
+            } else {
+                clearFlag(entryFlags, OME_SCROLLING_TICKER);
+            }
+        } else {
+            ++ticker.loopCounter;
+            const uint8_t loopLimit = (ticker.state == 0 || ticker.state == (displayLength - availableSpace)) ? LOOKUP_TABLE_TICKER_START_CYCLES : LOOKUP_TABLE_TICKER_SCROLL_CYCLES;
+            if (ticker.loopCounter >= loopLimit) {
+                ticker.loopCounter = 0;
+                drawText = true;
+                ticker.state++;
+                if (ticker.state > (displayLength - availableSpace)) {
+                    ticker.state = 0;
+                }
+            }
+        }
+        if (drawText) {
+            strncpy(&_menuTableBuf[0], static_cast<const char *>(str + ticker.state), MENU_TABLE_BUFFER_LEN);
+            count += drawMenuTableItemValue(displayPort, row, availableSpace);
+        }
+        clearFlag(entryFlags, OME_PRINT_VALUE);
+    }
+
+    return count;
+}
+
 uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& entryFlags, table_ticker_t& ticker) // NOLINT(readability-function-cognitive-complexity)
 {
     const uint16_t entryType = entry->flags & OME_TYPE_MASK;
@@ -174,6 +218,11 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         count += displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, entry->text);
         clearFlag(entryFlags, OME_PRINT_LABEL);
     }
+
+    if (entryType == OME_TABLE) {
+        count += drawMenuTableEntry(displayPort, entry, row, entryFlags, ticker);
+        return count;
+    };
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast,cppcoreguidelines-pro-bounds-pointer-arithmetic)
     switch (entryType) {
@@ -264,44 +313,6 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             strncpy(reinterpret_cast<char*>(&_menuDrawBuf[0]), static_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
             count += drawMenuItemValue(displayPort, row, MENU_DRAW_BUFFER_LEN);
-            clearFlag(entryFlags, OME_PRINT_VALUE);
-        }
-        break;
-    case OME_TABLE:
-        if (((entryFlags & OME_PRINT_VALUE) || (entryFlags & OME_SCROLLING_TICKER)) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
-            const size_t labelLength = strnlen(entry->text , MENU_DRAW_BUFFER_LEN) + 1; // account for the space between label and display data
-            const uint8_t index = std::clamp(*ptr->val, static_cast<uint8_t>(0), ptr->max);
-            const char* str = static_cast<const char *>(ptr->names[index]);   // lookup table display text
-            const size_t displayLength = std::strlen(str);
-            const size_t availableSpace = displayPort.getColumnCount() - _rightMenuColumn;
-
-            bool drawText = false;
-            if (entryFlags & OME_PRINT_VALUE) {
-                drawText = true;
-                ticker.state = 0;
-                ticker.loopCounter = 0;
-                if (displayLength > availableSpace) { // table entry text is longer than the available space so start the ticker
-                    setFlag(entryFlags, OME_SCROLLING_TICKER);
-                } else {
-                    clearFlag(entryFlags, OME_SCROLLING_TICKER);
-                }
-            } else {
-                ++ticker.loopCounter;
-                const uint8_t loopLimit = (ticker.state == 0 || ticker.state == (displayLength - availableSpace)) ? LOOKUP_TABLE_TICKER_START_CYCLES : LOOKUP_TABLE_TICKER_SCROLL_CYCLES;
-                if (ticker.loopCounter >= loopLimit) {
-                    ticker.loopCounter = 0;
-                    drawText = true;
-                    ticker.state++;
-                    if (ticker.state > (displayLength - availableSpace)) {
-                        ticker.state = 0;
-                    }
-                }
-            }
-            if (drawText) {
-                strncpy(&_menuTableBuf[0], static_cast<const char *>(str + ticker.state), MENU_TABLE_BUFFER_LEN);
-                count += drawMenuTableItemValue(displayPort, row, availableSpace);
-            }
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
