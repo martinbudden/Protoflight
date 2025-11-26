@@ -50,15 +50,15 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
     const uint32_t currentTimeMs = currentTimeUs / 1000;
 
     if (_cmsx.isInMenu()) {
-        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
-        scanKeys(currentTimeMs, _lastCalledMs);
-        _cmsx.drawMenu(*_displayPort, currentTimeUs);
+        if (scanKeys(currentTimeMs, _lastCalledMs)) {
+            _cmsx.drawMenu(*_displayPort, currentTimeUs);
+            _displayPort->commitTransaction();
+        }
         if (currentTimeMs > _lastHeartbeatTimeMs + HEARTBEAT_INTERVAL_MS) {
             // Heart beat for external CMS display device @500ms, timeout @1000ms
             _displayPort->heartbeat();
             _lastHeartbeatTimeMs = currentTimeMs;
         }
-        _displayPort->commitTransaction();
     } else {
         // Detect menu invocation
         if (!_cockpit.isArmed() && !_cockpit.isRcModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
@@ -70,6 +70,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
 #endif
                 _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
                 _cmsx.menuOpen(*_displayPort);
+                _cmsx.drawMenu(*_displayPort, currentTimeUs);
                 _displayPort->commitTransaction();
                 _keyDelayMs = CMSX::BUTTON_PAUSE_MS; // Tends to overshoot if BUTTON_TIME_MS used
             }
@@ -95,12 +96,13 @@ uint16_t CMS::handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount)
     return ret;
 }
 
-void CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(readability-function-cognitive-complexity)
+bool CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(readability-function-cognitive-complexity)
 {
     if (_externKey != CMSX::KEY_NONE) {
         _keyDelayMs = _cmsx.handleKey(*_displayPort, _externKey);
         _externKey = CMSX::KEY_NONE;
-        return;
+        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
+        return true;
     }
 
     const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
@@ -132,9 +134,10 @@ void CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(read
     }
     if (_keyDelayMs > 0) {
         _keyDelayMs -= static_cast<int32_t>(currentTimeMs - lastCalledMs);
-        return;
+        return false;
     }
     if (key) {
+        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
         _keyDelayMs = handleKeyWithRepeat(key, _repeatCount);
         // Key repeat effect is implemented in two phases.
         // First phase is to decrease keyDelayMs reciprocal to hold time.
@@ -160,7 +163,9 @@ void CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(read
                 }
             }
         }
+        return true;
     }
+    return false;
 }
 
 DisplayPortBase* CMS::displayPortSelectNext()

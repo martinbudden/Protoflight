@@ -41,7 +41,7 @@ public:
     void updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta); //!< CMS Task function, called by Task
 
     uint16_t handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount);
-    void scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs);
+    bool scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs);
     void setExternKey(CMSX::key_e externKey);
 
     DisplayPortBase* displayPortSelectNext();
