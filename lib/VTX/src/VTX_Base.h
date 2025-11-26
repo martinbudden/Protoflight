@@ -109,12 +109,14 @@ protected:
     uint8_t _channel {};
     uint8_t _region {};
 public:
-    static const std::array<const char *, BAND_COUNT + 1> BandNames;
-    static const std::array<char, BAND_COUNT + 1> BandLetters;
-    static const std::array<const char *, CHANNEL_COUNT + 1> ChannelNames;
-    static const std::array<const char * const, PIT_MODE_COUNT> PitModeNames;
     static const std::array <uint8_t, POWER_LEVEL_COUNT> PowerIndexTramp;
     static const std::array <uint8_t, POWER_LEVEL_COUNT> PowerIndexRTC670;
     static const std::array <uint8_t, POWER_LEVEL_COUNT> PowerIndexSmartAudio;
-    static const uint16_t Frequencies[VTX_Base::BAND_COUNT][CHANNEL_COUNT];
+    static constexpr uint16_t Frequencies[BAND_COUNT][CHANNEL_COUNT] { // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        { 5865, 5845, 5825, 5805, 5785, 5765, 5745, 5725 }, // Boscam A
+        { 5733, 5752, 5771, 5790, 5809, 5828, 5847, 5866 }, // Boscam B
+        { 5705, 5685, 5665, 5645, 5885, 5905, 5925, 5945 }, // Boscam E
+        { 5740, 5760, 5780, 5800, 5820, 5840, 5860, 5880 }, // FatShark
+        { 5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917 }, // RaceBand
+    };
 };

@@ -85,27 +85,6 @@ void VTX_Base::setPowerByIndex(uint8_t index)
     }
 }
 
-const std::array<const char *, VTX_Base::BAND_COUNT + 1> VTX_Base::BandNames
-{{
-    "--------",
-    "BOSCAM A",
-    "BOSCAM B",
-    "BOSCAM E",
-    "FATSHARK",
-    "RACEBAND",
-}};
-
-const std::array<char, VTX_Base::BAND_COUNT + 1> VTX_Base::BandLetters { '-', 'A', 'B', 'E', 'F', 'R' };
-const std::array<const char *, VTX_Base::CHANNEL_COUNT + 1> VTX_Base::ChannelNames { "-", "1", "2", "3", "4", "5", "6", "7", "8" };
-const std::array<const char * const, VTX_Base::PIT_MODE_COUNT> VTX_Base::PitModeNames { "---", "OFF", "ON " };
-
-const uint16_t VTX_Base::Frequencies[VTX_Base::BAND_COUNT][VTX_Base::CHANNEL_COUNT] { // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-    { 5865, 5845, 5825, 5805, 5785, 5765, 5745, 5725 }, // Boscam A
-    { 5733, 5752, 5771, 5790, 5809, 5828, 5847, 5866 }, // Boscam B
-    { 5705, 5685, 5665, 5645, 5885, 5905, 5925, 5945 }, // Boscam E
-    { 5740, 5760, 5780, 5800, 5820, 5840, 5860, 5880 }, // FatShark
-    { 5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917 }, // RaceBand
-};
 
 // Tramp "---", 25, 200, 400. 600 mW
 const std::array <uint8_t, VTX_Base::POWER_LEVEL_COUNT> VTX_Base::PowerIndexTramp {

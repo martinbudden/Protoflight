@@ -41,6 +41,22 @@ static CMSX::menu_t menuVTX_confirm = {
     .entries = &menuVTX_confirmEntries[0],
 };
 
+const std::array<const char *, 6> bandNames
+{{
+    "--------",
+    "BOSCAM A",
+    "BOSCAM B",
+    "BOSCAM E",
+    "FATSHARK",
+    "RACEBAND",
+}};
+
+
+const std::array<char, 6> bandLetters { '-', 'A', 'B', 'E', 'F', 'R' };
+const std::array<const char *, 9> channelNames { "-", "1", "2", "3", "4", "5", "6", "7", "8" };
+const std::array<const char * const, 3> pitModeNames { "---", "OFF", "ON " };
+
+
 static const void* pitModeChange([[maybe_unused]] CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
 {
     data.pitMode = 0;
@@ -66,15 +82,11 @@ static const void* powerChange([[maybe_unused]] CMSX& cmsx, [[maybe_unused]] Dis
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-#if defined(USE_VTX)
-static auto entryPitMode = OSD_TABLE_t { &data.pitMode, VTX_Base::PIT_MODE_COUNT - 1, &VTX_Base::PitModeNames[0] };
-#else
-static auto entryPitMode = OSD_TABLE_t {};
-#endif
-static auto entryBand = OSD_TABLE_t {}; // set up dynamically in menuVTX_OnEnter
-static auto entryChannel = OSD_TABLE_t {}; // set up dynamically in menuVTX_OnEnter
-static auto entryFrequency = OSD_UINT16_t { &data.frequency, 5600, 5900, 0 };
-static auto entryPower = OSD_TABLE_t {}; // set up dynamically in menuVTX_OnEnter
+static auto entryPitMode     = OSD_TABLE_t { &data.pitMode, 3 - 1, &pitModeNames[0] };
+static auto entryBand        = OSD_TABLE_t { &data.band, 6-1, &bandNames[0] };
+static auto entryChannel     = OSD_TABLE_t { &data.channel, 9-1, &channelNames[0] };
+static auto entryFrequency   = OSD_UINT16_t { &data.frequency, 5600, 5900, 0 };
+static auto entryPower       = OSD_TABLE_t {}; // set up dynamically in menuVTX_OnEnter
 static auto entryTemperature = OSD_INT16_t { &data.temperature, -100, 300, 0 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
@@ -91,6 +103,7 @@ static const void* menuVTX_OnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
         vtx->getBandAndChannel(data.band, data.channel);
         vtx->getPowerIndex(data.powerIndex);
     }
+#if false
     entryBand.val = &data.band;
     entryBand.max = VTX_Base::BAND_COUNT; //vtxTableBandCount;
     entryBand.names = &VTX_Base::BandNames[0];
@@ -102,6 +115,7 @@ static const void* menuVTX_OnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
     entryPower.val = &data.powerIndex;
     //entryPower.max = vtxTablePowerLevels;
     //entryPower.names = vtxTablePowerLabels;
+#endif
 #endif
 
     return nullptr;
