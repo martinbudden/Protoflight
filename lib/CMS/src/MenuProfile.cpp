@@ -1,5 +1,4 @@
 #include "CMS.h"
-#include "CMSX.h"
 #include "CMS_Types.h"
 #include "Cockpit.h"
 #include "FlightController.h"
@@ -236,12 +235,13 @@ static auto entryRateProfile = OSD_TABLE_t { nullptr, 3, &rateProfileNames[0] };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 #endif
 
-static const std::array<CMSX::OSD_Entry, 6> menuProfileEntries
+static const std::array<CMSX::OSD_Entry, 7> menuProfileEntries
 {{
     {"-- PROFILE --",  OME_LABEL, nullptr, nullptr},
 
     //{"PID PROF",    OME_TABLE, &pidProfileIndexOnChange, &entryPID_Profile},
     {"PID",         OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID},
+    {"SIMPLIFIED TUNING", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuSimplifiedTuning },
 
     //{"RATE PROF",   OME_TABLE, &rateProfileIndexOnChange, &entryRateProfile},
     {"RATES",       OME_SUBMENU, &CMSX::menuChange, &CMSX::menuRates},

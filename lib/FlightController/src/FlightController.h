@@ -187,6 +187,25 @@ public:
     };
 
     typedef std::array<PIDF_uint16_t, PID_COUNT> pidf_uint16_array_t;
+    enum simplified_pid_settings_mode_e {
+        PID_SIMPLIFIED_TUNING_OFF = 0,
+        PID_SIMPLIFIED_TUNING_RP,
+        PID_SIMPLIFIED_TUNING_RPY,
+        PID_SIMPLIFIED_TUNING_MODE_COUNT
+    };
+    struct simplified_pid_settings_t {
+        uint8_t mode;
+        uint16_t multiplier;
+        uint16_t roll_pitch_ratio;
+        uint16_t i_gain;
+        uint16_t d_gain;
+        uint16_t pi_gain;
+        uint16_t pitch_pi_gain;
+        uint16_t d_max_gain;
+        uint16_t k_gain;
+        uint16_t dterm_filter;
+        uint16_t dterm_filter_multiplier;
+    };
 
 public:
     static float applyDeadband(float value, float deadband) {
@@ -211,6 +230,9 @@ public:
 
     PIDF_uint16_t getPID_Constants(pid_index_e pidIndex) const;
     void setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16);
+
+    const simplified_pid_settings_t& getSimplifiedPID_settings() const;
+    void setSimplifiedPID_settings(const simplified_pid_settings_t& simplifiedPID_settings);
 
     virtual PIDF_uint16_t getPID_MSP(size_t index) const override;
     void setPID_P_MSP(pid_index_e pidIndex, uint16_t kp);
@@ -354,6 +376,7 @@ private:
         control_mode_e controlMode {CONTROL_MODE_RATE};
         float mixerAdjustedThrottle {0.0F};
         std::array<PIDF::PIDF_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning
+        simplified_pid_settings_t simplifiedPID_settings {};
         std::array<float, RPY_AXIS_COUNT> outputs;
         std::array<PowerTransferFilter1, RPY_AXIS_COUNT> outputFilters;
     };

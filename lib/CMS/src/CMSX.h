@@ -192,6 +192,7 @@ public:
     static menu_t menuMain;
         static menu_t menuProfile;
             static menu_t menuPID;
+            static menu_t menuSimplifiedTuning;
             static menu_t menuRates;
             static menu_t menuFilters;
         static menu_t menuFeatures;

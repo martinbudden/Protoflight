@@ -9,7 +9,7 @@ DisplayPortM5GFX::DisplayPortM5GFX(M5Canvas& canvas, uint32_t screenWidthPixels,
     _screenHeightPixels(screenHeightPixels),
     _canvas(canvas)
 {
-    _rowCount = 16;
+    _rowCount = 15;
     _columnCount = 26;
     _canvas.setColorDepth(1);
     if (!_canvas.createSprite(_screenWidthPixels, _screenHeightPixels)) {

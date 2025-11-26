@@ -146,6 +146,16 @@ void FlightController::setPID_K_MSP(pid_index_e pidIndex, uint16_t kk)
     _fcM.pidConstants[pidIndex].kk = _sh.PIDS[pidIndex].getK();
 }
 
+const FlightController::simplified_pid_settings_t& FlightController::getSimplifiedPID_settings() const
+{
+    return _fcM.simplifiedPID_settings;
+}
+
+void FlightController::setSimplifiedPID_settings(const simplified_pid_settings_t& simplifiedPID_settings)
+{
+    _fcM.simplifiedPID_settings = simplifiedPID_settings;
+}
+
 uint32_t FlightController::getOutputPowerTimeMicroseconds() const
 {
     //return _motorMixer.getOutputPowerTimeMicroseconds();
