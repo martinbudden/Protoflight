@@ -363,7 +363,7 @@ static const std::array<CMSX::OSD_Entry, 10> menuProfileEntries
 {{
     {"-- PROFILES --",  OME_LABEL, nullptr, nullptr},
 
-    {"RATE PROFILE",    OME_TABLE, &pidProfileIndexOnChange, &entryRateProfile},
+    {"RATE PROFILE",    OME_TABLE, &rateProfileIndexOnChange, &entryRateProfile},
     {"RATES",           OME_SUBMENU, &CMSX::menuChange, &CMSX::menuRates},
 
     {"PID PROFILE",     OME_TABLE, &pidProfileIndexOnChange, &entryPID_Profile},
