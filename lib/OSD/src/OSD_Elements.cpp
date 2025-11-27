@@ -137,7 +137,9 @@ void OSD_Elements::addActiveElements()
     addActiveElement(OSD_CUSTOM_MSG1);
     addActiveElement(OSD_CUSTOM_MSG2);
     addActiveElement(OSD_CUSTOM_MSG3);
+#if defined(USE_BAROMETER) || defined(USE_GPS)
     addActiveElement(OSD_ALTITUDE);
+#endif
     addActiveElement(OSD_ROLL_PIDS);
     addActiveElement(OSD_PITCH_PIDS);
     addActiveElement(OSD_YAW_PIDS);
@@ -232,7 +234,7 @@ void OSD_Elements::addActiveElements()
 #endif
 #if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
     if ((featureIsEnabled(FEATURE_ESC_SENSOR)) || useDshotTelemetry) {
-        addActiveElement(OSD_ESC_TMP);
+        addActiveElement(OSD_ESC_TEMPERATURE);
         addActiveElement(OSD_ESC_RPM);
         addActiveElement(OSD_ESC_RPM_FREQ);
     }
@@ -308,7 +310,7 @@ bool OSD_Elements::displayActiveElement(DisplayPortBase& displayPort)
     return false;
 }
 
-bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex)
+bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex) // cppcheck-suppress constParameterReference
 {
     //Serial.printf("drawSingleElement:%d\r\n", elementIndex);
     // By default mark the element as rendered in case it's in the off blink state
@@ -333,8 +335,10 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
     _activeElement.drawElement = true;
 
     // Call the element drawing function
-    if (isSysOSD_Element(elementIndex)) {
+    if (isSysOSD_Element(elementIndex)) { // cppcheck-suppress knownConditionTrueFalse
+#if defined(USE_OSD_HD)
         displayPort.writeSys(_activeElement.posX, _activeElement.posY, static_cast<DisplayPortBase::system_element_e>(elementIndex - OSD_SYS_GOGGLE_VOLTAGE + DisplayPortBase::SYS_GOGGLE_VOLTAGE));
+#endif
     } else {
         //Serial.print("calling draw fn\r\n");
         (this->*DrawFunctions[elementIndex])(displayPort);

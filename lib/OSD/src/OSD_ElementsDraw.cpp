@@ -40,7 +40,9 @@ void OSD_Elements::initDrawFunctions()
     DrawFunctions[OSD_GPS_SPEED]        = &OSD_Elements::draw_GPS_SPEED;
     DrawFunctions[OSD_GPS_SATS]         = &OSD_Elements::draw_GPS_SATS;
 #endif
+#if defined(USE_BAROMETER) || defined(USE_GPS)
     DrawFunctions[OSD_ALTITUDE]         = &OSD_Elements::draw_ALTITUDE;
+#endif
     DrawFunctions[OSD_ROLL_PIDS]        = &OSD_Elements::draw_ROLL_PIDS;
     DrawFunctions[OSD_PITCH_PIDS]       = &OSD_Elements::draw_PITCH_PIDS;
     DrawFunctions[OSD_YAW_PIDS]         = &OSD_Elements::draw_YAW_PIDS;
@@ -57,13 +59,17 @@ void OSD_Elements::initDrawFunctions()
     DrawFunctions[OSD_ROLL_ANGLE]       = &OSD_Elements::draw_ROLL_ANGLE;
     DrawFunctions[OSD_MAIN_BATTERY_USAGE] = &OSD_Elements::draw_MAIN_BATTERY_USAGE;
     DrawFunctions[OSD_DISARMED]         = &OSD_Elements::draw_DISARMED;
+#if defined(USE_GPS)
     DrawFunctions[OSD_HOME_DIRECTION]   = &OSD_Elements::draw_HOME_DIRECTION;
     DrawFunctions[OSD_HOME_DISTANCE]    = &OSD_Elements::draw_HOME_DISTANCE;
+#endif
     DrawFunctions[OSD_NUMERICAL_HEADING]= &OSD_Elements::draw_NUMERICAL_HEADING;
     DrawFunctions[OSD_NUMERICAL_VARIO]  = &OSD_Elements::draw_NUMERICAL_VARIO;
     DrawFunctions[OSD_COMPASS_BAR]      = &OSD_Elements::draw_COMPASS_BAR;
+#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
     DrawFunctions[OSD_ESC_TEMPERATURE]  = &OSD_Elements::draw_ESC_TEMPERATURE;
     DrawFunctions[OSD_ESC_RPM]          = &OSD_Elements::draw_ESC_RPM;
+#endif
     DrawFunctions[OSD_REMAINING_TIME_ESTIMATE] = &OSD_Elements::draw_REMAINING_TIME_ESTIMATE;
     DrawFunctions[OSD_RTC_DATETIME]     = &OSD_Elements::draw_RTC_DATETIME;
     DrawFunctions[OSD_ADJUSTMENT_RANGE] = &OSD_Elements::draw_ADJUSTMENT_RANGE;
@@ -74,18 +80,28 @@ void OSD_Elements::initDrawFunctions()
     DrawFunctions[OSD_LOG_STATUS]       = &OSD_Elements::draw_LOG_STATUS;
     DrawFunctions[OSD_FLIP_ARROW]       = &OSD_Elements::draw_FLIP_ARROW;
     DrawFunctions[OSD_LINK_QUALITY]     = &OSD_Elements::draw_LINK_QUALITY;
-    DrawFunctions[OSD_FLIGHT_DIST]      = &OSD_Elements::draw_FLIGHT_DIST;
+#if defined(USE_GPS)
+    DrawFunctions[OSD_FLIGHT_DISTANCE]  = &OSD_Elements::draw_FLIGHT_DISTANCE;
+#endif
     DrawFunctions[OSD_STICK_OVERLAY_LEFT] = &OSD_Elements::draw_STICK_OVERLAY;
     DrawFunctions[OSD_STICK_OVERLAY_RIGHT] = &OSD_Elements::draw_STICK_OVERLAY;
     DrawFunctions[OSD_PILOT_NAME]       = &OSD_Elements::draw_PILOT_NAME;
+#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
     DrawFunctions[OSD_ESC_RPM_FREQUENCY]= &OSD_Elements::draw_ESC_RPM_FREQUENCY;
+#endif
+#if defined(USE_PROFILE_NAMES)
     DrawFunctions[OSD_RATE_PROFILE_NAME]= &OSD_Elements::draw_RATE_PROFILE_NAME;
     DrawFunctions[OSD_PID_PROFILE_NAME] = &OSD_Elements::draw_PID_PROFILE_NAME;
+#endif
+#if defined(USE_OSD_PROFILES)
     DrawFunctions[OSD_PROFILE_NAME]     = &OSD_Elements::draw_PROFILE_NAME;
+#endif
     DrawFunctions[OSD_RSSI_DBM_VALUE]   = &OSD_Elements::draw_RSSI_DBM_VALUE;
     DrawFunctions[OSD_RC_CHANNELS]      = &OSD_Elements::draw_RC_CHANNELS;
     DrawFunctions[OSD_CAMERA_FRAME]     = nullptr;  // only has background. Should be added first so it's the lowest layer and doesn't cover other elements
+#if defined(USE_GPS)
     DrawFunctions[OSD_EFFICIENCY]       = &OSD_Elements::draw_EFFICIENCY;
+#endif
     DrawFunctions[OSD_TOTAL_FLIGHTS]    = &OSD_Elements::draw_TOTAL_FLIGHTS;
     DrawFunctions[OSD_UP_DOWN_REFERENCE]= &OSD_Elements::draw_UP_DOWN_REFERENCE;
     DrawFunctions[OSD_TX_UPLINK_POWER]  = &OSD_Elements::draw_TX_UPLINK_POWER;
@@ -116,8 +132,9 @@ void OSD_Elements::initDrawFunctions()
     DrawFunctions[OSD_CUSTOM_MSG1]      = &OSD_Elements::draw_CUSTOM_MSG;
     DrawFunctions[OSD_CUSTOM_MSG2]      = &OSD_Elements::draw_CUSTOM_MSG;
     DrawFunctions[OSD_CUSTOM_MSG3]      = &OSD_Elements::draw_CUSTOM_MSG;
+#if defined(USE_RANGEFINDER)
     DrawFunctions[OSD_LIDAR_DISTANCE]   = &OSD_Elements::draw_LIDAR_DISTANCE;
-
+#endif
 
     DrawBackgroundFunctions[OSD_HORIZON_SIDEBARS]   = &OSD_Elements::drawBackground_HORIZON_SIDEBARS;
     DrawBackgroundFunctions[OSD_CRAFT_NAME]         = &OSD_Elements::drawBackground_CRAFT_NAME;
@@ -501,7 +518,7 @@ void OSD_Elements::draw_LINK_QUALITY(DisplayPortBase& displayPort)
     (void)displayPort;
 }
 
-void OSD_Elements::draw_FLIGHT_DIST(DisplayPortBase& displayPort)
+void OSD_Elements::draw_FLIGHT_DISTANCE(DisplayPortBase& displayPort)
 {
     (void)displayPort;
 }

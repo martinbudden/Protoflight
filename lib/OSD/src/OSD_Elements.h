@@ -25,9 +25,13 @@ enum  osd_elements_e {
     OSD_VTX_CHANNEL,
     OSD_CURRENT_DRAW,
     OSD_MAH_DRAWN,
+#if defined(USE_GPS)
     OSD_GPS_SPEED,
     OSD_GPS_SATS,
+#endif
+#if defined(USE_BAROMETER) || defined(USE_GPS)
     OSD_ALTITUDE,
+#endif
     OSD_ROLL_PIDS,
     OSD_PITCH_PIDS,
     OSD_YAW_PIDS,
@@ -35,20 +39,26 @@ enum  osd_elements_e {
     OSD_PID_RATE_PROFILE,
     OSD_WARNINGS,
     OSD_AVG_CELL_VOLTAGE,
+#if defined(USE_GPS)
     OSD_GPS_LON,
     OSD_GPS_LAT,
+#endif
     OSD_DEBUG,
     OSD_PITCH_ANGLE,
     OSD_ROLL_ANGLE,
     OSD_MAIN_BATTERY_USAGE,
     OSD_DISARMED,
+#if defined(USE_GPS)
     OSD_HOME_DIRECTION,
     OSD_HOME_DISTANCE,
+#endif
     OSD_NUMERICAL_HEADING,
     OSD_NUMERICAL_VARIO,
     OSD_COMPASS_BAR,
+#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
     OSD_ESC_TEMPERATURE,
     OSD_ESC_RPM,
+#endif
     OSD_REMAINING_TIME_ESTIMATE,
     OSD_RTC_DATETIME,
     OSD_ADJUSTMENT_RANGE,
@@ -59,18 +69,28 @@ enum  osd_elements_e {
     OSD_LOG_STATUS,
     OSD_FLIP_ARROW,
     OSD_LINK_QUALITY,
-    OSD_FLIGHT_DIST,
+#if defined(USE_GPS)
+    OSD_FLIGHT_DISTANCE,
+#endif
     OSD_STICK_OVERLAY_LEFT,
     OSD_STICK_OVERLAY_RIGHT,
     OSD_PILOT_NAME,
+#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
     OSD_ESC_RPM_FREQUENCY,
+#endif
+#if defined(USE_PROFILE_NAMES)
     OSD_RATE_PROFILE_NAME,
     OSD_PID_PROFILE_NAME,
+#endif
+#if defined(USE_OSD_PROFILES)
     OSD_PROFILE_NAME,
+#endif
     OSD_RSSI_DBM_VALUE,
     OSD_RC_CHANNELS,
     OSD_CAMERA_FRAME,
+#if defined(USE_GPS)
     OSD_EFFICIENCY,
+#endif
     OSD_TOTAL_FLIGHTS,
     OSD_UP_DOWN_REFERENCE,
     OSD_TX_UPLINK_POWER,
@@ -78,6 +98,7 @@ enum  osd_elements_e {
     OSD_AUX_VALUE,
     OSD_READY_MODE,
     OSD_RSNR_VALUE,
+#if defined(USE_OSD_HD)
     OSD_SYS_GOGGLE_VOLTAGE,
     OSD_SYS_VTX_VOLTAGE,
     OSD_SYS_BITRATE,
@@ -87,17 +108,22 @@ enum  osd_elements_e {
     OSD_SYS_GOGGLE_DVR,
     OSD_SYS_VTX_DVR,
     OSD_SYS_WARNINGS,
-    OSD_SYS_VTX_TEMP,
+    OSD_SYS_VTX_TEMPERATURE,
     OSD_SYS_FAN_SPEED,
+#endif
+#if defined(USE_GPS_LAP_TIMER)
     OSD_GPS_LAP_TIME_CURRENT,
     OSD_GPS_LAP_TIME_PREVIOUS,
     OSD_GPS_LAP_TIME_BEST3,
+#endif
     OSD_DEBUG2,
     OSD_CUSTOM_MSG0,
     OSD_CUSTOM_MSG1,
     OSD_CUSTOM_MSG2,
     OSD_CUSTOM_MSG3,
+#if defined(USE_RANGEFINDER)
     OSD_LIDAR_DISTANCE,
+#endif
     OSD_ITEM_COUNT // MUST BE LAST
 };
 
@@ -143,7 +169,11 @@ public:
     typedef void (OSD_Elements::*elementDrawFnPtr)(DisplayPortBase& displayPort);
 
 public:
+#if defined(USE_OSD_HD)
     bool isSysOSD_Element(uint8_t index) { return (index >= OSD_SYS_GOGGLE_VOLTAGE) && (index <= OSD_SYS_FAN_SPEED); }
+#else
+    bool isSysOSD_Element(uint8_t index) { (void)index; return false; }
+#endif
 
     const config_t& getConfig() const { return _config; }
     config_t& getConfig() { return _config; }
@@ -154,7 +184,11 @@ public:
     static constexpr uint32_t ELEMENT_TYPE_MASK = 0b1100'0000'0000'0000U;  // bits 14-15
     static element_type_e ELEMENT_TYPE(uint32_t x) { return static_cast<element_type_e>((x & ELEMENT_TYPE_MASK) >> ELEMENT_BITS_POS); }
 
+#if defined(USE_OSD_PROFILES)
     enum { PROFILE_COUNT = 2 };
+#else
+    enum { PROFILE_COUNT = 2 };
+#endif
     static constexpr uint16_t PROFILE_BITS_POS = 12;
     static constexpr uint16_t PROFILE_MASK = 0b0011'0000'0000'0000U;
     static uint16_t profileFlag(uint16_t x) { return 1U << (x - 1 + PROFILE_BITS_POS); }
@@ -231,7 +265,7 @@ public:
     void draw_LOG_STATUS(DisplayPortBase& displayPort);
     void draw_FLIP_ARROW(DisplayPortBase& displayPort);
     void draw_LINK_QUALITY(DisplayPortBase& displayPort);
-    void draw_FLIGHT_DIST(DisplayPortBase& displayPort);
+    void draw_FLIGHT_DISTANCE(DisplayPortBase& displayPort);
     void draw_STICK_OVERLAY(DisplayPortBase& displayPort);
     void draw_PILOT_NAME(DisplayPortBase& displayPort);
     void draw_ESC_RPM_FREQUENCY(DisplayPortBase& displayPort);

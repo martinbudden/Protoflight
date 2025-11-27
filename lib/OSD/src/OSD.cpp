@@ -321,7 +321,7 @@ void OSD::processStats2(timeUs32_t currentTimeUs)
         _stats.armed_time = 0;
         //schedulerIgnoreTaskExecTime();
     }
-#ifdef USE_ESC_SENSOR
+#if defined(USE_ESC_SENSOR)
     if (featureIsEnabled(FEATURE_ESC_SENSOR)) {
         osdEscDataCombined = getEscSensorData(ESC_SENSOR_COMBINED);
     }
