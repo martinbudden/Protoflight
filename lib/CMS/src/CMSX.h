@@ -152,7 +152,7 @@ private:
     std::array<menu_context_t, MAX_MENU_STACK_DEPTH> _menuStack {};
     const OSD_Entry* _pageTop {}; // First entry for the current page
     uint32_t _lastPolledUs {};
-    uint32_t _osdProfileCursor {};
+    uint16_t _osdProfileCursor {};
     uint16_t _profile {0};
     uint8_t _maxMenuItems {};
     uint8_t _pageCount {}; // Number of pages in the current menu

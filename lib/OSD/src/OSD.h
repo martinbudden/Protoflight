@@ -28,8 +28,7 @@ public:
     enum { SD_ROWS = 16, SD_COLS = 30 };
     enum { HD_ROWS = 20, HD_COLS = 53 };
     enum { FRAMERATE_DEFAULT_HZ = 12 };
-    enum { ESC_RPM_ALARM_OFF = -1, ESC_TEMP_ALARM_OFF = 0, ESC_CURRENT_ALARM_OFF = -1 };
-    enum { ELEMENT_BUFFER_LENGTH = 32 };
+    enum { ESC_RPM_ALARM_OFF = -1, ESC_TEMPERATURE_ALARM_OFF = 0, ESC_CURRENT_ALARM_OFF = -1 };
 
     enum  state_e {
         STATE_INIT,
@@ -54,29 +53,37 @@ public:
         STATS_RTC_DATE_TIME,
         STATS_TIMER_1,
         STATS_TIMER_2,
-        STATS_MAX_SPEED,
-        STATS_MAX_DISTANCE,
         STATS_MIN_BATTERY,
         STATS_END_BATTERY,
         STATS_BATTERY,
-        STATS_MIN_RSSI,
         STATS_MAX_CURRENT,
         STATS_USED_MAH,
+        STATS_WATT_HOURS_DRAWN,
+        STATS_MAX_G_FORCE,
+        STATS_MIN_RSSI,
+        STATS_MIN_LINK_QUALITY,
+        STATS_MIN_RSSI_DBM,
+        STATS_MIN_RSNR,
+#if defined(USE_BAROMETER)
         STATS_MAX_ALTITUDE,
+#endif
+#if defined (USE_BLACKBOX)
         STATS_BLACKBOX,
         STATS_BLACKBOX_NUMBER,
-        STATS_MAX_G_FORCE,
-        STATS_MAX_ESC_TEMP,
+#endif
+#if defined(USE_DSHOT)
+        STATS_MAX_ESC_TEMPERATURE,
         STATS_MAX_ESC_RPM,
-        STATS_MIN_LINK_QUALITY,
+#endif
+#if defined(USE_GPS)
+        STATS_MAX_SPEED,
+        STATS_MAX_DISTANCE,
         STATS_FLIGHT_DISTANCE,
+        STATS_TOTAL_DISTANCE,
+#endif
         STATS_MAX_FFT,
         STATS_TOTAL_FLIGHTS,
         STATS_TOTAL_TIME,
-        STATS_TOTAL_DIST,
-        STATS_MIN_RSSI_DBM,
-        STATS_WATT_HOURS_DRAWN,
-        STATS_MIN_RSNR,
         STATS_BEST_3_CONSEC_LAPS,
         STATS_BEST_LAP,
         STATS_FULL_THROTTLE_TIME,
@@ -106,10 +113,10 @@ public:
         TIMER_SRC_COUNT
     };
     enum timer_precision_e {
-        TIMER_PREC_SECOND,
-        TIMER_PREC_HUNDREDTHS,
-        TIMER_PREC_TENTHS,
-        TIMER_PREC_COUNT
+        TIMER_PRECISION_SECOND,
+        TIMER_PRECISION_HUNDREDTHS,
+        TIMER_PRECISION_TENTHS,
+        TIMER_PRECISION_COUNT
     };
     enum warnings_flags_e {
         WARNING_ARMING_DISABLE,
@@ -141,8 +148,8 @@ public:
         int8_t rcChannels[RC_CHANNELS_COUNT];   // RC channel values to display, -1 if none
         uint16_t timers[TIMER_COUNT];
 
-        uint32_t enabled_warnings;
-        uint32_t enabled_stats;
+        uint32_t enabled_warnings_flags;
+        uint32_t enabled_stats_flags;
 
         uint16_t framerate_hz;
 
@@ -154,8 +161,8 @@ public:
         uint16_t distance_alarm;
         int16_t esc_rpm_alarm;
         int16_t esc_current_alarm;
-        uint8_t esc_temp_alarm;
-        uint8_t core_temp_alarm;
+        uint8_t esc_temperature_alarm;
+        uint8_t core_temperature_alarm;
         uint8_t rssi_alarm;
 
         uint8_t units;
@@ -186,20 +193,20 @@ public:
         uint8_t osd_show_spec_prearm;
     };
     struct statsConfig_t {
-        uint32_t stats_total_flights;
-        uint32_t stats_total_time_s;
-        uint32_t stats_total_dist_m;
-        int8_t stats_min_armed_time_s;
-        uint32_t stats_mah_used;
-        uint8_t statsSaveMoveLimit; // gyro rate limit for saving stats upon disarm
+        uint32_t total_flights;
+        uint32_t total_time_s;
+        uint32_t total_distance_m;
+        uint32_t mah_used;
+        int8_t min_armed_time_s;
+        uint8_t save_move_limit; // gyro rate limit for saving stats upon disarm
     };
     struct stats_t {
         timeUs32_t armed_time;
         float max_g_force;
         int32_t max_altitude;
         int32_t max_esc_rpm;
-        int16_t max_esc_temp_index;
-        int16_t max_esc_temp;
+        int16_t max_esc_temperature_index;
+        int16_t max_esc_temperature;
         int16_t max_distance;
         int16_t max_speed;
         int16_t min_voltage; // /100
@@ -272,7 +279,8 @@ private:
     bool _moreElementsToDraw {};
     bool _backgroundLayerSupported {};
     bool _isReady {false};
-    bool _isArmed {};
     bool _statsVisible {false};
     bool _statsEnabled {false};
+
+    static const std::array<stats_e, STATS_COUNT> StatsDisplayOrder;
 };

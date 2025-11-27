@@ -26,7 +26,7 @@ static const void* calibrateAcc(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& di
 
 static const std::array<CMSX::OSD_Entry, 7> menuCalibrateAccEntries
 {{
-    { "--- CALIBRATE ACC ---",      OME_LABEL, nullptr, nullptr },
+    { "-- CALIBRATE ACC --",      OME_LABEL, nullptr, nullptr },
     { "PLACE ON A LEVEL SURFACE",   OME_LABEL, nullptr, nullptr},
     { "MAKE SURE CRAFT IS STILL",   OME_LABEL, nullptr, nullptr},
     { " ",                          OME_LABEL, nullptr, nullptr},
@@ -43,7 +43,7 @@ const void* CMSX::menuCalibrateAcc(CMSX& cmsx, DisplayPortBase& displayPort, [[m
 
 static const std::array<CMSX::OSD_Entry, 7> menuCalibrateEntries
 {{
-    { "--- CALIBRATE ---", OME_LABEL, nullptr, nullptr },
+    { "-- CALIBRATE --", OME_LABEL, nullptr, nullptr },
     { "GYRO",   OME_FUNCTION_CALL | OME_DYNAMIC, CMSX::menuCalibrateGyro, &CMSX::GyroCalibrationStatus[0] },
     { "ACC",    OME_FUNCTION_CALL | OME_DYNAMIC, CMSX::menuCalibrateAcc, &CMSX::AccCalibrationStatus[0] },
 #if defined(USE_BAROMETER)
@@ -68,7 +68,7 @@ CMSX::menu_t CMSX::menuCalibrate {
 
 static const std::array<CMSX::OSD_Entry, 7> menuFirmwareEntries
 {{
-    { "--- INFO ---", OME_LABEL, nullptr, nullptr },
+    { "-- INFO --", OME_LABEL, nullptr, nullptr },
 
     //{ "FWID",   OME_STRING, nullptr, FC_FIRMWARE_IDENTIFIER },
     //{ "FWVER",  OME_STRING, nullptr, FC_VERSION_STRING },
@@ -78,7 +78,7 @@ static const std::array<CMSX::OSD_Entry, 7> menuFirmwareEntries
     { "MFR",    OME_STRING, nullptr, manufacturerId },
     { "BOARD",  OME_STRING, nullptr, boardName },
 #endif
-    { "--- SETUP ---", OME_LABEL, nullptr, nullptr },
+    { "-- SETUP --", OME_LABEL, nullptr, nullptr },
     { "CALIBRATE",     OME_SUBMENU, CMSX::menuChange, &CMSX::menuCalibrate},
     { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}

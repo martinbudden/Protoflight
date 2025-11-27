@@ -41,6 +41,14 @@ void OSD_Elements::init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t colu
     }
 };
 
+void OSD_Elements::setProfile(uint8_t profile)
+{
+    if (profile > 1) {
+        profile = 1;
+    }
+    _profile = profile;
+}
+
 void OSD_Elements::setConfig(const config_t& config)
 {
     _config = config;
@@ -221,23 +229,23 @@ void OSD_Elements::addActiveElements()
     addActiveElement(OSD_LIDAR_DISTANCE);
 #endif
 #if defined(USE_GPS)
-    if (sensors(SENSOR_GPS)) {
+    //if (sensors(SENSOR_GPS)) {
         addActiveElement(OSD_GPS_SATS);
         addActiveElement(OSD_GPS_SPEED);
         addActiveElement(OSD_GPS_LAT);
         addActiveElement(OSD_GPS_LON);
         addActiveElement(OSD_HOME_DISTANCE);
         addActiveElement(OSD_HOME_DIRECTION);
-        addActiveElement(OSD_FLIGHT_DIST);
+        addActiveElement(OSD_FLIGHT_DISTANCE);
         addActiveElement(OSD_EFFICIENCY);
-    }
+    //}
 #endif
-#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
-    if ((featureIsEnabled(FEATURE_ESC_SENSOR)) || useDshotTelemetry) {
+#if defined(USE_DSHOT)
+    //if ((featureIsEnabled(FEATURE_ESC_SENSOR))) {
         addActiveElement(OSD_ESC_TEMPERATURE);
         addActiveElement(OSD_ESC_RPM);
-        addActiveElement(OSD_ESC_RPM_FREQ);
-    }
+        addActiveElement(OSD_ESC_RPM_FREQUENCY);
+    //}
 #endif
 #if defined(USE_GPS_LAP_TIMER)
     if (sensors(SENSOR_GPS)) {

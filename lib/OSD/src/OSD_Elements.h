@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Targets.h"
+
 #include <TimeMicroseconds.h>
 #include <array>
 #include <bitset>
@@ -55,7 +57,7 @@ enum  osd_elements_e {
     OSD_NUMERICAL_HEADING,
     OSD_NUMERICAL_VARIO,
     OSD_COMPASS_BAR,
-#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
+#if defined(USE_DSHOT)
     OSD_ESC_TEMPERATURE,
     OSD_ESC_RPM,
 #endif
@@ -75,7 +77,7 @@ enum  osd_elements_e {
     OSD_STICK_OVERLAY_LEFT,
     OSD_STICK_OVERLAY_RIGHT,
     OSD_PILOT_NAME,
-#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
+#if defined(USE_DSHOT)
     OSD_ESC_RPM_FREQUENCY,
 #endif
 #if defined(USE_PROFILE_NAMES)
@@ -201,6 +203,7 @@ public:
     static uint8_t OSD_Y(uint16_t x) { return (x >> XY_POSITION_BITS) & XY_POSITION_MASK; }
     static uint16_t OSD_POS(uint8_t x, uint8_t y) { return (x & XY_POSITION_MASK) | ((y & XY_POSITION_MASK) << XY_POSITION_BITS); }
 
+    void setProfile(uint8_t profile);
     void addActiveElement(osd_elements_e element);
     void addActiveElements();
     bool isRenderPending() const;

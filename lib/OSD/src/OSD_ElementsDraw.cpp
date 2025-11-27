@@ -66,7 +66,7 @@ void OSD_Elements::initDrawFunctions()
     DrawFunctions[OSD_NUMERICAL_HEADING]= &OSD_Elements::draw_NUMERICAL_HEADING;
     DrawFunctions[OSD_NUMERICAL_VARIO]  = &OSD_Elements::draw_NUMERICAL_VARIO;
     DrawFunctions[OSD_COMPASS_BAR]      = &OSD_Elements::draw_COMPASS_BAR;
-#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
+#if defined(USE_DSHOT)
     DrawFunctions[OSD_ESC_TEMPERATURE]  = &OSD_Elements::draw_ESC_TEMPERATURE;
     DrawFunctions[OSD_ESC_RPM]          = &OSD_Elements::draw_ESC_RPM;
 #endif
@@ -86,7 +86,7 @@ void OSD_Elements::initDrawFunctions()
     DrawFunctions[OSD_STICK_OVERLAY_LEFT] = &OSD_Elements::draw_STICK_OVERLAY;
     DrawFunctions[OSD_STICK_OVERLAY_RIGHT] = &OSD_Elements::draw_STICK_OVERLAY;
     DrawFunctions[OSD_PILOT_NAME]       = &OSD_Elements::draw_PILOT_NAME;
-#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
+#if defined(USE_DSHOT)
     DrawFunctions[OSD_ESC_RPM_FREQUENCY]= &OSD_Elements::draw_ESC_RPM_FREQUENCY;
 #endif
 #if defined(USE_PROFILE_NAMES)

@@ -35,8 +35,6 @@ void OSD::drawLogoAndCompleteInitialization()
     uint8_t midRow = _displayPort->getRowCount() / 2;
     uint8_t midCol = _displayPort->getColumnCount() / 2;
 
-    _isArmed = _cockpit.isArmed();
-
     //resetAlarms();
 
     _backgroundLayerSupported = _displayPort->layerSupported(DisplayPortBase::LAYER_BACKGROUND);
@@ -65,7 +63,7 @@ void OSD::drawLogoAndCompleteInitialization()
 
     _resumeRefreshAtUs = timeUs() + 4'000'000;
 #if defined(USE_OSD_PROFILES)
-    setOsdProfile(osdConfig()->osdProfileIndex);
+    _elements.setProfile(_config.osdProfileIndex);
 #endif
 
     _elements.init(_backgroundLayerSupported, _displayPort->getRowCount(), _displayPort->getColumnCount());
@@ -96,15 +94,15 @@ void OSD::setStatsConfig(const statsConfig_t& statsConfig)
 void OSD::setStatsState(uint8_t statIndex, bool enabled)
 {
     if (enabled) {
-        _config.enabled_stats |= (1U << statIndex);
+        _config.enabled_stats_flags |= (1U << statIndex);
     } else {
-        _config.enabled_stats &= ~(1U << statIndex);
+        _config.enabled_stats_flags &= ~(1U << statIndex);
     }
 }
 
 bool OSD::getStatsState(uint8_t statIndex) const
 {
-    return _config.enabled_stats & (1U << statIndex);
+    return _config.enabled_stats_flags & (1U << statIndex);
 }
 
 void OSD::resetStats()
@@ -118,8 +116,8 @@ void OSD::resetStats()
     _stats.max_distance    = 0;
     _stats.armed_time      = 0;
     _stats.max_g_force     = 0;
-    _stats.max_esc_temp_index = 0;
-    _stats.max_esc_temp    = 0;
+    _stats.max_esc_temperature_index = 0;
+    _stats.max_esc_temperature = 0;
     _stats.max_esc_rpm     = 0;
 
     _stats.min_link_quality = 99; //(linkQualitySource == LQ_SOURCE_NONE) ? 99 : 100; // percent
@@ -138,32 +136,42 @@ void OSD::resetStats()
 // If adding new stats, please add to the osdStatsNeedAccelerometer() function
 // if the statistic utilizes the accelerometer.
 //
-const std::array<OSD::stats_e, OSD::STATS_COUNT> statsDisplayOrder= {
+const std::array<OSD::stats_e, OSD::STATS_COUNT> OSD::StatsDisplayOrder= {
     OSD::STATS_RTC_DATE_TIME,
     OSD::STATS_TIMER_1,
     OSD::STATS_TIMER_2,
+#if defined(USE_BAROMETER)
     OSD::STATS_MAX_ALTITUDE,
+#endif
+#if defined(USE_GPS)
     OSD::STATS_MAX_SPEED,
     OSD::STATS_MAX_DISTANCE,
     OSD::STATS_FLIGHT_DISTANCE,
+#endif
     OSD::STATS_MIN_BATTERY,
     OSD::STATS_END_BATTERY,
     OSD::STATS_BATTERY,
     OSD::STATS_MIN_RSSI,
     OSD::STATS_MAX_CURRENT,
     OSD::STATS_USED_MAH,
+#if defined(USE_BLACKBOX)
     OSD::STATS_BLACKBOX,
     OSD::STATS_BLACKBOX_NUMBER,
+#endif
     OSD::STATS_MAX_G_FORCE,
-    OSD::STATS_MAX_ESC_TEMP,
+#if defined(USE_DSHOT)
+    OSD::STATS_MAX_ESC_TEMPERATURE,
     OSD::STATS_MAX_ESC_RPM,
+#endif
     OSD::STATS_MIN_LINK_QUALITY,
     OSD::STATS_MAX_FFT,
     OSD::STATS_MIN_RSSI_DBM,
     OSD::STATS_MIN_RSNR,
     OSD::STATS_TOTAL_FLIGHTS,
     OSD::STATS_TOTAL_TIME,
-    OSD::STATS_TOTAL_DIST,
+#if defined(USE_GPS)
+    OSD::STATS_TOTAL_DISTANCE,
+#endif
     OSD::STATS_WATT_HOURS_DRAWN,
     OSD::STATS_BEST_3_CONSEC_LAPS,
     OSD::STATS_BEST_LAP,
@@ -182,11 +190,12 @@ void OSD::displayStatisticLabel(uint8_t x, uint8_t y, const char * text, const c
 bool OSD::displayStatistic(int statistic, uint8_t displayRow)
 {
     const uint8_t midCol = _displayPort->getColumnCount() / 2;
+    enum { ELEMENT_BUFFER_LENGTH = 32 };
     std::array<char, ELEMENT_BUFFER_LENGTH> buf {};
 
     switch (statistic) { // NOLINT(hicpp-multiway-paths-covered)
     case STATS_TOTAL_FLIGHTS:
-        ui2a(_statsConfig.stats_total_flights, &buf[0]);
+        ui2a(_statsConfig.total_flights, &buf[0]);
         displayStatisticLabel(midCol, displayRow, "TOTAL FLIGHTS", &buf[0]);
         return true;
     default:
@@ -224,8 +233,8 @@ bool OSD::renderStatsContinue()
         // prepare for the next call to the method
         ++_statsRenderingState.index;
         // look for something to render
-        if (_config.enabled_stats & (1<< statsDisplayOrder[index])) {
-            if (displayStatistic(statsDisplayOrder[index], _statsRenderingState.row)) {
+        if (_config.enabled_stats_flags & (1<< StatsDisplayOrder[index])) {
+            if (displayStatistic(StatsDisplayOrder[index], _statsRenderingState.row)) {
                 ++_statsRenderingState.row;
                 statisticDisplayed = true;
                 break;
@@ -345,15 +354,15 @@ void OSD::syncBlink(timeUs32_t currentTimeUs)
 void OSD::setWarningState(uint8_t warningIndex, bool enabled)
 {
     if (enabled) {
-        _config.enabled_warnings |= (1U << warningIndex);
+        _config.enabled_warnings_flags |= (1U << warningIndex);
     } else {
-        _config.enabled_warnings &= ~(1U << warningIndex);
+        _config.enabled_warnings_flags &= ~(1U << warningIndex);
     }
 }
 
 bool OSD::getWarningState(uint8_t warningIndex) const
 {
-    return _config.enabled_warnings & (1U << warningIndex);
+    return _config.enabled_warnings_flags & (1U << warningIndex);
 }
 
 void OSD::drawLogo(uint8_t x, uint8_t y)
@@ -435,17 +444,17 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
     case STATE_PROCESS_STATS2:
         //Serial.printf("STATE_PROCESS_STATS2\r\n");
         processStats2(timeMicroseconds); // may clear screen
-        _state = STATE_PROCESS_STATS3;
+        _state = STATE_PROCESS_STATS3; // cppcheck-suppress redundantAssignment
         break;
     case STATE_PROCESS_STATS3:
         //Serial.printf("STATE_PROCESS_STATS3\r\n");
         processStats3();
 #if defined(USE_CMS)
         if (_displayPort->isGrabbed()) {
-            _state = STATE_COMMIT:
+            _state = STATE_COMMIT;
         }
 #endif
-        _state = STATE_UPDATE_ALARMS;
+        _state = STATE_UPDATE_ALARMS; // cppcheck-suppress redundantAssignment
         break;
     case STATE_UPDATE_ALARMS:
         //Serial.printf("STATE_UPDATE_ALARMS\r\n");

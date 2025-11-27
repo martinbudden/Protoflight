@@ -211,7 +211,7 @@ static constexpr OSD::config_t osdConfig = {
     .profile = {},
     .rcChannels = { -1, -1, -1, -1 },
     .timers = {},
-    .enabled_warnings = static_cast<uint32_t>(~(OSD::WARNING_RSSI |OSD::WARNING_LINK_QUALITY | OSD::WARNING_RSSI_DBM |OSD::WARNING_RSNR | OSD::WARNING_OVER_CAP)),
+    .enabled_warnings_flags = static_cast<uint32_t>(~(OSD::WARNING_RSSI |OSD::WARNING_LINK_QUALITY | OSD::WARNING_RSSI_DBM |OSD::WARNING_RSNR | OSD::WARNING_OVER_CAP)),
 /*
         WARNING_ARMING_DISABLE,
         WARNING_BATTERY_NOT_FULL,
@@ -229,7 +229,7 @@ static constexpr OSD::config_t osdConfig = {
         WARNING_LOAD,
         WARNING_POSHOLD_FAILED,
 */
-    .enabled_stats = static_cast<uint32_t>(~(OSD::STATS_MAX_SPEED | OSD::STATS_MIN_BATTERY | OSD::STATS_MIN_RSSI | OSD::STATS_MAX_CURRENT | OSD::STATS_USED_MAH | OSD::STATS_BLACKBOX | OSD::STATS_BLACKBOX_NUMBER | OSD::STATS_TIMER_2)),
+    .enabled_stats_flags = static_cast<uint32_t>(~(OSD::STATS_MAX_SPEED | OSD::STATS_MIN_BATTERY | OSD::STATS_MIN_RSSI | OSD::STATS_MAX_CURRENT | OSD::STATS_USED_MAH | OSD::STATS_BLACKBOX | OSD::STATS_BLACKBOX_NUMBER | OSD::STATS_TIMER_2)),
 /*
         STATS_RTC_DATE_TIME,
         STATS_TIMER_1,
@@ -238,14 +238,14 @@ static constexpr OSD::config_t osdConfig = {
         STATS_BATTERY,
         STATS_MAX_ALTITUDE,
         STATS_MAX_G_FORCE,
-        STATS_MAX_ESC_TEMP,
+        STATS_MAX_ESC_TEMPERATURE,
         STATS_MAX_ESC_RPM,
         STATS_MIN_LINK_QUALITY,
         STATS_FLIGHT_DISTANCE,
         STATS_MAX_FFT,
         STATS_TOTAL_FLIGHTS,
         STATS_TOTAL_TIME,
-        STATS_TOTAL_DIST,
+        STATS_TOTAL_DISTANCE,
         STATS_MIN_RSSI_DBM,
         STATS_WATT_HOURS_DRAWN,
         STATS_MIN_RSNR,
@@ -264,8 +264,8 @@ static constexpr OSD::config_t osdConfig = {
     .distance_alarm = 0,
     .esc_rpm_alarm = OSD::ESC_RPM_ALARM_OFF,
     .esc_current_alarm = OSD::ESC_CURRENT_ALARM_OFF,
-    .esc_temp_alarm = OSD::ESC_TEMP_ALARM_OFF,
-    .core_temp_alarm = 70, // a temperature above 70C should produce a warning, lockups have been reported above 80C
+    .esc_temperature_alarm = OSD::ESC_TEMPERATURE_ALARM_OFF,
+    .core_temperature_alarm = 70, // a temperature above 70C should produce a warning, lockups have been reported above 80C
     .rssi_alarm = 20,
 
     .units = UNITS_METRIC,

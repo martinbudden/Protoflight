@@ -81,9 +81,14 @@ public:
     DisplayPortBase() = default;
     virtual uint32_t clearScreen(display_clear_option_e options) { (void)options; _cleared = true; return 0; }
     virtual bool drawScreen() = 0; // Returns true if screen still being transferred
+
     virtual uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) = 0;
+    uint32_t writeString(uint8_t x, uint8_t y, const char *text) { return writeString(x, y, SEVERITY_NORMAL, text); }
     uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const uint8_t* text) { return writeString(x, y, attr, reinterpret_cast<const char*>(text)); }
+    uint32_t writeString(uint8_t x, uint8_t y, const uint8_t* text) { return writeString(x, y, SEVERITY_NORMAL, reinterpret_cast<const char*>(text)); }
     virtual uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) = 0;
+    uint32_t writeChar(uint8_t x, uint8_t y, uint8_t c) { return writeChar(x, y, SEVERITY_NORMAL, c); }
+
     virtual int screenSize() const { return 0; }
     virtual int writeSys(uint8_t x, uint8_t y, system_element_e systemElement) { (void)x; (void)y; (void)systemElement; return 0; }
     virtual bool isTransferInProgress() const { return false; }

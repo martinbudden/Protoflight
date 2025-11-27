@@ -251,6 +251,13 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
+    case OME_STRING:
+        if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
+            strncpy(reinterpret_cast<char*>(&_menuDrawBuf[0]), static_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
+            count += drawMenuItemValue(displayPort, row, MENU_DRAW_BUFFER_LEN);
+            clearFlag(entryFlags, OME_PRINT_VALUE);
+        }
+        break;
     case OME_BOOL:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_BOOL_t*>(entry->data);
@@ -305,13 +312,6 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
             const auto* ptr = reinterpret_cast<const OSD_INT32_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
-            clearFlag(entryFlags, OME_PRINT_VALUE);
-        }
-        break;
-    case OME_STRING:
-        if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            strncpy(reinterpret_cast<char*>(&_menuDrawBuf[0]), static_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
-            count += drawMenuItemValue(displayPort, row, MENU_DRAW_BUFFER_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -480,11 +480,6 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
     switch (entry->flags & OME_TYPE_MASK) {
     case OME_LABEL:
         break;
-    case OME_BACK:
-        menuBack(displayPort, nullptr);
-        ret = BUTTON_PAUSE_MS;
-        _elementEditing = false;
-        break;
     case OME_SUBMENU:
         if (key == KEY_RIGHT) {
             menuChange(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
@@ -502,11 +497,18 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
             ret = BUTTON_PAUSE_MS;
         }
         break;
-    case OME_OSD_EXIT:
+    case OME_EXIT:
         if (entry->fnPtr && key == KEY_RIGHT) {
             entry->fnPtr(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
             ret = BUTTON_PAUSE_MS;
         }
+        break;
+    case OME_BACK:
+        menuBack(displayPort, nullptr);
+        ret = BUTTON_PAUSE_MS;
+        _elementEditing = false;
+        break;
+    case OME_END:
         break;
 #if defined(USE_OSD)
     case OME_VISIBLE:
@@ -542,6 +544,30 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
         }
         break;
 #endif
+    case OME_STRING:
+        break;
+    case OME_TABLE:
+        if (entry->data) {
+            const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
+            const uint8_t previousValue = *ptr->val;
+            if (key == KEY_RIGHT) {
+                if (*ptr->val < ptr->max) {
+                    *ptr->val += 1;
+                }
+            } else {
+                if (*ptr->val > 0) {
+                    *ptr->val -= 1;
+                }
+            }
+            if (entry->fnPtr) {
+                entry->fnPtr(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
+            }
+            setFlag(entryFlags, OME_PRINT_VALUE);
+            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
+                setRebootRequired();
+            }
+        }
+        break;
     case OME_BOOL:
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_BOOL_t*>(entry->data);
@@ -663,7 +689,6 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
                 }
             }
             setFlag(entryFlags, OME_PRINT_VALUE);
-
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
@@ -686,7 +711,6 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
                 }
             }
             setFlag(entryFlags, OME_PRINT_VALUE);
-
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 setRebootRequired();
             }
@@ -694,32 +718,6 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
                 entry->fnPtr(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
             }
         }
-        break;
-    case OME_TABLE:
-        if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
-            const uint8_t previousValue = *ptr->val;
-            if (key == KEY_RIGHT) {
-                if (*ptr->val < ptr->max) {
-                    *ptr->val += 1;
-                }
-            } else {
-                if (*ptr->val > 0) {
-                    *ptr->val -= 1;
-                }
-            }
-            if (entry->fnPtr) {
-                entry->fnPtr(*this, displayPort, reinterpret_cast<const menu_t*>(entry->data));
-            }
-            setFlag(entryFlags, OME_PRINT_VALUE);
-            if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
-                setRebootRequired();
-            }
-        }
-        break;
-    case OME_STRING:
-        [[fallthrough]];
-    case OME_END:
         break;
     case OME_MENU:
         // Shouldn't happen
@@ -758,9 +756,9 @@ void CMSX::menuOpen(DisplayPortBase& displayPort)
         displayPort.grab();
         displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }
-    //!!TODO: this should probably not have a dependency on the OSD or OSD slave code
+    //!!TODO: this should not have a dependency on the OSD
 #if defined(USE_OSD)
-    resumeRefreshAt = 0;
+    //!!_resumeRefreshAtUs = 0;
 #endif
 
     const uint8_t columnCount = displayPort.getColumnCount();
@@ -773,10 +771,10 @@ void CMSX::menuOpen(DisplayPortBase& displayPort)
         _maxMenuItems      = displayPort.getRowCount() / _linesPerMenuItem;
     } else {
         _smallScreen       = false;
-        _rightAligned      = false;
+        _rightAligned      = true;
         _linesPerMenuItem  = 1;
         if (columnCount <= NORMAL_SCREEN_MAX_COLS) {
-            _leftMenuColumn    = 2;
+            _leftMenuColumn    = 1;
             _rightMenuColumn   = _rightAligned ? columnCount - 2 : columnCount - MENU_DRAW_BUFFER_LEN; // cppcheck-suppress knownConditionTrueFalse
         } else {
             _leftMenuColumn    = (columnCount / 2) - 13;

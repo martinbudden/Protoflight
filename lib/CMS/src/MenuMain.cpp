@@ -2,12 +2,39 @@
 #include "CMS_Types.h"
 
 
-CMSX::menu_t CMSX::menuBlackbox {};
-CMSX::menu_t CMSX::menuPower {};
+static const std::array<CMSX::OSD_Entry, 3> menuBlackboxEntries
+{{
+    {"-- BLACKBOX --", OME_LABEL, nullptr, nullptr},
+
+    {"BACK",  OME_BACK, nullptr, nullptr},
+    {nullptr, OME_END, nullptr, nullptr}
+}};
+
+CMSX::menu_t CMSX::menuBlackbox {
+    .onEnter = nullptr,
+    .onExit = nullptr,
+    .onDisplayUpdate = nullptr,
+    .entries = &menuBlackboxEntries[0],
+};
+
+static const std::array<CMSX::OSD_Entry, 3> menuPowerEntries
+{{
+    {"-- POWER --", OME_LABEL, nullptr, nullptr},
+
+    {"BACK",  OME_BACK, nullptr, nullptr},
+    {nullptr, OME_END, nullptr, nullptr}
+}};
+
+CMSX::menu_t CMSX::menuPower {
+    .onEnter = nullptr,
+    .onExit = nullptr,
+    .onDisplayUpdate = nullptr,
+    .entries = &menuPowerEntries[0],
+};
 
 static const std::array<CMSX::OSD_Entry, 6> menuFeaturesEntries
 {{
-    {"--- FEATURES ---", OME_LABEL, nullptr, nullptr},
+    {"-- FEATURES --", OME_LABEL, nullptr, nullptr},
 
     {"BLACKBOX", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuBlackbox},
     {"POWER",    OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPower},
@@ -17,7 +44,7 @@ static const std::array<CMSX::OSD_Entry, 6> menuFeaturesEntries
     {nullptr, OME_END, nullptr, nullptr}
 }};
 
-CMSX::menu_t CMSX::menuFeatures = {
+CMSX::menu_t CMSX::menuFeatures {
     .onEnter = nullptr,
     .onExit = nullptr,
     .onDisplayUpdate = nullptr,

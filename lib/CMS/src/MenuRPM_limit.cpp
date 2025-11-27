@@ -37,7 +37,7 @@ static const std::array<CMSX::OSD_Entry, 7> menuRPM_limitEntries
     { "MAX RPM", OME_UINT16,                     nullptr, &entryRPM_limitValue },
     { "KV",      OME_UINT16,                     nullptr, &entryKV },
 
-    { "SAVE&REBOOT", OME_OSD_EXIT, CMSX::menuExit, CMSX::MENU_POPUP_SAVE_REBOOT },
+    { "SAVE&REBOOT", OME_EXIT, CMSX::menuExit, CMSX::MENU_POPUP_SAVE_REBOOT },
     { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
 }};

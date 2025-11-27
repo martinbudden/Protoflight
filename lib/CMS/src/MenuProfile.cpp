@@ -10,8 +10,11 @@ Storage
 Only one menu can be active at one time, so we can save RAM by using a union.
 */
 union data_u {
-    IMU_Filters::config_t imuFiltersConfig {};
     Cockpit::rates_t rates;
+
+    IMU_Filters::config_t imuFiltersConfig {};
+
+    FlightController::simplified_pid_settings_t pidSettings;
     std::array<FlightController::PIDF_uint16_t, 3> pids;
     FlightController::filters_config_t pidFiltersConfig;
 };
@@ -20,6 +23,89 @@ static data_u data {};
 
 static uint8_t rateProfileIndex = 0;
 static uint8_t pidProfileIndex = 0;
+static uint8_t pidTuningMode;
+
+
+//
+// Rates
+//
+
+static std::array<uint8_t, 3> rateProfileIndexString = { 'R', '1', '\0' };
+
+static const void* menuRatesOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+{
+    rateProfileIndexString[1] = '1' + rateProfileIndex;
+    data.rates = cmsx.getCMS().getCockpit().getRates();
+    return nullptr;
+}
+
+static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+{
+    cmsx.getCMS().getCockpit().setRates(data.rates);
+    return nullptr;
+}
+
+// NOLINTBEGIN(fuchsia-statically-constructed-objects)
+static std::array<const char * const, Cockpit::THROTTLE_LIMIT_TYPE_COUNT> throttleLimitTypeNames = { "OFF", "SCALE", "CLIP" };
+
+static auto entryRcRatesRoll  = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 255, 1 };
+static auto entryRcRatesPitch = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 255, 1 };
+static auto entryRcRatesYaw   = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_YAW], 1, 255, 1 };
+
+static auto entryRatesRoll    = OSD_UINT8_t { &data.rates.rates[FlightController::FD_ROLL], 1, 255, 1 };
+static auto entryRatesPitch   = OSD_UINT8_t { &data.rates.rates[FlightController::FD_PITCH], 1, 255, 1 };
+static auto entryRatesYaw     = OSD_UINT8_t { &data.rates.rates[FlightController::FD_YAW], 1, 255, 1 };
+
+static auto entryRcExpoRoll   = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_ROLL], 1, 100, 1 };
+static auto entryRcExpoPitch  = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_PITCH], 1, 100, 1 };
+static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_YAW], 1, 100, 1 };
+
+static auto entryThrottleMid  = OSD_UINT8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
+static auto entryThrottleExpo = OSD_UINT8_t { &data.rates.throttleExpo, 1, 100, 1 };
+static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, Cockpit::THROTTLE_LIMIT_TYPE_COUNT - 1, &throttleLimitTypeNames[0] };
+static auto entryThrottleLimitPercent = OSD_UINT8_t { &data.rates.throttleLimitPercent, 25, 100, 1 };
+// NOLINTEND(fuchsia-statically-constructed-objects)
+
+static const std::array<CMSX::OSD_Entry, 10> menuRatesEntries
+{{
+    { "-- RATE --",  OME_LABEL, nullptr, &rateProfileIndexString[0] },
+
+    { "ROLL RATE",   OME_UINT8,  nullptr, &entryRcRatesRoll },
+    { "PITCH RATE",  OME_UINT8,  nullptr, &entryRcRatesPitch },
+    { "YAW RATE",    OME_UINT8,  nullptr, &entryRcRatesYaw },
+#if false
+    { "ROLL SUPER",  OME_UINT8,  nullptr, &entryRatesRoll },
+    { "PITCH SUPER", OME_UINT8,  nullptr, &entryRatesPitch },
+    { "YAW SUPER",   OME_UINT8,  nullptr, &entryRatesYaw },
+
+    { "ROLL EXPO",   OME_UINT8,  nullptr, &entryRcExpoRoll },
+    { "PITCH EXPO",  OME_UINT8,  nullptr, &entryRcExpoPitch },
+    { "YAW EXPO",    OME_UINT8,  nullptr, &entryRcExpoYaw },
+#endif
+    { "THR MID",     OME_UINT8,  nullptr, &entryThrottleMid },
+    { "THR EXPO",    OME_UINT8,  nullptr, &entryThrottleExpo },
+
+    { "THR LM TYP",  OME_TABLE,  nullptr, &entryThrottleLimitType },
+    { "THR LM %",    OME_UINT8,  nullptr, &entryThrottleLimitPercent },
+
+    { "BACK", OME_BACK, nullptr, nullptr },
+    { nullptr, OME_END, nullptr, nullptr}
+}};
+
+CMSX::menu_t CMSX::menuRates = {
+    .onEnter = menuRatesOnEnter,
+    .onExit = menuRatesOnExit,
+    .onDisplayUpdate = nullptr,
+    .entries = &menuRatesEntries[0]
+};
+
+static const void* rateProfileIndexOnChange(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+{
+    (void)cmsx;
+    return nullptr;
+}
+
+static std::array<const char * const, 4> rateProfileNames { "R1", "R2", "R3", "R4" };
 
 //
 // IMU Filters
@@ -103,8 +189,85 @@ CMSX::menu_t CMSX::menuPID_Filters = {
 };
 
 //
-// PIDs
+// Simplified PID tuning
 //
+
+static const void* menuSimplifiedTuningOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+{
+    const FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
+    pidTuningMode = flightController.getPID_TuningMode();
+    data.pidSettings = flightController.getSimplifiedPID_Settings(); // NOLINT(cppcoreguidelines-pro-type-union-access)
+
+    return nullptr;
+}
+
+static const void* menuSimplifiedTuningOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+{
+    FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
+    flightController.setPID_TuningMode(static_cast<FlightController::pid_tuning_mode_e>(pidTuningMode));
+    flightController.setSimplifiedPID_Settings(data.pidSettings); // NOLINT(cppcoreguidelines-pro-type-union-access)
+
+    return nullptr;
+}
+
+static constexpr std::array<const char * const, 3> lookupTablePID_TuningModes { "STANDARD", "RP", "RPY" };
+static constexpr std::array<const char * const, 2> lookupTableOffOn { "OFF", "ON" };
+
+
+// NOLINTBEGIN(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
+static auto entryTablePID_TuningMode  = OSD_TABLE_t  { &pidTuningMode,  3 - 1, &lookupTablePID_TuningModes[0] };
+
+static auto entryD_gains        = OSD_UINT16_t { &data.pidSettings.d_gain, 0, 200, 1 };
+static auto entryPI_gains       = OSD_UINT16_t { &data.pidSettings.pi_gain, 0, 200, 1 };
+static auto entryK_gains        = OSD_UINT16_t { &data.pidSettings.k_gain, 0, 200, 1 };
+#if defined(USE_D_MAX)
+static auto entryDMax           = OSD_UINT16_t { &data.pidSettings.d_max_gain, 0, 200, 1 };
+#endif
+static auto entryI_gains        = OSD_UINT16_t { &data.pidSettings.i_gain, 0, 200, 1 };
+static auto entryRollPitchRatio = OSD_UINT16_t { &data.pidSettings.roll_pitch_ratio, 0, 200, 1 };
+static auto entryPitchPI_gains  = OSD_UINT16_t { &data.pidSettings.pitch_pi_gain, 0, 200, 1 };
+static auto entryMultiplier     = OSD_UINT16_t { &data.pidSettings.multiplier, 0, 200, 1 };
+// NOLINTEND(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
+
+#if defined(USE_D_MAX)
+static const std::array<CMSX::OSD_Entry, 14> menuSimplifiedTuningEntries
+#else
+static const std::array<CMSX::OSD_Entry, 13> menuSimplifiedTuningEntries
+#endif
+{{
+    { "-- SIMPLIFIED TUNE --", OME_LABEL, nullptr, nullptr},
+    { "PID TUNING",        OME_TABLE,  nullptr, &entryTablePID_TuningMode },
+
+    { "-- BASIC --",       OME_LABEL,  nullptr, nullptr},
+    { "D GAINS",           OME_UINT16, nullptr, &entryD_gains },
+    { "P&I GAINS",         OME_UINT16, nullptr, &entryPI_gains },
+    { "FF GAINS",          OME_UINT16, nullptr, &entryK_gains },
+
+    { "-- EXPERT --",      OME_LABEL,  nullptr, nullptr},
+#if defined(USE_D_MAX)
+    { "D MAX",             OME_UINT16, nullptr, &entryDMax },
+#endif
+    { "I GAINS",           OME_UINT16, nullptr, &entryI_gains },
+
+    { "PITCH:ROLL D",      OME_UINT16, nullptr, &entryRollPitchRatio },
+    { "PITCH:ROLL P,I&FF", OME_UINT16, nullptr, &entryPitchPI_gains },
+    { "MASTER MULT",       OME_UINT16, nullptr, &entryMultiplier },
+
+    { "BACK", OME_BACK, nullptr, nullptr },
+    { nullptr, OME_END, nullptr, nullptr}
+}};
+
+CMSX::menu_t CMSX::menuSimplifiedPID_Tuning = {
+    .onEnter = menuSimplifiedTuningOnEnter,
+    .onExit = menuSimplifiedTuningOnExit,
+    .onDisplayUpdate = nullptr,
+    .entries = &menuSimplifiedTuningEntries[0]
+};
+
+//
+// PID Tuning
+//
+
 static std::array<uint8_t, 3> pidProfileIndexString = { 'P', '1', '\0' };
 
 static const void* menuPID_TuningOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
@@ -188,110 +351,30 @@ static const void* pidProfileIndexOnChange(CMSX& cmsx, [[maybe_unused]] DisplayP
 static std::array<const char * const, 4> pidProfileNames { "P1", "P2", "P3", "P4" };
 
 //
-// Rates
-//
-static std::array<uint8_t, 3> rateProfileIndexString = { 'R', '1', '\0' };
-
-static const void* menuRatesOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
-{
-    rateProfileIndexString[1] = '1' + rateProfileIndex;
-    data.rates = cmsx.getCMS().getCockpit().getRates();
-    return nullptr;
-}
-
-static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
-{
-    cmsx.getCMS().getCockpit().setRates(data.rates);
-    return nullptr;
-}
-
-// NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static std::array<const char * const, Cockpit::THROTTLE_LIMIT_TYPE_COUNT> throttleLimitTypeNames = { "OFF", "SCALE", "CLIP" };
-
-static auto entryRcRatesRoll  = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 255, 1 };
-static auto entryRcRatesPitch = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 255, 1 };
-static auto entryRcRatesYaw   = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_YAW], 1, 255, 1 };
-
-static auto entryRatesRoll    = OSD_UINT8_t { &data.rates.rates[FlightController::FD_ROLL], 1, 255, 1 };
-static auto entryRatesPitch   = OSD_UINT8_t { &data.rates.rates[FlightController::FD_PITCH], 1, 255, 1 };
-static auto entryRatesYaw     = OSD_UINT8_t { &data.rates.rates[FlightController::FD_YAW], 1, 255, 1 };
-
-static auto entryRcExpoRoll   = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_ROLL], 1, 100, 1 };
-static auto entryRcExpoPitch  = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_PITCH], 1, 100, 1 };
-static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_YAW], 1, 100, 1 };
-
-static auto entryThrottleMid  = OSD_UINT8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
-static auto entryThrottleExpo = OSD_UINT8_t { &data.rates.throttleExpo, 1, 100, 1 };
-static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, Cockpit::THROTTLE_LIMIT_TYPE_COUNT - 1, &throttleLimitTypeNames[0] };
-static auto entryThrottleLimitPercent = OSD_UINT8_t { &data.rates.throttleLimitPercent, 25, 100, 1 };
-// NOLINTEND(fuchsia-statically-constructed-objects)
-
-static const std::array<CMSX::OSD_Entry, 10> menuRatesEntries
-{{
-    { "-- RATE --",  OME_LABEL, nullptr, &rateProfileIndexString[0] },
-
-    { "ROLL RATE",   OME_UINT8,  nullptr, &entryRcRatesRoll },
-    { "PITCH RATE",  OME_UINT8,  nullptr, &entryRcRatesPitch },
-    { "YAW RATE",    OME_UINT8,  nullptr, &entryRcRatesYaw },
-#if false
-    { "ROLL SUPER",  OME_UINT8,  nullptr, &entryRatesRoll },
-    { "PITCH SUPER", OME_UINT8,  nullptr, &entryRatesPitch },
-    { "YAW SUPER",   OME_UINT8,  nullptr, &entryRatesYaw },
-
-    { "ROLL EXPO",   OME_UINT8,  nullptr, &entryRcExpoRoll },
-    { "PITCH EXPO",  OME_UINT8,  nullptr, &entryRcExpoPitch },
-    { "YAW EXPO",    OME_UINT8,  nullptr, &entryRcExpoYaw },
-#endif
-    { "THR MID",     OME_UINT8,  nullptr, &entryThrottleMid },
-    { "THR EXPO",    OME_UINT8,  nullptr, &entryThrottleExpo },
-
-    { "THR LM TYP",  OME_TABLE,  nullptr, &entryThrottleLimitType },
-    { "THR LM %",    OME_UINT8,  nullptr, &entryThrottleLimitPercent },
-
-    { "BACK", OME_BACK, nullptr, nullptr },
-    { nullptr, OME_END, nullptr, nullptr}
-}};
-
-CMSX::menu_t CMSX::menuRates = {
-    .onEnter = menuRatesOnEnter,
-    .onExit = menuRatesOnExit,
-    .onDisplayUpdate = nullptr,
-    .entries = &menuRatesEntries[0]
-};
-
-static const void* rateProfileIndexOnChange(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
-{
-    (void)cmsx;
-    return nullptr;
-}
-
-static std::array<const char * const, 4> rateProfileNames { "R1", "R2", "R3", "R4" };
-
-//
 // Profile Menu
 //
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryPID_Profile = OSD_TABLE_t { nullptr, 4-1, &pidProfileNames[0] };
-static auto entryRateProfile = OSD_TABLE_t { nullptr, 4-1, &rateProfileNames[0] };
+static auto entryRateProfile = OSD_TABLE_t { &rateProfileIndex, 4-1, &rateProfileNames[0] };
+static auto entryPID_Profile = OSD_TABLE_t { &pidProfileIndex, 4-1, &pidProfileNames[0] };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 10> menuProfileEntries
 {{
     {"-- PROFILES --",  OME_LABEL, nullptr, nullptr},
 
-    {"PID PROFILE", OME_TABLE, &pidProfileIndexOnChange, &entryPID_Profile},
-    {"PID",         OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID_Tuning},
+    {"RATE PROFILE",    OME_TABLE, &pidProfileIndexOnChange, &entryRateProfile},
+    {"RATES",           OME_SUBMENU, &CMSX::menuChange, &CMSX::menuRates},
+
+    {"PID PROFILE",     OME_TABLE, &pidProfileIndexOnChange, &entryPID_Profile},
+    {"PID",             OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID_Tuning},
     {"SIMPLIFIED PIDS", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuSimplifiedPID_Tuning },
-    {"PID FILTERS", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID_Filters},
+    {"PID FILTERS",     OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID_Filters},
     
-    {"RATE PROFILE", OME_TABLE, &rateProfileIndexOnChange, &entryRateProfile},
-    {"RATES",       OME_SUBMENU, &CMSX::menuChange, &CMSX::menuRates},
+    {"IMU FILTERS",     OME_SUBMENU, &CMSX::menuChange, &CMSX::menuIMU_Filters},
 
-    {"IMU FILTERS", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuIMU_Filters},
-
-    {"BACK",        OME_BACK, nullptr, nullptr},
-    {nullptr,       OME_END, nullptr, nullptr}
+    {"BACK",            OME_BACK, nullptr, nullptr},
+    {nullptr,           OME_END, nullptr, nullptr}
 }};
 
 static const void* menuProfileOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)

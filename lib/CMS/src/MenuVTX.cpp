@@ -28,10 +28,10 @@ static const void* menuConfirm(CMSX& cmsx, DisplayPortBase& displayPort, const C
 
 static const std::array<CMSX::OSD_Entry, 4> menuVTX_confirmEntries
 {{
-    { "CONFIRM", OME_LABEL,    nullptr,         nullptr },
-    { "YES",     OME_OSD_EXIT, menuConfirm,     CMSX::MENU_EXIT },
-    { "NO",      OME_BACK,     nullptr,         nullptr },
-    { nullptr,   OME_END,      nullptr,         nullptr }
+    { "CONFIRM", OME_LABEL, nullptr,        nullptr },
+    { "YES",     OME_EXIT,  menuConfirm,    CMSX::MENU_EXIT },
+    { "NO",      OME_BACK,  nullptr,        nullptr },
+    { nullptr,   OME_END,   nullptr,        nullptr }
 }};
 
 static CMSX::menu_t menuVTX_confirm = {
@@ -82,12 +82,12 @@ static const void* powerChange([[maybe_unused]] CMSX& cmsx, [[maybe_unused]] Dis
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryPitMode     = OSD_TABLE_t { &data.pitMode, 3 - 1, &pitModeNames[0] };
-static auto entryBand        = OSD_TABLE_t { &data.band, 6-1, &bandNames[0] };
-static auto entryChannel     = OSD_TABLE_t { &data.channel, 9-1, &channelNames[0] };
+static auto entryPitMode     = OSD_TABLE_t  { &data.pitMode, 3 - 1, &pitModeNames[0] };
+static auto entryBand        = OSD_TABLE_t  { &data.band, 6-1, &bandNames[0] };
+static auto entryChannel     = OSD_TABLE_t  { &data.channel, 9-1, &channelNames[0] };
 static auto entryFrequency   = OSD_UINT16_t { &data.frequency, 5600, 5900, 0 };
-static auto entryPower       = OSD_TABLE_t {}; // set up dynamically in menuVTX_OnEnter
-static auto entryTemperature = OSD_INT16_t { &data.temperature, -100, 300, 0 };
+static auto entryPower       = OSD_TABLE_t  {}; // set up dynamically in menuVTX_OnEnter
+static auto entryTemperature = OSD_INT16_t  { &data.temperature, -100, 300, 0 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static std::array<char, 31> statusString = { "- -- ---- ----" };
