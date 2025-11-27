@@ -171,13 +171,15 @@ H pidAtMinThrottle:1
 H anti_gravity_threshold:350
 H anti_gravity_gain:1000
 */
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_type", "%d",                 _flightController.getFiltersConfig().dterm_lpf1_type);
         BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_static_hz", "%d",            _flightController.getFiltersConfig().dterm_lpf1_hz);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_type", "%d",                 _flightController.getFiltersConfig().dterm_lpf2_type);
         BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_static_hz", "%d",            _flightController.getFiltersConfig().dterm_lpf2_hz);
+#if defined(USE_DTERM_FILTERS_EXTENDED)
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_type", "%d",                 _flightController.getFiltersConfig().dterm_lpf1_type);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_type", "%d",                 _flightController.getFiltersConfig().dterm_lpf2_type);
         //BLACKBOX_PRINT_HEADER_LINE("yaw_lowpass_hz", "%d",                  currentPidProfile.yaw_lowpass_hz);
         BLACKBOX_PRINT_HEADER_LINE("dterm_notch_hz", "%d",                  _flightController.getFiltersConfig().dterm_notch_hz);
         BLACKBOX_PRINT_HEADER_LINE("dterm_notch_cutoff", "%d",              _flightController.getFiltersConfig().dterm_notch_cutoff);
+#endif
         //BLACKBOX_PRINT_HEADER_LINE("iterm_windup", "%d",                    currentPidProfile.itermWindup);
         //BLACKBOX_PRINT_HEADER_LINE("pid_at_min_throttle", "%d",             currentPidProfile.pidAtMinThrottle);
 

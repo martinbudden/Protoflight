@@ -271,24 +271,46 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU16(fcFilters.yaw_lpf_hz);
         dst.writeU16(imuFiltersConfig.gyro_notch1_hz);
         dst.writeU16(imuFiltersConfig.gyro_notch1_cutoff);
+#if defined(USE_DTERM_FILTERS_EXTENDED)
         dst.writeU16(fcFilters.dterm_notch_hz);
         dst.writeU16(fcFilters.dterm_notch_cutoff);
+#else
+        dst.writeU16(0);
+        dst.writeU16(0);
+#endif
         dst.writeU16(imuFiltersConfig.gyro_notch2_hz);
         dst.writeU16(imuFiltersConfig.gyro_notch2_cutoff);
+#if defined(USE_DTERM_FILTERS_EXTENDED)
         dst.writeU8(fcFilters.dterm_lpf1_type);
+#else
+        dst.writeU8(0);
+#endif
         dst.writeU8(0); // gyro_hardware_lpf set in driver
         dst.writeU8(0); // was gyro_32khz_hardware_lpf
         dst.writeU16(imuFiltersConfig.gyro_lpf1_hz);
         dst.writeU16(imuFiltersConfig.gyro_lpf2_hz);
         dst.writeU8(imuFiltersConfig.gyro_lpf1_type);
         dst.writeU8(imuFiltersConfig.gyro_lpf2_type);
+#if defined(USE_DTERM_FILTERS_EXTENDED)
         dst.writeU16(fcFilters.dterm_lpf2_hz);
+#else
+        dst.writeU16(0);
+#endif
         // Added in MSP API 1.41
+#if defined(USE_DTERM_FILTERS_EXTENDED)
         dst.writeU8(fcFilters.dterm_lpf2_type);
+#else
+        dst.writeU8(0);
+#endif
         dst.writeU16(imuFiltersConfig.gyro_dynamic_lpf1_min_hz);
         dst.writeU16(imuFiltersConfig.gyro_dynamic_lpf1_max_hz);
+#if defined(USE_DTERM_FILTERS_EXTENDED)
         dst.writeU16(fcFilters.dterm_dynamic_lpf1_min_hz);
         dst.writeU16(fcFilters.dterm_dynamic_lpf1_max_hz);
+#else
+        dst.writeU16(0);
+        dst.writeU16(0);
+#endif
         // Added in MSP API 1.42
         dst.writeU8(0);  // DEPRECATED 1.43: dyn_notch_range
         dst.writeU8(0);  // DEPRECATED 1.44: dyn_notch_width_percent

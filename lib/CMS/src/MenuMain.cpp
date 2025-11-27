@@ -2,11 +2,37 @@
 #include "CMS_Types.h"
 
 
-static const void* menuSetupPopupOnDisplayUpdate(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::OSD_Entry* selected)
+CMSX::menu_t CMSX::menuBlackbox {};
+CMSX::menu_t CMSX::menuPower {};
+
+static const std::array<CMSX::OSD_Entry, 6> menuFeaturesEntries
+{{
+    {"--- FEATURES ---", OME_LABEL, nullptr, nullptr},
+
+    {"BLACKBOX", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuBlackbox},
+    {"POWER",    OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPower},
+    {"FAILSAFE", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuFailsafe},
+
+    {"BACK",  OME_BACK, nullptr, nullptr},
+    {nullptr, OME_END, nullptr, nullptr}
+}};
+
+CMSX::menu_t CMSX::menuFeatures = {
+    .onEnter = nullptr,
+    .onExit = nullptr,
+    .onDisplayUpdate = nullptr,
+    .entries = &menuFeaturesEntries[0],
+};
+
+static const void* saveExitMenu(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+{
+    CMSX::menuChange(cmsx, displayPort, cmsx.getSaveExitMenu());
+    return nullptr;
+}
+
+static const void* menuSetupPopupOnDisplayUpdate(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* selected)
 {
     (void)cmsx;
-    (void)displayPort;
-    (void)selected;
 
     return nullptr;
 }
@@ -19,30 +45,6 @@ CMSX::menu_t CMSX::menuSetupPopup = {
     .onDisplayUpdate = &menuSetupPopupOnDisplayUpdate,
     .entries = &menuSetupPopupEntries[0],
 };
-
-static const std::array<CMSX::OSD_Entry, 6> menuFeaturesEntries
-{{
-    {"--- FEATURES ---", OME_LABEL, nullptr, nullptr},
-
-    {"BLACKBOX", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuBlackbox},
-    {"POWER",    OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPower},
-    {"FAILSAFE", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuFailsafe},
-    {"BACK",     OME_BACK, nullptr, nullptr},
-    {nullptr, OME_END, nullptr, nullptr}
-}};
-
-CMSX::menu_t CMSX::menuFeatures = {
-    .onEnter = nullptr,
-    .onExit = nullptr,
-    .onDisplayUpdate = nullptr,
-    .entries = &menuFeaturesEntries[0],
-};
-
-static const void* saveExitMenu(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
-{
-    CMSX::menuChange(cmsx, displayPort, cmsx.getSaveExitMenu());
-    return nullptr;
-}
 
 static const void* mainMenuOnEnter(CMSX& cmsx, DisplayPortBase& displayPort)
 {
@@ -78,6 +80,3 @@ CMSX::menu_t CMSX::menuMain {
     .onDisplayUpdate = nullptr,
     .entries = &menuMainEntries[0]
 };
-
-CMSX::menu_t CMSX::menuBlackbox {};
-CMSX::menu_t CMSX::menuPower {};

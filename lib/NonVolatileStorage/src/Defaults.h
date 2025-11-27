@@ -22,20 +22,6 @@ namespace DEFAULTS {
 
 static constexpr MotorMixerBase::type_e motorMixerType = MotorMixerBase::QUAD_X;
 
-/*!
-Default PIDs.
-Same values as used by Betaflight.
-*/
-static constexpr FlightController::pidf_uint16_array_t flightControllerPIDs = {{
-    { 45, 80, 30, 120, 0 }, // roll rate
-    { 47, 84, 34, 125, 0 }, // pitch rate
-    { 45, 80,  0, 120, 0 }, // yaw rate
-    { 50, 75, 75,  50, 0 }, // roll angle
-    { 50, 75, 75,  50, 0 }, // pitch angle
-    { 50, 75, 75,  50, 0 }, // roll sin angle
-    { 50, 75, 75,  50, 0 }, // pitch sin angle
-}};
-
 static constexpr DynamicIdleController::config_t dynamicIdleControllerConfig = {
     .dyn_idle_min_rpm_100 = 0,
     .dyn_idle_p_gain = 50,
@@ -52,17 +38,32 @@ static constexpr MotorMixerBase::motorConfig_t motorConfig = {
     .motorPoleCount = 14,
 };
 
+static const FlightController::pidf_uint16_array_t& flightControllerPIDs = FlightController::DefaultPIDs;
+
+static constexpr FlightController::simplified_pid_settings_t flightControllerSimplifiedPID_settings = {
+    .multiplier = 100,
+    .roll_pitch_ratio = 100,
+    .i_gain = 100,
+    .d_gain = 100,
+    .pi_gain = 100,
+    .pitch_pi_gain = 100,
+    .d_max_gain = 100,
+    .k_gain = 100,
+};
+
 static constexpr FlightController::filters_config_t flightControllerFiltersConfig = {
     .dterm_lpf1_hz = 75,
     .dterm_lpf2_hz = 150,
+#if defined(USE_DTERM_FILTERS_EXTENDED)
     .dterm_notch_hz = 0,
     .dterm_notch_cutoff = 160,
     .dterm_dynamic_lpf1_min_hz = 75,
     .dterm_dynamic_lpf1_max_hz = 150,
-    .yaw_lpf_hz = 100,
-    .output_lpf_hz = 500,
     .dterm_lpf1_type = FlightController::filters_config_t::PT1,
     .dterm_lpf2_type = FlightController::filters_config_t::PT1,
+#endif
+    .yaw_lpf_hz = 100,
+    .output_lpf_hz = 500,
     .rc_smoothing_feedforward_cutoff = 0,
 };
 

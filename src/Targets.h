@@ -3,6 +3,13 @@
 /*!
 Targets
 */
+#if !defined(TARGET_AFROFLIGHT_F301CB)
+
+#define USE_SIN_ANGLE_PIDS
+#define USE_GPS
+#define USE_BAROMETER
+
+#endif
 
 
 #if defined(TARGET_M5STACK_STAMPS3_FLY)
@@ -73,15 +80,15 @@ Targets
     //#define USE_BLACKBOX
     //#define USE_BLACKBOX_TEST
     //#define USE_MSP
-    #define USE_DASHBOARD
+    //#define USE_DASHBOARD
     //#define USE_OSD
-    //#define USE_CMS
+    #define USE_CMS
     #define USE_VTX
 
     #define USE_BACKCHANNEL
 
 
-    //#define USE_D_MAX
+    #define USE_D_MAX
     //#define USE_ITERM_RELAX
     //#define USE_YAW_SPIN_RECOVERY
     //#define USE_CRASH_RECOVERY
@@ -335,7 +342,9 @@ Targets
     #define USE_MOTOR_MIXER_QUAD_X_PWM
     #define MOTOR_PINS          stm32_motor_pins_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}}
 
-    //#define USE_MSP
+    #define USE_MSP
+    //#define USE_OSD
+    //#define USE_CMS
     // LED0 PB4, LED1 PB3
 
 #elif defined(TARGET_SEED_XIAO_NRF52840_SENSE)

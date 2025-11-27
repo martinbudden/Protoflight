@@ -133,6 +133,7 @@ public:
 
     const Autopilot& getAutopilot() const { return _autopilot; }
     FlightController& getFlightController() { return _flightController; }
+    NonVolatileStorage& getNonVolatileStorage() { return _nvs; }
 
     uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
     void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex);

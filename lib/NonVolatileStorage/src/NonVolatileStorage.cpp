@@ -31,7 +31,10 @@ constexpr uint16_t GyroCalibrationStateKey = 0x0004;
 
 static constexpr std::array<uint16_t, FlightController::PID_COUNT> PID_Keys = {
     // note these must go up in jumps of 4, since one key is used for each profile
-    0x0100, 0x0104, 0x0108, 0x010C, 0x0110, 0x0114, 0x011C
+    0x0100, 0x0104, 0x0108, 0x010C, 0x0110,
+#if defined(USE_SIN_ANGLE_PIDS)
+    0x0114, 0x011C
+#endif
 };
 constexpr uint16_t MotorMixerTypeKey = 0x0005;
 
@@ -52,8 +55,9 @@ constexpr uint16_t FlightControllerDMaxConfigKey = 0x0414;
 constexpr uint16_t FlightControllerITermRelaxConfigKey = 0x0418;
 constexpr uint16_t FlightControllerYawSpinRecoveryConfigKey = 0x041C;
 constexpr uint16_t FlightControllerCrashRecoveryConfigKey = 0x0420;
-constexpr uint16_t OSD_ConfigKey = 0x0424;
-constexpr uint16_t OSD_ElementsConfigKey = 0x0428;
+constexpr uint16_t FlightControllerSimplifiedPID_settingsKey = 0x0424;
+constexpr uint16_t OSD_ConfigKey = 0x0428;
+constexpr uint16_t OSD_ElementsConfigKey = 0x042C;
 
 constexpr uint16_t RatesKey = 0x0500; // note jump of 4 to allow storage of 4 rates profiles
 
@@ -632,6 +636,23 @@ void NonVolatileStorage::resetPID(uint8_t pidIndex, uint8_t pidProfileIndex)
     (void)pidProfileIndex; //!!TODO: check if this is needed
 }
 
+FlightController::simplified_pid_settings_t NonVolatileStorage::loadSimplifiedPID_settings(uint8_t pidProfileIndex) const
+{
+    assert(pidProfileIndex < PID_PROFILE_COUNT);
+    {FlightController::simplified_pid_settings_t settings {};
+    if (pidProfileIndex < PID_PROFILE_COUNT && loadItem(FlightControllerSimplifiedPID_settingsKey + pidProfileIndex, &settings, sizeof(settings))) { // cppcheck-suppress knownConditionTrueFalse
+        return settings;
+    }}
+    return DEFAULTS::flightControllerSimplifiedPID_settings;
+}
+
+int32_t NonVolatileStorage::storeSimplifiedPID_settings(const FlightController::simplified_pid_settings_t& settings, uint8_t pidProfileIndex)
+{
+    assert(pidProfileIndex < PID_PROFILE_COUNT);
+    const uint16_t key = FlightControllerSimplifiedPID_settingsKey + pidProfileIndex;
+    return storeItem(key, &settings, sizeof(settings), &DEFAULTS::flightControllerSimplifiedPID_settings);
+}
+
 
 NonVolatileStorage::calibration_state_e NonVolatileStorage::loadAccCalibrationState() const
 {
@@ -797,6 +818,8 @@ void Cockpit::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex)
 void CMSX::saveConfigAndNotify()
 {
     Cockpit& cockpit = _cms.getCockpit();
-    _nvs.storeAll(_imuFilters, cockpit.getFlightController(), cockpit, cockpit.getAutopilot(), cockpit.getCurrentPidProfileIndex(), cockpit.getCurrentRateProfileIndex());
+    NonVolatileStorage& nvs = cockpit.getNonVolatileStorage();
+
+    nvs.storeAll(_imuFilters, cockpit.getFlightController(), cockpit, cockpit.getAutopilot(), cockpit.getCurrentPidProfileIndex(), cockpit.getCurrentRateProfileIndex());
 }
 #endif

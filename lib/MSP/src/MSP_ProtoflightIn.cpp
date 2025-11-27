@@ -217,15 +217,24 @@ MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBuf& 
         if (src.bytesRemaining() >= 8) {
             imuFiltersConfig.gyro_notch1_hz = src.readU16();
             imuFiltersConfig.gyro_notch1_cutoff = src.readU16();
+#if defined(USE_DTERM_FILTERS_EXTENDED)
             fcFilters.dterm_notch_hz = src.readU16();
             fcFilters.dterm_notch_cutoff = src.readU16();
+#else
+            src.readU16();
+            src.readU16();
+#endif
         }
         if (src.bytesRemaining() >= 4) {
             imuFiltersConfig.gyro_notch2_hz = src.readU16();
             imuFiltersConfig.gyro_notch2_cutoff = src.readU16();
         }
         if (src.bytesRemaining() >= 1) {
+#if defined(USE_DTERM_FILTERS_EXTENDED)
             fcFilters.dterm_lpf1_type = src.readU8();
+#else
+            src.readU8();
+#endif
         }
         if (src.bytesRemaining() >= 10) {
             src.readU8(); // ignored gyro_hardware_lpf set in driver
@@ -239,11 +248,20 @@ MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBuf& 
 
         if (src.bytesRemaining() >= 9) {
             // Added in MSP API 1.41
+#if defined(USE_DTERM_FILTERS_EXTENDED)
             fcFilters.dterm_lpf2_type = src.readU8();
+#else
+            src.readU8();
+#endif
             imuFiltersConfig.gyro_dynamic_lpf1_min_hz = src.readU16();
             imuFiltersConfig.gyro_dynamic_lpf1_max_hz = src.readU16();
+#if defined(USE_DTERM_FILTERS_EXTENDED)
             fcFilters.dterm_dynamic_lpf1_min_hz = src.readU16();
             fcFilters.dterm_dynamic_lpf1_max_hz = src.readU16();
+#else
+            src.readU16();
+            src.readU16();
+#endif
         }
 
         if (src.bytesRemaining() >= 8) {

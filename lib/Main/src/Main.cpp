@@ -82,7 +82,7 @@ void Main::setup()
     [[maybe_unused]] VTX_Base* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
     [[maybe_unused]] OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
     [[maybe_unused]] MSP_SerialBase* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs, blackbox, vtx, osd);
-    [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, ahrs.getIMU(), nvs, osd, vtx);
+    [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, imuSensor, osd, vtx);
 
 
     //

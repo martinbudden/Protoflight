@@ -70,6 +70,9 @@ void Main::loadPID_ProfileFromNonVolatileStorage(FlightController& flightControl
 #if defined(USE_CRASH_RECOVERY)
     flightController.setCrashRecoveryConfig(nvs.loadFlightControllerCrashRecoveryConfig(pidProfile));
 #endif
+
+    flightController.setSimplifiedPID_Settings(nvs.loadSimplifiedPID_settings(pidProfile));
+
     for (uint8_t ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
         const VehicleControllerBase::PIDF_uint16_t pid = nvs.loadPID(ii, pidProfile);
         flightController.setPID_Constants(static_cast<FlightController::pid_index_e>(ii), pid);

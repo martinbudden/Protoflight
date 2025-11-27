@@ -46,7 +46,7 @@ static const std::array<CMSX::OSD_Entry, 7> menuCalibrateEntries
     { "--- CALIBRATE ---", OME_LABEL, nullptr, nullptr },
     { "GYRO",   OME_FUNCTION_CALL | OME_DYNAMIC, CMSX::menuCalibrateGyro, &CMSX::GyroCalibrationStatus[0] },
     { "ACC",    OME_FUNCTION_CALL | OME_DYNAMIC, CMSX::menuCalibrateAcc, &CMSX::AccCalibrationStatus[0] },
-#if defined(USE_BARO)
+#if defined(USE_BAROMETER)
     { "BARO",   OME_FUNCTION_CALL | OME_DYNAMIC, menuCalibrateBaro, &CMSX::baroCalibrationStatus },
 #endif
     { "BACK", OME_BACK, nullptr, nullptr },

@@ -175,7 +175,9 @@ void FlightController::updateSetpoints(const controls_t& controls)
     _rxM.setpointHPs[ROLL_RATE_DPS] = std::fabs(controls.rollStickDPS - _rxM.setpointLPs[ROLL_RATE_DPS]);
 #endif
     _sh.PIDS[ROLL_ANGLE_DEGREES].setSetpoint(controls.rollStickDegrees);
+#if defined(USE_SIN_ANGLE_PIDS)
     _sh.PIDS[ROLL_SIN_ANGLE].setSetpoint(sinf(controls.rollStickDegrees * degreesToRadians));
+#endif
 
     //
     // Pitch axis
@@ -194,7 +196,9 @@ void FlightController::updateSetpoints(const controls_t& controls)
     _rxM.setpointHPs[PITCH_RATE_DPS] = std::fabs(controls.pitchStickDPS - _rxM.setpointLPs[PITCH_RATE_DPS]);
 #endif
     _sh.PIDS[PITCH_ANGLE_DEGREES].setSetpoint(-controls.pitchStickDegrees);
+#if defined(USE_SIN_ANGLE_PIDS)
     _sh.PIDS[ROLL_SIN_ANGLE].setSetpoint(sinf(-controls.pitchStickDegrees * degreesToRadians));
+#endif
 
     //
     // Yaw axis

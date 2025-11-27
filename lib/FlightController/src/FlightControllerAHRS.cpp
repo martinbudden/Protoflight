@@ -123,10 +123,13 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
 
         _ahM.amcs.rollSinAngle = rollSinAngleNED(orientation);
         float rollRateSetpointDPS;
+#if defined(USE_SIN_ANGLE_PIDS)
         if (_useQuaternionSpaceForAngleMode) {
             const float rollSinAngleDelta = _sh.dTermFilters1[ROLL_SIN_ANGLE].filter(_ahM.amcs.rollSinAngle - _sh.PIDS[ROLL_SIN_ANGLE].getPreviousMeasurement());
             rollRateSetpointDPS = _sh.PIDS[ROLL_SIN_ANGLE].updateDelta(_ahM.amcs.rollSinAngle, rollSinAngleDelta, deltaT);
-        } else {
+        } else
+#endif
+        {
             const float rollAngleDegrees = rollAngleDegreesNED(orientation);
             const float rollAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(rollAngleDegrees - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
             rollRateSetpointDPS = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(rollAngleDegrees, rollAngleDelta, deltaT) * _maxRollRateDPS;
@@ -139,10 +142,13 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
 
         _ahM.amcs.pitchSinAngle = pitchSinAngleNED(orientation);
         float pitchRateSetpointDPS;
+#if defined(USE_SIN_ANGLE_PIDS)
         if (_useQuaternionSpaceForAngleMode) {
             const float pitchSinAngleDelta = _sh.dTermFilters1[PITCH_SIN_ANGLE].filter(_ahM.amcs.pitchSinAngle - _sh.PIDS[PITCH_SIN_ANGLE].getPreviousMeasurement());
             pitchRateSetpointDPS = _sh.PIDS[PITCH_SIN_ANGLE].updateDelta(_ahM.amcs.pitchSinAngle, pitchSinAngleDelta, deltaT);
-        } else {
+        } else
+#endif
+        {
             const float pitchAngleDegrees = pitchAngleDegreesNED(orientation);
             const float pitchAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(pitchAngleDegrees - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
             pitchRateSetpointDPS = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(pitchAngleDegrees, pitchAngleDelta, deltaT) * _maxPitchRateDPS;

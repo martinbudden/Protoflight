@@ -60,14 +60,14 @@ public:
     void init();
     static void toHexChars(char* charPtr, uint16_t value);
 
-    uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
-    void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) { _currentPidProfileIndex = currentPidProfileIndex; }
-
-    uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
-    void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex) { _currentRateProfileIndex = currentRateProfileIndex; }
-
     int32_t clear();
     int32_t remove(uint16_t key);
+
+    bool loadItem(uint16_t key, void* item, size_t length) const;
+    bool loadItem(uint16_t key, uint8_t pidProfileIndex, void* item, size_t length) const;
+
+    int32_t storeItem(uint16_t key, const void* item, size_t length, const void* defaults);
+    int32_t storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults);
 
     int32_t storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile);
 
@@ -77,22 +77,16 @@ public:
     MotorMixerBase::type_e loadMotorMixerType() const;
     int32_t storeMotorMixerType(MotorMixerBase::type_e motorMixerType);
 
+    uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
+    void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) { _currentPidProfileIndex = currentPidProfileIndex; }
+    uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
+    void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex) { _currentRateProfileIndex = currentRateProfileIndex; }
+
     uint8_t loadPidProfileIndex() const;
     int32_t storePidProfileIndex(uint8_t pidProfileIndex);
 
     uint8_t loadRateProfileIndex() const;
     int32_t storeRateProfileIndex(uint8_t rateProfileIndex);
-
-    VehicleControllerBase::PIDF_uint16_t loadPID(uint8_t pidIndex, uint8_t pidProfileIndex) const;
-    int32_t storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex, uint8_t pidProfileIndex);
-    int32_t storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex) { return storePID(pid, pidIndex, _currentPidProfileIndex); }
-    void resetPID(uint8_t pidIndex, uint8_t pidProfileIndex);
-    void resetPID(uint8_t pidIndex) { resetPID(pidIndex, _currentPidProfileIndex); }
-
-    bool loadItem(uint16_t key, void* item, size_t length) const;
-    bool loadItem(uint16_t key, uint8_t pidProfileIndex, void* item, size_t length) const;
-    int32_t storeItem(uint16_t key, const void* item, size_t length, const void* defaults);
-    int32_t storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults);
 
     calibration_state_e loadAccCalibrationState() const;
     int32_t storeAccCalibrationState(calibration_state_e calibrationState);
@@ -111,6 +105,24 @@ public:
 
     MotorMixerBase::motorConfig_t loadMotorConfig() const;
     int32_t storeMotorConfig(const MotorMixerBase::motorConfig_t& config);
+
+    IMU_Filters::config_t loadIMU_FiltersConfig() const;
+    int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
+
+    Cockpit::failsafe_config_t loadFailsafeConfig();
+    int32_t storeFailsafeConfig(const Cockpit::failsafe_config_t& config);
+
+    Cockpit::rates_t loadRates(uint8_t rateProfileIndex) const;
+    int32_t storeRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex);
+
+    VehicleControllerBase::PIDF_uint16_t loadPID(uint8_t pidIndex, uint8_t pidProfileIndex) const;
+    int32_t storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex, uint8_t pidProfileIndex);
+    int32_t storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex) { return storePID(pid, pidIndex, _currentPidProfileIndex); }
+    void resetPID(uint8_t pidIndex, uint8_t pidProfileIndex);
+    void resetPID(uint8_t pidIndex) { resetPID(pidIndex, _currentPidProfileIndex); }
+
+    FlightController::simplified_pid_settings_t loadSimplifiedPID_settings(uint8_t pidProfileIndex) const;
+    int32_t storeSimplifiedPID_settings(const FlightController::simplified_pid_settings_t& settings, uint8_t pidProfileIndex);
 
     FlightController::filters_config_t loadFlightControllerFiltersConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerFiltersConfig(const FlightController::filters_config_t& config, uint8_t pidProfileIndex);
@@ -166,14 +178,6 @@ public:
     Autopilot::altitude_hold_config_t loadAltitudeHoldConfig() const;
     int32_t storeAltitudeHoldConfig(const Autopilot::altitude_hold_config_t& config);
 #endif
-    IMU_Filters::config_t loadIMU_FiltersConfig() const;
-    int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
-
-    Cockpit::failsafe_config_t loadFailsafeConfig();
-    int32_t storeFailsafeConfig(const Cockpit::failsafe_config_t& config);
-
-    Cockpit::rates_t loadRates(uint8_t rateProfileIndex) const;
-    int32_t storeRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex);
 
 private:
 #if defined(USE_FLASH_KLV)

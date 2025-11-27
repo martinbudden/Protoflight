@@ -139,7 +139,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     mainState.amperageLatest = static_cast<uint16_t>(0.67F * 10.0F);
 
 #if defined(USE_BAROMETER)
-    mainState.baroAlt = baro.altitude;
+    //mainState.baroAlt = baro.altitude;
 #endif
 
 #if defined(USE_RANGEFINDER)

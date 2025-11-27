@@ -65,9 +65,13 @@ public:
         YAW_RATE_DPS = 2,
         ROLL_ANGLE_DEGREES = 3,
         PITCH_ANGLE_DEGREES = 4,
+#if defined(USE_SIN_ANGLE_PIDS)
         ROLL_SIN_ANGLE = 5,
         PITCH_SIN_ANGLE = 6,
         PID_COUNT = 7,
+#else
+        PID_COUNT = 5,
+#endif
         PID_BEGIN = 0
     };
 
@@ -76,14 +80,16 @@ public:
         enum { PT1 = 0, BIQUAD, PT2, PT3 };
         uint16_t dterm_lpf1_hz;
         uint16_t dterm_lpf2_hz;
+#if defined(USE_DTERM_FILTERS_EXTENDED)
         uint16_t dterm_notch_hz;
         uint16_t dterm_notch_cutoff;
         uint16_t dterm_dynamic_lpf1_min_hz;
         uint16_t dterm_dynamic_lpf1_max_hz;
-        uint16_t yaw_lpf_hz;
-        uint16_t output_lpf_hz;
         uint8_t dterm_lpf1_type;
         uint8_t dterm_lpf2_type;
+#endif
+        uint16_t yaw_lpf_hz;
+        uint16_t output_lpf_hz;
         uint8_t rc_smoothing_feedforward_cutoff;
     };
     struct flight_mode_config_t {
@@ -113,6 +119,8 @@ public:
         float PGain;
         float IGain;
     };
+    static constexpr float D_MAX_DEFAULT_ROLL = 40.0F;
+    static constexpr float D_MAX_DEFAULT_PITCH = 46.0F;
     struct d_max_config_t {
         std::array<uint8_t, RP_AXIS_COUNT> d_max; // Maximum D value on each axis
         uint8_t d_max_gain;     // gain factor for amount of gyro / setpoint activity required to boost D
@@ -187,14 +195,13 @@ public:
     };
 
     typedef std::array<PIDF_uint16_t, PID_COUNT> pidf_uint16_array_t;
-    enum simplified_pid_settings_mode_e {
-        PID_SIMPLIFIED_TUNING_OFF = 0,
-        PID_SIMPLIFIED_TUNING_RP,
-        PID_SIMPLIFIED_TUNING_RPY,
-        PID_SIMPLIFIED_TUNING_MODE_COUNT
+    enum pid_tuning_mode_e {
+        PID_TUNING_STANDARD = 0,
+        PID_TUNING_SIMPLIFIED_RP,
+        PID_TUNING_SIMPLIFIED_RPY,
+        PID_TUNING_MODE_COUNT
     };
     struct simplified_pid_settings_t {
-        uint8_t mode;
         uint16_t multiplier;
         uint16_t roll_pitch_ratio;
         uint16_t i_gain;
@@ -203,8 +210,6 @@ public:
         uint16_t pitch_pi_gain;
         uint16_t d_max_gain;
         uint16_t k_gain;
-        uint16_t dterm_filter;
-        uint16_t dterm_filter_multiplier;
     };
 
 public:
@@ -221,6 +226,9 @@ public:
     inline control_mode_e getControlMode() const { return _fcC.controlMode; }
     void setControlMode(control_mode_e controlMode);
 
+    pid_tuning_mode_e getPID_TuningMode() const { return _pidTuningMode; }
+    void setPID_TuningMode(pid_tuning_mode_e pidTuningMode);
+
     virtual uint32_t getOutputPowerTimeMicroseconds() const override; //!!TODO: is this still needed?
 
     const std::string& getPID_Name(pid_index_e pidIndex) const;
@@ -231,8 +239,8 @@ public:
     PIDF_uint16_t getPID_Constants(pid_index_e pidIndex) const;
     void setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16);
 
-    const simplified_pid_settings_t& getSimplifiedPID_settings() const;
-    void setSimplifiedPID_settings(const simplified_pid_settings_t& simplifiedPID_settings);
+    const simplified_pid_settings_t& getSimplifiedPID_Settings() const;
+    void setSimplifiedPID_Settings(const simplified_pid_settings_t& simplifiedPID_Settings);
 
     virtual PIDF_uint16_t getPID_MSP(size_t index) const override;
     void setPID_P_MSP(pid_index_e pidIndex, uint16_t kp);
@@ -342,6 +350,7 @@ private:
     //
     // configuration and runtime data is const once it has been set in set*Config()
     //
+    pid_tuning_mode_e _pidTuningMode {PID_TUNING_STANDARD};
     filters_config_t _filtersConfig {};
     flight_mode_config_t _flightModeConfig {};
     tpa_config_t _tpaConfig {};
@@ -376,7 +385,7 @@ private:
         control_mode_e controlMode {CONTROL_MODE_RATE};
         float mixerAdjustedThrottle {0.0F};
         std::array<PIDF::PIDF_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning
-        simplified_pid_settings_t simplifiedPID_settings {};
+        simplified_pid_settings_t simplifiedPID_Settings {};
         std::array<float, RPY_AXIS_COUNT> outputs;
         std::array<PowerTransferFilter1, RPY_AXIS_COUNT> outputFilters;
     };
@@ -449,4 +458,17 @@ private:
         0.01F, // !!TODO: provisional value
         0.013754F
     };
+public:
+    //!Default PIDs. For compatibility these are the same values as used by Betaflight.
+    static constexpr FlightController::pidf_uint16_array_t DefaultPIDs = {{
+        { 45, 80, 30, 120, 0 }, // roll rate
+        { 47, 84, 34, 125, 0 }, // pitch rate
+        { 45, 80,  0, 120, 0 }, // yaw rate
+        { 50, 75, 75,  50, 0 }, // roll angle
+        { 50, 75, 75,  50, 0 }, // pitch angle
+#if defined(USE_SIN_ANGLE_PIDS)
+        { 50, 75, 75,  50, 0 }, // roll sin angle
+        { 50, 75, 75,  50, 0 }, // pitch sin angle
+#endif
+    }};
 };

@@ -13,21 +13,25 @@ union data_u {
     IMU_Filters::config_t imuFiltersConfig {};
     Cockpit::rates_t rates;
     std::array<FlightController::PIDF_uint16_t, 3> pids;
+    FlightController::filters_config_t pidFiltersConfig;
 };
 
 static data_u data {};
 
+static uint8_t rateProfileIndex = 0;
+static uint8_t pidProfileIndex = 0;
+
 //
-// Filters
+// IMU Filters
 //
 
-static const void* menuFiltersOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+static const void* menuIMU_FiltersOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
     data.imuFiltersConfig = cmsx.getIMU_Filters().getConfig(); // NOLINT(cppcoreguidelines-pro-type-union-access)
     return nullptr;
 }
 
-static const void* menuFiltersOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuIMU_FiltersOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     cmsx.getIMU_Filters().setConfig(data.imuFiltersConfig); // NOLINT(cppcoreguidelines-pro-type-union-access)
     return nullptr;
@@ -42,7 +46,7 @@ static auto entryGyroNF2  = OSD_UINT16_t { &data.imuFiltersConfig.gyro_notch2_hz
 static auto entryGyroNF2C = OSD_UINT16_t { &data.imuFiltersConfig.gyro_notch2_cutoff, 0, 500, 1 };
 // NOLINTEND(cppcoreguidelines-pro-type-union-access,fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 9> menuFiltersEntries
+static const std::array<CMSX::OSD_Entry, 9> menuIMU_FiltersEntries
 {{
     { "-- FILTERS --", OME_LABEL, nullptr, nullptr },
 
@@ -57,29 +61,63 @@ static const std::array<CMSX::OSD_Entry, 9> menuFiltersEntries
     {nullptr,       OME_END, nullptr, nullptr}
 }};
 
-CMSX::menu_t CMSX::menuFilters = {
-    .onEnter = menuFiltersOnEnter,
-    .onExit = menuFiltersOnExit,
+CMSX::menu_t CMSX::menuIMU_Filters = {
+    .onEnter = menuIMU_FiltersOnEnter,
+    .onExit = menuIMU_FiltersOnExit,
     .onDisplayUpdate = nullptr,
-    .entries = &menuFiltersEntries[0]
+    .entries = &menuIMU_FiltersEntries[0]
+};
+
+//
+// PID Filters
+//
+
+static const void* menuPID_FiltersOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+{
+    const FlightController& flightController = cmsx.getCockpit().getFlightController();
+    data.pidFiltersConfig = flightController.getFiltersConfig(); // NOLINT(cppcoreguidelines-pro-type-union-access)
+    return nullptr;
+}
+
+static const void* menuPID_FiltersOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+{
+    FlightController& flightController = cmsx.getCockpit().getFlightController();
+    flightController.setFiltersConfig(data.pidFiltersConfig); // NOLINT(cppcoreguidelines-pro-type-union-access)
+    return nullptr;
+}
+
+static const std::array<CMSX::OSD_Entry, 3> menuPID_FiltersEntries
+{{
+    { "-- PID FILTERS --", OME_LABEL, nullptr, nullptr },
+
+
+    {"BACK",        OME_BACK, nullptr, nullptr},
+    {nullptr,       OME_END, nullptr, nullptr}
+}};
+
+CMSX::menu_t CMSX::menuPID_Filters = {
+    .onEnter = menuPID_FiltersOnEnter,
+    .onExit = menuPID_FiltersOnExit,
+    .onDisplayUpdate = nullptr,
+    .entries = &menuPID_FiltersEntries[0]
 };
 
 //
 // PIDs
 //
-static std::array<uint8_t, 2> pidProfileIndexString = { '1', '\0' };
+static std::array<uint8_t, 3> pidProfileIndexString = { 'P', '1', '\0' };
 
-static const void* menuPID_onEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+static const void* menuPID_TuningOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
-    pidProfileIndexString[0] = '1' + cmsx.getCMS().getCockpit().getCurrentPidProfileIndex();
-    const FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
+    pidProfileIndexString[1] = '1' + cmsx.getCockpit().getCurrentPidProfileIndex();
+    const FlightController& flightController = cmsx.getCockpit().getFlightController();
     data.pids[FlightController::ROLL_RATE_DPS] = flightController.getPID_Constants(FlightController::ROLL_RATE_DPS);
     data.pids[FlightController::PITCH_RATE_DPS] = flightController.getPID_Constants(FlightController::PITCH_RATE_DPS);
     data.pids[FlightController::YAW_RATE_DPS] = flightController.getPID_Constants(FlightController::YAW_RATE_DPS);
     return nullptr;
 }
 
-static const void* menuPID_onExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuPID_TuningOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
     flightController.setPID_Constants(FlightController::ROLL_RATE_DPS, data.pids[FlightController::ROLL_RATE_DPS]);
@@ -88,20 +126,27 @@ static const void* menuPID_onExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& 
     return nullptr;
 }
 
+// NOLINTBEGIN(fuchsia-statically-constructed-objects)
 static auto entryRollPID_P  = OSD_UINT16_t { &data.pids[0].kp, 0, 200, 1 };
 static auto entryRollPID_I  = OSD_UINT16_t { &data.pids[0].ki, 0, 200, 1 };
 static auto entryRollPID_D  = OSD_UINT16_t { &data.pids[0].kd, 0, 200, 1 };
 static auto entryRollPID_K  = OSD_UINT16_t { &data.pids[0].kk, 0, 200, 1 };
+static auto entryRollPID_S  = OSD_UINT16_t { &data.pids[0].ks, 0, 200, 1 };
+
 static auto entryPitchPID_P = OSD_UINT16_t { &data.pids[1].kp, 0, 200, 1 };
 static auto entryPitchPID_I = OSD_UINT16_t { &data.pids[1].ki, 0, 200, 1 };
 static auto entryPitchPID_D = OSD_UINT16_t { &data.pids[1].kd, 0, 200, 1 };
 static auto entryPitchPID_K = OSD_UINT16_t { &data.pids[1].kk, 0, 200, 1 };
+static auto entryPitchPID_S = OSD_UINT16_t { &data.pids[1].ks, 0, 200, 1 };
+
 static auto entryYawPID_P   = OSD_UINT16_t { &data.pids[2].kp, 0, 200, 1 };
 static auto entryYawPID_I   = OSD_UINT16_t { &data.pids[2].ki, 0, 200, 1 };
 static auto entryYawPID_D   = OSD_UINT16_t { &data.pids[2].kd, 0, 200, 1 };
 static auto entryYawPID_K   = OSD_UINT16_t { &data.pids[2].kk, 0, 200, 1 };
+static auto entryYawPID_S   = OSD_UINT16_t { &data.pids[2].ks, 0, 200, 1 };
+// NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 15> menuPidEntries
+static const std::array<CMSX::OSD_Entry, 18> menuPID_TuningEntries
 {{
     { "-- PID --", OME_LABEL, nullptr, &pidProfileIndexString[0] },
 
@@ -109,47 +154,47 @@ static const std::array<CMSX::OSD_Entry, 15> menuPidEntries
     { "ROLL  I", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_I },
     { "ROLL  D", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_D },
     { "ROLL  K", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_K },
+    { "ROLL  S", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryRollPID_S },
 
     { "PITCH P", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryPitchPID_P },
     { "PITCH I", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryPitchPID_I },
     { "PITCH D", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryPitchPID_D },
     { "PITCH K", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryPitchPID_K },
+    { "PITCH S", OME_UINT16 | OME_SLIDER_RP, nullptr, &entryPitchPID_S },
 
     { "YAW   P", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_P },
     { "YAW   I", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_I },
     { "YAW   D", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_D },
     { "YAW   K", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_K },
+    { "YAW   S", OME_UINT16 | OME_SLIDER_RPY, nullptr, &entryYawPID_S },
 
     { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
 }};
 
-CMSX::menu_t CMSX::menuPID = {
-    .onEnter = menuPID_onEnter,
-    .onExit = menuPID_onExit,
+CMSX::menu_t CMSX::menuPID_Tuning = {
+    .onEnter = menuPID_TuningOnEnter,
+    .onExit = menuPID_TuningOnExit,
     .onDisplayUpdate = nullptr,
-    .entries = &menuPidEntries[0]
+    .entries = &menuPID_TuningEntries[0]
 };
 
-#if false
-static const void* pidProfileIndexOnChange(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu)
+static const void* pidProfileIndexOnChange(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
 {
     (void)cmsx;
-    (void)displayPort;
-    (void)menu;
     return nullptr;
 }
 
-static std::array<const char * const, 4> pidProfileNames { "1", "2", "3", "4" };
-#endif
+static std::array<const char * const, 4> pidProfileNames { "P1", "P2", "P3", "P4" };
+
 //
 // Rates
 //
-static std::array<uint8_t, 2> rateProfileIndexString = { '1', '\0' };
+static std::array<uint8_t, 3> rateProfileIndexString = { 'R', '1', '\0' };
 
 static const void* menuRatesOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
-    rateProfileIndexString[0] = '1';
+    rateProfileIndexString[1] = '1' + rateProfileIndex;
     data.rates = cmsx.getCMS().getCockpit().getRates();
     return nullptr;
 }
@@ -214,56 +259,55 @@ CMSX::menu_t CMSX::menuRates = {
     .entries = &menuRatesEntries[0]
 };
 
-#if false
-static const void* rateProfileIndexOnChange(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu)
+static const void* rateProfileIndexOnChange(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
 {
     (void)cmsx;
-    (void)displayPort;
-    (void)menu;
     return nullptr;
 }
 
-static std::array<const char * const, 4> rateProfileNames { "1", "2", "3", "4" };
+static std::array<const char * const, 4> rateProfileNames { "R1", "R2", "R3", "R4" };
 
 //
 // Profile Menu
 //
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryPID_Profile = OSD_TABLE_t { nullptr, 3, &pidProfileNames[0] };
-static auto entryRateProfile = OSD_TABLE_t { nullptr, 3, &rateProfileNames[0] };
+static auto entryPID_Profile = OSD_TABLE_t { nullptr, 4-1, &pidProfileNames[0] };
+static auto entryRateProfile = OSD_TABLE_t { nullptr, 4-1, &rateProfileNames[0] };
 // NOLINTEND(fuchsia-statically-constructed-objects)
-#endif
 
-static const std::array<CMSX::OSD_Entry, 7> menuProfileEntries
+static const std::array<CMSX::OSD_Entry, 10> menuProfileEntries
 {{
-    {"-- PROFILE --",  OME_LABEL, nullptr, nullptr},
+    {"-- PROFILES --",  OME_LABEL, nullptr, nullptr},
 
-    //{"PID PROF",    OME_TABLE, &pidProfileIndexOnChange, &entryPID_Profile},
-    {"PID",         OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID},
-    {"SIMPLIFIED TUNING", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuSimplifiedTuning },
-
-    //{"RATE PROF",   OME_TABLE, &rateProfileIndexOnChange, &entryRateProfile},
+    {"PID PROFILE", OME_TABLE, &pidProfileIndexOnChange, &entryPID_Profile},
+    {"PID",         OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID_Tuning},
+    {"SIMPLIFIED PIDS", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuSimplifiedPID_Tuning },
+    {"PID FILTERS", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID_Filters},
+    
+    {"RATE PROFILE", OME_TABLE, &rateProfileIndexOnChange, &entryRateProfile},
     {"RATES",       OME_SUBMENU, &CMSX::menuChange, &CMSX::menuRates},
 
-    {"FILTERS",     OME_SUBMENU, &CMSX::menuChange, &CMSX::menuFilters},
+    {"IMU FILTERS", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuIMU_Filters},
 
     {"BACK",        OME_BACK, nullptr, nullptr},
     {nullptr,       OME_END, nullptr, nullptr}
 }};
 
-static const void* menuProfileOnEnter(CMSX& cmsx, DisplayPortBase& displayPort)
+static const void* menuProfileOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
-    (void)cmsx;
-    (void)displayPort;
+    pidProfileIndex = cmsx.getCockpit().getCurrentPidProfileIndex();
+    rateProfileIndex = cmsx.getCockpit().getCurrentRateProfileIndex();
+
     //CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;
 }
 
-static const void* menuProfileOnExit(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuProfileOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    (void)cmsx;
-    (void)displayPort;
+    cmsx.getCockpit().setCurrentPidProfileIndex(pidProfileIndex);
+    cmsx.getCockpit().setCurrentRateProfileIndex(rateProfileIndex);
+
     //CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;
 }

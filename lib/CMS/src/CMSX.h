@@ -8,13 +8,12 @@ class Cockpit;
 class DisplayPortBase;
 class IMU_Base;
 class IMU_Filters;
-class NonVolatileStorage;
 class VTX_Base;
 
 
 class CMSX {
 public:
-    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, VTX_Base* vtx);
+    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, VTX_Base* vtx);
 private:
     // CMS is not copyable or moveable
     CMSX(const CMSX&) = delete;
@@ -94,7 +93,6 @@ public:
     Cockpit& getCockpit();
     const Cockpit& getCockpit() const;
     IMU_Filters& getIMU_Filters() { return _imuFilters; };
-    NonVolatileStorage& getNonVolatileStorage() { return _nvs; }
     const IMU_Base& getIMU() const { return _imu; }
     IMU_Base& getIMU() { return _imu; }
     VTX_Base* getVTX() { return _vtx; }
@@ -147,7 +145,6 @@ private:
     CMS& _cms;
     IMU_Filters& _imuFilters;
     IMU_Base& _imu;
-    NonVolatileStorage& _nvs;
     VTX_Base* _vtx;
     menu_t& _menuMain;
     menu_context_t _currentMenuContext {};
@@ -191,10 +188,11 @@ public:
 
     static menu_t menuMain;
         static menu_t menuProfile;
-            static menu_t menuPID;
-            static menu_t menuSimplifiedTuning;
+            static menu_t menuPID_Tuning;
+            static menu_t menuSimplifiedPID_Tuning;
             static menu_t menuRates;
-            static menu_t menuFilters;
+            static menu_t menuIMU_Filters;
+            static menu_t menuPID_Filters;
         static menu_t menuFeatures;
             static menu_t menuBlackbox;
             static menu_t menuVTX;

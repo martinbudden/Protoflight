@@ -16,11 +16,12 @@ static constexpr uint16_t OME_INT16 = 9;
 static constexpr uint16_t OME_UINT32 = 10;
 static constexpr uint16_t OME_INT32 = 11;
 static constexpr uint16_t OME_STRING = 12;
-static constexpr uint16_t OME_FLOAT = 13;
-static constexpr uint16_t OME_VISIBLE = 14;
-static constexpr uint16_t OME_TABLE = 15;
-static constexpr uint16_t OME_END = 16;
-static constexpr uint16_t OME_MENU = 17;
+static constexpr uint16_t OME_UINT8_AS_FLOAT = 13;
+static constexpr uint16_t OME_UINT16_AS_FLOAT = 14;
+static constexpr uint16_t OME_VISIBLE = 15;
+static constexpr uint16_t OME_TABLE = 16;
+static constexpr uint16_t OME_END = 17;
+static constexpr uint16_t OME_MENU = 18;
 
 static constexpr uint16_t OME_TYPE_COUNT = OME_MENU;
 static constexpr uint16_t OME_TYPE_MASK = 0x001F;
@@ -84,11 +85,19 @@ struct OSD_INT32_t {
     int32_t step;
 };
 
-struct OSD_FLOAT_t {
+struct OSD_UINT8_AS_FLOAT_t {
     uint8_t* val;
     uint8_t min;
     uint8_t max;
     uint8_t step;
+    uint16_t multiplier;
+};
+
+struct OSD_UINT16_AS_FLOAT_t {
+    uint16_t* val;
+    uint16_t min;
+    uint16_t max;
+    uint16_t step;
     uint16_t multiplier;
 };
 

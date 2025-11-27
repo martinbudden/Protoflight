@@ -21,11 +21,10 @@ const CMSX::menu_t* CMSX::MENU_BACK              = CMSX::MENU_NULL_PTR + 7;
 //NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 
-CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, VTX_Base* vtx) :
+CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, VTX_Base* vtx) :
     _cms(cms),
     _imuFilters(imuFilters),
     _imu(imu),
-    _nvs(nvs),
     _vtx(vtx),
     _menuMain(menuMain)
     //_menuMain(menuFilters)
@@ -68,7 +67,7 @@ bool CMSX::setupPopupMenuBuild()
 
     menuSetupPopupEntries[menuIndex] = { "-- SETUP MENU --", OME_LABEL, nullptr, nullptr };
     // Add menu entries for uncompleted setup tasks
-    if (getCMS().getCockpit().getArmingDisableFlags() & ARMING_DISABLED_ACC_CALIBRATION) { // NOLINT(hicpp-signed-bitwise)
+    if (getCockpit().getArmingDisableFlags() & ARMING_DISABLED_ACC_CALIBRATION) { // NOLINT(hicpp-signed-bitwise)
         menuSetupPopupEntries[++menuIndex] = { "CALIBRATE ACC", OME_FUNCTION_CALL | OME_DYNAMIC, menuCalibrateAcc, &AccCalibrationStatus[0] };
     }
 #if defined(USE_BATTERY_CONTINUE)
@@ -151,14 +150,14 @@ void CMSX::padToSize(char* buf, uint8_t size) const
     }
 }
 
-uint32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize)
+uint32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize) // NOLINT(readability-make-member-function-const)
 {
     padToSize(&_menuDrawBuf[0], maxSize < MENU_DRAW_BUFFER_LEN ? maxSize : MENU_DRAW_BUFFER_LEN);
     const uint8_t column = _rightAligned ? _rightMenuColumn - maxSize : _rightMenuColumn;
     return displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, &_menuDrawBuf[0]);
 }
 
-uint32_t CMSX::drawMenuTableItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize)
+uint32_t CMSX::drawMenuTableItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize) // NOLINT(readability-make-member-function-const)
 {
     padToSize(&_menuTableBuf[0], maxSize < MENU_TABLE_BUFFER_LEN ? maxSize : MENU_TABLE_BUFFER_LEN);
     const uint8_t column = _rightAligned ? _rightMenuColumn - maxSize : _rightMenuColumn;
@@ -170,12 +169,12 @@ uint32_t CMSX::drawMenuTableEntry(DisplayPortBase& displayPort, const OSD_Entry*
     uint32_t count = 0;
 
     if (((entryFlags & OME_PRINT_VALUE) || (entryFlags & OME_SCROLLING_TICKER)) && entry->data) {
-        const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
+        const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         //const size_t labelLength = strnlen(entry->text , MENU_DRAW_BUFFER_LEN) + 1; // account for the space between label and display data
         const uint8_t index = std::clamp(*ptr->val, static_cast<uint8_t>(0), ptr->max);
-        const char* str = static_cast<const char *>(ptr->names[index]);   // lookup table display text
-        const size_t displayLength = std::strlen(str);
-        const size_t availableSpace = displayPort.getColumnCount() - _rightMenuColumn;
+        const char* str = static_cast<const char *>(ptr->names[index]);   // lookup table display text NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        const uint8_t displayLength = static_cast<uint8_t>(std::strlen(str));
+        const uint8_t availableSpace = displayPort.getColumnCount() - _rightMenuColumn;
 
         bool drawText = false;
         if (entryFlags & OME_PRINT_VALUE) {
@@ -385,19 +384,19 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
     // Display the menu entries
     uint8_t ii = 0;
     for (const OSD_Entry* entry = _pageTop; entry <= _pageTop + _pageMaxRow; ++ii, ++entry) {
-        const uint8_t row = topRow + static_cast<uint8_t>(ii * _linesPerMenuItem);
+        const uint8_t entryRow = topRow + static_cast<uint8_t>(ii * _linesPerMenuItem);
         // display the current item indicator
         //uint16_t& entryFlags = _entryFlags[ii];
         // Highlight values overridden by sliders
         if (rowSliderOverride(entry->flags)) { // cppcheck-suppress knownConditionTrueFalse
-            displayPort.writeChar(_leftMenuColumn - 1, row, DisplayPortBase::SEVERITY_NORMAL, 'S');
+            displayPort.writeChar(_leftMenuColumn - 1, entryRow, DisplayPortBase::SEVERITY_NORMAL, 'S');
         }
         // Print values
         // XXX Polled values at latter positions in the list may not be
         // XXX printed if not enough room in the middle of the list.
         if ((_entryFlags[ii] & OME_PRINT_VALUE) || (_entryFlags[ii] & OME_SCROLLING_TICKER)) {
             //const bool selectedRow = (ii == _currentMenuContext.cursorRow);
-            spaceLeft -= static_cast<int32_t>(drawMenuEntry(displayPort, entry, row, _entryFlags[ii], _runtimeTableTicker[ii]));
+            spaceLeft -= static_cast<int32_t>(drawMenuEntry(displayPort, entry, entryRow, _entryFlags[ii], _runtimeTableTicker[ii]));
             enum { CHARACTERS_PER_LINE };
             if (spaceLeft < CHARACTERS_PER_LINE) {
                 return;
@@ -579,7 +578,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
             }
         }
         break;
-    case OME_FLOAT:
+    case OME_UINT8_AS_FLOAT:
         [[fallthrough]];
     case OME_UINT8:
         if (entry->data) {
@@ -603,6 +602,8 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
             }
         }
         break;
+    case OME_UINT16_AS_FLOAT:
+        [[fallthrough]];
     case OME_UINT16:
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_UINT16_t*>(entry->data);
@@ -758,7 +759,7 @@ void CMSX::menuOpen(DisplayPortBase& displayPort)
         displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }
     //!!TODO: this should probably not have a dependency on the OSD or OSD slave code
-#ifdef USE_OSD
+#if defined(USE_OSD)
     resumeRefreshAt = 0;
 #endif
 
