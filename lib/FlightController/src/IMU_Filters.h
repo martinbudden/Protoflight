@@ -18,14 +18,14 @@ public:
     struct config_t {
         enum { PT1 = 0, BIQUAD, PT2, PT3, NOT_SET = 0xFF }; // filter types
         uint16_t acc_lpf_hz;
+        uint16_t gyro_lpf1_hz;
+        uint16_t gyro_lpf2_hz;
         uint16_t gyro_notch1_hz;
         uint16_t gyro_notch1_cutoff;
         uint16_t gyro_notch2_hz;
         uint16_t gyro_notch2_cutoff;
-        uint16_t gyro_lpf1_hz;
-        uint16_t gyro_lpf2_hz;
-        uint16_t gyro_dynamic_lpf1_min_hz;
-        uint16_t gyro_dynamic_lpf1_max_hz;
+        //uint16_t gyro_dynamic_lpf1_min_hz;
+        //uint16_t gyro_dynamic_lpf1_max_hz;
         uint8_t gyro_lpf1_type;
         uint8_t gyro_lpf2_type;
         // uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
@@ -59,10 +59,11 @@ protected:
 
     PowerTransferFilter1T<xyz_t> _accLPF;
     PowerTransferFilter1T<xyz_t> _gyroLPF1_PT1;
+#if defined(USE_GYRO_FILTERS_EXTENDED)
     PowerTransferFilter2T<xyz_t> _gyroLPF1_PT2;
-    BiquadFilterT<xyz_t> _gyroLPF1Biquad;
+    BiquadFilterT<xyz_t> _gyroLPF1_Biquad;
+#endif
     PowerTransferFilter1T<xyz_t>  _gyroLPF2;
-
     BiquadFilterT<xyz_t> _gyroNotch1;
     BiquadFilterT<xyz_t> _gyroNotch2;
 #if defined(USE_DYNAMIC_NOTCH_FILTER)

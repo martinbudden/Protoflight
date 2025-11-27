@@ -135,14 +135,14 @@ static constexpr DynamicNotchFilter::config_t dynamicNotchFilterConfig = {
 
 static constexpr IMU_Filters::config_t imuFiltersConfig = {
     .acc_lpf_hz = 100,
+    .gyro_lpf1_hz = 0, // switched off
+    .gyro_lpf2_hz = 250, // this is an anti-alias filter and shouldn't be disabled
     .gyro_notch1_hz = 0,
     .gyro_notch1_cutoff = 0,
     .gyro_notch2_hz = 0,
     .gyro_notch2_cutoff = 0,
-    .gyro_lpf1_hz = 0, // switched off
-    .gyro_lpf2_hz = 250, // this is an anti-alias filter and shouldn't be disabled
-    .gyro_dynamic_lpf1_min_hz = 0,
-    .gyro_dynamic_lpf1_max_hz = 0,
+    //.gyro_dynamic_lpf1_min_hz = 0,
+    //.gyro_dynamic_lpf1_max_hz = 0,
     .gyro_lpf1_type = 0,
     .gyro_lpf2_type = IMU_Filters::config_t::PT1,
 };

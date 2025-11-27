@@ -302,8 +302,8 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
 #else
         dst.writeU8(0);
 #endif
-        dst.writeU16(imuFiltersConfig.gyro_dynamic_lpf1_min_hz);
-        dst.writeU16(imuFiltersConfig.gyro_dynamic_lpf1_max_hz);
+        dst.writeU16(0); // imuFiltersConfig.gyro_dynamic_lpf1_min_hz);
+        dst.writeU16(0); //imuFiltersConfig.gyro_dynamic_lpf1_max_hz);
 #if defined(USE_DTERM_FILTERS_EXTENDED)
         dst.writeU16(fcFilters.dterm_dynamic_lpf1_min_hz);
         dst.writeU16(fcFilters.dterm_dynamic_lpf1_max_hz);

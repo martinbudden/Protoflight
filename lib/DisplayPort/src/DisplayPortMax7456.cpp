@@ -420,7 +420,7 @@ uint32_t DisplayPortMax7456::clearScreen(display_clear_option_e options)
     return 0;
 }
 
-uint32_t DisplayPortMax7456::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
+uint32_t DisplayPortMax7456::writeChar(uint8_t x, uint8_t y, uint8_t c, uint8_t attr)
 {
     (void)attr;
     uint8_t *buf = getActiveLayerBuffer();
@@ -430,7 +430,7 @@ uint32_t DisplayPortMax7456::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8
     return 0;
 }
 
-uint32_t DisplayPortMax7456::writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text)
+uint32_t DisplayPortMax7456::writeString(uint8_t x, uint8_t y, const char *text, uint8_t attr)
 {
     (void)attr;
     if (y < VIDEO_LINES_PAL) {

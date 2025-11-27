@@ -154,14 +154,14 @@ uint32_t CMSX::drawMenuItemValue(DisplayPortBase& displayPort, uint8_t row, uint
 {
     padToSize(&_menuDrawBuf[0], maxSize < MENU_DRAW_BUFFER_LEN ? maxSize : MENU_DRAW_BUFFER_LEN);
     const uint8_t column = _rightAligned ? _rightMenuColumn - maxSize : _rightMenuColumn;
-    return displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, &_menuDrawBuf[0]);
+    return displayPort.writeString(column, row, &_menuDrawBuf[0]);
 }
 
 uint32_t CMSX::drawMenuTableItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize) // NOLINT(readability-make-member-function-const)
 {
     padToSize(&_menuTableBuf[0], maxSize < MENU_TABLE_BUFFER_LEN ? maxSize : MENU_TABLE_BUFFER_LEN);
     const uint8_t column = _rightAligned ? _rightMenuColumn - maxSize : _rightMenuColumn;
-    return displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, &_menuTableBuf[0]);
+    return displayPort.writeString(column, row, &_menuTableBuf[0]);
 }
 
 uint32_t CMSX::drawMenuTableEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& entryFlags, table_ticker_t& ticker)
@@ -214,7 +214,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
     uint32_t count = 0;
     if (entryFlags & OME_PRINT_LABEL) {
         const uint8_t column = _leftMenuColumn + ((entryType == OME_LABEL) ? 0 : 1);
-        count += displayPort.writeString(column, row, DisplayPortBase::SEVERITY_NORMAL, entry->text);
+        count += displayPort.writeString(column, row, entry->text);
         clearFlag(entryFlags, OME_PRINT_LABEL);
     }
 
@@ -367,13 +367,13 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
         // clear the old cursor
         if (_cursorRow != CURSOR_ROW_NOT_SET) {
             const uint8_t row = topRow + static_cast<uint8_t>(_cursorRow * _linesPerMenuItem);
-            spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, row, DisplayPortBase::SEVERITY_NORMAL, " "));
+            spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, row, " "));
         }
         // and draw the new one
         _cursorRow = _currentMenuContext.cursorRow;
     }
     const uint8_t row = topRow + static_cast<uint8_t>(_cursorRow * _linesPerMenuItem);
-    spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, row, DisplayPortBase::SEVERITY_NORMAL, ">"));
+    spaceLeft -= static_cast<int32_t>(displayPort.writeString(_leftMenuColumn, row, ">"));
     if (_currentMenuContext.menu->onDisplayUpdate) {
         if (_currentMenuContext.menu->onDisplayUpdate(*this, displayPort, _pageTop + _currentMenuContext.cursorRow) == MENU_BACK) {
             menuBack(displayPort, nullptr);
@@ -389,7 +389,7 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
         //uint16_t& entryFlags = _entryFlags[ii];
         // Highlight values overridden by sliders
         if (rowSliderOverride(entry->flags)) { // cppcheck-suppress knownConditionTrueFalse
-            displayPort.writeChar(_leftMenuColumn - 1, entryRow, DisplayPortBase::SEVERITY_NORMAL, 'S');
+            displayPort.writeChar(_leftMenuColumn - 1, entryRow, 'S');
         }
         // Print values
         // XXX Polled values at latter positions in the list may not be
@@ -408,10 +408,10 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
     // Only draw the symbols when necessary after the screen has been cleared. Otherwise they're static.
     if (displayWasCleared && _leftMenuColumn > 0) { // make sure there's room to draw the symbol
         if (_currentMenuContext.page > 0) {
-            displayPort.writeChar(_leftMenuColumn - 1, topRow, DisplayPortBase::SEVERITY_NORMAL, displayPort.getSmallArrowUp());
+            displayPort.writeChar(_leftMenuColumn - 1, topRow, displayPort.getSmallArrowUp());
         }
         if (_currentMenuContext.page < _pageCount - 1) {
-            displayPort.writeChar(_leftMenuColumn - 1, topRow + _pageMaxRow, DisplayPortBase::SEVERITY_NORMAL, displayPort.getSmallArrowDown());
+            displayPort.writeChar(_leftMenuColumn - 1, topRow + _pageMaxRow, displayPort.getSmallArrowDown());
         }
     }
 // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -867,7 +867,7 @@ const void* CMSX::menuExit(DisplayPortBase& displayPort, const menu_t* menu)
     if ((menu == MENU_EXIT_SAVE_REBOOT) || (menu == MENU_POPUP_SAVE_REBOOT) || (menu == MENU_POPUP_EXIT_REBOOT)) {
         _cursorRow = CURSOR_ROW_NOT_SET;
         displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
-        displayPort.writeString(5, 3, DisplayPortBase::SEVERITY_NORMAL, "REBOOTING...");
+        displayPort.writeString(5, 3, "REBOOTING...");
         displayPort.redraw();
 #if false
         stopMotors();

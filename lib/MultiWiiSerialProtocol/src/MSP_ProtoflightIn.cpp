@@ -253,8 +253,8 @@ MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBuf& 
 #else
             src.readU8();
 #endif
-            imuFiltersConfig.gyro_dynamic_lpf1_min_hz = src.readU16();
-            imuFiltersConfig.gyro_dynamic_lpf1_max_hz = src.readU16();
+            /*imuFiltersConfig.gyro_dynamic_lpf1_min_hz = */src.readU16();
+            /*imuFiltersConfig.gyro_dynamic_lpf1_max_hz = */src.readU16();
 #if defined(USE_DTERM_FILTERS_EXTENDED)
             fcFilters.dterm_dynamic_lpf1_min_hz = src.readU16();
             fcFilters.dterm_dynamic_lpf1_max_hz = src.readU16();

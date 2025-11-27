@@ -21,11 +21,11 @@ public:
     bool isGrabbed() const;
     void clearScreen(display_clear_option_e options);
     bool drawScreen();
-    int screenSize() const;
+    uint32_t screenSize() const;
     void setXY(uint8_t x, uint8_t y);
-    int sys(uint8_t x, uint8_t y, DisplayPortBase::system_element_e systemElement);
-    uint32_t write(uint8_t x, uint8_t y, uint8_t attr, const char *text);
-    uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c);
+    uint32_t sys(uint8_t x, uint8_t y, DisplayPortBase::system_element_e systemElement);
+    uint32_t write(uint8_t x, uint8_t y, const char *text, uint8_t attr);
+    uint32_t writeChar(uint8_t x, uint8_t y, uint8_t c, uint8_t attr);
     bool isTransferInProgress() const;
     bool heartbeat();
     void redraw();

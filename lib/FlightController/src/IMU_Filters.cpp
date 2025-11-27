@@ -25,24 +25,32 @@ void IMU_Filters::setConfig(const config_t& config)
     }
 
     // set up gyroLPF1.
-    static constexpr float Q = 0.7071067811865475F; // 1 / sqrt(2)
     const uint16_t gyro_lpf1_hz = config.gyro_lpf1_hz == 0 ? 500 : config.gyro_lpf1_hz;
     switch (config.gyro_lpf1_type) {
-    case config_t::BIQUAD:
-        _gyroLPF1Biquad.initLowPass(gyro_lpf1_hz, _looptimeSeconds, Q);
-        _gyroLPF1 = &_gyroLPF1Biquad;
-        break;
     case config_t::NOT_SET:
         _gyroLPF1_PT1.setToPassthrough();
         _gyroLPF1 = &_gyroLPF1_PT1;
         break;
+    case config_t::BIQUAD:
+#if defined(USE_GYRO_FILTERS_EXTENDED)
+        {static constexpr float Q = 0.7071067811865475F; // 1 / sqrt(2)
+        _gyroLPF1_Biquad.initLowPass(gyro_lpf1_hz, _looptimeSeconds, Q);}
+        _gyroLPF1 = &_gyroLPF1_Biquad;
+        break;
+#else
+        [[fallthrough]];
+#endif
     case config_t::PT3:
         // just use PT2 if PT3 specified
         [[fallthrough]];
     case config_t::PT2:
+#if defined(USE_GYRO_FILTERS_EXTENDED)
         _gyroLPF1_PT2.setCutoffFrequency(gyro_lpf1_hz, _looptimeSeconds);
         _gyroLPF1 = &_gyroLPF1_PT2;
         break;
+#else
+        [[fallthrough]];
+#endif
     case config_t::PT1:
         [[fallthrough]];
     default:

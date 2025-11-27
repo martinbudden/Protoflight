@@ -62,12 +62,16 @@ enum  osd_elements_e {
     OSD_ESC_RPM,
 #endif
     OSD_REMAINING_TIME_ESTIMATE,
+#if defined(USE_RTC_TIME)
     OSD_RTC_DATETIME,
+#endif
     OSD_ADJUSTMENT_RANGE,
     OSD_CORE_TEMPERATURE,
     OSD_ANTI_GRAVITY,
     OSD_G_FORCE,
+#if defined(USE_DSHOT)
     OSD_MOTOR_DIAGNOSTICS,
+#endif
     OSD_LOG_STATUS,
     OSD_FLIP_ARROW,
     OSD_LINK_QUALITY,
@@ -76,7 +80,9 @@ enum  osd_elements_e {
 #endif
     OSD_STICK_OVERLAY_LEFT,
     OSD_STICK_OVERLAY_RIGHT,
+#if defined(USE_OSD_PROFILES)
     OSD_PILOT_NAME,
+#endif
 #if defined(USE_DSHOT)
     OSD_ESC_RPM_FREQUENCY,
 #endif
@@ -119,14 +125,16 @@ enum  osd_elements_e {
     OSD_GPS_LAP_TIME_BEST3,
 #endif
     OSD_DEBUG2,
+#if defined(USE_OSD_PROFILES)
     OSD_CUSTOM_MSG0,
     OSD_CUSTOM_MSG1,
     OSD_CUSTOM_MSG2,
     OSD_CUSTOM_MSG3,
+#endif
 #if defined(USE_RANGEFINDER)
     OSD_LIDAR_DISTANCE,
 #endif
-    OSD_ITEM_COUNT // MUST BE LAST
+    OSD_ELEMENT_COUNT // MUST BE LAST
 };
 
 /*!
@@ -153,7 +161,7 @@ public:
     };
     enum { STICK_OVERLAY_WIDTH = 7, STICK_OVERLAY_HEIGHT = 5 };
     struct config_t {
-        std::array<uint16_t, OSD_ITEM_COUNT> element_pos; // 2 bits for type, 2 bits for profile, 6 bits for y, 6 bits for x
+        std::array<uint16_t, OSD_ELEMENT_COUNT> element_pos; // 2 bits for type, 2 bits for profile, 6 bits for y, 6 bits for x
     };
     struct element_t {
         enum { ELEMENT_BUFFER_LENGTH = 32 };
@@ -220,8 +228,8 @@ public:
     bool drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex);
     bool drawSingleElementBackground(DisplayPortBase& displayPort, uint8_t elementIndex);
 
-    uint32_t displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, const char* s);
-    uint32_t displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, uint8_t c);
+    uint32_t displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, const char* s, uint8_t attr);
+    uint32_t displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t c, uint8_t attr);
 
 // element drawing functions
     void formatPID(char* buf, const char* label, uint8_t axis);
@@ -325,10 +333,10 @@ private:
     uint8_t _STICK_OVERLAY_Y {0};
 
     config_t _config {};
-    std::array<uint8_t, OSD_ITEM_COUNT> _activeElements;
-    std::bitset<OSD_ITEM_COUNT> _blinkBits {};
+    std::array<uint8_t, OSD_ELEMENT_COUNT> _activeElements;
+    std::bitset<OSD_ELEMENT_COUNT> _blinkBits {};
 
     // drawing functions
-    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> DrawFunctions;
-    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> DrawBackgroundFunctions;
+    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> DrawFunctions;
+    static std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> DrawBackgroundFunctions;
 };

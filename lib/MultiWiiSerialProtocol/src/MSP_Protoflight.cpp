@@ -5,7 +5,7 @@
 #include <MSP_Protocol.h>
 
 
-MSP_Protoflight::MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx, OSD* osd) :
+MSP_Protoflight::MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx) :
     _ahrs(ahrs),
     _flightController(flightController),
     _cockpit(cockpit),
@@ -15,8 +15,7 @@ MSP_Protoflight::MSP_Protoflight(AHRS& ahrs, FlightController& flightController,
     _debug(debug),
     _nonVolatileStorage(nvs),
     _blackbox(blackbox),
-    _vtx(vtx),
-    _osd(osd)
+    _vtx(vtx)
 {
     //_mspBox.init(features, ahrs, flightController);
     enum { MSP_OVERRIDE_OFF = false, AIRMODE_OFF = false, ANTI_GRAVITY_OFF = false };

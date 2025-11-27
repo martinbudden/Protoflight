@@ -6,6 +6,7 @@
 #include "FlightController.h"
 #include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
+#include "MSP_Serial.h"
 #include "NonVolatileStorage.h"
 #include "OSD_Task.h"
 
@@ -73,15 +74,18 @@ void Main::setup()
 
     Cockpit& cockpit = createCockpit(receiver, flightController, debug, imuFilters, nvs);
 
-    DisplayPortBase& displayPort = createDisplayPort(debug);
+    Blackbox* blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
+    VTX_Base* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
+    MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs, blackbox, vtx);
+    DisplayPortBase& displayPort = createDisplayPort(debug, mspSerial);
 
 
     // create the optional components according to build flags
     [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
-    [[maybe_unused]] Blackbox* blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
-    [[maybe_unused]] VTX_Base* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
     [[maybe_unused]] OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
-    [[maybe_unused]] MSP_SerialBase* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs, blackbox, vtx, osd);
+    if (mspSerial) {
+        mspSerial->setOSD(osd);
+    }
     [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, imuSensor, osd, vtx);
 
 

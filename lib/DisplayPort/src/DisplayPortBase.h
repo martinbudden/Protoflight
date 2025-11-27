@@ -29,7 +29,7 @@ enum display_clear_option_e {
 
 class DisplayPortBase {
 public:
-    enum { BLINK = 0x80 }; // blink attribute bit
+    static constexpr uint8_t BLINK = 0x80; // blink attribute bit
 
     enum device_type_e {
         DEVICE_TYPE_NONE = 0,
@@ -82,18 +82,19 @@ public:
     virtual uint32_t clearScreen(display_clear_option_e options) { (void)options; _cleared = true; return 0; }
     virtual bool drawScreen() = 0; // Returns true if screen still being transferred
 
-    virtual uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) = 0;
-    uint32_t writeString(uint8_t x, uint8_t y, const char *text) { return writeString(x, y, SEVERITY_NORMAL, text); }
-    uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const uint8_t* text) { return writeString(x, y, attr, reinterpret_cast<const char*>(text)); }
-    uint32_t writeString(uint8_t x, uint8_t y, const uint8_t* text) { return writeString(x, y, SEVERITY_NORMAL, reinterpret_cast<const char*>(text)); }
-    virtual uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) = 0;
-    uint32_t writeChar(uint8_t x, uint8_t y, uint8_t c) { return writeChar(x, y, SEVERITY_NORMAL, c); }
+    virtual uint32_t writeString(uint8_t x, uint8_t y, const char *text, uint8_t attr) = 0;
+    uint32_t writeString(uint8_t x, uint8_t y, const char *text) { return writeString(x, y, text, SEVERITY_NORMAL); }
+    uint32_t writeString(uint8_t x, uint8_t y, const uint8_t* text, uint8_t attr) { return writeString(x, y, reinterpret_cast<const char*>(text), attr); }
+    uint32_t writeString(uint8_t x, uint8_t y, const uint8_t* text) { return writeString(x, y, reinterpret_cast<const char*>(text), SEVERITY_NORMAL); }
 
-    virtual int screenSize() const { return 0; }
-    virtual int writeSys(uint8_t x, uint8_t y, system_element_e systemElement) { (void)x; (void)y; (void)systemElement; return 0; }
+    virtual uint32_t writeChar(uint8_t x, uint8_t y, uint8_t c, uint8_t attr) = 0;
+    uint32_t writeChar(uint8_t x, uint8_t y, uint8_t c) { return writeChar(x, y, c, SEVERITY_NORMAL); }
+
+    virtual uint32_t screenSize() const { return _rowCount * _columnCount; }
+    virtual uint32_t writeSys(uint8_t x, uint8_t y, system_element_e systemElement) { (void)x; (void)y; (void)systemElement; return 0; }
     virtual bool isTransferInProgress() const { return false; }
     virtual int heartbeat() { return 0; }
-    virtual void redraw() {}
+    virtual void redraw() { drawScreen(); }
     virtual bool isSynced() const {return true;}
     virtual uint32_t txBytesFree() const {return 0;}
 
@@ -111,9 +112,9 @@ public:
     virtual bool getCanvas(display_canvas_t* canvas) const { (void)canvas; return false; }
     virtual void setBackgroundType(background_e backgroundType) { (void)backgroundType; }
 
-    void grab() { clearScreen(DISPLAY_CLEAR_WAIT); ++_grabCount; }
+    virtual int grab() { clearScreen(DISPLAY_CLEAR_WAIT); ++_grabCount; return 0; }
     bool isGrabbed() const { return _grabCount > 0; }
-    void release() { --_grabCount; }
+    virtual uint32_t release() { --_grabCount; return 0; }
     void releaseAll() { _grabCount = 0; }
 
     bool isCleared() const { return _cleared; }

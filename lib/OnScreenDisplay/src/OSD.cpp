@@ -47,17 +47,17 @@ void OSD::drawLogoAndCompleteInitialization()
 
     std::array<char, 30> string_buffer;
     sprintf(&string_buffer[0], "V%s", "0.0.1");//FC_VERSION_STRING);
-    _displayPort->writeString(midCol + 5, midRow, DisplayPortBase::SEVERITY_NORMAL, &string_buffer[0]);
+    _displayPort->writeString(midCol + 5, midRow, &string_buffer[0]);
 #if defined(USE_CMS) || true
-    _displayPort->writeString(midCol - 8, midRow + 2,  DisplayPortBase::SEVERITY_NORMAL, "MENU:THR MID");
-    _displayPort->writeString(midCol - 4, midRow + 3, DisplayPortBase::SEVERITY_NORMAL, "+ YAW LEFT");
-    _displayPort->writeString(midCol - 4, midRow + 4, DisplayPortBase::SEVERITY_NORMAL, "+ PITCH UP");
+    _displayPort->writeString(midCol - 8, midRow + 2, "MENU:THR MID");
+    _displayPort->writeString(midCol - 4, midRow + 3, "+ YAW LEFT");
+    _displayPort->writeString(midCol - 4, midRow + 4, "+ PITCH UP");
 #endif
 
 #if defined(USE_RTC_TIME)
     std::array<char, FORMATTED_DATE_TIME_BUFSIZE> dateTimeBuffer;
     if (osdFormatRtcDateTime(&dateTimeBuffer[0])) {
-        _displayPort->writeString(midCol - 10, midRow + 6, DisplayPortBase::SEVERITY_NORMAL, &dateTimeBuffer[]);
+        _displayPort->writeString(midCol - 10, midRow + 6, &dateTimeBuffer[]);
     }
 #endif
 
@@ -136,6 +136,7 @@ void OSD::resetStats()
 // If adding new stats, please add to the osdStatsNeedAccelerometer() function
 // if the statistic utilizes the accelerometer.
 //
+#if defined (USE_OSD_STATS)
 const std::array<OSD::stats_e, OSD::STATS_COUNT> OSD::StatsDisplayOrder= {
     OSD::STATS_RTC_DATE_TIME,
     OSD::STATS_TIMER_1,
@@ -143,8 +144,8 @@ const std::array<OSD::stats_e, OSD::STATS_COUNT> OSD::StatsDisplayOrder= {
 #if defined(USE_BAROMETER)
     OSD::STATS_MAX_ALTITUDE,
 #endif
-#if defined(USE_GPS)
     OSD::STATS_MAX_SPEED,
+#if defined(USE_GPS)
     OSD::STATS_MAX_DISTANCE,
     OSD::STATS_FLIGHT_DISTANCE,
 #endif
@@ -154,10 +155,8 @@ const std::array<OSD::stats_e, OSD::STATS_COUNT> OSD::StatsDisplayOrder= {
     OSD::STATS_MIN_RSSI,
     OSD::STATS_MAX_CURRENT,
     OSD::STATS_USED_MAH,
-#if defined(USE_BLACKBOX)
     OSD::STATS_BLACKBOX,
     OSD::STATS_BLACKBOX_NUMBER,
-#endif
     OSD::STATS_MAX_G_FORCE,
 #if defined(USE_DSHOT)
     OSD::STATS_MAX_ESC_TEMPERATURE,
@@ -179,12 +178,13 @@ const std::array<OSD::stats_e, OSD::STATS_COUNT> OSD::StatsDisplayOrder= {
     OSD::STATS_FULL_THROTTLE_COUNTER,
     OSD::STATS_AVG_THROTTLE,
 };
+#endif
 
 void OSD::displayStatisticLabel(uint8_t x, uint8_t y, const char * text, const char * value)
 {
-    _displayPort->writeString(x - 13, y, DisplayPortBase::SEVERITY_NORMAL, text);
-    _displayPort->writeString(x + 5, y, DisplayPortBase::SEVERITY_NORMAL, ":");
-    _displayPort->writeString(x + 7, y, DisplayPortBase::SEVERITY_NORMAL, value);
+    _displayPort->writeString(x - 13, y, text);
+    _displayPort->writeString(x + 5, y, ":");
+    _displayPort->writeString(x + 7, y, value);
 }
 
 bool OSD::displayStatistic(int statistic, uint8_t displayRow)
@@ -207,6 +207,7 @@ Called repeatedly until it returns true which indicates that all stats have been
 */
 bool OSD::renderStatsContinue()
 {
+#if defined(USE_OSD_STATS)
     const uint8_t midCol = _displayPort->getColumnCount() / 2;
 
     if (_statsRenderingState.row == 0) {
@@ -222,7 +223,7 @@ bool OSD::renderStatsContinue()
             _statsRenderingState.row = static_cast<uint8_t>((availableRows - displayRows) / 2);  // center the stats vertically
         }
         if (displayLabel) {
-            _displayPort->writeString(midCol - static_cast<uint8_t>(strlen("--- STATS ---") / 2), _statsRenderingState.row, DisplayPortBase::SEVERITY_NORMAL, "--- STATS ---");
+            _displayPort->writeString(midCol - static_cast<uint8_t>(strlen("--- STATS ---") / 2), _statsRenderingState.row, "--- STATS ---");
             ++_statsRenderingState.row;
             return false;
         }
@@ -248,6 +249,7 @@ bool OSD::renderStatsContinue()
     if (_statsRenderingState.rowCount == 0) {
         _statsRenderingState.rowCount = _statsRenderingState.row;
     }
+#endif
     return true;
 }
 
@@ -276,7 +278,7 @@ bool OSD::refreshStats()
         // No stats row count has been set yet.
         // Go through the logic one time to determine how many stats are actually displayed.
         bool count_phase_complete = renderStatsContinue();
-        if (count_phase_complete) {
+        if (count_phase_complete) { // cppcheck-suppress knownConditionTrueFalse
             _refreshStatsState = REFRESH_STATS_STATE_CLEAR_SCREEN;
         }
         break;
@@ -376,7 +378,7 @@ void OSD::drawLogo(uint8_t x, uint8_t y)
     for (uint8_t row = 0; row < LOGO_ROW_COUNT; ++row) {
         for (uint8_t column = 0; column < LOGO_COLUMN_COUNT; ++column) {
             if (characterCode < END_OF_FONT) {
-                _displayPort->writeChar(x + column, y + row, DisplayPortBase::SEVERITY_NORMAL, characterCode);
+                _displayPort->writeChar(x + column, y + row, characterCode);
                 ++characterCode;
             }
         }

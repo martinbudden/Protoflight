@@ -23,7 +23,7 @@ void OSD_Elements::init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t colu
 
     if (columnCount !=0  && rowCount != 0) {
         // Ensure that all OSD elements are on the canvas once the number of row and columns is known
-        for (size_t ii = 0; ii < OSD_ITEM_COUNT; ++ii) { // NOLINT(modernize-loop-convert)
+        for (size_t ii = 0; ii < OSD_ELEMENT_COUNT; ++ii) { // NOLINT(modernize-loop-convert)
             const uint16_t elementPos = _config.element_pos[ii];
             const uint16_t elementTopBits = elementPos & (ELEMENT_TYPE_MASK | PROFILE_MASK);
 
@@ -92,20 +92,20 @@ void OSD_Elements::setDefaultConfig(uint8_t rowCount, uint8_t columnCount)
    }
 }
 
-uint32_t OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  element, uint8_t x, uint8_t y, uint8_t attr, const char *s)
+uint32_t OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t&  element, uint8_t x, uint8_t y, const char *s, uint8_t attr)
 {
     if (_blinkBits[element.index]) {
         attr |= DisplayPortBase::BLINK;
     }
-    return displayPort.writeString(x, y, attr, s);
+    return displayPort.writeString(x, y, s, attr);
 }
 
-uint32_t OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
+uint32_t OSD_Elements::displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t c, uint8_t attr)
 {
     if (_blinkBits[element.index]) {
         attr |= DisplayPortBase::BLINK;
     }
-    return displayPort.writeChar(x, y, attr, c);
+    return displayPort.writeChar(x, y, c, attr);
 }
 
 bool OSD_Elements::isRenderPending() const
@@ -141,10 +141,12 @@ void OSD_Elements::addActiveElements()
     addActiveElement(OSD_MAH_DRAWN);
     addActiveElement(OSD_WATT_HOURS_DRAWN);
     addActiveElement(OSD_CRAFT_NAME);
+#if defined(USE_OSD_PROFILES)
     addActiveElement(OSD_CUSTOM_MSG0);
     addActiveElement(OSD_CUSTOM_MSG1);
     addActiveElement(OSD_CUSTOM_MSG2);
     addActiveElement(OSD_CUSTOM_MSG3);
+#endif
 #if defined(USE_BAROMETER) || defined(USE_GPS)
     addActiveElement(OSD_ALTITUDE);
 #endif
@@ -166,14 +168,20 @@ void OSD_Elements::addActiveElements()
 #if defined(USE_VARIO)
     addActiveElement(OSD_NUMERICAL_VARIO);
 #endif
+#if defined(USE_GPS)
     addActiveElement(OSD_COMPASS_BAR);
+#endif
     addActiveElement(OSD_ANTI_GRAVITY);
 #if defined(USE_BLACKBOX)
     addActiveElement(OSD_LOG_STATUS);
 #endif
+#if defined(USE_DSHOT)
     addActiveElement(OSD_MOTOR_DIAGNOSTICS);
+#endif
     addActiveElement(OSD_FLIP_ARROW);
+#if defined(USE_OSD_PROFILES)
     addActiveElement(OSD_PILOT_NAME);
+#endif
 #if defined(USE_RTC_TIME)
     addActiveElement(OSD_RTC_DATETIME);
 #endif
@@ -272,17 +280,17 @@ bool OSD_Elements::drawNextActiveElement(DisplayPortBase& displayPort)
         return false;
     }
 
-    const uint8_t item = _activeElements[_activeElementIndex];
+    const uint8_t element = _activeElements[_activeElementIndex];
 
-    if (!_backgroundLayerSupported && DrawBackgroundFunctions[item] && !_backgroundRendered) {
+    if (!_backgroundLayerSupported && DrawBackgroundFunctions[element] && !_backgroundRendered) {
         // If the background layer isn't supported then we
         // have to draw the element's static layer as well.
-        _backgroundRendered = drawSingleElementBackground(displayPort, item);
+        _backgroundRendered = drawSingleElementBackground(displayPort, element);
         // After the background always come back to check for foreground
         return true;
     }
 
-    if (drawSingleElement(displayPort, item)) {
+    if (drawSingleElement(displayPort, element)) {
         // If rendering is complete then advance to the next element
         // Prepare to render the background of the next element
         _backgroundRendered = false;
@@ -304,14 +312,14 @@ bool OSD_Elements::displayActiveElement(DisplayPortBase& displayPort)
     }
     // If there's a previously drawn background string to be displayed, do that
     if (_displayPendingBackground) {
-        displayWrite(displayPort, _activeElement, _activeElement.posX + _activeElement.offsetX, _activeElement.posY + _activeElement.offsetY, _activeElement.attr, &_activeElement.buf[0]);
+        displayWrite(displayPort, _activeElement, _activeElement.posX + _activeElement.offsetX, _activeElement.posY + _activeElement.offsetY, &_activeElement.buf[0], _activeElement.attr);
         _activeElement.buf[0] = '\0';
         _displayPendingBackground = false;
         return _displayPendingForeground;
     }
     // If there's a previously drawn foreground string to be displayed, do that
     if (_displayPendingForeground) {
-        displayWrite(displayPort, _activeElement, _activeElement.posX + _activeElement.offsetX, _activeElement.posY + _activeElement.offsetY, _activeElement.attr, &_activeElement.buf[0]);
+        displayWrite(displayPort, _activeElement, _activeElement.posX + _activeElement.offsetX, _activeElement.posY + _activeElement.offsetY, &_activeElement.buf[0], _activeElement.attr);
         _activeElement.buf[0] = '\0';
         _displayPendingForeground = false;
     }

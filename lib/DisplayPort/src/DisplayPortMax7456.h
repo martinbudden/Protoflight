@@ -72,8 +72,8 @@ private:
 public:
     virtual uint32_t clearScreen(display_clear_option_e options) override;
     virtual bool drawScreen() override;
-    virtual uint32_t writeString(uint8_t x, uint8_t y, uint8_t attr, const char *text) override;
-    virtual uint32_t writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c) override;
+    virtual uint32_t writeString(uint8_t x, uint8_t y, const char *text, uint8_t attr) override;
+    virtual uint32_t writeChar(uint8_t x, uint8_t y, uint8_t c, uint8_t attr) override;
     virtual bool layerCopy(layer_e destLayer, layer_e sourceLayer) override;
     virtual void setBackgroundType(background_e backgroundType) override;
 

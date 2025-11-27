@@ -67,16 +67,14 @@ public:
 #if defined(USE_BAROMETER)
         STATS_MAX_ALTITUDE,
 #endif
-#if defined (USE_BLACKBOX)
         STATS_BLACKBOX,
         STATS_BLACKBOX_NUMBER,
-#endif
 #if defined(USE_DSHOT)
         STATS_MAX_ESC_TEMPERATURE,
         STATS_MAX_ESC_RPM,
 #endif
-#if defined(USE_GPS)
         STATS_MAX_SPEED,
+#if defined(USE_GPS)
         STATS_MAX_DISTANCE,
         STATS_FLIGHT_DISTANCE,
         STATS_TOTAL_DISTANCE,
@@ -267,7 +265,7 @@ private:
     uint32_t  _resumeRefreshAtUs {};
     state_e _state { STATE_INIT };
     std::array<uint16_t, STATE_COUNT> _stateDurationFractionUs {};
-    std::array<uint32_t, OSD_ITEM_COUNT> _elementDurationFractionUs {};
+    std::array<uint32_t, OSD_ELEMENT_COUNT> _elementDurationFractionUs {};
 
     config_t _config {};
     statsConfig_t _statsConfig {};
@@ -281,6 +279,7 @@ private:
     bool _isReady {false};
     bool _statsVisible {false};
     bool _statsEnabled {false};
-
+#if defined(USE_OSD_STATS)
     static const std::array<stats_e, STATS_COUNT> StatsDisplayOrder;
+#endif
 };

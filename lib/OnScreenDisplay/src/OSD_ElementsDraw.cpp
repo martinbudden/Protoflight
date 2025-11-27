@@ -13,8 +13,8 @@
 // Drawing functions
 //
 
-std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> OSD_Elements::DrawFunctions {};
-std::array<OSD_Elements::elementDrawFnPtr, OSD_ITEM_COUNT> OSD_Elements::DrawBackgroundFunctions {};
+std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> OSD_Elements::DrawFunctions {};
+std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> OSD_Elements::DrawBackgroundFunctions {};
 
 
 void OSD_Elements::initDrawFunctions()
@@ -71,12 +71,16 @@ void OSD_Elements::initDrawFunctions()
     DrawFunctions[OSD_ESC_RPM]          = &OSD_Elements::draw_ESC_RPM;
 #endif
     DrawFunctions[OSD_REMAINING_TIME_ESTIMATE] = &OSD_Elements::draw_REMAINING_TIME_ESTIMATE;
+#if defined(USE_RTC_TIME)
     DrawFunctions[OSD_RTC_DATETIME]     = &OSD_Elements::draw_RTC_DATETIME;
+#endif
     DrawFunctions[OSD_ADJUSTMENT_RANGE] = &OSD_Elements::draw_ADJUSTMENT_RANGE;
     DrawFunctions[OSD_CORE_TEMPERATURE] = &OSD_Elements::draw_CORE_TEMPERATURE;
     DrawFunctions[OSD_ANTI_GRAVITY]     = &OSD_Elements::draw_ANTI_GRAVITY;
     DrawFunctions[OSD_G_FORCE]          = &OSD_Elements::draw_G_FORCE;
+#if defined(USE_DSHOT)
     DrawFunctions[OSD_MOTOR_DIAGNOSTICS] = &OSD_Elements::draw_MOTOR_DIAGNOSTICS;
+#endif
     DrawFunctions[OSD_LOG_STATUS]       = &OSD_Elements::draw_LOG_STATUS;
     DrawFunctions[OSD_FLIP_ARROW]       = &OSD_Elements::draw_FLIP_ARROW;
     DrawFunctions[OSD_LINK_QUALITY]     = &OSD_Elements::draw_LINK_QUALITY;
@@ -85,7 +89,9 @@ void OSD_Elements::initDrawFunctions()
 #endif
     DrawFunctions[OSD_STICK_OVERLAY_LEFT] = &OSD_Elements::draw_STICK_OVERLAY;
     DrawFunctions[OSD_STICK_OVERLAY_RIGHT] = &OSD_Elements::draw_STICK_OVERLAY;
+#if defined(USE_OSD_PROFILES)
     DrawFunctions[OSD_PILOT_NAME]       = &OSD_Elements::draw_PILOT_NAME;
+#endif
 #if defined(USE_DSHOT)
     DrawFunctions[OSD_ESC_RPM_FREQUENCY]= &OSD_Elements::draw_ESC_RPM_FREQUENCY;
 #endif
@@ -109,7 +115,7 @@ void OSD_Elements::initDrawFunctions()
     DrawFunctions[OSD_AUX_VALUE]        = &OSD_Elements::draw_AUX_VALUE;
     DrawFunctions[OSD_READY_MODE]       = &OSD_Elements::draw_READY_MODE;
     DrawFunctions[OSD_RSNR_VALUE]       = &OSD_Elements::draw_RSNR_VALUE;
-#if defined(USE_MSP_DISPLAYPORT)
+#if defined(USE_OSD_HD) && defined(USE_MSP_DISPLAYPORT)
     DrawFunctions[OSD_SYS_GOGGLE_VOLTAGE] = &OSD_Elements::draw_SYS;
     DrawFunctions[OSD_SYS_VTX_VOLTAGE]   = &OSD_Elements::draw_SYS;
     DrawFunctions[OSD_SYS_BITRATE]      = &OSD_Elements::draw_SYS;
@@ -128,10 +134,12 @@ void OSD_Elements::initDrawFunctions()
     DrawFunctions[OSD_GPS_LAP_TIME_BEST3] = &OSD_Elements::draw_GPS_LAP_TIME_BEST3;
 #endif
     DrawFunctions[OSD_DEBUG2]           = &OSD_Elements::draw_DEBUG2;
+#if defined(USE_OSD_PROFILES)
     DrawFunctions[OSD_CUSTOM_MSG0]      = &OSD_Elements::draw_CUSTOM_MSG;
     DrawFunctions[OSD_CUSTOM_MSG1]      = &OSD_Elements::draw_CUSTOM_MSG;
     DrawFunctions[OSD_CUSTOM_MSG2]      = &OSD_Elements::draw_CUSTOM_MSG;
     DrawFunctions[OSD_CUSTOM_MSG3]      = &OSD_Elements::draw_CUSTOM_MSG;
+#endif
 #if defined(USE_RANGEFINDER)
     DrawFunctions[OSD_LIDAR_DISTANCE]   = &OSD_Elements::draw_LIDAR_DISTANCE;
 #endif
@@ -140,7 +148,9 @@ void OSD_Elements::initDrawFunctions()
     DrawBackgroundFunctions[OSD_CRAFT_NAME]         = &OSD_Elements::drawBackground_CRAFT_NAME;
     DrawBackgroundFunctions[OSD_STICK_OVERLAY_LEFT] = &OSD_Elements::drawBackground_STICK_OVERLAY;
     DrawBackgroundFunctions[OSD_STICK_OVERLAY_RIGHT]= &OSD_Elements::drawBackground_STICK_OVERLAY;
+#if defined(USE_OSD_PROFILES)
     DrawBackgroundFunctions[OSD_PILOT_NAME]         = &OSD_Elements::drawBackground_PILOT_NAME;
+#endif
     DrawBackgroundFunctions[OSD_CAMERA_FRAME]       = &OSD_Elements::drawBackground_CAMERA_FRAME;
 };
 
@@ -164,12 +174,12 @@ void OSD_Elements::drawBackground_HORIZON_SIDEBARS(DisplayPortBase& displayPort)
 
     if (_HORIZON_SIDEBARS_RenderLevel) {
         // AH level indicators
-        displayPort.writeChar(_activeElement.posX - width + 1, _activeElement.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_LEFT);
-        displayPort.writeChar(_activeElement.posX + width - 1, _activeElement.posY, DisplayPortBase::SEVERITY_NORMAL, SYM_AH_RIGHT);
+        displayPort.writeChar(_activeElement.posX - width + 1, _activeElement.posY, SYM_AH_LEFT);
+        displayPort.writeChar(_activeElement.posX + width - 1, _activeElement.posY, SYM_AH_RIGHT);
         _HORIZON_SIDEBARS_RenderLevel = false;
     } else {
-        displayPort.writeChar(_activeElement.posX - width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
-        displayPort.writeChar(_activeElement.posX + width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), DisplayPortBase::SEVERITY_NORMAL, SYM_AH_DECORATION);
+        displayPort.writeChar(_activeElement.posX - width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), SYM_AH_DECORATION);
+        displayPort.writeChar(_activeElement.posX + width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), SYM_AH_DECORATION);
         if (_HORIZON_SIDEBARS_PosY == height) {
             // Rendering is complete, so prepare to start again
             _HORIZON_SIDEBARS_PosY = -height;

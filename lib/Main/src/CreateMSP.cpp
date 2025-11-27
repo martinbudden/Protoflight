@@ -8,12 +8,12 @@
 /*!
 Statically allocate the MSP and associated objects.
 */
-MSP_SerialBase* Main::createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base*vtx, OSD* osd)
+MSP_Serial* Main::createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base*vtx)
 {
 #if defined(USE_MSP)
-    static MSP_Protoflight mspProtoflight(ahrs, flightController, cockpit, receiver, autopilot, imuFilters, debug, nvs, blackbox, vtx, osd);
+    static MSP_Protoflight mspProtoflight(ahrs, flightController, cockpit, receiver, autopilot, imuFilters, debug, nvs, blackbox, vtx);
     static MSP_Stream mspStream(mspProtoflight);
-    static MSP_Serial mspSerial(mspStream);
+    static MSP_Serial mspSerial(mspStream, mspProtoflight);
 
     return &mspSerial;
 #else
@@ -27,7 +27,6 @@ MSP_SerialBase* Main::createMSP(AHRS& ahrs, FlightController& flightController, 
     (void)nvs;
     (void)blackbox;
     (void)vtx;
-    (void)osd;
 
     return nullptr;
 #endif

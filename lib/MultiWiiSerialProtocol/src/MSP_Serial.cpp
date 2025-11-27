@@ -1,3 +1,4 @@
+#include "MSP_Protoflight.h"
 #include "MSP_Serial.h"
 
 #if defined(FRAMEWORK_RPI_PICO)
@@ -8,6 +9,11 @@
 #include <Arduino.h>
 #endif
 
+
+void MSP_Serial::setOSD(OSD* osd)
+{
+    _mspProtoflight.setOSD(osd);
+}
 
 /*!
 Called from MSP_Task::loop()

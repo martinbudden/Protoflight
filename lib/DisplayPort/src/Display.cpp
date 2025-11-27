@@ -31,7 +31,7 @@ bool Display::drawScreen()
     return _displayPort.drawScreen();
 }
 
-int Display::screenSize() const
+uint32_t Display::screenSize() const
 {
     return _displayPort.screenSize();
 }
@@ -66,12 +66,12 @@ void Display::setXY(uint8_t x, uint8_t y)
     _displayPort.setPosY(y);
 }
 
-int Display::sys(uint8_t x, uint8_t y, DisplayPortBase::system_element_e systemElement)
+uint32_t Display::sys(uint8_t x, uint8_t y, DisplayPortBase::system_element_e systemElement)
 {
     return _displayPort.writeSys(x, y, systemElement);
 }
 
-uint32_t Display::write(uint8_t x, uint8_t y, uint8_t attr, const char *text)
+uint32_t Display::write(uint8_t x, uint8_t y, const char *text, uint8_t attr)
 {
     _displayPort.setPosX(x + static_cast<uint8_t>(strlen(text)));
     _displayPort.setPosY(y);
@@ -81,14 +81,14 @@ uint32_t Display::write(uint8_t x, uint8_t y, uint8_t attr, const char *text)
         return 0;
     }
 
-    return _displayPort.writeString(x, y, attr, text);
+    return _displayPort.writeString(x, y, text, attr);
 }
 
-uint32_t Display::writeChar(uint8_t x, uint8_t y, uint8_t attr, uint8_t c)
+uint32_t Display::writeChar(uint8_t x, uint8_t y, uint8_t c, uint8_t attr)
 {
     _displayPort.setPosX(x + 1);
     _displayPort.setPosY(y);
-    return _displayPort.writeChar(x, y, attr, c);
+    return _displayPort.writeChar(x, y, c, attr);
 }
 
 bool Display::isTransferInProgress() const

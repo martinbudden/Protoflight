@@ -8,7 +8,9 @@ Targets
 #define USE_BAROMETER
 #define USE_GPS
 #define USE_OSD_PROFILES
+#define USE_OSD_STATS
 #define USE_SIN_ANGLE_PIDS
+#define USE_GYRO_FILTERS_EXTENDED
 
 #endif
 
@@ -354,7 +356,9 @@ Targets
     #define MOTOR_PINS          stm32_motor_pins_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}}
 
     #define USE_MSP
-    //#define USE_OSD
+    #define USE_MSP_DISPLAYPORT
+
+    #define USE_OSD
     //#define USE_CMS
     // LED0 PB4, LED1 PB3
 
@@ -412,6 +416,7 @@ Targets
     #define SDCARD_SPI_PINS     stm32_spi_pins_t{.cs={PC,8},.sck={PC,9},.cipo={PC,10},.copi={PC,11},.irq={0,0xFF}}
     #define USE_BLACKBOX
     //#define USE_MSP
+    #define USE_GYRO_FILTERS_EXTENDED
 
 #elif defined(TARGET_STM32F3_DISCOVERY)
 
