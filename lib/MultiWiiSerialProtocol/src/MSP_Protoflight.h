@@ -20,8 +20,7 @@ class VTX_Base;
 class MSP_Protoflight : public MSP_Base {
 public:
     virtual ~MSP_Protoflight() = default;
-    MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx);
-    void setOSD(OSD* osd) { _osd = osd; }
+    MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx, OSD* osd);
 public:
     enum { RATEPROFILE_MASK = (1 << 7) };
     enum { RTC_NOT_SUPPORTED = 0xFF };
@@ -49,7 +48,7 @@ private:
     NonVolatileStorage& _nonVolatileStorage;
     Blackbox* _blackbox;
     VTX_Base* _vtx;
-    OSD* _osd {nullptr};
+    OSD* _osd;
     uint8_t _pidProfileIndex {0};
     uint8_t _ratesProfileIndex {0};
 };

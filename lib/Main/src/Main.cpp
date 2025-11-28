@@ -74,19 +74,14 @@ void Main::setup()
 
     Cockpit& cockpit = createCockpit(receiver, flightController, debug, imuFilters, nvs);
 
-    Blackbox* blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
-    VTX_Base* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
-    MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs, blackbox, vtx);
-    DisplayPortBase& displayPort = createDisplayPort(debug, mspSerial);
-
-
     // create the optional components according to build flags
-    [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
-    [[maybe_unused]] OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
-    if (mspSerial) {
-        mspSerial->setOSD(osd);
-    }
+    Blackbox* blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
+    DisplayPortBase& displayPort = createDisplayPort(debug);
+    OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
+    VTX_Base* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
+    [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs, blackbox, vtx, osd);
     [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, imuSensor, osd, vtx);
+    [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
 
 
     //

@@ -237,6 +237,7 @@
         "rpipico",
         "RSNR",
         "RXFAIL",
+        "RXNE",
         "SBUS",
         "SDCARD",
         "sdft",

@@ -141,13 +141,13 @@ private:
     static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static ReceiverBase& createReceiver();
     static Cockpit& createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs);
-    static DisplayPortBase& createDisplayPort(Debug& debug, MSP_SerialBase* mspSerial);
+    static DisplayPortBase& createDisplayPort(Debug& debug);
     // optional components create function return nullptr if component not specified as part of the build
     static Dashboard* createDashboard(const DisplayPortBase& displayPort, const AHRS& ahrs, FlightController& flightController, ReceiverBase& receiver);
     static Blackbox* createBlackBox(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
     static VTX_Base* createVTX(NonVolatileStorage& nvs);
     static OSD* createOSD(DisplayPortBase& displayPort, const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
-    static MSP_Serial* createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx);
+    static MSP_Serial* createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx, OSD* osd);
     static CMS* createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, OSD* osd, VTX_Base* vtx);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, NonVolatileStorage& nvs, const TaskBase* dashboardTask);
 

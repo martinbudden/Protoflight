@@ -387,6 +387,9 @@ void OSD::drawLogo(uint8_t x, uint8_t y)
 
 void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
 {
+    if (_displayPort->isGrabbed()) {
+        return;
+    }
     if (_state == STATE_IDLE) {
         _state = STATE_CHECK;
     } else if (_state != STATE_INIT) {

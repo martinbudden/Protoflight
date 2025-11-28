@@ -1,35 +1,17 @@
-#include "MSP_Protoflight.h"
 #include "MSP_Serial.h"
+#include "MSP_SerialPortBase.h"
+#include <StreamBuf.h>
 
-#if defined(FRAMEWORK_RPI_PICO)
-#elif defined(FRAMEWORK_ESPIDF)
-#elif defined(FRAMEWORK_STM32_CUBE)
-#elif defined(FRAMEWORK_TEST)
-#else // defaults to FRAMEWORK_ARDUINO
-#include <Arduino.h>
-#endif
-
-
-void MSP_Serial::setOSD(OSD* osd)
-{
-    _mspProtoflight.setOSD(osd);
-}
 
 /*!
 Called from MSP_Task::loop()
 */
 void MSP_Serial::processInput()
 {
-#if defined(FRAMEWORK_RPI_PICO)
-#elif defined(FRAMEWORK_ESPIDF)
-#elif defined(FRAMEWORK_STM32_CUBE)
-#elif defined(FRAMEWORK_TEST)
-#else // defaults to FRAMEWORK_ARDUINO
-    while (Serial.available() > 0) {
-        const uint8_t inChar = Serial.read();
+    while (_mspSerialPort.isDataAvailable()) {
+        const uint8_t inChar = _mspSerialPort.readByte();
         _mspStream.putChar(inChar, nullptr); // This will invoke MSP_Serial::sendFrame(), when a completed frame is received
     }
-#endif
 }
 
 /*!
@@ -58,23 +40,13 @@ size_t MSP_Serial::sendFrame(const uint8_t* hdr, size_t hdrLen, const uint8_t* d
     sbuf.writeData(crc, crcLen);
     sbuf.switchToReader();
 
-#if defined(FRAMEWORK_RPI_PICO)
-    (void)sbuf;
-#elif defined(FRAMEWORK_ESPIDF)
-    (void)sbuf;
-#elif defined(FRAMEWORK_STM32_CUBE)
-    (void)sbuf;
-#elif defined(FRAMEWORK_TEST)
-    (void)sbuf;
-#else // defaults to FRAMEWORK_ARDUINO
     while (sbuf.bytesRemaining() > 0) {
-        const size_t available = Serial.availableForWrite();
+        const size_t available = _mspSerialPort.availableForWrite();
         const size_t writeLen = std::min(available, sbuf.bytesRemaining());
-        Serial.write(sbuf.ptr(), writeLen);
+        _mspSerialPort.write(sbuf.ptr(), writeLen);
         sbuf.advance(writeLen);
-        delay(1);
+        //!!delayMs(1);
     }
-#endif
 
     return totalFrameLength;
 }
