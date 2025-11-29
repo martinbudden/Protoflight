@@ -225,11 +225,6 @@ void Cockpit::updateControls(const controls_t& controls)
     _flightController.updateSetpoints(flightControls);
 }
 
-void Cockpit::setFailsafeConfig(const failsafe_config_t& failsafeConfig)
-{
-    _failsafeConfig = failsafeConfig;
-}
-
 void Cockpit::checkFailsafe(uint32_t tickCount)
 {
     _flightController.detectCrashOrSpin();
@@ -257,4 +252,14 @@ void Cockpit::checkFailsafe(uint32_t tickCount)
             _flightController.updateSetpoints(flightControls);
         }
     }
+}
+
+void Cockpit::setFailsafeConfig(const failsafe_config_t& failsafeConfig)
+{
+    _failsafeConfig = failsafeConfig;
+}
+
+void Cockpit::setRX_Config(const rx_config_t& rxConfig)
+{
+    _rxConfig = rxConfig;
 }

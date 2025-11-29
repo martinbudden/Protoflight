@@ -64,11 +64,12 @@ constexpr uint16_t RatesKey = 0x0500; // note jump of 4 to allow storage of 4 ra
 constexpr uint16_t IMU_FiltersConfigKey = 0x0600;
 constexpr uint16_t RPM_FiltersConfigKey = 0x0601;
 constexpr uint16_t FailsafeConfigKey = 0x0602;
-constexpr uint16_t AutopilotConfigKey = 0x603;
-constexpr uint16_t AutopilotPositionConfigKey = 0x604;
-constexpr uint16_t AltitudeHoldConfigKey = 0x605;
-constexpr uint16_t MotorConfigKey = 0x606;
-constexpr uint16_t VTX_ConfigKey = 0607;
+constexpr uint16_t RX_ConfigKey = 0x0603;
+constexpr uint16_t AutopilotConfigKey = 0x604;
+constexpr uint16_t AutopilotPositionConfigKey = 0x605;
+constexpr uint16_t AltitudeHoldConfigKey = 0x606;
+constexpr uint16_t MotorConfigKey = 0x607;
+constexpr uint16_t VTX_ConfigKey = 0x0608;
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // Protoflight
@@ -588,6 +589,19 @@ Cockpit::failsafe_config_t NonVolatileStorage::loadFailsafeConfig() // NOLINT(re
 int32_t NonVolatileStorage::storeFailsafeConfig(const Cockpit::failsafe_config_t& config)
 {
     return storeItem(FailsafeConfigKey, &config, sizeof(config), &DEFAULTS::cockpitFailSafeConfig);
+}
+
+Cockpit::rx_config_t NonVolatileStorage::loadRX_Config() // NOLINT(readability-make-member-function-const)
+{
+    {Cockpit::rx_config_t config {};
+    if (loadItem(RX_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    }}
+    return DEFAULTS::cockpitRX_Config;
+}
+
+int32_t NonVolatileStorage::storeRX_Config(const Cockpit::rx_config_t& config)
+{
+    return storeItem(RX_ConfigKey, &config, sizeof(config), &DEFAULTS::cockpitRX_Config);
 }
 
 Cockpit::rates_t NonVolatileStorage::loadRates(uint8_t rateProfileIndex) const

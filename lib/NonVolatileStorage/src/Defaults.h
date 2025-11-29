@@ -158,6 +158,18 @@ static constexpr RPM_Filters::config_t rpmFiltersConfig = {
 };
 #endif
 
+static constexpr Cockpit::rates_t cockpitRates = {
+    .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
+    .rcRates = { 7, 7, 7 },
+    .rcExpos = { 0, 0, 0 },
+    .rates = { 67, 67, 67 },
+    .throttleMidpoint = 50,
+    .throttleExpo = 0,
+    .throttleLimitType = Cockpit::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitPercent = 100,
+    //.ratesType = Cockpit::RATES_TYPE_ACTUAL
+};
+
 static constexpr Cockpit::failsafe_config_t cockpitFailSafeConfig = {
     .throttle_pwm = 1000, // throttle off
     .throttle_low_delay_deciseconds = 100,
@@ -169,16 +181,22 @@ static constexpr Cockpit::failsafe_config_t cockpitFailSafeConfig = {
     .stick_threshold_percent = 30,
 };
 
-static constexpr Cockpit::rates_t cockpitRates = {
-    .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
-    .rcRates = { 7, 7, 7 },
-    .rcExpos = { 0, 0, 0 },
-    .rates = { 67, 67, 67 },
-    .throttleMidpoint = 50,
-    .throttleExpo = 0,
-    .throttleLimitType = Cockpit::THROTTLE_LIMIT_TYPE_OFF,
-    .throttleLimitPercent = 100,
-    //.ratesType = Cockpit::RATES_TYPE_ACTUAL
+static constexpr Cockpit::rx_config_t cockpitRX_Config = {
+    .serial_rx_type = Cockpit::SERIAL_RX_CRSF,
+    .serial_rx_inverted = 0,
+    .half_duplex = 0,
+    .rssi_channel = 0,
+    .rssi_scale = 100,
+    .rssi_invert = 0,
+    .rssi_offset = 0,
+    .fpvCamAngleDegrees = 0,        // Camera angle to be scaled into rc commands
+    .airModeActivateThreshold = 25, // Throttle setpoint percent where airmode gets activated
+    .spektrum_sat_bind = 0,         // number of bind pulses for Spektrum satellite receivers
+    .mid_rc = 1500,                 // Some radios have not a neutral point centered on 1500
+    .min_check = 1050,
+    .max_check = 1900,
+    .rx_min_usec = 885,
+    .rx_max_usec = 2115,
 };
 
 #if defined(USE_ALTITUDE_HOLD)

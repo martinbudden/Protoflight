@@ -112,6 +112,9 @@ public:
     Cockpit::failsafe_config_t loadFailsafeConfig();
     int32_t storeFailsafeConfig(const Cockpit::failsafe_config_t& config);
 
+    Cockpit::rx_config_t loadRX_Config();
+    int32_t storeRX_Config(const Cockpit::rx_config_t& config);
+
     Cockpit::rates_t loadRates(uint8_t rateProfileIndex) const;
     int32_t storeRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex);
 

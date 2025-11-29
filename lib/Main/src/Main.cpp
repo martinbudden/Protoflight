@@ -70,7 +70,7 @@ void Main::setup()
 
     AHRS& ahrs = createAHRS(flightController, imuSensor, imuFilters);
 
-    ReceiverBase& receiver = createReceiver();
+    ReceiverBase& receiver = createReceiver(nvs);
 
     Cockpit& cockpit = createCockpit(receiver, flightController, debug, imuFilters, nvs);
 

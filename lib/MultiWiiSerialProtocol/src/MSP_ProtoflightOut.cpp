@@ -95,22 +95,6 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU16(0); // CPU temperature, added in API v1.46
         break;
     }
-    case MSP_FAILSAFE_CONFIG: {
-        const Cockpit::failsafe_config_t failsafeConfig = _cockpit.getFailsafeConfig();
-        dst.writeU8(failsafeConfig.delay_deciseconds);
-        dst.writeU8(failsafeConfig.landing_time_seconds);
-        dst.writeU16(failsafeConfig.throttle_pwm);
-        dst.writeU8(failsafeConfig.switch_mode);
-        dst.writeU16(failsafeConfig.throttle_low_delay_deciseconds);
-        dst.writeU8(failsafeConfig.procedure);
-        break;
-    }
-    case MSP_SET_MIXER_CONFIG: {
-        enum { MIXER_QUAD_X = 3 };
-        dst.writeU8(MIXER_QUAD_X); // mixer mode
-        dst.writeU8(0); // yaw_motors_reversed
-        break;
-    }
     case MSP_RAW_IMU: {
         IMU_Base::xyz_int32_t acc {};
         _ahrs.readAccRaw(acc.x, acc.y, acc.z);
@@ -135,13 +119,17 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
     case MSP_NAME:
         dst.writeStringWithZeroTerminator("Martin Budden"); // pilot/aircraft name
         break;
-
     case MSP_MOTOR:
         for (size_t ii = 0; ii < 8; ++ii) {
             dst.writeU16(0);
         }
         break;
-
+    case MSP_MOTOR_TELEMETRY:
+        return RESULT_CMD_UNKNOWN;
+    case MSP2_MOTOR_OUTPUT_REORDERING:
+        return RESULT_CMD_UNKNOWN;
+    case MSP2_GET_VTX_DEVICE_STATUS:
+        return RESULT_CMD_UNKNOWN;
     case MSP_RC: {
         const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
         dst.writeU16(controls.throttle);
@@ -153,6 +141,35 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         }
         break;
     }
+    case MSP_ATTITUDE: {
+        const Quaternion quaternion {}; //!!TODO:= _ahrs.getOrientationForInstrumentationUsingLock();
+
+        dst.writeU16(static_cast<uint16_t>(quaternion.calculateRollDegrees()*10.0F));
+        dst.writeU16(static_cast<uint16_t>(quaternion.calculatePitchDegrees()*10.0F));
+        dst.writeU16(static_cast<uint16_t>(quaternion.calculateYawDegrees()));
+        break;
+    }
+    case MSP_ALTITUDE:
+        dst.writeU32(0);
+        dst.writeU16(0);
+        break;
+    case MSP_SONAR_ALTITUDE:
+        dst.writeU32(0);
+        break;
+    case MSP_BOARD_ALIGNMENT_CONFIG:
+        //dst.writeU16(boardAlignment()->rollDegrees);
+        //dst.writeU16(boardAlignment()->pitchDegrees);
+        //dst.writeU16(boardAlignment()->yawDegrees);
+        dst.writeU16(0);
+        dst.writeU16(0);
+        dst.writeU16(0);
+        break;
+    case MSP_ARMING_CONFIG:
+        dst.writeU8(0); //armingConfig()->auto_disarm_delay);
+        dst.writeU8(0);
+        dst.writeU8(0); //imuConfig()->small_angle);
+        dst.writeU8(0); //armingConfig()->gyro_cal_on_first_arm);
+        break;
     case MSP_RC_TUNING: {
         const Cockpit::rates_t rates = _cockpit.getRates();
         dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::ROLL]));
@@ -168,53 +185,17 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::YAW]));
         dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::PITCH]));
         dst.writeU8(static_cast<uint8_t>(rates.rcExpos[Cockpit::PITCH]));
-
         // added in 1.41
         dst.writeU8(rates.throttleLimitType);
         dst.writeU8(rates.throttleLimitPercent);
-
         // added in 1.42
         dst.writeU8(static_cast<uint8_t>(rates.rateLimits[Cockpit::ROLL]));
         dst.writeU8(static_cast<uint8_t>(rates.rateLimits[Cockpit::PITCH]));
         dst.writeU8(static_cast<uint8_t>(rates.rateLimits[Cockpit::YAW]));
-
         // added in 1.43
         dst.writeU8(Cockpit::RATES_TYPE_ACTUAL); // hardcoded, since we only support RATES_TYPE_ACTUAL rates.ratesType);
         break;
     }
-    case MSP_ATTITUDE: {
-        const Quaternion quaternion {}; //!!TODO:= _ahrs.getOrientationForInstrumentationUsingLock();
-
-        dst.writeU16(static_cast<uint16_t>(quaternion.calculateRollDegrees()*10.0F));
-        dst.writeU16(static_cast<uint16_t>(quaternion.calculatePitchDegrees()*10.0F));
-        dst.writeU16(static_cast<uint16_t>(quaternion.calculateYawDegrees()));
-        break;
-    }
-    case MSP_ALTITUDE:
-        dst.writeU32(0);
-        dst.writeU16(0);
-        break;
-
-    case MSP_SONAR_ALTITUDE:
-        dst.writeU32(0);
-        break;
-
-    case MSP_BOARD_ALIGNMENT_CONFIG:
-        //dst.writeU16(boardAlignment()->rollDegrees);
-        //dst.writeU16(boardAlignment()->pitchDegrees);
-        //dst.writeU16(boardAlignment()->yawDegrees);
-        dst.writeU16(0);
-        dst.writeU16(0);
-        dst.writeU16(0);
-        break;
-
-    case MSP_ARMING_CONFIG:
-        dst.writeU8(0); //armingConfig()->auto_disarm_delay);
-        dst.writeU8(0);
-        dst.writeU8(0); //imuConfig()->small_angle);
-        dst.writeU8(0); //armingConfig()->gyro_cal_on_first_arm);
-        break;
-
     case MSP_PID: {
         for (size_t ii = 0; ii < FlightController::PID_COUNT; ++ii) {
             const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
@@ -235,12 +216,95 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
             dst.writeStringWithZeroTerminator(pidName);
         }
         break;
-
     case MSP_PID_CONTROLLER: {
         enum { PID_CONTROLLER_BETAFLIGHT = 1 };
         dst.writeU8(PID_CONTROLLER_BETAFLIGHT);
         break;
     }
+    case MSP_MODE_RANGES:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_MODE_RANGES_EXTRA:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_ADJUSTMENT_RANGES:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_MOTOR_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_COMPASS_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_GPS_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_RAW_GPS:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_COMP_GPS:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_GPSSVINFO:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_GPS_RESCUE:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_GPS_RESCUE_PIDS:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_ACC_TRIM:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_MIXER_CONFIG: {
+        dst.writeU8(static_cast<uint8_t>(_cockpit.getFlightController().getMotorMixer().getType()));
+        dst.writeU8(0); // yaw_motors_reversed
+        break;
+    }    
+    case MSP_RX_CONFIG: {
+        const Cockpit::rx_config_t& rxConfig = _cockpit.getRX_Config();
+        dst.writeU8(rxConfig.serial_rx_type);
+        dst.writeU16(rxConfig.max_check);
+        dst.writeU16(rxConfig.mid_rc);
+        dst.writeU16(rxConfig.min_check);
+        dst.writeU8(rxConfig.spektrum_sat_bind);
+        dst.writeU16(rxConfig.rx_min_usec);
+        dst.writeU16(rxConfig.rx_max_usec);
+        dst.writeU8(0); // not required in API 1.44, was rxConfig.rcInterpolation
+        dst.writeU8(0); // not required in API 1.44, was rxConfig.rcInterpolationInterval
+        dst.writeU16(static_cast<uint16_t>(rxConfig.airModeActivateThreshold * 10 + 1000));
+        dst.writeU8(0);
+        dst.writeU32(0);
+        dst.writeU8(0);
+        dst.writeU8(rxConfig.fpvCamAngleDegrees);
+        dst.writeU8(0); // not required in API 1.44, was rxConfig.rcSmoothingChannels
+        dst.writeU8(0);
+        dst.writeU8(0);
+        dst.writeU8(0);
+        dst.writeU8(0);
+        dst.writeU8(0);
+        dst.writeU8(0);
+        break;
+    }
+    case MSP_FAILSAFE_CONFIG: {
+        const Cockpit::failsafe_config_t failsafeConfig = _cockpit.getFailsafeConfig();
+        dst.writeU8(failsafeConfig.delay_deciseconds);
+        dst.writeU8(failsafeConfig.landing_time_seconds);
+        dst.writeU16(failsafeConfig.throttle_pwm);
+        dst.writeU8(failsafeConfig.switch_mode);
+        dst.writeU16(failsafeConfig.throttle_low_delay_deciseconds);
+        dst.writeU8(failsafeConfig.procedure);
+        break;
+    }
+    case MSP_RXFAIL_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_RSSI_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_RX_MAP:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_CF_SERIAL_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP2_COMMON_SERIAL_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_DATAFLASH_SUMMARY:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_BLACKBOX_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_SDCARD_SUMMARY:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_MOTOR_3D_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_RC_DEADBAND:
+        return RESULT_CMD_UNKNOWN;
     case MSP_SENSOR_ALIGNMENT: {
         const uint8_t gyroAlignment = 0; //gyroDeviceConfig(0)->alignment;
         dst.writeU8(gyroAlignment);
@@ -256,6 +320,8 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(ALIGN_DEFAULT);
         break;
     }
+    case MSP_ADVANCED_CONFIG:
+        return RESULT_CMD_UNKNOWN;
     case MSP_FILTER_CONFIG : {
         auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
@@ -322,6 +388,8 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU16(0); // dynNotchConfig.dyn_notch_max_hz
         break;
     }
+    case MSP_PID_ADVANCED:
+        return RESULT_CMD_UNKNOWN;
     case MSP_SENSOR_CONFIG: {
         // use sensorIndex_e index: 0:GyroHardware, 1:AccHardware, 2:BaroHardware, 3:MagHardware, 4:RangefinderHardware
         // hardcode a value for now
@@ -336,7 +404,12 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(RANGEFINDER_NONE);
         break;
     }
-    // Added in MSP API 1.46
+    case MSP_VTX_CONFIG:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_TX_INFO:
+        return RESULT_CMD_UNKNOWN;
+    case MSP_RTC:
+        return RESULT_CMD_UNKNOWN;
     case MSP2_SENSOR_CONFIG_ACTIVE: {
         // just hardcode some values for now
         const IMU_Base& imu = _ahrs.getIMU();
@@ -352,28 +425,23 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
     case MSP_FC_VARIANT:
         dst.writeData(flightControllerIdentifier, FLIGHT_CONTROLLER_IDENTIFIER_LENGTH);
         break;
-
     case MSP_FC_VERSION:
         dst.writeU8(FC_VERSION_MAJOR);
         dst.writeU8(FC_VERSION_MINOR);
         dst.writeU8(FC_VERSION_PATCH_LEVEL);
         break;
-
     case MSP_BOARD_INFO: {
         dst.writeData(boardIdentifier, BOARD_IDENTIFIER_LENGTH);
         dst.writeU16(0); //hardware revision
         dst.writeU8(0);  // 0 == FC
         const uint8_t targetCapabilities = 0;
         dst.writeU8(targetCapabilities);
-
         // Target name with explicit length
         dst.writeU8(static_cast<uint8_t>(strlen(targetName)));
         dst.writeData(targetName, strlen(targetName));
-
         // board name strings
         dst.writeU8(0);
         dst.writeU8(0);
-
 #if defined(USE_SIGNATURE)
         // Signature
         dst.writeData(getSignature(), SIGNATURE_LENGTH);
@@ -382,28 +450,22 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         memset(&emptySignature[0], 0, sizeof(emptySignature));
         dst.writeData(&emptySignature, sizeof(emptySignature));
 #endif
-
         dst.writeU8(0xFF); // unknown MCU type
         //dst.writeU8(getMcuTypeId());
-
         // Added in API version 1.42
         dst.writeU8(0);
         //dst.writeU8(systemConfig()->configurationState);
-
         // Added in API version 1.43
         //dst.writeU16(0);
         dst.writeU16(static_cast<uint16_t>(_ahrs.getIMU().getGyroSampleRateHz())); // informational so the configurator can display the correct gyro/pid frequencies in the drop-down
-
         // Configuration warnings / problems (uint32_t)
         const uint32_t configurationProblems = 0;
         dst.writeU32(configurationProblems);
-
         // Added in MSP API 1.44
         dst.writeU8(1); // SPI registered device count
         dst.writeU8(0); // I2C registered device count
         break;
     }
-
     case MSP_BUILD_INFO:
         dst.writeData(buildDate, BUILD_DATE_LENGTH);
         dst.writeData(buildTime, BUILD_TIME_LENGTH);
@@ -411,29 +473,26 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         // Added in API version 1.46
         //dst.writeBuildInfoFlags();
         break;
-
+    case MSP_ANALOG:
+        return RESULT_CMD_UNKNOWN;
     case MSP_DEBUG: {
         for (size_t ii = 0; ii < Debug::VALUE_COUNT; ++ii) {
             dst.writeU16(static_cast<uint16_t>(_debug.get(ii)));
         }
         break;
     }
-
     case MSP_UID:
         dst.writeU32(U_ID_0);
         dst.writeU32(U_ID_1);
         dst.writeU32(U_ID_2);
         break;
-
     case MSP_FEATURE_CONFIG:
         dst.writeU32(_cockpit.enabledFeatures());
         break;
-
     case MSP_TRANSPONDER_CONFIG: {
         dst.writeU8(0); // no providers
         break;
     }
-
     default:
         return RESULT_CMD_UNKNOWN;
     }

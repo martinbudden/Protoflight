@@ -50,6 +50,8 @@ enum { ARMING_DISABLE_FLAGS_COUNT = 27 };
 
 class Cockpit : public CockpitBase {
 public:
+    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters,  Debug& _debug, NonVolatileStorage& nvs);
+public:
     enum { ROLL = 0, PITCH = 1, YAW = 2, AXIS_COUNT = 3 };
     enum { RATE_LIMIT_MAX = 1998 };
     enum throttleLimitType_e { THROTTLE_LIMIT_TYPE_OFF = 0, THROTTLE_LIMIT_TYPE_SCALE, THROTTLE_LIMIT_TYPE_CLIP, THROTTLE_LIMIT_TYPE_COUNT };
@@ -96,6 +98,44 @@ public:
         uint8_t switch_mode;
         uint8_t stick_threshold_percent; // Stick deflection percentage to exit GPS Rescue procedure
     };
+    enum serial_rx_type {
+        SERIAL_RX_NONE = 0,
+        SERIAL_RX_SPEKTRUM_2048 = 1,
+        SERIAL_RX_SBUS = 2,
+        SERIAL_RX_SUMD = 3,
+        SERIAL_RX_SUMH = 4,
+        SERIAL_RX_XBUS_MODE_B = 5,
+        SERIAL_RX_XBUS_MODE_B_RJ01 = 6,
+        SERIAL_RX_IBUS = 7,
+        SERIAL_RX_JETIEXBUS = 8,
+        SERIAL_RX_CRSF = 9,
+        SERIAL_RX_SRXL = 10,
+        SERIAL_RX_TARGET_CUSTOM = 11,
+        SERIAL_RX_FPORT = 12,
+        SERIAL_RX_SRXL2 = 13,
+        SERIAL_RX_GHST = 14,
+        SERIAL_RX_SPEKTRUM_1024 = 15
+    };
+    enum { RX_MAPPABLE_CHANNEL_COUNT = 8 };
+    struct rx_config_t {
+        //uint8_t rc_map[RX_MAPPABLE_CHANNEL_COUNT];  // mapping of radio channels to internal RPYTA+ order
+        uint8_t serial_rx_type;
+        uint8_t serial_rx_inverted; // invert the serial RX protocol compared to its default setting
+        uint8_t half_duplex;        // allow rx to operate in half duplex mode on F4, ignored for F1 and F3.
+        uint8_t rssi_channel;
+        uint8_t rssi_scale;
+        uint8_t rssi_invert;
+        int8_t rssi_offset;         // offset applied to the RSSI value
+        uint8_t fpvCamAngleDegrees;         // Camera angle to be scaled into rc commands
+        uint8_t airModeActivateThreshold;   // Throttle setpoint percent where airmode gets activated
+        uint8_t spektrum_sat_bind;  // number of bind pulses for Spektrum satellite receivers
+        uint16_t mid_rc;            // Some radios have not a neutral point centered on 1500. can be changed here
+        uint16_t min_check;         // minimum rc end
+        uint16_t max_check;         // maximum rc end
+        uint16_t rx_min_usec;
+        uint16_t rx_max_usec;
+    };
+
     // arming flags
     static constexpr uint32_t ARMED = 0x01;
     static constexpr uint32_t WAS_EVER_ARMED = 0x02;
@@ -128,7 +168,6 @@ public:
     static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
     static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
 public:
-    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters,  Debug& _debug, NonVolatileStorage& nvs);
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
     const Autopilot& getAutopilot() const { return _autopilot; }
@@ -161,9 +200,13 @@ public:
     uint32_t getFlightModeFlags() const;
 
     virtual void checkFailsafe(uint32_t tickCount) override;
+    failsafe_phase_e getFailsafePhase() const { return _failsafePhase; }
+
     const failsafe_config_t& getFailsafeConfig() const { return _failsafeConfig; }
     void setFailsafeConfig(const failsafe_config_t& failsafeConfig);
-    failsafe_phase_e getFailsafePhase() const { return _failsafePhase; }
+
+    const rx_config_t& getRX_Config() const { return _rxConfig; }
+    void setRX_Config(const rx_config_t& rxConfig);
 
     const rates_t& getRates() const { return _rates; }
     void setRates(const rates_t& rates) { _rates = rates; }
@@ -205,6 +248,7 @@ private:
     // failsafe handling
     failsafe_phase_e _failsafePhase {FAILSAFE_IDLE};
     failsafe_config_t _failsafeConfig {};
+    rx_config_t _rxConfig {};
     int32_t _receiverInUse {false};
     uint32_t _failsafeTickCount {0}; //!< failsafe counter, so the vehicle doesn't fly away if it looses contact with the transmitter (for example by going out of range)
     uint32_t _failsafeTickCountThreshold {1500};

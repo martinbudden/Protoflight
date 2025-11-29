@@ -139,7 +139,7 @@ private:
     static FlightController& createFlightController(float taskIntervalSeconds, Debug& debug, const NonVolatileStorage& nvs);
     static IMU_Filters& createIMU_Filters(float taskIntervalSeconds, MotorMixerBase& motorMixer, Debug& debug, const NonVolatileStorage& nvs);
     static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
-    static ReceiverBase& createReceiver();
+    static ReceiverBase& createReceiver(NonVolatileStorage& nvs);
     static Cockpit& createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs);
     static DisplayPortBase& createDisplayPort(Debug& debug);
     // optional components create function return nullptr if component not specified as part of the build
