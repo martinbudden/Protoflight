@@ -1,6 +1,7 @@
 #include "CMS.h"
 #include "CMS_Types.h"
 #include "Cockpit.h"
+#include "LookupTables.h"
 
 
 static Cockpit::failsafe_config_t failsafeConfig {};
@@ -17,16 +18,11 @@ static const void* menuFailsafeOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBa
     return nullptr;
 }
 
-static std::array<const char * const, Cockpit::FAILSAFE_PROCEDURE_COUNT> failsafeProcedureNames = {
-    "AUTO-LAND",
-    "DROP",
-    "GPS-RESCUE",
-};
 
 enum { PWM_MIN = 1000, PWM_MAX = 2000 };
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryFailsafeProcedure   = OSD_TABLE_t  { &failsafeConfig.procedure, Cockpit::FAILSAFE_PROCEDURE_COUNT - 1, &failsafeProcedureNames[0] };
+static auto entryFailsafeProcedure   = OSD_TABLE_t  { &failsafeConfig.procedure, Cockpit::FAILSAFE_PROCEDURE_COUNT - 1, &LOOKUP_TABLES::failsafeProcedureNames[0] };
 static auto entryFailsafeDelay       = OSD_UINT8_t  { &failsafeConfig.delay_deciseconds, 0, 200, 1 };
 static auto entryFailsafeLandingTime = OSD_UINT8_t  { &failsafeConfig.landing_time_seconds, 0, 200, 1 };
 static auto entryFailsafeThrottle    = OSD_UINT16_t { &failsafeConfig.throttle_pwm, PWM_MIN, PWM_MAX, 1 };

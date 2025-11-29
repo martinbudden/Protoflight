@@ -2,13 +2,13 @@
 
 #include "DisplayPortBase.h"
 
-class MSP_SerialBase;
+class MSP_Stream;
 
 
 class DisplayPortMSP : public DisplayPortBase {
 public:
     // MSP Display Port commands
-    enum commands_e {
+    enum {
         COMMAND_HEARTBEAT = 0,         // Release the display after clearing and updating
         COMMAND_RELEASE = 1,         // Release the display after clearing and updating
         COMMAND_CLEAR_SCREEN = 2,    // Clear the display
@@ -25,7 +25,7 @@ public:
     static constexpr uint8_t ATTR_FONT    = 0b00000011; // (BIT(0) | BIT(1)) Select bank of 256 characters as per severity
     static constexpr uint8_t ATTR_MASK    = ATTR_VERSION | ATTR_BLINK | ATTR_FONT;
 public:
-    DisplayPortMSP(MSP_SerialBase& mspSerial);
+    DisplayPortMSP(MSP_Stream& mspStream);
     uint32_t clearScreen(display_clear_option_e options) override;
     bool drawScreen() override;
     uint32_t writeString(uint8_t x, uint8_t y, const char* text, uint8_t attr) override;
@@ -36,8 +36,9 @@ public:
     int grab() override;
     uint32_t release() override;
 private:
-    uint32_t output(uint8_t cmd, const uint8_t *buf, uint8_t len);
+    uint32_t output(const uint8_t *buf, uint8_t len);
+    uint32_t output(uint8_t subCommand);
 private:
-    MSP_SerialBase& _mspSerial;
+    MSP_Stream& _mspStream;
     bool _inTransaction {false};
 };

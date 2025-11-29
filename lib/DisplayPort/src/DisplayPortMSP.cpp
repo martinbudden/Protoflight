@@ -1,20 +1,25 @@
 #include "DisplayPortMSP.h"
+#include <MSP_Stream.h>
 #include <array>
 #include <cassert>
 #include <cstring>
 
 
-DisplayPortMSP::DisplayPortMSP(MSP_SerialBase& mspSerial) :
-    _mspSerial(mspSerial)
+DisplayPortMSP::DisplayPortMSP(MSP_Stream& mspStream) :
+    _mspStream(mspStream)
 {
 }
 
-uint32_t DisplayPortMSP::output(uint8_t cmd, const uint8_t* buf, uint8_t len)
+uint32_t DisplayPortMSP::output(uint8_t subCommand)
 {
-    (void)cmd;
-    (void)buf;
-    (void)len;
-    //return mspSerialPush(displayPortSerial, cmd, buf, len, MSP_DIRECTION_REPLY, MSP_V1);
+    std::array<uint8_t, 2> buf { subCommand, 0 };
+    _mspStream.serialEncodeMSPv1(MSP_DISPLAYPORT, &buf[0], sizeof(buf));
+    return 0;
+}
+
+uint32_t DisplayPortMSP::output(const uint8_t* buf, uint8_t len)
+{
+    _mspStream.serialEncodeMSPv1(MSP_DISPLAYPORT, buf, len);
     return 0;
 }
 
@@ -22,15 +27,12 @@ uint32_t DisplayPortMSP::clearScreen(display_clear_option_e options)
 {
     (void)options;
 
-    std::array<uint8_t, 1> cmd { COMMAND_CLEAR_SCREEN };
-
-    return output(MSP_DISPLAYPORT, &cmd[0], sizeof(cmd));
+    return output(COMMAND_CLEAR_SCREEN);
 }
 
 bool DisplayPortMSP::drawScreen()
 {
-    std::array<uint8_t, 1> cmd { COMMAND_DRAW_SCREEN };
-    output(MSP_DISPLAYPORT, &cmd[0], sizeof(cmd));
+    output(COMMAND_DRAW_SCREEN);
 
     return false;
 }
@@ -52,7 +54,7 @@ uint32_t DisplayPortMSP::writeString(uint8_t x, uint8_t y, const char *text, uin
     const auto len = static_cast<uint8_t>(strnlen(text, MSP_OSD_MAX_STRING_LENGTH));
     memcpy(&buf[4], text, len);
 
-    return output(MSP_DISPLAYPORT, &buf[0], len + 4);
+    return output(&buf[0], len + 4);
 }
 
 uint32_t DisplayPortMSP::writeChar(uint8_t x, uint8_t y, uint8_t c, uint8_t attr)
@@ -64,12 +66,10 @@ uint32_t DisplayPortMSP::writeChar(uint8_t x, uint8_t y, uint8_t c, uint8_t attr
 
 int DisplayPortMSP::heartbeat()
 {
-    std::array<uint8_t, 1> cmd { COMMAND_HEARTBEAT };
-
     // heartbeat is used to:
     // a) ensure display is not released by MW OSD software
     // b) prevent OSD Slave boards from displaying a 'disconnected' status.
-    output(MSP_DISPLAYPORT, &cmd[0], sizeof(cmd));
+    output(COMMAND_HEARTBEAT);
 
     return 0;
 }
@@ -84,9 +84,7 @@ int DisplayPortMSP::grab()
 uint32_t DisplayPortMSP::release()
 {
     --_grabCount;
-    std::array<uint8_t, 1> cmd { COMMAND_RELEASE };
-
-    return output(MSP_DISPLAYPORT, &cmd[0], sizeof(cmd));
+    return output(COMMAND_RELEASE);
 }
 
 uint32_t DisplayPortMSP::writeSys(uint8_t x, uint8_t y, system_element_e systemElement)
@@ -98,7 +96,7 @@ uint32_t DisplayPortMSP::writeSys(uint8_t x, uint8_t y, system_element_e systemE
         systemElement
     };
 
-    return output(MSP_DISPLAYPORT, &cmd[0], sizeof(cmd));
+    return output(&cmd[0], sizeof(cmd));
 }
 
 uint32_t DisplayPortMSP::txBytesFree() const

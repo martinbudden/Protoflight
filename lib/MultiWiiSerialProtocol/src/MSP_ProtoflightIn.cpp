@@ -9,50 +9,24 @@
 #include <ReceiverBase.h>
 
 
-MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBuf& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) // NOLINT(readability-function-cognitive-complexity)
+MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) // NOLINT(readability-function-cognitive-complexity)
 {
     (void)srcDesc;
     (void)postProcessFn;
     // const size_t dataSize = src.bytesRemaining();
 
     switch (cmdMSP) {
-    case MSP_SET_FEATURE_CONFIG:
-        _cockpit.setFeatures(src.readU32());
-        break;
-
-    case MSP_SET_FAILSAFE_CONFIG: {
-        Cockpit::failsafe_config_t failsafeConfig{};
-        failsafeConfig.delay_deciseconds = src.readU8();
-        failsafeConfig.landing_time_seconds = src.readU8();
-        failsafeConfig.throttle_pwm = src.readU16();
-        failsafeConfig.switch_mode = src.readU8();
-        failsafeConfig.throttle_low_delay_deciseconds = src.readU16();
-        failsafeConfig.procedure = src.readU8();
-        _cockpit.setFailsafeConfig(failsafeConfig);
-        break;
-    }
-    case MSP_SET_MIXER_CONFIG:
-        src.readU8(); // mixer mode, eg QUAD, etc
-        src.readU8(); // yaw_motors_reversed
-        break;
     case MSP_SELECT_SETTING:
+        src.readU8(); // PID profile and Rate profile
         break;
-
     case MSP_COPY_PROFILE:
-        break;
-
+        return RESULT_ERROR;
     case MSP_SET_RAW_RC:
-        break;
-
-    case MSP_SET_ACC_TRIM:
-        break;
-
+        return RESULT_ERROR;
     case MSP_SET_ARMING_CONFIG:
-        break;
-
+        return RESULT_ERROR;
     case MSP_SET_PID_CONTROLLER:
-        break;
-
+        return RESULT_ERROR;
     case MSP_SET_PID: {
         for (size_t ii = 0; ii <= FlightController::YAW_RATE_DPS; ++ii) {
             const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
@@ -75,54 +49,10 @@ MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBuf& 
         src.readU8();
         break;
     }
-
-    case MSP_SET_PID_ADVANCED:
-        src.readU16();
-        src.readU16();
-        src.readU16(); // was yaw_p_limit
-        src.readU8(); // reserved
-        src.readU8(); // was vbatPidCompensation
-        src.readU8(); // !!TODO::feedforward_transition
-        src.readU8(); // was low byte of dtermSetpointWeight
-        src.readU8(); // reserved
-        src.readU8(); // reserved
-        src.readU8(); // reserved
-        src.readU16(); // !!TODO: rateAccelLimit
-        src.readU16(); // !!TODO: yawRateAccelLimit
-        if (src.bytesRemaining() >= 2) {
-            src.readU8(); // !!TODO: angle_limit
-            src.readU8(); // was levelSensitivity
-        }
-        if (src.bytesRemaining() >= 4) {
-            src.readU16(); // was currentPidProfile->itermThrottleThreshold
-            src.readU16(); // !!TODO: anti_gravity_gain
-        }
-        if (src.bytesRemaining() >= 2) {
-            src.readU16(); // was currentPidProfile->dtermSetpointWeight
-        }
-        if (src.bytesRemaining() >= 14) {
-            // Added in MSP API 1.40
-            src.readU8(); // !!TODO: iterm_rotation
-            src.readU8(); // was currentPidProfile->smart_feedforward
-            src.readU8(); // !!TODO: iterm_relax
-            src.readU8(); // !!TODO: iterm_relax_type
-            src.readU8(); // !!TODO: abs_control_gain
-            src.readU8(); // !!TODO: throttle_boost
-            src.readU8(); // !!TODO: acro_trainer_angle_limit
-            // PID controller kick terms
-            _flightController.setPID_K_MSP(FlightController::ROLL_RATE_DPS, src.readU16());
-            _flightController.setPID_K_MSP(FlightController::PITCH_RATE_DPS, src.readU16());
-            _flightController.setPID_K_MSP(FlightController::YAW_RATE_DPS, src.readU16());
-            src.readU8(); // was currentPidProfile->antiGravityMode
-        }
-        break;
-
     case MSP_SET_MODE_RANGE:
-        break;
-
+        return RESULT_ERROR;
     case MSP_SET_ADJUSTMENT_RANGE:
-        break;
-
+        return RESULT_ERROR;
     case MSP_SET_RC_TUNING: {
         if (src.bytesRemaining() < 10) {
             return RESULT_ERROR;
@@ -178,20 +108,26 @@ MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBuf& 
         _cockpit.setRates(rates);
         break;
     }
-
     case MSP_SET_MOTOR_CONFIG:
-        break;
-
+        return RESULT_ERROR;
+    case MSP_SET_GPS_CONFIG:
+        return RESULT_ERROR;
+    case MSP_SET_COMPASS_CONFIG:
+        return RESULT_ERROR;
+    case MSP_SET_GPS_RESCUE:
+        return RESULT_ERROR;
     case MSP_SET_MOTOR:
-        //for (int i = 0; i < getMotorCount(); i++) {
-        //    motor_disarmed[i] = motorConvertFromExternal(src.readU16());
-        //}
-        break;
-
+        return RESULT_ERROR;
+    case MSP_SET_SERVO_CONFIGURATION:
+        return RESULT_ERROR;
+    case MSP_SET_SERVO_MIX_RULE:
+        return RESULT_ERROR;
+    case MSP_SET_MOTOR_3D_CONFIG:
+        return RESULT_ERROR;
+    case MSP_SET_RC_DEADBAND:
+        return RESULT_ERROR;
     case MSP_SET_RESET_CURR_PID:
-        //resetPidProfile(currentPidProfile);
-        break;
-
+        return RESULT_ERROR;
     case MSP_SET_SENSOR_ALIGNMENT: {
         // maintain backwards compatibility for API < 1.41
         //const uint8_t gyroAlignment = src.readU8();
@@ -203,7 +139,8 @@ MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBuf& 
         src.readU8();
         break;
     }
-
+    case MSP_SET_ADVANCED_CONFIG:
+        return RESULT_ERROR;
     case MSP_SET_FILTER_CONFIG: {
         auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
@@ -294,31 +231,101 @@ MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBuf& 
         _flightController.setFiltersConfig(fcFilters);
         break;
     }
-
+    case MSP_SET_PID_ADVANCED: {
+        src.readU16();
+        src.readU16();
+        src.readU16(); // was yaw_p_limit
+        src.readU8(); // reserved
+        src.readU8(); // was vbatPidCompensation
+        src.readU8(); // !!TODO::feedforward_transition
+        src.readU8(); // was low byte of dtermSetpointWeight
+        src.readU8(); // reserved
+        src.readU8(); // reserved
+        src.readU8(); // reserved
+        src.readU16(); // !!TODO: rateAccelLimit
+        src.readU16(); // !!TODO: yawRateAccelLimit
+        if (src.bytesRemaining() >= 2) {
+            src.readU8(); // !!TODO: angle_limit
+            src.readU8(); // was levelSensitivity
+        }
+        if (src.bytesRemaining() >= 4) {
+            src.readU16(); // was currentPidProfile->itermThrottleThreshold
+            src.readU16(); // !!TODO: anti_gravity_gain
+        }
+        if (src.bytesRemaining() >= 2) {
+            src.readU16(); // was currentPidProfile->dtermSetpointWeight
+        }
+        if (src.bytesRemaining() >= 14) {
+            // Added in MSP API 1.40
+            src.readU8(); // !!TODO: iterm_rotation
+            src.readU8(); // was currentPidProfile->smart_feedforward
+            src.readU8(); // !!TODO: iterm_relax
+            src.readU8(); // !!TODO: iterm_relax_type
+            src.readU8(); // !!TODO: abs_control_gain
+            src.readU8(); // !!TODO: throttle_boost
+            src.readU8(); // !!TODO: acro_trainer_angle_limit
+            // PID controller kick terms
+            _flightController.setPID_K_MSP(FlightController::ROLL_RATE_DPS, src.readU16());
+            _flightController.setPID_K_MSP(FlightController::PITCH_RATE_DPS, src.readU16());
+            _flightController.setPID_K_MSP(FlightController::YAW_RATE_DPS, src.readU16());
+            src.readU8(); // was currentPidProfile->antiGravityMode
+        }
+        break;
+    }
     case MSP_SET_SENSOR_CONFIG:
         src.readU8(); // acc
         src.readU8(); // baro
         src.readU8(); // map
         break;
-
+    case MSP_SET_FEATURE_CONFIG:
+        _cockpit.setFeatures(src.readU32());
+        break;
+    case MSP_SET_BEEPER_CONFIG:
+        return RESULT_ERROR;
+    case MSP_SET_BOARD_ALIGNMENT_CONFIG:
+        //rollDegrees = src.readU16();
+        //pitchDegrees = src.readU16();
+        //yawDegrees = src.readU16();
+        break;
+    case MSP_SET_MIXER_CONFIG:
+        src.readU8(); // mixer mode, eg QUAD, etc
+        src.readU8(); // yaw_motors_reversed
+        break;
+    case MSP_SET_RX_CONFIG:
+        return RESULT_ERROR;
+    case MSP_SET_FAILSAFE_CONFIG: {
+        Cockpit::failsafe_config_t failsafeConfig{};
+        failsafeConfig.delay_deciseconds = src.readU8();
+        failsafeConfig.landing_time_seconds = src.readU8();
+        failsafeConfig.throttle_pwm = src.readU16();
+        failsafeConfig.switch_mode = src.readU8();
+        failsafeConfig.throttle_low_delay_deciseconds = src.readU16();
+        failsafeConfig.procedure = src.readU8();
+        _cockpit.setFailsafeConfig(failsafeConfig);
+        break;
+    }
+    case MSP_SET_RXFAIL_CONFIG:
+        return RESULT_ERROR;
+    case MSP_SET_RSSI_CONFIG:
+        return RESULT_ERROR;
+    case MSP_SET_RX_MAP:
+        return RESULT_ERROR;
+    case MSP_SET_CF_SERIAL_CONFIG:
+        return RESULT_ERROR;
+    case MSP2_COMMON_SET_SERIAL_CONFIG:
+        return RESULT_ERROR;
+    case MSP_SET_ACC_TRIM:
+        return RESULT_ERROR;
     case MSP_ACC_CALIBRATION:
-        break;
-
-#if defined(USE_MAGNETOMETER)
+        return RESULT_ERROR;
     case MSP_MAG_CALIBRATION:
-        break;
-#endif
+        return RESULT_ERROR;
     case MSP_EEPROM_WRITE:
         if (_flightController.motorsIsOn()) {
             // can't save to non volatile storage if the motors are on
             return RESULT_ERROR;
         }
         _nonVolatileStorage.storeAll(_imuFilters, _flightController, _cockpit, _autopilot, _pidProfileIndex, _ratesProfileIndex);
-        break;
-    case MSP_SET_BOARD_ALIGNMENT_CONFIG:
-        //rollDegrees = src.readU16();
-        //pitchDegrees = src.readU16();
-        //yawDegrees = src.readU16();
         break;
 
     default:

@@ -3,6 +3,7 @@
 #include "Cockpit.h"
 #include "FlightController.h"
 #include "IMU_Filters.h"
+#include "LookupTables.h"
 
 /*
 Storage
@@ -46,7 +47,6 @@ static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static std::array<const char * const, Cockpit::THROTTLE_LIMIT_TYPE_COUNT> throttleLimitTypeNames = { "OFF", "SCALE", "CLIP" };
 
 static auto entryRcRatesRoll  = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 255, 1 };
 static auto entryRcRatesPitch = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 255, 1 };
@@ -62,7 +62,7 @@ static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcExpos[FlightControll
 
 static auto entryThrottleMid  = OSD_UINT8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
 static auto entryThrottleExpo = OSD_UINT8_t { &data.rates.throttleExpo, 1, 100, 1 };
-static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, Cockpit::THROTTLE_LIMIT_TYPE_COUNT - 1, &throttleLimitTypeNames[0] };
+static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, Cockpit::THROTTLE_LIMIT_TYPE_COUNT - 1, &LOOKUP_TABLES::throttleLimitTypeNames[0] };
 static auto entryThrottleLimitPercent = OSD_UINT8_t { &data.rates.throttleLimitPercent, 25, 100, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
@@ -210,12 +210,10 @@ static const void* menuSimplifiedTuningOnExit(CMSX& cmsx, [[maybe_unused]] Displ
     return nullptr;
 }
 
-static constexpr std::array<const char * const, 3> lookupTablePID_TuningModes { "STANDARD", "RP", "RPY" };
-static constexpr std::array<const char * const, 2> lookupTableOffOn { "OFF", "ON" };
 
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
-static auto entryTablePID_TuningMode  = OSD_TABLE_t  { &pidTuningMode,  3 - 1, &lookupTablePID_TuningModes[0] };
+static auto entryTablePID_TuningMode  = OSD_TABLE_t  { &pidTuningMode,  3 - 1, &LOOKUP_TABLES::PID_TuningModes[0] };
 
 static auto entryD_gains        = OSD_UINT16_t { &data.pidSettings.d_gain, 0, 200, 1 };
 static auto entryPI_gains       = OSD_UINT16_t { &data.pidSettings.pi_gain, 0, 200, 1 };

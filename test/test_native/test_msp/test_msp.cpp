@@ -108,7 +108,7 @@ void test_msp_api_version()
     TEST_ASSERT_EQUAL(MSP_Stream::MSP_COMMAND_RECEIVED, mspStream.getPacketState());
     TEST_ASSERT_EQUAL(3, mspStream.getCheckSum1());
 
-    MSP_Base::packet_t reply = mspStream.processInbuf();
+    MSP_Base::const_packet_t reply = mspStream.processInbuf();
 
     TEST_ASSERT_EQUAL(MSP_BASE_API_VERSION, reply.cmd);
     const uint8_t b0 = reply.payload.readU8();
@@ -330,12 +330,12 @@ class MSP_Test : public MSP_Base {
 public:
     enum { MSP_SET_NAME = 11 };
 public:
-    virtual result_e processInCommand(int16_t cmdMSP, StreamBuf& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
+    virtual result_e processInCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
 public:
     std::array<uint8_t, 8> _name;
 };
 
-MSP_Base::result_e MSP_Test::processInCommand(int16_t cmdMSP, StreamBuf& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn)
+MSP_Base::result_e MSP_Test::processInCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn)
 {
     (void)srcDesc;
     (void)postProcessFn;

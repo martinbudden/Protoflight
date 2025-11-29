@@ -5,6 +5,7 @@
 
 #include <Features.h>
 #include <MSP_Serial.h>
+#include <MSP_Stream.h>
 
 
 /*!

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MSP_SerialPortBase.h"
+#include <MSP_SerialPortBase.h>
 
 class SerialPort;
 

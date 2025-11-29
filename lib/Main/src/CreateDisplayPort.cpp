@@ -4,7 +4,6 @@
 #include "DisplayPortMax7456.h"
 #include "DisplayPortNull.h"
 
-#include "MSP_Serial.h"
 #include "MSP_SerialPort.h"
 #include "Main.h"
 #include "SerialPort.h"
@@ -12,6 +11,9 @@
 #if defined(M5_UNIFIED)
 #include <M5Unified.h>
 #endif
+
+#include <MSP_Serial.h>
+#include <MSP_Stream.h>
 
 #include <cassert>
 
@@ -34,7 +36,7 @@ DisplayPortBase& Main::createDisplayPort([[maybe_unused]] Debug& debug)
     static MSP_Base mspBase;
     static MSP_Stream mspStream(mspBase);
     static MSP_Serial mspSerial(mspStream, mspSerialPort);
-    static DisplayPortMSP displayPort(mspSerial);
+    static DisplayPortMSP displayPort(mspStream);
 #else
     static DisplayPortNull displayPort;
 #endif

@@ -7,7 +7,7 @@
 | VectorQuaternionMatrix | yes       | 0.4.5   | yes        | no      |
 | MotorMixers            | yes       | 0.0.3   | yes        | no      |
 | SensorFusion           | yes       | 0.2.9   | yes        | no      |
-| StreamBuf              | yes       | 0.0.2   | yes        | no      |
+| StreamBuf              | yes       | 0.0.3   | yes        | no      |
 | Sensors                | yes       | 0.0.2   | yes        | no      |
 | TaskBase               | yes       | 0.0.11  | yes        | no      |
 | StabilizedVehicle      | yes       | 0.5.21  | yes        | no      |

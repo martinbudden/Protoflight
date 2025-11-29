@@ -133,7 +133,8 @@ void test_msp_pid_in()
         sbuf.writeU8(ii);
     }
     sbuf.reset();
-    msp.processInCommand(MSP_SET_PID, sbuf);
+    StreamBufReader sbufReader(sbuf);
+    msp.processInCommand(MSP_SET_PID, sbufReader);
 
     FlightController::PIDF_uint16_t pid16 = fc.getPID_MSP(FlightController::ROLL_RATE_DPS);
     TEST_ASSERT_EQUAL(0, pid16.kp);
@@ -234,7 +235,7 @@ void test_msp_raw_imu()
     TEST_ASSERT_EQUAL(MSP_Stream::MSP_COMMAND_RECEIVED, mspStream.getPacketState());
     TEST_ASSERT_EQUAL(0, mspStream.getCheckSum1());
 
-    MSP_Base::packet_t reply = mspStream.processInbuf();
+    MSP_Base::const_packet_t reply = mspStream.processInbuf();
 
     TEST_ASSERT_EQUAL(MSP_RAW_IMU, reply.cmd);
     const uint16_t accX = reply.payload.readU16();
