@@ -39,7 +39,7 @@ static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 Returns true if the command was processed, false otherwise.
 May set mspPostProcessFunc to a function to be called once the command has been processed
 */
-MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn)
+MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn)
 {
     (void)srcDesc;
     (void)postProcessFn;

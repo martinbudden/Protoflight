@@ -19,7 +19,7 @@ void test_msp_out()
     std::array<uint8_t, 128> buf;
     StreamBuf sbuf(&buf[0], sizeof(buf));
 
-    msp.processOutCommand(MSP_BASE_API_VERSION, sbuf, 0, nullptr);
+    msp.processGetCommand(MSP_BASE_API_VERSION, sbuf, 0, nullptr);
     TEST_ASSERT_EQUAL(sizeof(buf) - 3, sbuf.bytesRemaining());
     sbuf.switchToReader();
     TEST_ASSERT_EQUAL(MSP_BASE_PROTOCOL_VERSION, sbuf.readU8());
@@ -330,12 +330,12 @@ class MSP_Test : public MSP_Base {
 public:
     enum { MSP_SET_NAME = 11 };
 public:
-    virtual result_e processInCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
+    virtual result_e processSetCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
 public:
     std::array<uint8_t, 8> _name;
 };
 
-MSP_Base::result_e MSP_Test::processInCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn)
+MSP_Base::result_e MSP_Test::processSetCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn)
 {
     (void)srcDesc;
     (void)postProcessFn;

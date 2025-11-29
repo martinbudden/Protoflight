@@ -78,7 +78,7 @@ size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t se
 
     StreamBuf sbuf(&td->data.msp.payload[0], sizeof(TD_MSP));
 
-    msp.processOutCommand(cmdMSP, sbuf, 0, nullptr);
+    msp.processGetCommand(cmdMSP, sbuf, 0, nullptr);
     const auto payloadSize = static_cast<uint8_t>(sbuf.bytesWritten());
     uint8_t checksum = 0;
     for (size_t ii = 0; ii < payloadSize; ++ii) {

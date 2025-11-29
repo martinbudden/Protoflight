@@ -9,7 +9,7 @@
 #include <ReceiverBase.h>
 
 
-MSP_Base::result_e MSP_Protoflight::processInCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) // NOLINT(readability-function-cognitive-complexity)
+MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) // NOLINT(readability-function-cognitive-complexity)
 {
     (void)srcDesc;
     (void)postProcessFn;

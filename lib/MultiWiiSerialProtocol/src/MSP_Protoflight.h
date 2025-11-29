@@ -28,12 +28,12 @@ public:
 public:
     virtual void rebootFn(serialPort_t* serialPort) override;
 
-    virtual result_e processOutCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
-    virtual result_e processOutCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBufReader& src) override;
-    result_e processOutCommand(int16_t cmdMSP, StreamBuf& dst) { return processOutCommand(cmdMSP, dst, 0, nullptr); };
+    virtual result_e processGetCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
+    virtual result_e processGetCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBufReader& src) override;
+    result_e processGetCommand(int16_t cmdMSP, StreamBuf& dst) { return processGetCommand(cmdMSP, dst, 0, nullptr); };
 
-    virtual result_e processInCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
-    result_e processInCommand(int16_t cmdMSP, StreamBufReader& src) { return processInCommand(cmdMSP, src, 0, nullptr); }
+    virtual result_e processSetCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
+    result_e processSetCommand(int16_t cmdMSP, StreamBufReader& src) { return processSetCommand(cmdMSP, src, 0, nullptr); }
 private:
     void serializeVTX(StreamBuf& dst);
 private:

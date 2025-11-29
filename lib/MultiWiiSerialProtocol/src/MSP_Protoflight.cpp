@@ -58,7 +58,7 @@ void MSP_Protoflight::rebootFn(serialPort_t* serialPort)
     }
 }
 
-MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBufReader& src)
+MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBufReader& src)
 {
     switch (cmdMSP) {
     case MSP_BOXNAMES: {
@@ -108,7 +108,7 @@ MSP_Base::result_e MSP_Protoflight::processOutCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     default:
-        return processOutCommand(cmdMSP, dst, srcDesc, postProcessFn);
+        return processGetCommand(cmdMSP, dst, srcDesc, postProcessFn);
     }
     return RESULT_ACK;
 }

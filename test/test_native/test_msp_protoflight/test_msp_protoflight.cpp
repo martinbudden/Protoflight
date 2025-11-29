@@ -134,7 +134,7 @@ void test_msp_pid_in()
     }
     sbuf.reset();
     StreamBufReader sbufReader(sbuf);
-    msp.processInCommand(MSP_SET_PID, sbufReader);
+    msp.processSetCommand(MSP_SET_PID, sbufReader);
 
     FlightController::PIDF_uint16_t pid16 = fc.getPID_MSP(FlightController::ROLL_RATE_DPS);
     TEST_ASSERT_EQUAL(0, pid16.kp);
@@ -176,7 +176,7 @@ void test_msp_features()
 
     std::array<uint8_t, 128> buf;
     StreamBuf sbuf(&buf[0], sizeof(buf));
-    msp.processOutCommand(MSP_FEATURE_CONFIG, sbuf);
+    msp.processGetCommand(MSP_FEATURE_CONFIG, sbuf);
     sbuf.reset();
     const uint32_t featuresRead = sbuf.readU32();
 
