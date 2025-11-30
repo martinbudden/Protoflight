@@ -38,15 +38,15 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
 
 #elif defined(USE_RECEIVER_SBUS)
 
-    static ReceiverSBUS receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
+    static ReceiverSBUS receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
 
 #elif defined(USE_RECEIVER_IBUS)
 
-    static ReceiverIBUS receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIBUS::BAUD_RATE);
+    static ReceiverIBUS receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIBUS::BAUD_RATE);
 
 #elif defined(USE_RECEIVER_CRSF)
 
-    static ReceiverCRSF receiver(ReceiverSerial::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE);
+    static ReceiverCRSF receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE);
 
 #else
 

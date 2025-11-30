@@ -61,6 +61,7 @@ Libraries
     ├── Filters @ 0.9.4
     ├── PIDF @ 0.4.1
     ├── MotorMixers @ 0.0.2
+    ├── MultiWiiSerialProtocol @ 0.0.14
     ├── StabilizedVehicle @ 0.5.21
     ├── Receiver @ 0.5.12
     └── Backchannel @ 0.1.11
