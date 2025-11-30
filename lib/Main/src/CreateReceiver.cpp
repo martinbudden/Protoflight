@@ -35,37 +35,6 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
     const esp_err_t espErr = receiver.init();
     Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
     assert(espErr == ESP_OK && "Unable to setup receiver.");
-
-#elif defined(USE_RECEIVER_SBUS)
-
-    static ReceiverSBUS receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
-
-#elif defined(USE_RECEIVER_IBUS)
-
-    static ReceiverIBUS receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIBUS::BAUD_RATE);
-
-#elif defined(USE_RECEIVER_CRSF)
-
-    static ReceiverCRSF receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE);
-
-#else
-
-    static ReceiverNull receiver;
-    const Cockpit::rx_config_t& rxConfig = nvs.loadRX_Config();
-    Cockpit::serial_rx_type rxType = static_cast<Cockpit::serial_rx_type>(rxConfig.serial_rx_type);
-    switch (rxType) {
-    case Cockpit::SERIAL_RX_SBUS:
-        break;
-    case Cockpit::SERIAL_RX_IBUS:
-        break;
-    case Cockpit::SERIAL_RX_CRSF:
-        break;
-    default:
-        break;
-    }
-
-#endif
-
 #if defined(M5_UNIFIED)
     // Holding BtnB down while switching on initiates binding.
     // The Atom has no BtnB, so it always broadcasts address for binding on startup.
@@ -76,6 +45,44 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
     // no buttons defined, so always broadcast address for binding on startup
     receiver.broadcastMyEUI();
 #endif // M5_UNIFIED
-
     return receiver;
+
+#elif defined(USE_RECEIVER_SBUS)
+
+    static ReceiverSBUS receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
+    return receiver;
+
+#elif defined(USE_RECEIVER_IBUS)
+
+    static ReceiverIBUS receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIBUS::BAUD_RATE);
+    return receiver;
+
+#elif defined(USE_RECEIVER_CRSF)
+
+    static ReceiverCRSF receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE);
+    return receiver;
+
+#else
+
+    ReceiverBase* receiverPtr = nullptr;
+    const Cockpit::rx_config_t& rxConfig = nvs.loadRX_Config();
+    auto rxType = static_cast<Cockpit::serial_rx_type>(rxConfig.serial_rx_type);
+    switch (rxType) {
+    case Cockpit::SERIAL_RX_SBUS:
+        receiverPtr = new ReceiverSBUS(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
+        break;
+    case Cockpit::SERIAL_RX_IBUS:
+        receiverPtr = new ReceiverIBUS(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIBUS::BAUD_RATE);
+        break;
+    case Cockpit::SERIAL_RX_CRSF:
+        receiverPtr = new ReceiverCRSF(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE);
+        break;
+    default:
+        assert(false && "Receiver type not supported");
+        break;
+    }
+    assert((receiverPtr != nullptr) && "Receiver could not be created");
+    return *receiverPtr;
+
+#endif
 }

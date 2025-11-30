@@ -74,9 +74,6 @@ public:
     void loadMacAddress(uint8_t* macAddress) const;
     int32_t storeMacAddress(const uint8_t* macAddress);
 
-    MotorMixerBase::type_e loadMotorMixerType() const;
-    int32_t storeMotorMixerType(MotorMixerBase::type_e motorMixerType);
-
     uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
     void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) { _currentPidProfileIndex = currentPidProfileIndex; }
     uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
@@ -103,8 +100,11 @@ public:
     DynamicIdleController::config_t loadDynamicIdleControllerConfig(uint8_t pidProfileIndex) const;
     int32_t storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config, uint8_t pidProfileIndex);
 
-    MotorMixerBase::motorConfig_t loadMotorConfig() const;
-    int32_t storeMotorConfig(const MotorMixerBase::motorConfig_t& config);
+    MotorMixerBase::mixer_config_t loadMotorMixerConfig() const;
+    int32_t storeMotorMixerConfig(const MotorMixerBase::mixer_config_t& config);
+
+    MotorMixerBase::motor_config_t loadMotorConfig() const;
+    int32_t storeMotorConfig(const MotorMixerBase::motor_config_t& config);
 
     IMU_Filters::config_t loadIMU_FiltersConfig() const;
     int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);

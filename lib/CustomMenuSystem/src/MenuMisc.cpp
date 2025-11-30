@@ -82,7 +82,7 @@ static const void* menuMiscOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 static const void* menuMiscOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     MotorMixerBase& motorMixer = cmsx.getCockpit().getFlightController().getMotorMixer();
-    MotorMixerBase::motorConfig_t motorConfig =  motorMixer.getMotorConfig();
+    MotorMixerBase::motor_config_t motorConfig =  motorMixer.getMotorConfig();
     motorConfig.motorIdle =  motorIdle;
     motorMixer.setMotorConfig(motorConfig);
 

@@ -1,4 +1,5 @@
 #include "Cockpit.h"
+#include "Debug.h"
 #include "FlightController.h"
 #include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
@@ -139,15 +140,43 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         src.readU8();
         break;
     }
-    case MSP_SET_ADVANCED_CONFIG:
-        return RESULT_ERROR;
+    case MSP_SET_ADVANCED_CONFIG: {
+        MotorMixerBase::motor_config_t motorConfig = _flightController.getMotorMixer().getMotorConfig();
+        src.readU8();  // was gyro_sync_denom - removed in API 1.43
+        src.readU8(); // pid_process_denom
+        motorConfig.device.useContinuousUpdate = src.readU8();
+        motorConfig.device.motorProtocol = src.readU8();
+        motorConfig.device.motorPWM_Rate = src.readU16();
+        if (src.bytesRemaining() >= 2) {
+            motorConfig.motorIdle = src.readU16();
+        }
+        if (src.bytesRemaining() >= 1) {
+            src.readU8(); // was gyro_use_32kHz
+        }
+        if (src.bytesRemaining() >= 1) {
+            motorConfig.device.motorInversion = src.readU8();
+        }
+        if (src.bytesRemaining() >= 8) {
+            src.readU8();  // deprecated gyro_to_use
+            src.readU8();  // gyro_high_fsr
+            src.readU8();  // gyroMovementCalibrationThreshold
+            src.readU16(); // gyroCalibrationDuration
+            src.readU16(); // gyro_offset_yaw
+            src.readU8();  // checkOverflow
+        }
+        if (src.bytesRemaining() >= 1) {
+            //Added in MSP API 1.42
+            _debug.setMode(static_cast<debug_mode_e>(src.readU8()));
+        }
+        _flightController.getMotorMixer().setMotorConfig(motorConfig);
+        break;
+    }
     case MSP_SET_FILTER_CONFIG: {
         auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
         RPM_Filters* rpmFilters = imuFilters.getRPM_Filters();
         RPM_Filters::config_t rpmFiltersConfig = rpmFilters ? rpmFilters->getConfig() : RPM_Filters::config_t {}; // cppcheck-suppress knownConditionTrueFalse
         FlightController::filters_config_t fcFilters = _flightController.getFiltersConfig();
-
         imuFiltersConfig.gyro_lpf1_hz = src.readU8();
         fcFilters.dterm_lpf1_hz = src.readU16();
         fcFilters.yaw_lpf_hz = src.readU16();
@@ -287,10 +316,13 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         //pitchDegrees = src.readU16();
         //yawDegrees = src.readU16();
         break;
-    case MSP_SET_MIXER_CONFIG:
-        src.readU8(); // mixer mode, eg QUAD, etc
-        src.readU8(); // yaw_motors_reversed
+    case MSP_SET_MIXER_CONFIG: {
+        MotorMixerBase::mixer_config_t mixerConfig = _flightController.getMotorMixer().getMixerConfig();
+        mixerConfig.type = static_cast<MotorMixerBase::type_e>(src.readU8());
+        mixerConfig.yaw_motors_reversed = src.readU8();
+        _flightController.getMotorMixer().setMixerConfig(mixerConfig);
         break;
+    }
     case MSP_SET_RX_CONFIG:
         return RESULT_ERROR;
     case MSP_SET_FAILSAFE_CONFIG: {

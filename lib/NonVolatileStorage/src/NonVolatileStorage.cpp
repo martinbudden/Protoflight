@@ -69,7 +69,8 @@ constexpr uint16_t AutopilotConfigKey = 0x604;
 constexpr uint16_t AutopilotPositionConfigKey = 0x605;
 constexpr uint16_t AltitudeHoldConfigKey = 0x606;
 constexpr uint16_t MotorConfigKey = 0x607;
-constexpr uint16_t VTX_ConfigKey = 0x0608;
+constexpr uint16_t MotorMixerConfigKey = 0x0608;
+constexpr uint16_t VTX_ConfigKey = 0x0609;
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // Protoflight
@@ -234,22 +235,6 @@ int32_t NonVolatileStorage::storeItem(uint16_t key, uint8_t pidProfileIndex, con
 }
 
 
-MotorMixerBase::type_e NonVolatileStorage::loadMotorMixerType() const
-{
-    MotorMixerBase::type_e motorMixerType {};
-    if (loadItem(MotorMixerTypeKey, &motorMixerType, sizeof(motorMixerType))) { // cppcheck-suppress knownConditionTrueFalse
-        return motorMixerType;
-    }
-    return DEFAULTS::motorMixerType;
-}
-
-int32_t NonVolatileStorage::storeMotorMixerType(MotorMixerBase::type_e motorMixerType)
-{
-    MotorMixerBase::type_e defaultMotorMixerType = DEFAULTS::motorMixerType;
-    return storeItem(PID_ProfileIndexKey, &motorMixerType, sizeof(motorMixerType), &defaultMotorMixerType);
-}
-
-
 uint8_t NonVolatileStorage::loadPidProfileIndex() const
 {
     uint8_t profileIndex {};
@@ -302,16 +287,31 @@ int32_t NonVolatileStorage::storeDynamicIdleControllerConfig(const DynamicIdleCo
     return storeItem(DynamicIdleControllerConfigKey, pidProfileIndex, &config, sizeof(config), &DEFAULTS::dynamicIdleControllerConfig);
 }
 
-MotorMixerBase::motorConfig_t NonVolatileStorage::loadMotorConfig() const
+MotorMixerBase::mixer_config_t NonVolatileStorage::loadMotorMixerConfig() const
 {
-    {MotorMixerBase::motorConfig_t config {};
+    {MotorMixerBase::mixer_config_t config {};
     if (loadItem(DynamicIdleControllerConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::motorMixerConfig;
+}
+
+int32_t NonVolatileStorage::storeMotorMixerConfig(const MotorMixerBase::mixer_config_t& config)
+{
+    return storeItem(MotorMixerConfigKey, &config, sizeof(config), &DEFAULTS::motorMixerConfig);
+}
+
+
+MotorMixerBase::motor_config_t NonVolatileStorage::loadMotorConfig() const
+{
+    {MotorMixerBase::motor_config_t config {};
+    if (loadItem(MotorConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
     return DEFAULTS::motorConfig;
 }
 
-int32_t NonVolatileStorage::storeMotorConfig(const MotorMixerBase::motorConfig_t& config)
+int32_t NonVolatileStorage::storeMotorConfig(const MotorMixerBase::motor_config_t& config)
 {
     return storeItem(MotorConfigKey, &config, sizeof(config), &DEFAULTS::motorConfig);
 }

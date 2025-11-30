@@ -14,15 +14,20 @@ FlightController& Main::createFlightController(float taskIntervalSeconds, [[mayb
     static AHRS_MessageQueue ahrsMessageQueue;
 
     const uint32_t outputToMotorsDenominator = OUTPUT_TO_MOTORS_DENOMINATOR;
-    MotorMixerBase::type_e motorMixerType = nvs.loadMotorMixerType();
-    (void)motorMixerType;
 
     const auto taskIntervalMicroseconds = static_cast<uint32_t>(taskIntervalSeconds*1000000.0F);
 
+    MotorMixerBase* motorMixerPtr = nullptr;
+
+
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
+
     static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
+    motorMixerPtr = &motorMixer;
+
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
+
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
     static MotorMixerQuadX_DShotBitbang motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
 #else
@@ -34,16 +39,45 @@ FlightController& Main::createFlightController(float taskIntervalSeconds, [[mayb
 #else
     motorMixer.setMotorOutputMin(0.055F); // 5.5%
 #endif
+    motorMixerPtr = &motorMixer;
+
 #elif defined(USE_MOTOR_MIXER_NULL)
-    static MotorMixerBase motorMixer(MotorMixerBase::motorCount(nvs.loadMotorMixerType()), debug);
+
+    const MotorMixerBase::config_t& motorMixerConfig = nvs.loadMotorMixerConfig();
+    const auto motorMixerType = static_cast<MotorMixerBase::type_e>(motorMixerConfig.type);
+    static MotorMixerBase motorMixer(MotorMixerBase::motorCount(motorMixerType), debug);
+    motorMixerPtr = &motorMixer;
+
 #else
-    static_assert(false && "MotorMixer not specified");
+    const MotorMixerBase::mixer_config_t& motorMixerConfig = nvs.loadMotorMixerConfig();
+    const auto motorMixerType = static_cast<MotorMixerBase::type_e>(motorMixerConfig.type);
+    const MotorMixerBase::motor_config_t& motorConfig = nvs.loadMotorConfig();
+    const auto motorProtocol = static_cast<MotorMixerBase::motor_protocol_e>(motorConfig.device.motorProtocol);
+
+    switch (motorMixerType) { // NOLINT(hicpp-multiway-paths-covered) switch could be better written as an if/else statement
+    case MotorMixerBase::QUAD_X:
+        if (motorProtocol == MotorMixerBase::MOTOR_PROTOCOL_PWM || motorProtocol == MotorMixerBase::MOTOR_PROTOCOL_BRUSHED) {
+            motorMixerPtr = new MotorMixerQuadX_PWM(debug, MotorMixerQuadBase::MOTOR_PINS);
+        } else {
+#if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
+            motorMixerPtr = new MotorMixerQuadX_DShotBitbang(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
+#else
+            motorMixerPtr = new MotorMixerQuadX_DShot(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
+#endif
+        }
+        break;
+    default:
+        assert(false && "MotorMixer type not supported");
+    }
+    assert((motorMixerPtr != nullptr) && "MotorMixer could not be created");
+
+
 #endif // USE_MOTOR_MIXER_*
 
-    motorMixer.setMotorConfig(nvs.loadMotorConfig());
+    motorMixerPtr->setMotorConfig(nvs.loadMotorConfig());
 
     // Statically allocate the flightController.
-    static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, motorMixer, ahrsMessageQueue, debug);
+    static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, *motorMixerPtr, ahrsMessageQueue, debug);
     loadPID_ProfileFromNonVolatileStorage(flightController, nvs, nvs.getCurrentPidProfileIndex());
 
     return flightController;

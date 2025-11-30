@@ -14,7 +14,7 @@
 | Receiver               | yes       | 0.5.12  | yes        | no      |
 | Backchannel            | yes       | 0.1.11  | yes        | no      |
 | MultiWiiSerialProtocol | yes       | 0.0.14  | yes        | no      |
-| Blackbox               | yes       | 0.0.22  | yes        | no      |
+| Blackbox               | yes       | 0.0.23  | yes        | no      |
 | FlashKLV               | yes       | 0.0.3   | yes        | no      |
 | IMU                    | yes       | 0.9.8 - superseded   | yes        | no      |
 
@@ -55,24 +55,25 @@ Libraries
     ├── Receiver @ 0.5.12
     └── StabilizedVehicle @ 0.5.21
 
+└── MultiWiiSerialProtocol @ 0.0.15
+    ├── TaskBase @ 0.0.12
+    └── StreamBuf @ 0.0.3
+
+└── Blackbox @ 0.0.23
+    ├── TaskBase @ 0.0.12
+    └── StreamBuf @ 0.0.3
 
 └── Protoflight @ 0.0.1
     ├── Sensors @ 0.0.2
     ├── Filters @ 0.9.4
     ├── PIDF @ 0.4.1
     ├── MotorMixers @ 0.0.2
-    ├── MultiWiiSerialProtocol @ 0.0.14
     ├── StabilizedVehicle @ 0.5.21
     ├── Receiver @ 0.5.12
+    ├── MultiWiiSerialProtocol @ 0.0.15
+    ├── Blackbox @ 0.0.23
     └── Backchannel @ 0.1.11
 
-└── MultiWiiSerialProtocol @ 0.0.14
-    ├── TaskBase @ 0.0.10
-    └── StreamBuf @ 0.0.2
-
-└── Blackbox @ 0.0.22
-    ├── TaskBase @ 0.0.10
-    └── StreamBuf @ 0.0.2
 
 └── IMU @ 0.9.8 - superseded
     └── VectorQuaternionMatrix @ 0.4.5

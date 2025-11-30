@@ -20,7 +20,10 @@ enum units_e { UNITS_METRIC = 0, UNIT_IMPERIAL = 1 };
 
 namespace DEFAULTS {
 
-static constexpr MotorMixerBase::type_e motorMixerType = MotorMixerBase::QUAD_X;
+static constexpr MotorMixerBase::mixer_config_t motorMixerConfig {
+    .type = MotorMixerBase::QUAD_X,
+    .yaw_motors_reversed = true,
+};
 
 static constexpr DynamicIdleController::config_t dynamicIdleControllerConfig = {
     .dyn_idle_min_rpm_100 = 0,
@@ -30,7 +33,17 @@ static constexpr DynamicIdleController::config_t dynamicIdleControllerConfig = {
     .dyn_idle_max_increase = 150,
 };
 
-static constexpr MotorMixerBase::motorConfig_t motorConfig = {
+
+static constexpr MotorMixerBase::motor_config_t motorConfig = {
+    .device = {
+        .motorPWM_Rate = 480, // 16000 for brushed
+        .motorProtocol = MotorMixerBase::MOTOR_PROTOCOL_DSHOT300,
+        .motorInversion = false,
+        .useContinuousUpdate = true,
+        .useBurstDshot = 0,
+        .useDshotTelemetry = 0,
+        .useDshotEDT = 0,
+    },
     .motorIdle = 550, // 700 for brushed
     .maxthrottle = 2000,
     .mincommand = 1000,

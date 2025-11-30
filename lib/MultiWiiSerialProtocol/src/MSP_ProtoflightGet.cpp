@@ -246,8 +246,9 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     case MSP_ACC_TRIM:
         return RESULT_CMD_UNKNOWN;
     case MSP_MIXER_CONFIG: {
-        dst.writeU8(static_cast<uint8_t>(_cockpit.getFlightController().getMotorMixer().getType()));
-        dst.writeU8(0); // yaw_motors_reversed
+        const MotorMixerBase::mixer_config_t& mixerConfig = _flightController.getMotorMixer().getMixerConfig();
+        dst.writeU8(static_cast<uint8_t>(mixerConfig.type));
+        dst.writeU8(mixerConfig.yaw_motors_reversed);
         break;
     }    
     case MSP_RX_CONFIG: {
@@ -320,8 +321,28 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(ALIGN_DEFAULT);
         break;
     }
-    case MSP_ADVANCED_CONFIG:
-        return RESULT_CMD_UNKNOWN;
+    case MSP_ADVANCED_CONFIG: {
+        const MotorMixerBase::motor_config_t& motorConfig = _flightController.getMotorMixer().getMotorConfig();
+
+        dst.writeU8(1);  // was gyro_sync_denom - removed in API 1.43
+        dst.writeU8(1); // pid_process_denom
+        dst.writeU8(motorConfig.device.useContinuousUpdate);
+        dst.writeU8(motorConfig.device.motorProtocol);
+        dst.writeU16(motorConfig.device.motorPWM_Rate);
+        dst.writeU16(motorConfig.motorIdle);
+        dst.writeU8(0); // was gyro_use_32kHz
+        dst.writeU8(motorConfig.device.motorInversion);
+        dst.writeU8(0); // deprecated gyro_to_use
+        dst.writeU8(0); //gyro_high_fsr
+        dst.writeU8(0); //gyroMovementCalibrationThreshold
+        dst.writeU16(0); // gyroCalibrationDuration
+        dst.writeU16(0); // gyro_offset_yaw
+        dst.writeU8(0); // checkOverflow
+        //Added in MSP API 1.42
+        dst.writeU8(_debug.getMode());
+        dst.writeU8(DEBUG_COUNT);
+        break;
+    }
     case MSP_FILTER_CONFIG : {
         auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();

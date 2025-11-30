@@ -9,6 +9,22 @@
 #include <ReceiverBase.h>
 #include <cstring>
 
+#if defined(FRAMEWORK_USE_FREERTOS)
+#if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
+#include <freertos/FreeRTOS.h>
+#include <freertos/FreeRTOSConfig.h>
+#include <freertos/task.h>
+#else
+#if defined(FRAMEWORK_ARDUINO_STM32)
+#include <STM32FreeRTOS.h>
+#endif
+#include <FreeRTOS.h>
+#include <FreeRTOSConfig.h>
+#include <task.h>
+#endif
+#endif
+
+
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
 OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug) : // cppcheck-suppress constParameterReference
@@ -396,6 +412,9 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
         return;
     }
     while (_state != STATE_IDLE) {
+#if defined(FRAMEWORK_USE_FREERTOS)
+        taskYIELD();
+#endif
         updateDisplayIteration(timeMicroseconds, timeMicrosecondsDelta);
     }
 }

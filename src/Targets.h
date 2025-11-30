@@ -125,6 +125,9 @@ Targets
 
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
 
+    #define RECEIVER_UART_INDEX 0
+    #define RECEIVER_PINS       UART_0_PINS
+
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
     #define USE_BAROMETER_BMP280
@@ -172,11 +175,14 @@ Targets
     #define IMU_I2C_PINS        I2C_0_PINS
 #endif
 
+    #define RECEIVER_UART_INDEX 0
+    #define RECEIVER_PINS       UART_0_PINS
+
     //#define USE_DSHOT
 #if defined(USE_DSHOT)
-    #define USE_MOTOR_MIXER_QUAD_X_DSHOT
+    //#define USE_MOTOR_MIXER_QUAD_X_DSHOT
 #else
-    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    //#define USE_MOTOR_MIXER_QUAD_X_PWM
 #endif
 
     #define USE_ITERM_RELAX
@@ -258,12 +264,12 @@ Targets
 
     // LIBRARY_RECEIVER_USE_ESPNOW is defined in platformio.ini
     //#define USE_RECEIVER_SBUS
-    //#define RECEIVER_UART_INDEX         0
-    //#define RECEIVER_PINS               UART_0_PINS
+    #define RECEIVER_UART_INDEX         0
+    #define RECEIVER_PINS               UART_0_PINS
 
     #define USE_BACKCHANNEL
 
-    #define USE_MOTOR_MIXER_QUAD_X_PWM
+    //#define USE_MOTOR_MIXER_QUAD_X_PWM
 
     #define USE_BAROMETER_HP203B
     #define BAROMETER_I2C_INDEX         0
@@ -381,7 +387,7 @@ Targets
     #define USE_IMU_MPU6000
     #define IMU_I2C_PINS        I2C_X_PINS
 
-    #define USE_RECEIVER_SBUS
+    //#define USE_RECEIVER_SBUS
     #define RECEIVER_UART_INDEX 0
     #define RECEIVER_PINS       UART_0_PINS
 
