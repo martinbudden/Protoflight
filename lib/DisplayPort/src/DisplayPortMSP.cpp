@@ -12,7 +12,7 @@ DisplayPortMSP::DisplayPortMSP(MSP_Stream& mspStream) :
 
 uint32_t DisplayPortMSP::output(uint8_t subCommand)
 {
-    std::array<uint8_t, 2> buf { subCommand, 0 };
+    const std::array<uint8_t, 1> buf { subCommand };
     _mspStream.serialEncodeMSPv1(MSP_DISPLAYPORT, &buf[0], sizeof(buf));
     return 0;
 }
@@ -59,7 +59,7 @@ uint32_t DisplayPortMSP::writeString(uint8_t x, uint8_t y, const char *text, uin
 
 uint32_t DisplayPortMSP::writeChar(uint8_t x, uint8_t y, uint8_t c, uint8_t attr)
 {
-    std::array<char, 2> buf { static_cast<char>(c), 0 };
+    const std::array<char, 2> buf { static_cast<char>(c), 0 };
 
     return writeString(x, y, &buf[0], attr);
 }
