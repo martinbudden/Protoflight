@@ -10,7 +10,7 @@
 
 
 //NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-const CMSX::menu_t* CMSX::MENU_NULL_PTR         = nullptr;
+const CMSX::menu_t* CMSX::MENU_NULL_PTR          = nullptr;
 const CMSX::menu_t* CMSX::MENU_EXIT              = CMSX::MENU_NULL_PTR + 1;
 const CMSX::menu_t* CMSX::MENU_EXIT_SAVE         = CMSX::MENU_NULL_PTR + 2;
 const CMSX::menu_t* CMSX::MENU_EXIT_SAVE_REBOOT  = CMSX::MENU_NULL_PTR + 3;
