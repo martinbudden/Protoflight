@@ -272,7 +272,6 @@ public:
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
     const MotorMixerBase& getMotorMixer() const { return _motorMixer; }
     MotorMixerBase& getMotorMixer() { return _motorMixer; }
-    float getMixerAdjustedThrottle() const { return _fcC.mixerAdjustedThrottle; }
 
     const Debug& getDebug() const { return _debug; }
     Debug& getDebug() { return _debug; }
@@ -383,7 +382,6 @@ private:
     struct fc_t {
         uint32_t outputToMixerCount {0};
         control_mode_e controlMode {CONTROL_MODE_RATE};
-        float mixerAdjustedThrottle {0.0F};
         std::array<PIDF::PIDF_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning
         simplified_pid_settings_t simplifiedPID_Settings {};
         std::array<float, RPY_AXIS_COUNT> outputs;

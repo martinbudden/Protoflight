@@ -39,7 +39,7 @@ void test_flight_controller()
 
     enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
     static Debug debug;
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, debug);
+    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, &debug);
     static ReceiverNull receiver;
     AHRS_MessageQueue ahrsMessageQueue;
     FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);

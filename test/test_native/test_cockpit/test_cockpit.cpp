@@ -26,7 +26,7 @@ static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
 enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
 static Debug debug;
 static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, debug);
+static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, &debug);
 static AHRS_MessageQueue ahrsMessageQueue;
 static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, motorMixer, ahrsMessageQueue, debug);
 static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);

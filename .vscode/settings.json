@@ -306,6 +306,7 @@
         "Wpacked",
         "Wpadded",
         "Wpedantic",
+        "Wpessimizing",
         "Wredundant",
         "Wshadow",
         "Wsign",

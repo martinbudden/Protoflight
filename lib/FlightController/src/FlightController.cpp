@@ -459,8 +459,6 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
         };
 
         _motorMixer.outputToMotors(commands, deltaT, tickCount);
-        // the mixer may adjust the throttle value, so save this value for the blackbox record
-        _fcM.mixerAdjustedThrottle= commands.throttle;
     }
 
 #if defined(USE_RPM_FILTERS)

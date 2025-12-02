@@ -23,7 +23,7 @@ FlightController& Main::createFlightController(float taskIntervalSeconds, [[mayb
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
 
-    static MotorMixerQuadX_PWM motorMixer(debug, MotorMixerQuadBase::MOTOR_PINS);
+    static MotorMixerQuadX_PWM motorMixer(&debug, MotorMixerQuadBase::MOTOR_PINS);
     motorMixerPtr = &motorMixer;
 
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
