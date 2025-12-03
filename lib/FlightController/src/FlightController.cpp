@@ -118,16 +118,18 @@ void FlightController::setPID_P_MSP(pid_index_e pidIndex, uint16_t kp)
     _fcM.pidConstants[pidIndex].kp = _sh.PIDS[pidIndex].getP();
 }
 
+void FlightController::setPID_PD_MSP(pid_index_e pidIndex, uint16_t kp)
+{
+    const PIDF pid = getPID(pidIndex);
+    const float ratio = pid.getD() / pid.getP();
+    setPID_P_MSP(pidIndex, kp);
+    setPID_D_MSP(pidIndex, static_cast<uint16_t>(static_cast<float>(kp)*ratio));
+}
+
 void FlightController::setPID_I_MSP(pid_index_e pidIndex, uint16_t ki)
 {
     _sh.PIDS[pidIndex].setI(ki * _scaleFactors.ki);
     _fcM.pidConstants[pidIndex].ki = _sh.PIDS[pidIndex].getI();
-}
-
-void FlightController::setPID_D(pid_index_e pidIndex, float kd)
-{
-    _sh.PIDS[pidIndex].setD(kd);
-    _fcM.pidConstants[pidIndex].kd = _sh.PIDS[pidIndex].getD();
 }
 
 void FlightController::setPID_D_MSP(pid_index_e pidIndex, uint16_t kd)

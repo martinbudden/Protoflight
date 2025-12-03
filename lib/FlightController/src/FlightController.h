@@ -223,18 +223,18 @@ public:
     bool motorsIsDisabled() const;
     void setBlackboxActive(bool isActive) { _sh.blackboxActive = isActive; }
 
+    virtual uint32_t getOutputPowerTimeMicroseconds() const override; //!!TODO: is this still needed?
+
     inline control_mode_e getControlMode() const { return _fcC.controlMode; }
     void setControlMode(control_mode_e controlMode);
 
     pid_tuning_mode_e getPID_TuningMode() const { return _pidTuningMode; }
     void setPID_TuningMode(pid_tuning_mode_e pidTuningMode);
 
-    virtual uint32_t getOutputPowerTimeMicroseconds() const override; //!!TODO: is this still needed?
 
     const std::string& getPID_Name(pid_index_e pidIndex) const;
 
     inline const PIDF& getPID(pid_index_e pidIndex) const { return _sh.PIDS[pidIndex]; }
-    void setPID_D(pid_index_e pidIndex, float kd);
 
     PIDF_uint16_t getPID_Constants(pid_index_e pidIndex) const;
     void setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16);
@@ -244,6 +244,7 @@ public:
 
     virtual PIDF_uint16_t getPID_MSP(size_t index) const override;
     void setPID_P_MSP(pid_index_e pidIndex, uint16_t kp);
+    void setPID_PD_MSP(pid_index_e pidIndex, uint16_t kp); // Set P and change D to preserve P/D ratio
     void setPID_I_MSP(pid_index_e pidIndex, uint16_t ki);
     void setPID_D_MSP(pid_index_e pidIndex, uint16_t kd);
     void setPID_S_MSP(pid_index_e pidIndex, uint16_t ks);

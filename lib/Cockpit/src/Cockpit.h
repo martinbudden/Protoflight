@@ -68,13 +68,20 @@ public:
         //uint8_t ratesType; // not used
     };
     enum failsafe_phase_e {
-        FAILSAFE_IDLE = 0,
+        FAILSAFE_DISARMED = 0,
+        FAILSAFE_IDLE,
         FAILSAFE_RX_LOSS_DETECTED,
         FAILSAFE_RX_LOSS_MONITORING,
         FAILSAFE_RX_LOSS_RECOVERED,
         FAILSAFE_LANDING,
         FAILSAFE_LANDED,
         FAILSAFE_GPS_RESCUE
+    };
+    struct failsafe_t {
+        failsafe_phase_e phase;
+        uint32_t tickCount; //<! failsafe counter, so the vehicle doesn't fly away if it looses contact with the transmitter (for example by going out of range)
+        uint32_t tickCountThreshold;
+        uint32_t tickCountSwitchOffThreshold;
     };
     enum failsafe_procedure_e {
         FAILSAFE_PROCEDURE_DROP_IT = 0,
@@ -200,7 +207,7 @@ public:
     uint32_t getFlightModeFlags() const;
 
     virtual void checkFailsafe(uint32_t tickCount) override;
-    failsafe_phase_e getFailsafePhase() const { return _failsafePhase; }
+    failsafe_phase_e getFailsafePhase() const { return _failsafe.phase; }
 
     const failsafe_config_t& getFailsafeConfig() const { return _failsafeConfig; }
     void setFailsafeConfig(const failsafe_config_t& failsafeConfig);
@@ -239,21 +246,22 @@ private:
         .throttleLimitPercent = 100
     };
     Blackbox* _blackbox {nullptr};
-    int32_t _onOffSwitchPressed {false}; // on/off switch debouncing
     float _maxRollAngleDegrees { 60.0F }; // used for angle mode
     float _maxPitchAngleDegrees { 60.0F }; // used for angle mode
     uint32_t _armingFlags {};
     uint32_t _armingDisabledFlags {};
     uint32_t _flightModeFlags {};
-    // failsafe handling
-    failsafe_phase_e _failsafePhase {FAILSAFE_IDLE};
     failsafe_config_t _failsafeConfig {};
     rx_config_t _rxConfig {};
-    int32_t _receiverInUse {false};
-    uint32_t _failsafeTickCount {0}; //!< failsafe counter, so the vehicle doesn't fly away if it looses contact with the transmitter (for example by going out of range)
-    uint32_t _failsafeTickCountThreshold {1500};
-    uint32_t _failsafeTickCountSwitchOffThreshold {5000};
+    // failsafe handling
+    failsafe_t _failsafe {
+        .phase = FAILSAFE_DISARMED,
+        .tickCount = 0,
+        .tickCountThreshold = 1500,
+        .tickCountSwitchOffThreshold = 5000
+    };
     uint8_t _currentPidProfileIndex {0};
     uint8_t _currentRateProfileIndex {0};
     bool _rebootRequired {false};
+    bool _onOffSwitchPressed {false}; // on/off switch debouncing
 };

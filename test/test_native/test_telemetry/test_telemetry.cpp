@@ -55,7 +55,7 @@ void test_telemetry_msp()
     enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
     static Debug debug;
     static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, debug);
+    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, &debug);
     static ReceiverNull receiver;
     static AHRS_MessageQueue ahrsMessageQueue;
     static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);

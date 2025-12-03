@@ -141,10 +141,7 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
         break;
     case CommandPacketSetPID::SET_PD: {
         // Set P and change D to preserve P/D ratio
-        const PIDF pid = _flightController.getPID(pidIndex);
-        const float ratio = pid.getD() / pid.getP();
-        _flightController.setPID_P_MSP(pidIndex, packet.value);
-        _flightController.setPID_D(pidIndex, _flightController.getPID(pidIndex).getP() * ratio);
+        _flightController.setPID_PD_MSP(pidIndex, packet.value);
         transmit = true;
         break;
     }

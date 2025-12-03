@@ -23,15 +23,15 @@ FlightController& Main::createFlightController(float taskIntervalSeconds, [[mayb
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
 
-    static MotorMixerQuadX_PWM motorMixer(&debug, MotorMixerQuadBase::MOTOR_PINS);
+    static MotorMixerQuadX_PWM motorMixer(MotorMixerQuadBase::MOTOR_PINS, &debug);
     motorMixerPtr = &motorMixer;
 
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
 
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
+    static MotorMixerQuadX_DShotBitbang motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
 #else
-    static MotorMixerQuadX_DShot motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
+    static MotorMixerQuadX_DShot motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
 #endif
 #if defined(USE_DYNAMIC_IDLE)
     motorMixer.setMotorOutputMin(0.0F);
@@ -57,12 +57,12 @@ FlightController& Main::createFlightController(float taskIntervalSeconds, [[mayb
     switch (motorMixerType) { // NOLINT(hicpp-multiway-paths-covered) switch could be better written as an if/else statement
     case MotorMixerBase::QUAD_X:
         if (motorProtocol == MotorMixerBase::MOTOR_PROTOCOL_PWM || motorProtocol == MotorMixerBase::MOTOR_PROTOCOL_BRUSHED) {
-            motorMixerPtr = new MotorMixerQuadX_PWM(debug, MotorMixerQuadBase::MOTOR_PINS);
+            motorMixerPtr = new MotorMixerQuadX_PWM(MotorMixerQuadBase::MOTOR_PINS, &debug);
         } else {
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-            motorMixerPtr = new MotorMixerQuadX_DShotBitbang(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
+            motorMixerPtr = new MotorMixerQuadX_DShotBitbang(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
 #else
-            motorMixerPtr = new MotorMixerQuadX_DShot(taskIntervalMicroseconds, outputToMotorsDenominator, debug, MotorMixerQuadBase::MOTOR_PINS);
+            motorMixerPtr = new MotorMixerQuadX_DShot(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
 #endif
         }
         break;

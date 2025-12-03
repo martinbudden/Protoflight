@@ -42,7 +42,7 @@ void test_msp_set_failsafe_config()
     static Debug debug;
     enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
     static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, debug);
+    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT);
     static ReceiverNull receiver;
     static AHRS_MessageQueue ahrsMessageQueue;
     static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
@@ -116,7 +116,7 @@ void test_msp_pid_in()
     static Debug debug;
     enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
     static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, debug);
+    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT);
     static ReceiverNull receiver;
     static AHRS_MessageQueue ahrsMessageQueue;
     static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
@@ -163,7 +163,7 @@ void test_msp_features()
     static Debug debug;
     enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
     static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, debug);
+    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT);
     static ReceiverNull receiver;
     static AHRS_MessageQueue ahrsMessageQueue;
     static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
@@ -191,7 +191,7 @@ void test_msp_raw_imu()
     static Debug debug;
     enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
     static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, debug);
+    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT);
     static ReceiverNull receiver;
     static AHRS_MessageQueue ahrsMessageQueue;
     static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);

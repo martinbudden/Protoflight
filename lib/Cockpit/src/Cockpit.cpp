@@ -44,7 +44,7 @@ bool Cockpit::wasEverArmed() const
 
 void Cockpit::setArmed()
 {
-    _armingFlags |= ARMED | WAS_EVER_ARMED;
+    _armingFlags |= (ARMED | WAS_EVER_ARMED);
     _flightController.motorsSwitchOn();
 }
 
@@ -52,6 +52,7 @@ void Cockpit::setDisarmed()
 {
     _armingFlags &= ~ARMED;
     _flightController.motorsSwitchOff();
+    _failsafe.phase = FAILSAFE_DISARMED;
 }
 
 void Cockpit::setArmingDisabledFlag(arming_disabled_flags_e flag)
@@ -173,9 +174,8 @@ Called from Receiver Task.
 void Cockpit::updateControls(const controls_t& controls)
 {
     // failsafe handling
-    _receiverInUse = true;
-    _failsafePhase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
-    _failsafeTickCount = controls.tickCount;
+    _failsafe.phase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
+    _failsafe.tickCount = controls.tickCount;
 
     handleOnOffSwitch();
     // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
@@ -229,16 +229,11 @@ void Cockpit::checkFailsafe(uint32_t tickCount)
 {
     _flightController.detectCrashOrSpin();
 
-    if ((tickCount - _failsafeTickCount > _failsafeTickCountThreshold) && _receiverInUse) {
-        // _receiverInUse is initialized to false, so the motors won't turn off it the transmitter hasn't been turned on yet.
-        // We've had 1500 ticks (1.5 seconds) without a packet, so we seem to have lost contact with the transmitter,
-        // so enter failsafe mode.
-        _failsafePhase = FAILSAFE_RX_LOSS_DETECTED;
-        if ((tickCount - _failsafeTickCount > _failsafeTickCountSwitchOffThreshold)) {
-            _flightController.motorsSwitchOff();
-            _receiverInUse = false; // set to false to allow us to switch the motors on again if we regain a signal
-        } else {
-            // failsafe detected, so zero all sticks and set throttle to 25%
+    if ((tickCount - _failsafe.tickCount > _failsafe.tickCountThreshold) && (_failsafe.phase != FAILSAFE_DISARMED)) {
+        // We've had tickCountThreshold ticks without a packet, so we seem to have lost contact with the transmitter,
+        if ((tickCount - _failsafe.tickCount < _failsafe.tickCountSwitchOffThreshold)) {
+            // failsafe detected, so zero all sticks, set throttle to its failsafe value, and switch to angle mode
+            _failsafe.phase = FAILSAFE_RX_LOSS_DETECTED;
             const FlightController::controls_t flightControls = {
                 .tickCount = tickCount,
                 .throttleStick = (static_cast<float>(_failsafeConfig.throttle_pwm) - ReceiverBase::CHANNEL_LOW_F) / ReceiverBase::CHANNEL_RANGE_F,
@@ -250,6 +245,10 @@ void Cockpit::checkFailsafe(uint32_t tickCount)
                 .controlMode = FlightController::CONTROL_MODE_ANGLE
             };
             _flightController.updateSetpoints(flightControls);
+        } else {
+            // we've lost contact for an extended period, so disarm.
+            _failsafe.phase = FAILSAFE_DISARMED;
+            setDisarmed();
         }
     }
 }
