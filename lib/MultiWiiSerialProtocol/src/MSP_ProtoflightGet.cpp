@@ -180,7 +180,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(0); // was tpa_rate
         dst.writeU8(rates.throttleMidpoint);
         dst.writeU8(rates.throttleExpo);
-        dst.writeU16(0);   // was tpa_breakpoint
+        dst.writeU16(0); // was tpa_breakpoint
         dst.writeU8(static_cast<uint8_t>(rates.rcExpos[Cockpit::YAW]));
         dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::YAW]));
         dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::PITCH]));
