@@ -62,7 +62,8 @@ static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcExpos[FlightControll
 
 static auto entryThrottleMid  = OSD_UINT8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
 static auto entryThrottleExpo = OSD_UINT8_t { &data.rates.throttleExpo, 1, 100, 1 };
-static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, Cockpit::THROTTLE_LIMIT_TYPE_COUNT - 1, &LOOKUP_TABLES::throttleLimitTypeNames[0] };
+static_assert(static_cast<int>(LOOKUP_TABLES::THROTTLE_LIMIT_NAMES_COUNT) == static_cast<int>(Cockpit::THROTTLE_LIMIT_TYPE_COUNT));
+static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, LOOKUP_TABLES::THROTTLE_LIMIT_NAMES_COUNT - 1, &LOOKUP_TABLES::throttleLimitTypeNames[0] };
 static auto entryThrottleLimitPercent = OSD_UINT8_t { &data.rates.throttleLimitPercent, 25, 100, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
@@ -213,7 +214,7 @@ static const void* menuSimplifiedTuningOnExit(CMSX& cmsx, [[maybe_unused]] Displ
 
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
-static auto entryTablePID_TuningMode  = OSD_TABLE_t  { &pidTuningMode,  3 - 1, &LOOKUP_TABLES::PID_TuningModes[0] };
+static auto entryTablePID_TuningMode  = OSD_TABLE_t  { &pidTuningMode,  LOOKUP_TABLES::PID_TUNING_MODES_COUNT - 1, &LOOKUP_TABLES::PID_TuningModes[0] };
 
 static auto entryD_gains        = OSD_UINT16_t { &data.pidSettings.d_gain, 0, 200, 1 };
 static auto entryPI_gains       = OSD_UINT16_t { &data.pidSettings.pi_gain, 0, 200, 1 };

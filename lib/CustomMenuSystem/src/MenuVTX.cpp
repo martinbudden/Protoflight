@@ -1,9 +1,7 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
 #include "Targets.h"
-#if defined(USE_VTX)
-#include "VTX_Base.h" // test code won't build if VTX_Base included here
-#endif
+#include "VTX_Base.h" // previously had problem with test code not building if VTX_Base included here
 
 struct data_t {
     int16_t temperature;
@@ -41,7 +39,10 @@ static CMSX::menu_t menuVTX_confirm = {
     .entries = &menuVTX_confirmEntries[0],
 };
 
-const std::array<const char *, 6> bandNames
+// Note VTX band is 1-based rather than zero-based: !!TODO:Need to look at VTX_Base::BAND_COUNT being 1-based
+enum { VTX_BAND_COUNT = VTX_Base::BAND_COUNT + 1 };
+
+const std::array<const char *, VTX_BAND_COUNT> bandNames
 {{
     "--------",
     "BOSCAM A",
@@ -51,10 +52,13 @@ const std::array<const char *, 6> bandNames
     "RACEBAND",
 }};
 
+const std::array<char, VTX_BAND_COUNT> bandLetters { '-', 'A', 'B', 'E', 'F', 'R' };
 
-const std::array<char, 6> bandLetters { '-', 'A', 'B', 'E', 'F', 'R' };
-const std::array<const char *, 9> channelNames { "-", "1", "2", "3", "4", "5", "6", "7", "8" };
-const std::array<const char * const, 3> pitModeNames { "---", "OFF", "ON " };
+enum { VTX_CHANNEL_COUNT = VTX_Base::CHANNEL_COUNT + 1 };
+const std::array<const char *, VTX_CHANNEL_COUNT> channelNames { "-", "1", "2", "3", "4", "5", "6", "7", "8" };
+
+enum { VTX_PIT_MODE_COUNT = 3 };
+const std::array<const char * const, VTX_PIT_MODE_COUNT> pitModeNames { "---", "OFF", "ON " };
 
 
 static const void* pitModeChange([[maybe_unused]] CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
@@ -82,9 +86,9 @@ static const void* powerChange([[maybe_unused]] CMSX& cmsx, [[maybe_unused]] Dis
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryPitMode     = OSD_TABLE_t  { &data.pitMode, 3 - 1, &pitModeNames[0] };
-static auto entryBand        = OSD_TABLE_t  { &data.band, 6-1, &bandNames[0] };
-static auto entryChannel     = OSD_TABLE_t  { &data.channel, 9-1, &channelNames[0] };
+static auto entryPitMode     = OSD_TABLE_t  { &data.pitMode, VTX_PIT_MODE_COUNT - 1, &pitModeNames[0] };
+static auto entryBand        = OSD_TABLE_t  { &data.band, VTX_BAND_COUNT - 1, &bandNames[0] };
+static auto entryChannel     = OSD_TABLE_t  { &data.channel, VTX_CHANNEL_COUNT - 1, &channelNames[0] };
 static auto entryFrequency   = OSD_UINT16_t { &data.frequency, 5600, 5900, 0 };
 static auto entryPower       = OSD_TABLE_t  {}; // set up dynamically in menuVTX_OnEnter
 static auto entryTemperature = OSD_INT16_t  { &data.temperature, -100, 300, 0 };
