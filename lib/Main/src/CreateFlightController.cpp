@@ -17,6 +17,7 @@ FlightController& Main::createFlightController(float taskIntervalSeconds, [[mayb
 
     const auto taskIntervalMicroseconds = static_cast<uint32_t>(taskIntervalSeconds*1000000.0F);
 
+    // The motor mixer will exist for the duration of the program and so never needs to be deleted, so it is OK to leave its pointer dangling.
     MotorMixerBase* motorMixerPtr = nullptr;
 
 

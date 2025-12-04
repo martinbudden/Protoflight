@@ -64,6 +64,7 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
 
 #else
 
+    // The receiver will exist for the duration of the program and so never needs to be deleted, so it is OK to leave its pointer dangling.
     ReceiverBase* receiverPtr = nullptr;
     const Cockpit::rx_config_t& rxConfig = nvs.loadRX_Config();
     auto rxType = static_cast<Cockpit::serial_rx_type>(rxConfig.serial_rx_type);

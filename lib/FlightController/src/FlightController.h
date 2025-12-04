@@ -93,7 +93,7 @@ public:
         uint8_t rc_smoothing_feedforward_cutoff;
     };
     struct flight_mode_config_t {
-        uint8_t level_race_mode; // aka "NFE race mode" - angle mode on roll, acro mode on pitch
+        uint8_t level_race_mode; // aka "NFE race mode": angle mode on roll, acro mode on pitch
     };
     enum tpa_mode_e { TPA_MODE_PD, TPA_MODE_D, TPA_MODE_PDS };
     struct tpa_config_t {
