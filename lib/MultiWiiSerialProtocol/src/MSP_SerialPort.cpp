@@ -17,7 +17,7 @@ size_t MSP_SerialPort::availableForWrite() const
     return _serialPort.availableForWrite();
 }
 
-size_t MSP_SerialPort::write(uint8_t* buf, size_t len)
+size_t MSP_SerialPort::write(const uint8_t* buf, size_t len)
 {
     return _serialPort.write(buf, len);
 }

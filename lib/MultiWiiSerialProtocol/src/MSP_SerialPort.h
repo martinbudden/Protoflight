@@ -18,7 +18,7 @@ public:
     bool isDataAvailable() const override;
     uint8_t readByte() override;
     size_t availableForWrite() const override;
-    size_t write(uint8_t* buf, size_t len) override;
+    size_t write(const uint8_t* buf, size_t len) override;
 private:
     SerialPort& _serialPort;
 };
