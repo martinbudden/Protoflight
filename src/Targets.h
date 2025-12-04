@@ -378,6 +378,8 @@ Targets
     #define SOFT_SERIAL_1_PINS  stm32_uart_pins_t{.rx={PB,0},.tx={PB,1}}
     #define I2C_X_PINS          stm32_i2c_pins_t{.sda={PB,7},.scl={PB,6},.irq={PB,13}}
     #define MOTOR_PINS          stm32_motor_pins_t{.m0={PC,7,0,0},.m1={PC,6,0,0},.m2={PB,8,0,0},.m3={PB,9,0,0}} // BR, TR, BL, TL
+    #define LED_0_PIN           PB4
+    #define LED_1_PIN           PB3
 
     #define GYRO_SAMPLE_RATE_HZ 1000
     #define AHRS_TASK_IS_TIMER_DRIVEN
@@ -388,6 +390,7 @@ Targets
     #define IMU_I2C_PINS        I2C_X_PINS
 
     //#define USE_RECEIVER_SBUS
+    //#define USE_RECEIVER_CRSF
     #define RECEIVER_UART_INDEX 0
     #define RECEIVER_PINS       UART_0_PINS
 
@@ -403,7 +406,6 @@ Targets
 
     #define USE_OSD
     //#define USE_CMS
-    // LED0 PB4, LED1 PB3
 
 #elif defined(TARGET_SEED_XIAO_NRF52840_SENSE)
 
