@@ -25,7 +25,7 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
     // Disconnect from Access Point if it was previously connected
     WiFi.disconnect();
     // get my MAC address
-    uint8_t myMacAddress[ESP_NOW_ETH_ALEN];
+    std::array<uint8_t, ESP_NOW_ETH_ALEN> myMacAddress;
     WiFi.macAddress(&myMacAddress[0]);
 #if !defined(RECEIVER_CHANNEL)
     enum { RECEIVER_CHANNEL = 3 };

@@ -58,6 +58,10 @@ void Main::setup()
     nvs.setCurrentPidProfileIndex(nvs.loadPidProfileIndex());
     nvs.setCurrentRateProfileIndex(nvs.loadRateProfileIndex());
 
+#if defined(FRAMEWORK_ARDUINO) || defined(FRAMEWORK_ARDUINO_ESP32)
+    delay(400); // delay to allow serial port to initialize before first print
+#endif
+
     // create the IMU and get its sample rate
     static IMU_Base& imuSensor = createIMU(nvs);
     const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSensor.getGyroSampleRateHz());

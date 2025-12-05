@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Platform.h"
+
 /*!
 Targets
 */
@@ -21,9 +23,10 @@ Targets
 
     #define SPI_0_PINS          spi_pins_t{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=0xFF}
     #define I2C_X_PINS          i2c_pins_t{.sda=3,.scl=4,.irq=BUS_I2C::IRQ_NOT_SET}
-    #define MOTOR_PINS          motor_pins_t{.m0=23,.m1=25,.m2=10,.m3=5} // BR, TR, BL, TL
+    //#define MOTOR_PINS          motor_pins_t{.m0=23,.m1=25,.m2=10,.m3=5} // BR, FR, BL, FL
+    #define MOTOR_PINS          motor_pins_t{.m0=41,.m1=42,.m2=10,.m3=5} // BR, FR, BL, FL
 
-    #define GYRO_SAMPLE_RATE_HZ 1000
+    #define GYRO_SAMPLE_RATE_HZ 1600
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 

@@ -327,7 +327,7 @@ public:
     virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
 
 private:
-    static constexpr float degreesToRadians { static_cast<float>(M_PI) / 180.0F };
+    static constexpr float DEGREES_TO_RADIANS = 3.14159265358979323846F / 180.0F;
     MotorMixerBase& _motorMixer;
     AHRS_MessageQueue& _ahrsMessageQueue;
     Debug& _debug;
@@ -367,7 +367,7 @@ private:
 #endif
 #if defined(USE_YAW_SPIN_RECOVERY)
     yaw_spin_recovery_config_t _yawSpinRecoveryConfig {.yaw_spin_threshold=1950, .yaw_spin_recovery=YAW_SPIN_RECOVERY_OFF};
-    yaw_spin_recovery_runtime_t _yawSpin = {.recoveredRPS=100.0F*degreesToRadians,. partiallyRecoveredRPS=400.F*degreesToRadians};
+    yaw_spin_recovery_runtime_t _yawSpin = {.recoveredRPS=100.0F*DEGREES_TO_RADIANS,. partiallyRecoveredRPS=400.F*DEGREES_TO_RADIANS};
 #endif
 #if defined(USE_CRASH_RECOVERY)
     crash_recovery_config_t _crashRecoveryConfig {};

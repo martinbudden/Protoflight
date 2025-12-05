@@ -176,7 +176,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
 #endif
     _sh.PIDS[ROLL_ANGLE_DEGREES].setSetpoint(controls.rollStickDegrees);
 #if defined(USE_SIN_ANGLE_PIDS)
-    _sh.PIDS[ROLL_SIN_ANGLE].setSetpoint(sinf(controls.rollStickDegrees * degreesToRadians));
+    _sh.PIDS[ROLL_SIN_ANGLE].setSetpoint(sinf(controls.rollStickDegrees * DEGREES_TO_RADIANS));
 #endif
 
     //
@@ -197,7 +197,7 @@ void FlightController::updateSetpoints(const controls_t& controls)
 #endif
     _sh.PIDS[PITCH_ANGLE_DEGREES].setSetpoint(-controls.pitchStickDegrees);
 #if defined(USE_SIN_ANGLE_PIDS)
-    _sh.PIDS[ROLL_SIN_ANGLE].setSetpoint(sinf(-controls.pitchStickDegrees * degreesToRadians));
+    _sh.PIDS[ROLL_SIN_ANGLE].setSetpoint(sinf(-controls.pitchStickDegrees * DEGREES_TO_RADIANS));
 #endif
 
     //
