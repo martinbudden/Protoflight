@@ -4,16 +4,16 @@
 #include <array>
 #include <cstdint>
 
-
-class VTX_Base {
+class VTX
+{
 public:
-    VTX_Base() = default;
+    VTX() = default;
 private:
-    // VTX_Base is not copyable or moveable
-    VTX_Base(const VTX_Base&) = delete;
-    VTX_Base& operator=(const VTX_Base&) = delete;
-    VTX_Base(VTX_Base&&) = delete;
-    VTX_Base& operator=(VTX_Base&&) = delete;
+    // VTX is not copyable or moveable
+    VTX(const VTX&) = delete;
+    VTX& operator=(const VTX&) = delete;
+    VTX(VTX&&) = delete;
+    VTX& operator=(VTX&&) = delete;
 public:
     // RTC6705 does not support bands and channels, only frequencies.
     enum type_e {

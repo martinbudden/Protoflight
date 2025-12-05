@@ -6,7 +6,7 @@
 /*!
 Statically allocate the CMS.
 */
-CMS* Main::createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, OSD* osd, VTX_Base* vtx) // cppcheck-suppress constParameterReference
+CMS* Main::createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, OSD* osd, VTX* vtx) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_CMS)
     static CMS cms(&displayPort, receiver, cockpit, imuFilters, imu, osd, vtx);

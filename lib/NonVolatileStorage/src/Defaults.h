@@ -12,7 +12,7 @@
 #include <OSD.h>
 #endif
 #if defined(USE_VTX)
-#include <VTX_Base.h>
+#include <VTX.h>
 #endif
 
 enum units_e { UNITS_METRIC = 0, UNIT_IMPERIAL = 1 };
@@ -342,7 +342,7 @@ static constexpr OSD_Elements::config_t osdElementsConfig = {};
 #endif
 
 #if defined(USE_VTX)
-static constexpr VTX_Base::config_t vtxConfig = {
+static constexpr VTX::config_t vtxConfig = {
     .frequencyMHz = 5740,
     .pitModeFrequencyMHz = 0,
     .band =4,

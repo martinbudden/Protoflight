@@ -14,13 +14,13 @@ class IMU_Filters;
 class NonVolatileStorage;
 class OSD;
 class ReceiverBase;
-class VTX_Base;
+class VTX;
 
 
 class MSP_Protoflight : public MSP_Base {
 public:
     virtual ~MSP_Protoflight() = default;
-    MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX_Base* vtx, OSD* osd);
+    MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd);
 public:
     enum { RATEPROFILE_MASK = (1 << 7) };
     enum { RTC_NOT_SUPPORTED = 0xFF };
@@ -47,7 +47,7 @@ private:
     Debug& _debug;
     NonVolatileStorage& _nonVolatileStorage;
     Blackbox* _blackbox;
-    VTX_Base* _vtx;
+    VTX* _vtx;
     OSD* _osd;
     uint8_t _pidProfileIndex {0};
     uint8_t _ratesProfileIndex {0};

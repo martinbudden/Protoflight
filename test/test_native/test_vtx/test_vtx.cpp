@@ -1,4 +1,4 @@
-#include <VTX_Base.h>
+#include <VTX.h>
 #include <unity.h>
 
 void setUp()
@@ -12,7 +12,7 @@ void tearDown()
 // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)
 void test_vtx()
 {
-    static VTX_Base vtx; // cppcheck-suppress unassignedVariable
+    static VTX vtx; // cppcheck-suppress unassignedVariable
     (void)vtx;
 }
 

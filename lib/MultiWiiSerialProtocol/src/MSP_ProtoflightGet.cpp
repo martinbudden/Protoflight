@@ -4,7 +4,7 @@
 #include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
-#include "VTX_Base.h"
+#include "VTX.h"
 #include "version.h"
 
 #include <AHRS.h>
@@ -526,7 +526,7 @@ void MSP_Protoflight::serializeVTX(StreamBuf& dst)
 #if defined(USE_VTX)
     assert(_vtx != nullptr);
 
-    const VTX_Base::type_e vtxType = _vtx->getDeviceType();
+    const VTX::type_e vtxType = _vtx->getDeviceType();
     const bool deviceReady = _vtx->isReady();
 
     uint8_t band = 0;
@@ -578,7 +578,7 @@ void MSP_Protoflight::serializeVTX(StreamBuf& dst)
 #endif
 
     // serialize custom device status
-    if (vtxType == VTX_Base::SMART_AUDIO) {
+    if (vtxType == VTX::SMART_AUDIO) {
         dst.writeU8(0);
 #if false
         //!!TODO custom device status for SmartAudio

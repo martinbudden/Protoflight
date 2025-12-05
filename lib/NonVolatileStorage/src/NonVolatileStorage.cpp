@@ -505,15 +505,15 @@ int32_t NonVolatileStorage::storeOSD_ElementsConfig(const OSD_Elements::config_t
 }
 #endif
 #if defined(USE_VTX)
-VTX_Base::config_t NonVolatileStorage::loadVTXConfig() const
+VTX::config_t NonVolatileStorage::loadVTXConfig() const
 {
-    {VTX_Base::config_t config {};
+    {VTX::config_t config {};
     if (loadItem(VTX_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
     return DEFAULTS::vtxConfig;
 }
-int32_t NonVolatileStorage::storeVTXConfig(const VTX_Base::config_t& config)
+int32_t NonVolatileStorage::storeVTXConfig(const VTX::config_t& config)
 {
     return storeItem(VTX_ConfigKey, &config, sizeof(config), &DEFAULTS::vtxConfig);
 }

@@ -8,12 +8,12 @@ class Cockpit;
 class DisplayPortBase;
 class IMU_Base;
 class IMU_Filters;
-class VTX_Base;
+class VTX;
 
 
 class CMSX {
 public:
-    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, VTX_Base* vtx);
+    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx);
 private:
     // CMS is not copyable or moveable
     CMSX(const CMSX&) = delete;
@@ -95,7 +95,7 @@ public:
     IMU_Filters& getIMU_Filters() { return _imuFilters; };
     const IMU_Base& getIMU() const { return _imu; }
     IMU_Base& getIMU() { return _imu; }
-    VTX_Base* getVTX() { return _vtx; }
+    VTX* getVTX() { return _vtx; }
 
 private:
     void setRebootRequired();
@@ -145,7 +145,7 @@ private:
     CMS& _cms;
     IMU_Filters& _imuFilters;
     IMU_Base& _imu;
-    VTX_Base* _vtx;
+    VTX* _vtx;
     menu_t& _menuMain;
     menu_context_t _currentMenuContext {};
     uint8_t _menuStackIndex {};

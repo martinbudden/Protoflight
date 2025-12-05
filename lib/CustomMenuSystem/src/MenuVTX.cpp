@@ -1,7 +1,7 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
 #include "Targets.h"
-#include "VTX_Base.h" // previously had problem with test code not building if VTX_Base included here
+#include "VTX.h" // previously had problem with test code not building if VTX included here
 
 struct data_t {
     int16_t temperature;
@@ -39,8 +39,8 @@ static CMSX::menu_t menuVTX_confirm = {
     .entries = &menuVTX_confirmEntries[0],
 };
 
-// Note VTX band is 1-based rather than zero-based: !!TODO:Need to look at VTX_Base::BAND_COUNT being 1-based
-enum { VTX_BAND_COUNT = VTX_Base::BAND_COUNT + 1 };
+// Note VTX band is 1-based rather than zero-based: !!TODO:Need to look at VTX::BAND_COUNT being 1-based
+enum { VTX_BAND_COUNT = VTX::BAND_COUNT + 1 };
 
 const std::array<const char *, VTX_BAND_COUNT> bandNames
 {{
@@ -54,7 +54,7 @@ const std::array<const char *, VTX_BAND_COUNT> bandNames
 
 const std::array<char, VTX_BAND_COUNT> bandLetters { '-', 'A', 'B', 'E', 'F', 'R' };
 
-enum { VTX_CHANNEL_COUNT = VTX_Base::CHANNEL_COUNT + 1 };
+enum { VTX_CHANNEL_COUNT = VTX::CHANNEL_COUNT + 1 };
 const std::array<const char *, VTX_CHANNEL_COUNT> channelNames { "-", "1", "2", "3", "4", "5", "6", "7", "8" };
 
 enum { VTX_PIT_MODE_COUNT = 3 };
@@ -102,19 +102,19 @@ static const void* menuVTX_OnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 {
     (void)cmsx;
 #if defined(USE_VTX)
-    VTX_Base* vtx = cmsx.getVTX();
+    VTX* vtx = cmsx.getVTX();
     if (vtx) {
         vtx->getBandAndChannel(data.band, data.channel);
         vtx->getPowerIndex(data.powerIndex);
     }
 #if false
     entryBand.val = &data.band;
-    entryBand.max = VTX_Base::BAND_COUNT; //vtxTableBandCount;
-    entryBand.names = &VTX_Base::BandNames[0];
+    entryBand.max = VTX::BAND_COUNT; //vtxTableBandCount;
+    entryBand.names = &VTX::BandNames[0];
 
     entryChannel.val = &data.channel;
-    entryChannel.max = VTX_Base::CHANNEL_COUNT;//vtxTableChannelCount;
-    entryChannel.names = &VTX_Base::ChannelNames[0];
+    entryChannel.max = VTX::CHANNEL_COUNT;//vtxTableChannelCount;
+    entryChannel.names = &VTX::ChannelNames[0];
 
     entryPower.val = &data.powerIndex;
     //entryPower.max = vtxTablePowerLevels;

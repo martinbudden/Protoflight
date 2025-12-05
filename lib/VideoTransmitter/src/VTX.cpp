@@ -1,7 +1,7 @@
-#include "VTX_Base.h"
+#include "VTX.h"
 
 
-void VTX_Base::setConfig(const config_t& config)
+void VTX::setConfig(const config_t& config)
 {
     _config = config;
 }
@@ -10,7 +10,7 @@ void VTX_Base::setConfig(const config_t& config)
 Converts frequencyMHz to band and channel values.
 If frequency not found then band and channel are set to 0.
 */
-void VTX_Base::lookupBandChannel(uint8_t& band, uint8_t& channel, uint16_t frequencyMHz)
+void VTX::lookupBandChannel(uint8_t& band, uint8_t& channel, uint16_t frequencyMHz)
 {
     if (frequencyMHz == 5880) {
         // 5880Mhz returns Raceband 7 rather than Fatshark 8.
@@ -37,7 +37,7 @@ band:  Band value (1 to 5).
 channel:  Channel value (1 to 8).
 Returns frequency value (in MHz), or 0 if band/channel out of range.
 */
-uint16_t VTX_Base::lookupFrequency(uint8_t band, uint8_t channel)
+uint16_t VTX::lookupFrequency(uint8_t band, uint8_t channel)
 {
     if (band > 0 && band <= BAND_COUNT && channel > 0 && channel <= CHANNEL_COUNT) {
         return Frequencies[band - 1][channel - 1]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -46,7 +46,7 @@ uint16_t VTX_Base::lookupFrequency(uint8_t band, uint8_t channel)
     return 0;
 }
 
-bool VTX_Base::lookupPowerValue(size_t index, uint16_t& powerValue) const
+bool VTX::lookupPowerValue(size_t index, uint16_t& powerValue) const
 {
     switch (_type) {
     case RTC6705:
@@ -61,7 +61,7 @@ bool VTX_Base::lookupPowerValue(size_t index, uint16_t& powerValue) const
         return false;
     }
 
-    const std::array <uint8_t, VTX_Base::POWER_LEVEL_COUNT>& powerValues = 
+    const std::array <uint8_t, VTX::POWER_LEVEL_COUNT>& powerValues = 
         (_type == RTC6705) ? PowerIndexRTC670 :
         (_type == SMART_AUDIO) ? PowerIndexSmartAudio : PowerIndexTramp;
 
@@ -73,7 +73,7 @@ bool VTX_Base::lookupPowerValue(size_t index, uint16_t& powerValue) const
     return false;
 }
 
-void VTX_Base::setPowerByIndex(uint8_t index)
+void VTX::setPowerByIndex(uint8_t index)
 {
     uint16_t powerValue {};
 
@@ -87,7 +87,7 @@ void VTX_Base::setPowerByIndex(uint8_t index)
 
 
 // Tramp "---", 25, 200, 400. 600 mW
-const std::array <uint8_t, VTX_Base::POWER_LEVEL_COUNT> VTX_Base::PowerIndexTramp {
+const std::array <uint8_t, VTX::POWER_LEVEL_COUNT> VTX::PowerIndexTramp {
                         // Spektrum Spec    Tx menu  Tx sends   To VTX    Watt
     TRAMP_POWER_OFF,    //         Off      INHIBIT         0        0     -
     TRAMP_POWER_OFF,    //   1 -  14mW            -         -        -     -
@@ -101,7 +101,7 @@ const std::array <uint8_t, VTX_Base::POWER_LEVEL_COUNT> VTX_Base::PowerIndexTram
 };
 
 // RTC6705 "---", 25 or 200 mW
-const std::array <uint8_t, VTX_Base::POWER_LEVEL_COUNT> VTX_Base::PowerIndexRTC670 {
+const std::array <uint8_t, VTX::POWER_LEVEL_COUNT> VTX::PowerIndexRTC670 {
     RTC6705_POWER_25,   // Off
     RTC6705_POWER_25,   //   1 -  14mW
     RTC6705_POWER_25,   //  15 -  25mW
@@ -114,7 +114,7 @@ const std::array <uint8_t, VTX_Base::POWER_LEVEL_COUNT> VTX_Base::PowerIndexRTC6
 };
 
 // SmartAudio "---", 25, 200, 500. 800 mW
-const std::array <uint8_t, VTX_Base::POWER_LEVEL_COUNT> VTX_Base::PowerIndexSmartAudio {
+const std::array <uint8_t, VTX::POWER_LEVEL_COUNT> VTX::PowerIndexSmartAudio {
     SMART_AUDIO_POWER_OFF,  // Off
     SMART_AUDIO_POWER_OFF,  //   1 -  14mW
     SMART_AUDIO_POWER_25,   //  15 -  25mW
