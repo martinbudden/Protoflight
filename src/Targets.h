@@ -21,10 +21,12 @@ Targets
 
     #define BOARD_IDENTIFIER    "M5Stack_StampS3_Fly"
 
-    #define SPI_0_PINS          spi_pins_t{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=0xFF}
+    #define SPI_0_PINS          spi_pins_t{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=11}
     #define I2C_X_PINS          i2c_pins_t{.sda=3,.scl=4,.irq=BUS_I2C::IRQ_NOT_SET}
     //#define MOTOR_PINS          motor_pins_t{.m0=23,.m1=25,.m2=10,.m3=5} // BR, FR, BL, FL
     #define MOTOR_PINS          motor_pins_t{.m0=41,.m1=42,.m2=10,.m3=5} // BR, FR, BL, FL
+    // KH-A1001WF-06A connector, connected to PMW3901MB-TXQT Optical Motion Tracking Chip
+    #define OPTICAL_FLOW_PINS   spi_pins_t{.cs=12,.sck=44,.cipo=43,.copi=14,.irq=0xFF}
 
     #define GYRO_SAMPLE_RATE_HZ 1600
     #define AHRS_TASK_IS_TIMER_DRIVEN
@@ -35,7 +37,7 @@ Targets
     #define IMU_SPI_PINS        SPI_0_PINS
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
 
-    #define USE_BAROMETER_BMP280
+    //#define USE_BAROMETER_BMP280
     #define BAROMETER_I2C_PINS  I2C_X_PINS 
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
@@ -102,6 +104,33 @@ Targets
     //#define USE_OSD
     #define USE_CMS
     #define USE_VTX
+
+    #define USE_BACKCHANNEL
+
+    #define USE_D_MAX
+    //#define USE_ITERM_RELAX
+    //#define USE_YAW_SPIN_RECOVERY
+    //#define USE_CRASH_RECOVERY
+    //#define USE_DYNAMIC_NOTCH_FILTER
+    //#define USE_ALTITUDE_HOLD
+
+#elif defined(TARGET_WAVESHARE_ESP32_S3)
+
+    #define BOARD_IDENTIFIER    "WAVESHARE_ESP32_S3"
+
+    #define IMU_SPI_PINS        spi_pins_t{.cs=41,.sck=01,.cipo=42,.copi=02,.irq=04}
+    #define IMU_SPI_INDEX       BUS_INDEX_1
+    #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
+
+    #define GYRO_SAMPLE_RATE_HZ 8000
+    #define AHRS_TASK_IS_TIMER_DRIVEN
+    #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
+    #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
+
+    #define USE_IMU_ISM330DHCX
+    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+
+    #define USE_MOTOR_MIXER_QUAD_X_PWM
 
     #define USE_BACKCHANNEL
 
@@ -347,7 +376,6 @@ Targets
     #define USE_YAW_SPIN_RECOVERY
     #define USE_DYNAMIC_IDLE
     #define USE_RPM_FILTERS
-
 
 #elif defined(TARGET_CODECELL)
 

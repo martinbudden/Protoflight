@@ -59,7 +59,7 @@ void Main::setup()
     nvs.setCurrentRateProfileIndex(nvs.loadRateProfileIndex());
 
 #if defined(FRAMEWORK_ARDUINO) || defined(FRAMEWORK_ARDUINO_ESP32)
-    delay(400); // delay to allow serial port to initialize before first print
+    delay(500); // delay to allow serial port to initialize before first print
 #endif
 
     // create the IMU and get its sample rate

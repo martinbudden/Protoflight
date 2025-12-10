@@ -21,6 +21,25 @@ Set the IMU target gyro sample rate to GYRO_SAMPLE_RATE_HZ.
 */
 IMU_Base& Main::createIMU(NonVolatileStorage& nvs)
 {
+#if defined(OPTICAL_FLOW_PINS)
+    // we need to deselect the optical flow chip, which is on the same SPI bus as the IMU.
+    const BUS_SPI::spi_pins_t opticalFlowPins = BUS_SPI::OPTICAL_FLOW_PINS;
+#if defined(FRAMEWORK_ARDUINO_ESP32) || defined(FRAMEWORK_ESPIDF) 
+    const gpio_config_t opticalFlowConfig = {
+        .pin_bit_mask = (1ULL << opticalFlowPins.cs),
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
+    };
+    gpio_config(&opticalFlowConfig);
+    gpio_set_level(static_cast<gpio_num_t>(opticalFlowPins.cs), 1);
+#else
+    pinMode(opticalFlowPins.cs, OUTPUT);
+    digitalWrite(opticalFlowPins.cs, 1);
+#endif
+#endif // OPTICAL_FLOW_PINS
+
     // Statically allocate the IMU according the the build flags
 #if defined(LIBRARY_SENSORS_IMU_USE_SPI_BUS)
     enum { SPI_8_MEGAHERTZ = 8000000, SPI_10_MEGAHERTZ = 10000000, SPI_20_MEGAHERTZ = 20000000 };
@@ -29,7 +48,7 @@ IMU_Base& Main::createIMU(NonVolatileStorage& nvs)
 #elif defined(USE_IMU_MPU6000)
     static IMU_MPU6000 imuSensor(IMU_AXIS_ORDER, SPI_20_MEGAHERTZ, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
 #elif defined(USE_IMU_BMI270)
-    static IMU_BMI270 imuSensor(IMU_AXIS_ORDER, SPI_20_MEGAHERTZ,  BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
+    static IMU_BMI270 imuSensor(IMU_AXIS_ORDER, SPI_10_MEGAHERTZ,  BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
     //imuSensor.init(GYRO_SAMPLE_RATE_HZ, IMU_Base::GYRO_FULL_SCALE_MAX, IMU_Base::ACC_FULL_SCALE_MAX, nullptr);
 #elif defined(USE_IMU_BNO085)
     static IMU_BNO085 imuSensor(IMU_AXIS_ORDER, SPI_20_MEGAHERTZ, BUS_SPI::IMU_SPI_INDEX, BUS_SPI::IMU_SPI_PINS);
