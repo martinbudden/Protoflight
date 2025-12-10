@@ -5,7 +5,7 @@
 | Filters                | yes       | 0.9.4   | yes        | no      |
 | PIDF                   | yes       | 0.4.1   | yes        | no      |
 | VectorQuaternionMatrix | yes       | 0.4.6   | yes        | no      |
-| MotorMixers            | yes       | 0.0.4   | yes        | no      |
+| MotorMixers            | yes       | 0.0.5   | yes        | no      |
 | SensorFusion           | yes       | 0.2.10  | yes        | no      |
 | StreamBuf              | yes       | 0.0.4   | yes        | no      |
 | Sensors                | yes       | 0.0.4   | yes        | no      |
@@ -34,8 +34,8 @@ Libraries
 ├── Sensors @ 0.0.4
 │   └── VectorQuaternionMatrix @ 0.4.6
 │
-├── MotorMixers @ 0.0.4
-│   ├── VectorQuaternionMatrix @ 0.4.5
+├── MotorMixers @ 0.0.5
+│   ├── VectorQuaternionMatrix @ 0.4.6
 │   ├── Filters @ 0.9.4
 │   └── PIDF @ 0.4.1
 │

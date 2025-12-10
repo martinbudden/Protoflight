@@ -146,7 +146,7 @@ void Cockpit::handleOnOffSwitch()
     } else {
         if (_onOffSwitchPressed) {
             // motorOnOff false and _onOffPressed true means the  on/off button is being released, so toggle the motor state
-            if (_flightController.motorsIsOn()) {
+            if (isArmed()) {
                 setDisarmed();
                 if (_blackbox) {
                     _blackbox->finish();

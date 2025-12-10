@@ -41,7 +41,7 @@ void Main::setup()
 #if !defined(FRAMEWORK_RPI_PICO) && !defined(FRAMEWORK_ESPIDF) && !defined(FRAMEWORK_STM32_CUBE) && !defined(FRAMEWORK_TEST)
     Serial.begin(115200);
 #endif
-
+    delay(500); // Allow serial port to initialize
     //
     // Statically allocate all the Protoflight objects
     //

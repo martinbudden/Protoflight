@@ -21,10 +21,9 @@ Targets
 
     #define BOARD_IDENTIFIER    "M5Stack_StampS3_Fly"
 
-    #define SPI_0_PINS          spi_pins_t{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=11}
+    #define SPI_1_PINS          spi_pins_t{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=11}
     #define I2C_X_PINS          i2c_pins_t{.sda=3,.scl=4,.irq=BUS_I2C::IRQ_NOT_SET}
-    //#define MOTOR_PINS          motor_pins_t{.m0=23,.m1=25,.m2=10,.m3=5} // BR, FR, BL, FL
-    #define MOTOR_PINS          motor_pins_t{.m0=41,.m1=42,.m2=10,.m3=5} // BR, FR, BL, FL
+    #define MOTOR_PINS          motor_pins_t{.m0=5,.m1=10,.m2=42,.m3=41} // BR, FR, BL, FL
     // KH-A1001WF-06A connector, connected to PMW3901MB-TXQT Optical Motion Tracking Chip
     #define OPTICAL_FLOW_PINS   spi_pins_t{.cs=12,.sck=44,.cipo=43,.copi=14,.irq=0xFF}
 
@@ -33,8 +32,8 @@ Targets
     #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 
     #define USE_IMU_BMI270
-    #define IMU_SPI_INDEX       BUS_INDEX_0
-    #define IMU_SPI_PINS        SPI_0_PINS
+    #define IMU_SPI_INDEX       BUS_INDEX_1
+    #define IMU_SPI_PINS        SPI_1_PINS
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
 
     //#define USE_BAROMETER_BMP280

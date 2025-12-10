@@ -216,11 +216,11 @@ void FlightController::motorsSwitchOff()
 void FlightController::motorsSwitchOn()
 {
     // don't allow motors to be switched on if the sensor fusion has not initialized
-    if (!_sensorFusionFilterIsInitializing) {
+    //if (!_sensorFusionFilterIsInitializing) {
         _motorMixer.motorsSwitchOn();
         // reset the PID integral values when we switch the motors on
         switchPID_integrationOn();
-    }
+    //}
 }
 
 bool FlightController::motorsIsDisabled() const
