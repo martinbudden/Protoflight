@@ -37,7 +37,7 @@ Targets
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
 
     //#define USE_BAROMETER_BMP280
-    #define BAROMETER_I2C_PINS  I2C_X_PINS 
+    #define BAROMETER_I2C_PINS  I2C_X_PINS
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
@@ -56,7 +56,7 @@ Targets
     #define USE_FLIGHT_CONTROLLER_TIME_CHECKS
 
     #define USE_IMU_BMI270
-    #define IMU_I2C_PINS        I2C_X_PINS 
+    #define IMU_I2C_PINS        I2C_X_PINS
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
@@ -85,7 +85,7 @@ Targets
 #else
     #define USE_IMU_MPU6886
 #endif
-    #define IMU_I2C_PINS        I2C_X_PINS 
+    #define IMU_I2C_PINS        I2C_X_PINS
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
 
     //#define USE_BAROMETER_BMP280
@@ -93,7 +93,7 @@ Targets
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
-    #define SDCARD_SPI_PINS     SPI_X_PINS 
+    #define SDCARD_SPI_PINS     SPI_X_PINS
     //#define USE_BLACKBOX
     //#define USE_BLACKBOX_TEST
     #define USE_MSP
@@ -162,7 +162,7 @@ Targets
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
     #define USE_BAROMETER_BMP280
-    #define BAROMETER_I2C_PINS  I2C_X_PINS 
+    #define BAROMETER_I2C_PINS  I2C_X_PINS
 
     #define SDCARD_SPI_PINS     SPI_X_PINS
     #define USE_BLACKBOX
@@ -238,9 +238,9 @@ Targets
     #define USE_IMU_LSM6DS3TR_C
 #if defined(LIBRARY_SENSORS_IMU_USE_SPI_BUS)
     #define IMU_SPI_INDEX       BUS_INDEX_0
-    #define IMU_SPI_PINS        SPI_0_PINS 
+    #define IMU_SPI_PINS        SPI_0_PINS
 #else
-    #define IMU_I2C_PINS        I2C_0_PINS 
+    #define IMU_I2C_PINS        I2C_0_PINS
 #endif
 
     #define USE_RECEIVER_SBUS
@@ -352,7 +352,7 @@ Targets
 #else
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 #endif
-   
+
     //#define USE_BLACKBOX
 
     #define USE_BAROMETER_BMP580
@@ -454,7 +454,7 @@ Targets
 
     #define USE_RECEIVER_SBUS
     #define RECEIVER_UART_INDEX 0
-    #define RECEIVER_PINS       UART_0_PINS 
+    #define RECEIVER_PINS       UART_0_PINS
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
