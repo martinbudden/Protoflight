@@ -24,7 +24,7 @@ IMU_Base& Main::createIMU(NonVolatileStorage& nvs)
 #if defined(OPTICAL_FLOW_PINS)
     // we need to deselect the optical flow chip, which is on the same SPI bus as the IMU.
     const BUS_SPI::spi_pins_t opticalFlowPins = BUS_SPI::OPTICAL_FLOW_PINS;
-#if defined(FRAMEWORK_ARDUINO_ESP32) || defined(FRAMEWORK_ESPIDF) 
+#if defined(FRAMEWORK_ARDUINO_ESP32) || defined(FRAMEWORK_ESPIDF)
     const gpio_config_t opticalFlowConfig = {
         .pin_bit_mask = (1ULL << opticalFlowPins.cs),
         .mode = GPIO_MODE_OUTPUT,

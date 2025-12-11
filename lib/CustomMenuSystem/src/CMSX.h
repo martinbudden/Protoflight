@@ -113,7 +113,7 @@ private:
     uint32_t drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
 
     enum { MAX_MENU_STACK_DEPTH = 10 };
-    enum menu_stack_e { MENU_STACK_NOTHING_TO_POP, MENU_STACK_NO_ROOM_TO_PUSH, MENU_STACK_OK }; 
+    enum menu_stack_e { MENU_STACK_NOTHING_TO_POP, MENU_STACK_NO_ROOM_TO_PUSH, MENU_STACK_OK };
     void menuStackReset();
     menu_stack_e menuStackPush();
     menu_stack_e menuStackPop();

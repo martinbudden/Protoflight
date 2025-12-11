@@ -260,8 +260,8 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsData)
     float rollRateDeltaFilteredDPS = _sh.dTermFilters1[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
     rollRateDeltaFilteredDPS = _sh.dTermFilters2[ROLL_RATE_DPS].filter(rollRateDeltaFilteredDPS);
     outputs.roll = _sh.PIDS[ROLL_RATE_DPS].updateDeltaITerm(
-                                                    rollRateDPS, 
-                                                    rollRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[ROLL_RATE_DPS], 
+                                                    rollRateDPS,
+                                                    rollRateDeltaFilteredDPS * _rxC.TPA * _ahM.dMaxMultiplier[ROLL_RATE_DPS],
                                                     calculateITermError(ROLL_RATE_DPS, rollRateDPS),
                                                     ahrsData.deltaT);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)

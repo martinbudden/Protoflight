@@ -60,7 +60,7 @@ void OSD_Elements::setDefaultConfig(uint8_t rowCount, uint8_t columnCount)
     const uint8_t midCol = columnCount/2;
 
     // Position elements near centre of screen and disabled by default
-    for (auto& element_pos : _config.element_pos) { 
+    for (auto& element_pos : _config.element_pos) {
         element_pos = OSD_POS((midCol - 5), midRow); // cppcheck-suppress useStlAlgorithm
     }
 

@@ -36,7 +36,7 @@ D_MAX is not applied here, since it depends on the gyro value and so needs to be
 */
 void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttle, uint32_t tickCount)
 {
-    // We don't know the period at which setpoints are updated (it depends on the receiver) so calculate this 
+    // We don't know the period at which setpoints are updated (it depends on the receiver) so calculate this
     // so we can set the filters' cutoff frequency
     if (_rxM.setpointTickCountCounter != 0) {
         _rxM.setpointTickCountSum += tickCount;
@@ -106,7 +106,7 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
 
     // ****
     // calculate the Throttle PID Attenuation (TPA)
-    // TPA is applied here to the PTerms on roll and pitch, and is used as a multiplier 
+    // TPA is applied here to the PTerms on roll and pitch, and is used as a multiplier
     // of the DTERM in updateOutputsUsingPIDs.
     // ****
 

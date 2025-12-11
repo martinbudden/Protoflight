@@ -250,7 +250,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(static_cast<uint8_t>(mixerConfig.type));
         dst.writeU8(mixerConfig.yaw_motors_reversed);
         break;
-    }    
+    }
     case MSP_RX_CONFIG: {
         const Cockpit::rx_config_t& rxConfig = _cockpit.getRX_Config();
         dst.writeU8(rxConfig.serial_rx_type);

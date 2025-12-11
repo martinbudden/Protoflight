@@ -49,7 +49,7 @@ void DynamicNotchFilter::setConfig(const config_t& config)
     _sampleRateHz = looprateHz / static_cast<float>(_sampleCount);
 
     _binResolutionHz = _sampleRateHz / static_cast<float>(SDFT_SAMPLE_COUNT); // 18.5Hz per bin at 8kHz looptime and 600Hz maxHz
-    _startBin = static_cast<size_t>(lrintf(_minHz / _binResolutionHz)); 
+    _startBin = static_cast<size_t>(lrintf(_minHz / _binResolutionHz));
     if (_startBin == 0) {
         _startBin = 1; // cannot use bin 0 because it is for DC component
     }
@@ -96,9 +96,9 @@ void DynamicNotchFilter::push(const xyz_t& sample)
     ++_sampleIndex;
 }
 
-/*! 
+/*!
 Find frequency peaks and update filters
-Calculation of filters frequencies takes 4 iterations per axis, 
+Calculation of filters frequencies takes 4 iterations per axis,
 so each filter has its frequency set every 12 calls of this function
 
 At 8kHz AHRS loop rate this gives 8kHz/12 = 666Hz, that is frequency update every 1.5ms.

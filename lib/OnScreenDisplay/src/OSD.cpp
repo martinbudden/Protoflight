@@ -456,7 +456,7 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
     case STATE_PROCESS_STATS1:
         //Serial.printf("STATE_PROCESS_STATS1\r\n");
         // transaction begins here since refreshStats draws to the screen
-        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING); 
+        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
         _state = processStats1(timeMicroseconds) ? STATE_REFRESH_STATS : STATE_PROCESS_STATS2; // cppcheck-suppress knownConditionTrueFalse
         break;
     case STATE_REFRESH_STATS:

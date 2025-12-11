@@ -26,13 +26,13 @@ uint32_t DisplayPortM5GFX::txBytesFree() const
 }
 
 uint32_t DisplayPortM5GFX::clearScreen(display_clear_option_e options)
-{ 
+{
     (void)options;
     _cleared = true;
     _canvas.fillSprite(TFT_WHITE);
     _canvas.setTextColor(TFT_BLACK, TFT_WHITE);
     _canvas.setTextSize(2);
-    return 0; 
+    return 0;
 }
 
 // Returns true if screen still being transferred

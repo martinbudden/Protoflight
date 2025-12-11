@@ -61,7 +61,7 @@ bool VTX::lookupPowerValue(size_t index, uint16_t& powerValue) const
         return false;
     }
 
-    const std::array <uint8_t, VTX::POWER_LEVEL_COUNT>& powerValues = 
+    const std::array <uint8_t, VTX::POWER_LEVEL_COUNT>& powerValues =
         (_type == RTC6705) ? PowerIndexRTC670 :
         (_type == SMART_AUDIO) ? PowerIndexSmartAudio : PowerIndexTramp;
 

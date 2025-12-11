@@ -147,7 +147,7 @@ void test_dynamic_notch_filter()
     std::array<float, DynamicNotchFilter::SDFT_BIN_COUNT> testSdftData = {
         // peaks at 6(5.0F), 11(8.0F), 15(0.5F), 23(2.0F)
         // 0    1     2     3     4     5     6     7     8     9
-        1.0F, 8.0F, 2.0F, 6.0F, 5.0F, 3.0F, 5.0F, 2.0F, 1.0F, 0.0F, 
+        1.0F, 8.0F, 2.0F, 6.0F, 5.0F, 3.0F, 5.0F, 2.0F, 1.0F, 0.0F,
         0.0F, 8.0F, 0.0F, 0.0F, 0.1F, 0.5F, 0.2F, 0.0F, 0.0F, 0.0F,
         0.0F, 0.0F, 1.0F, 2.0F, 1.5F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
         0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
@@ -181,7 +181,7 @@ void test_dynamic_notch_filter()
     TEST_ASSERT_EQUAL(DynamicNotchFilter::X, state.axis);
 
     if (config.dyn_notch_smoothing) {
-        TEST_ASSERT_EQUAL_FLOAT(180.6423F, centerFrequencyHz[0]); // bin 6 
+        TEST_ASSERT_EQUAL_FLOAT(180.6423F, centerFrequencyHz[0]); // bin 6
         TEST_ASSERT_EQUAL_FLOAT(344.6851F, centerFrequencyHz[1]); // bin 11
         TEST_ASSERT_EQUAL_FLOAT(513.4822F, centerFrequencyHz[2]); // bin 23
         TEST_ASSERT_EQUAL_FLOAT(0.0F, centerFrequencyHz[3]);

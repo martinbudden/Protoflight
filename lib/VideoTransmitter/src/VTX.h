@@ -26,7 +26,7 @@ public:
         UNKNOWN     = 0xFF
     };
     enum { MIN_FREQUENCY_MHZ = 5000, MAX_FREQUENCY_MHZ = 5999 };
-    
+
     enum { PIT_MODE_NA, PIT_MODE_OFF, PIT_MODE_ON, PIT_MODE_COUNT };
 
     // VTX band numbers used for spektrum vtx control
@@ -36,7 +36,7 @@ public:
     enum { BAND_USER = 0, BAND_A = 1, BAND_B = 2, BAND_E = 3, BAND_FATSHARK = 4, BAND_RACEBAND = 5, };
 
     // RTC6705 RF Power index 25 or 200 mW
-    enum { 
+    enum {
         RTC6705_POWER_25 = 1,
         RTC6705_POWER_200 = 2
     };

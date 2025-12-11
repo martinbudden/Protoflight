@@ -21,9 +21,9 @@ void PositionController::navigate_waypoints(const xy_t& A, const xy_t& B, const 
     // calculate vector from A to B
     xy_t AB = B - A;
 
-    // check if waypoints are on top of each other. 
+    // check if waypoints are on top of each other.
     // If yes, skip A and directly continue to B
-    
+
     if (AB.magnitude() < 1.0e-6F) {
         AB = B - currentPosition;
     }
@@ -39,7 +39,6 @@ void PositionController::navigate_waypoints(const xy_t& A, const xy_t& B, const 
     // If the current position is in a +-135 degree angle behind waypoint A
     // and further away from A than the L1 distance, then A becomes the L1 point.
     // If the aircraft is already between A and B normal L1 logic is applied.
-    
 
     // estimate aircraft position WRT to B
     const xy_t B_to_P = currentPosition - B;
@@ -71,7 +70,7 @@ void PositionController::navigate_waypoints(const xy_t& A, const xy_t& B, const 
         // direction, we have missed the waypoint. At +- 90 degrees we are just passing it.
     } else if (fabsf(AB_to_BP_bearing) < 1.5F) {//math::radians(100.0F)) {
         // Extension, fly back to waypoint.
-        // This corner case is possible if the system was following the AB line from waypoint A to waypoint B, 
+        // This corner case is possible if the system was following the AB line from waypoint A to waypoint B,
         // and then is switched to manual mode (or otherwise misses the waypoint)
         // and from behind the waypoint continues to follow the AB line.
 

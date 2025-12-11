@@ -285,7 +285,7 @@ static constexpr OSD::config_t osdConfig = {
         STATS_FULL_THROTTLE_TIME,
         STATS_FULL_THROTTLE_COUNTER,
         STATS_AVG_THROTTLE,
-*/    
+*/
     .framerate_hz = OSD::FRAMERATE_DEFAULT_HZ,
     .cap_alarm  = 2200,
     .alt_alarm  = 100, // meters or feet depend on configuration

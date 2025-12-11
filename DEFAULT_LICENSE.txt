@@ -5,7 +5,7 @@
  *
  * This copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the software.
- * 
+ *
  * GNU General Public License v3.0
  *
  * This file is part of Protoflight.

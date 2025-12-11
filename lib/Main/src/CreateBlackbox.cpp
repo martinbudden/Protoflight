@@ -14,7 +14,7 @@
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox* Main::createBlackBox(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) // cppcheck-suppress constParameterReference 
+Blackbox* Main::createBlackBox(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_BLACKBOX)
     static BlackboxCallbacks            blackboxCallbacks(flightController.getAHRS_MessageQueue(), ahrs, flightController, cockpit, receiver, debug);

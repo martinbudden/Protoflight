@@ -369,7 +369,7 @@ static const std::array<CMSX::OSD_Entry, 10> menuProfileEntries
     {"PID",             OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID_Tuning},
     {"SIMPLIFIED PIDS", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuSimplifiedPID_Tuning },
     {"PID FILTERS",     OME_SUBMENU, &CMSX::menuChange, &CMSX::menuPID_Filters},
-    
+
     {"IMU FILTERS",     OME_SUBMENU, &CMSX::menuChange, &CMSX::menuIMU_Filters},
 
     {"BACK",            OME_BACK, nullptr, nullptr},

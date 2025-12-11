@@ -129,7 +129,7 @@ void CMSX::padLeft(char *buf, uint8_t size)
     auto len = static_cast<uint8_t>(strnlen(buf, size));
 
     int32_t ii = size - 1;
-    const int32_t jj = size - len; 
+    const int32_t jj = size - len;
     while (ii - jj >= 0) {
         buf[ii] = buf[ii - jj]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         --ii;
@@ -885,7 +885,7 @@ const void* CMSX::menuExit(DisplayPortBase& displayPort, const menu_t* menu)
 
 void CMSX::pageSelect(uint8_t newpage)
 {
-    const OSD_Entry* menuEntry = _currentMenuContext.menu->entries; 
+    const OSD_Entry* menuEntry = _currentMenuContext.menu->entries;
     while ((menuEntry->flags & OME_TYPE_MASK) != OME_END) {
         ++menuEntry; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     }
