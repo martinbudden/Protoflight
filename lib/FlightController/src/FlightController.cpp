@@ -60,6 +60,17 @@ const std::string& FlightController::getPID_Name(pid_index_e pidIndex) const
     return PID_NAMES[pidIndex];
 }
 
+VehicleControllerBase::PIDF_error_t FlightController::getPID_Error(size_t index) const
+{
+    const PIDF::error_t error = _sh.PIDS[index].getError();
+    return PIDF_error_t {
+        .P = error.P,
+        .I = error.I,
+        .D = error.D,
+        .S = error.S,
+        .K = error.K
+    };
+}
 
 //!!TODO: reconcile FlightController::getPID_MSP, FlightController::getPID_Constants and set variants
 VehicleControllerBase::PIDF_uint16_t FlightController::getPID_MSP(size_t index) const
@@ -216,11 +227,14 @@ void FlightController::motorsSwitchOff()
 void FlightController::motorsSwitchOn()
 {
     // don't allow motors to be switched on if the sensor fusion has not initialized
-    //if (!_sensorFusionFilterIsInitializing) {
+#if !defined(FRAMEWORK_TEST)
+    _sensorFusionFilterIsInitializing = false; //!!TODO: fix _sensorFusionFilterIsInitializing
+#endif
+    if (!_sensorFusionFilterIsInitializing) {
         _motorMixer.motorsSwitchOn();
         // reset the PID integral values when we switch the motors on
         switchPID_integrationOn();
-    //}
+    }
 }
 
 bool FlightController::motorsIsDisabled() const
@@ -321,8 +335,8 @@ void FlightController::setTPA_Config(const tpa_config_t& tpaConfig)
 
 void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig)
 {
-    _antiGravityConfig = antiGravityConfig; 
-    _antiGravity = { 
+    _antiGravityConfig = antiGravityConfig;
+    _antiGravity = {
         .PGain = static_cast<float>(antiGravityConfig.p_gain) * _scaleFactors.kp,
         .IGain = static_cast<float>(antiGravityConfig.i_gain) * _scaleFactors.ki
     };

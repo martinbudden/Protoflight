@@ -15,11 +15,16 @@ BackchannelBase& Main::createBackchannel(FlightController& flightController, AHR
     auto& receiverAtomJoyStick = static_cast<ReceiverAtomJoyStick&>(receiver); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     static BackchannelTransceiverESPNOW backchannelTransceiverESPNOW(receiverAtomJoyStick.getESPNOW_Transceiver(), &backchannelMacAddress[0]);
 
+
+    const ReceiverBase::EUI_48_t myEUI = receiver.getMyEUI();
+    const std::array<uint8_t, 6> myMacAddress = {
+        myEUI.octets[0], myEUI.octets[1], myEUI.octets[2], myEUI.octets[3], myEUI.octets[4], myEUI.octets[5]
+    };
+
     static BackchannelFlightController backchannel(
         backchannelTransceiverESPNOW,
         &backchannelMacAddress[0],
-        //&myMacAddress[0],
-        &receiver.getMyEUI().octets[0],
+        &myMacAddress[0],
         flightController,
         ahrs,
         receiver,

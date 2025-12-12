@@ -247,6 +247,12 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
         _requestType = CommandPacketRequestData::NO_REQUEST; // reset _requestType to NO_REQUEST, since REQUEST_PID_DATA is a one shot, as response to keypress
         break;
     }
+    case CommandPacketRequestData::REQUEST_PID_ERROR_DATA: {
+        const size_t len = packTelemetryData_PID_Errors(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _flightController, _flightController.getMotorMixer().getType(), _flightController.getControlMode());
+        //Serial.printf("vcLen:%d\r\n", len);
+        sendData(_transmitDataBufferPtr, len);
+        break;
+    }
     case CommandPacketRequestData::REQUEST_VEHICLE_CONTROLLER_DATA: {
         const size_t len = packTelemetryData_FC_QUADCOPTER(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _flightController);
         //Serial.printf("vcLen:%d\r\n", len);

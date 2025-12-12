@@ -40,8 +40,8 @@ void Main::setup()
 
 #if !defined(FRAMEWORK_RPI_PICO) && !defined(FRAMEWORK_ESPIDF) && !defined(FRAMEWORK_STM32_CUBE) && !defined(FRAMEWORK_TEST)
     Serial.begin(115200);
-#endif
     delay(500); // Allow serial port to initialize
+#endif
     //
     // Statically allocate all the Protoflight objects
     //
@@ -70,7 +70,7 @@ void Main::setup()
 
     FlightController& flightController = createFlightController(AHRS_taskIntervalSeconds, debug, nvs);
 
-    IMU_Filters& imuFilters = createIMU_Filters(AHRS_taskIntervalSeconds, flightController.getMotorMixer(), debug, nvs); 
+    IMU_Filters& imuFilters = createIMU_Filters(AHRS_taskIntervalSeconds, flightController.getMotorMixer(), debug, nvs);
 
     AHRS& ahrs = createAHRS(flightController, imuSensor, imuFilters);
 
