@@ -251,6 +251,7 @@ public:
     void setPID_K_MSP(pid_index_e pidIndex, uint16_t kk);
 
     PIDF_error_t getPID_Error(size_t index) const override;
+    float getPID_Setpoint(size_t index) const override;
 
     inline float getPID_Setpoint(pid_index_e pidIndex) const { return _sh.PIDS[pidIndex].getSetpoint(); }
     void setPID_Setpoint(pid_index_e pidIndex, float setpoint) { _sh.PIDS[pidIndex].setSetpoint(setpoint); }

@@ -72,6 +72,11 @@ VehicleControllerBase::PIDF_error_t FlightController::getPID_Error(size_t index)
     };
 }
 
+float FlightController::getPID_Setpoint(size_t index) const
+{
+    return _sh.PIDS[index].getSetpoint();
+}
+
 //!!TODO: reconcile FlightController::getPID_MSP, FlightController::getPID_Constants and set variants
 VehicleControllerBase::PIDF_uint16_t FlightController::getPID_MSP(size_t index) const
 {
@@ -450,7 +455,7 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
 NOTE: CALLED FROM WITHIN THE FlightController TASK
 It is typically called at frequency of between 1000Hz and 8000Hz, so it has to be FAST.
 
-Called by the scheduler when signalled by the AHRS task that output data is available.
+Called by the scheduler when the updateOutputsUsingPIDs function running in the AHRS task SIGNALs that output data is available.
 */
 void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
 {

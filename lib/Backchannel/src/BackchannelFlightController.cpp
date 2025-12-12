@@ -175,6 +175,7 @@ bool BackchannelFlightController::packetSetPID(const CommandPacketSetPID& packet
             _telemetryID,
             _sequenceNumber,
             _flightController,
+            _nonVolatileStorage.getCurrentPidProfileIndex(),
             _flightController.getControlMode(),
             0.0F,
             0.0F
@@ -238,6 +239,7 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
             _telemetryID,
             _sequenceNumber,
             _flightController,
+            _nonVolatileStorage.getCurrentPidProfileIndex(),
             _flightController.getControlMode(),
             0.0F,
             0.0F
@@ -248,7 +250,14 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
         break;
     }
     case CommandPacketRequestData::REQUEST_PID_ERROR_DATA: {
-        const size_t len = packTelemetryData_PID_Errors(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _flightController, _flightController.getMotorMixer().getType(), _flightController.getControlMode());
+        const size_t len = packTelemetryData_PID_Outputs(
+            _transmitDataBufferPtr,
+            _telemetryID,
+            _sequenceNumber, 
+            _flightController, 
+            _nonVolatileStorage.getCurrentPidProfileIndex(),
+            _flightController.getControlMode()
+        );
         //Serial.printf("vcLen:%d\r\n", len);
         sendData(_transmitDataBufferPtr, len);
         break;
