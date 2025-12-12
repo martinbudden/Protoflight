@@ -139,31 +139,44 @@ float Cockpit::mapThrottle(float throttle) const
     return throttle * static_cast<float>(_rates.throttleLimitPercent) / 100.0F;
 }
 
+void Cockpit::startBlackboxRecording()
+{
+    if (_blackbox) {
+        _blackbox->start(Blackbox::start_t{
+            .debugMode = static_cast<uint16_t>(_debug.getMode()),
+            .motorCount = static_cast<uint8_t>(_flightController.getMotorMixer().getMotorCount()),
+            .servoCount = static_cast<uint8_t>(_flightController.getMotorMixer().getServoCount())
+        });
+        _flightController.setBlackboxActive(true);
+    }
+}
+
+void Cockpit::stopBlackboxRecording()
+{
+    if (_blackbox) {
+        _blackbox->finish();
+        _flightController.setBlackboxActive(false);
+    }
+}
+
 void Cockpit::handleOnOffSwitch()
 {
     if (_receiver.getSwitch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
         _onOffSwitchPressed = true;
     } else {
         if (_onOffSwitchPressed) {
-            // motorOnOff false and _onOffPressed true means the  on/off button is being released, so toggle the motor state
+            // MOTOR_ON_OFF_SWITCH is false and _onOffSwitchPressed true means that the switch was previously pressed and is now being released
+            _onOffSwitchPressed = false;
+            // toggle arming when the onOff switch is released
             if (isArmed()) {
                 setDisarmed();
-                if (_blackbox) {
-                    _blackbox->finish();
-                    _flightController.setBlackboxActive(false);
-                }
+                stopBlackboxRecording();
             } else {
-                if (_blackbox) {
-                    _blackbox->start(Blackbox::start_t{
-                        .debugMode = static_cast<uint16_t>(_debug.getMode()),
-                        .motorCount = static_cast<uint8_t>(_flightController.getMotorMixer().getMotorCount()),
-                        .servoCount = static_cast<uint8_t>(_flightController.getMotorMixer().getServoCount())
-                    });
-                    _flightController.setBlackboxActive(true);
+                if (_recordToBlackboxWhenArmed) {
+                    startBlackboxRecording();
                 }
                 setArmed();
             }
-            _onOffSwitchPressed = false;
         }
     }
 }

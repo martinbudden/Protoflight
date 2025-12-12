@@ -226,6 +226,10 @@ public:
     static bool pwmIsLow(uint16_t x) { return x < 1250; }
     static bool pwmIsMid(uint16_t x) { return (x > 1250) && (x <1750); }
 
+    void setRecordToBlackboxWhenArmed(bool recordToBlackboxWhenArmed) { _recordToBlackboxWhenArmed = recordToBlackboxWhenArmed; }
+    void startBlackboxRecording();
+    void stopBlackboxRecording();
+
     void setRebootRequired();
     bool getRebootRequired() const;
 private:
@@ -262,6 +266,7 @@ private:
     };
     uint8_t _currentPidProfileIndex {0};
     uint8_t _currentRateProfileIndex {0};
+    bool _recordToBlackboxWhenArmed { false };
     bool _rebootRequired {false};
     bool _onOffSwitchPressed {false}; // on/off switch debouncing
 };

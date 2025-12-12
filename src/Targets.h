@@ -94,7 +94,7 @@ Targets
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
     #define SDCARD_SPI_PINS     SPI_X_PINS
-    //#define USE_BLACKBOX
+    #define USE_BLACKBOX
     //#define USE_BLACKBOX_TEST
     #define USE_MSP
     #define MSP_UART_INDEX      0

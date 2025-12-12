@@ -257,6 +257,7 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsData)
     // Roll axis
     //
     const float rollRateDPS = rollRateNED_DPS(ahrsData.accGyroRPS.gyroRPS);
+    // filter the DTerm twice
     float rollRateDeltaFilteredDPS = _sh.dTermFilters1[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());
     rollRateDeltaFilteredDPS = _sh.dTermFilters2[ROLL_RATE_DPS].filter(rollRateDeltaFilteredDPS);
     outputs.roll = _sh.PIDS[ROLL_RATE_DPS].updateDeltaITerm(
@@ -273,6 +274,7 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsData)
     // Pitch axis
     //
     const float pitchRateDPS = pitchRateNED_DPS(ahrsData.accGyroRPS.gyroRPS);
+    // filter the DTerm twice
     float pitchRateDeltaFilteredDPS = _sh.dTermFilters1[PITCH_RATE_DPS].filter(rollRateDPS - _sh.PIDS[PITCH_RATE_DPS].getPreviousMeasurement());
     pitchRateDeltaFilteredDPS = _sh.dTermFilters2[PITCH_RATE_DPS].filter(pitchRateDeltaFilteredDPS);
     outputs.pitch = _sh.PIDS[PITCH_RATE_DPS].updateDeltaITerm(
