@@ -51,7 +51,7 @@ static constexpr MotorMixerBase::motor_config_t motorConfig = {
     .motorPoleCount = 14,
 };
 
-static const FlightController::pidf_uint16_array_t& flightControllerPIDs = FlightController::DefaultPIDs;
+static const std::array<FlightController::PIDF_uint16_t, FlightController::PID_COUNT>& flightControllerPIDs = FlightController::DefaultPIDs;
 
 static constexpr FlightController::simplified_pid_settings_t flightControllerSimplifiedPID_settings = {
     .multiplier = 100,

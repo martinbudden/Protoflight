@@ -75,7 +75,7 @@ void Main::checkIMU_Calibration(NonVolatileStorage& nvs, IMU_Base& imu) // cppch
             const xyz_t accOffset = nvs.loadGyroOffset();
             imu.setAccOffset(accOffset);
 #if !defined(FRAMEWORK_STM32_CUBE)
-            sprintf(&buf[0], "**** AHRS accOffsets loaded from NVS: ax:%f, ay:%f, az:%f\r\n", static_cast<double>(accOffset.x), static_cast<double>(accOffset.y), static_cast<double>(accOffset.z));
+            sprintf(&buf[0], "**** AHRS accOffsets  loaded from NVS: ax:%f, ay:%f, az:%f\r\n", static_cast<double>(accOffset.x), static_cast<double>(accOffset.y), static_cast<double>(accOffset.z));
             print(&buf[0]);
 #endif
         }

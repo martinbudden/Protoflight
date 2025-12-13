@@ -108,7 +108,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
     // use the outputs from the "ANGLE" PIDS as the setpoints for the "RATE" PIDs.
     //!!TODO: need to mix in YAW to roll and pitch changes to coordinate turn
 
-    const float yawRateSetpointDPS = _sh.PIDS[YAW_RATE_DPS].getSetpoint();
+    //const float yawRateSetpointDPS = _sh.PIDS[YAW_RATE_DPS].getSetpoint();
 
     // Running the angle PIDs in "quaternion space" rather than "angle space",
     // avoids the computationally expensive Quaternion::calculateRoll and Quaternion::calculatePitch
@@ -132,10 +132,13 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
         {
             const float rollAngleDegrees = rollAngleDegreesNED(orientation);
             const float rollAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(rollAngleDegrees - _sh.PIDS[ROLL_ANGLE_DEGREES].getPreviousMeasurement());
-            rollRateSetpointDPS = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(rollAngleDegrees, rollAngleDelta, deltaT) * _maxRollRateDPS;
+            // calculate roll rate setpoint in degrees, range is [-_maxRollAngleDegrees, _maxRollAngleDegrees], typically [-60, 60]
+            const float rollRateSetpointDegrees = _sh.PIDS[ROLL_ANGLE_DEGREES].updateDelta(rollAngleDegrees, rollAngleDelta, deltaT);
+            // convert to value in range [-1.0, 1.0] to be used for the ROLL_RATE_DPS setpoint
+            rollRateSetpointDPS = std::clamp(rollRateSetpointDegrees / _maxRollAngleDegrees, -1.0F, 1.0F) * _maxRollRateDPS;
         }
         // a component of YAW changes roll, so update accordingly !!TODO:check sign
-        rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.amcs.rollSinAngle;
+        //rollRateSetpointDPS -= yawRateSetpointDPS * _ahM.amcs.rollSinAngle;
         _sh.PIDS[ROLL_RATE_DPS].setSetpoint(rollRateSetpointDPS);
     } else {
         _ahM.amcs.state = STATE_CALCULATE_ROLL;
@@ -150,11 +153,14 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
 #endif
         {
             const float pitchAngleDegrees = pitchAngleDegreesNED(orientation);
-            const float pitchAngleDelta = _sh.dTermFilters1[ROLL_ANGLE_DEGREES].filter(pitchAngleDegrees - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
-            pitchRateSetpointDPS = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(pitchAngleDegrees, pitchAngleDelta, deltaT) * _maxPitchRateDPS;
+            const float pitchAngleDelta = _sh.dTermFilters1[PITCH_ANGLE_DEGREES].filter(pitchAngleDegrees - _sh.PIDS[PITCH_ANGLE_DEGREES].getPreviousMeasurement());
+            // calculate pitch rate setpoint in degrees, range is [-_maxPitchAngleDegrees, _maxPitchAngleDegrees], typically [-60, 60]
+            const float pitchRateSetpointDegrees = _sh.PIDS[PITCH_ANGLE_DEGREES].updateDelta(pitchAngleDegrees, pitchAngleDelta, deltaT);
+            // convert to value in range [-1.0, 1.0] to be used for the PITCH_RATE_DPS setpoint
+            pitchRateSetpointDPS = std::clamp(pitchRateSetpointDegrees / _maxPitchAngleDegrees, -1.0F, 1.0F) * _maxPitchRateDPS;
         }
-        // a component of YAW changes roll, so update accordingly !!TODO:check sign
-        pitchRateSetpointDPS += yawRateSetpointDPS * _ahM.amcs.pitchSinAngle;
+        // a component of YAW changes pitch, so update accordingly !!TODO:check sign
+        //pitchRateSetpoint += yawRateSetpointDPS * _ahM.amcs.pitchSinAngle;
         _sh.PIDS[PITCH_RATE_DPS].setSetpoint(pitchRateSetpointDPS);
     }
 
@@ -238,7 +244,7 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsData)
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const timeUs32_t time0 = timeUs();
 #endif
-    if (_rxC.useAngleMode) {
+    if (_rxC.useAngleMode || true) {
         updateRateSetpointsForAngleMode(ahrsData.orientation, ahrsData.deltaT);
     }
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
@@ -256,6 +262,7 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsData)
     //
     // Roll axis
     //
+//Serial.printf("RR\r\n");
     const float rollRateDPS = rollRateNED_DPS(ahrsData.accGyroRPS.gyroRPS);
     // filter the DTerm twice
     float rollRateDeltaFilteredDPS = _sh.dTermFilters1[ROLL_RATE_DPS].filter(rollRateDPS - _sh.PIDS[ROLL_RATE_DPS].getPreviousMeasurement());

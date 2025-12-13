@@ -68,6 +68,8 @@ Targets
 
 #elif defined(TARGET_M5STACK_CORE2)
 
+    #undef USE_SIN_ANGLE_PIDS
+
     #define BOARD_IDENTIFIER    "M5Stack_Core2"
 
     #define SPI_X_PINS          spi_pins_t{.cs=4,.sck=18,.cipo=38,.copi=23,.irq=0xFF}
@@ -94,18 +96,19 @@ Targets
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
     #define SDCARD_SPI_PINS     SPI_X_PINS
-    #define USE_BLACKBOX
+    //#define USE_BLACKBOX
     //#define USE_BLACKBOX_TEST
-    #define USE_MSP
+    //#define USE_MSP
     #define MSP_UART_INDEX      0
     #define MSP_UART_PINS       UART_0_PINS
     #define USE_DASHBOARD
     //#define USE_OSD
-    #define USE_CMS
-    #define USE_VTX
+    //#define USE_CMS
+    //#define USE_VTX
 
     #define USE_BACKCHANNEL
 
+    #define USE_ANGLE_MODE_LOCKED_ON
     #define USE_D_MAX
     //#define USE_ITERM_RELAX
     //#define USE_YAW_SPIN_RECOVERY

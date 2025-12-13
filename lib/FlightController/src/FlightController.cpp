@@ -124,6 +124,7 @@ void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_
 
     _sh.PIDS[pidIndex].setPID(pid);
     _sh.PIDS[pidIndex].switchIntegrationOff();
+    _sh.PIDS[pidIndex].setSetpoint(0.0F);
     // keep copies of the PID constants so they can be adjusted by anti-gravity
     _fcM.pidConstants[pidIndex] = _sh.PIDS[pidIndex].getPID();
 }
@@ -232,10 +233,11 @@ void FlightController::motorsSwitchOff()
 void FlightController::motorsSwitchOn()
 {
     // don't allow motors to be switched on if the sensor fusion has not initialized
-#if !defined(FRAMEWORK_TEST)
-    _sensorFusionFilterIsInitializing = false; //!!TODO: fix _sensorFusionFilterIsInitializing
+#if defined(FRAMEWORK_TEST)
+    if (!_sensorFusionFilterIsInitializing) { //!!TODO: fix _sensorFusionFilterIsInitializing
+#else
+    {
 #endif
-    if (!_sensorFusionFilterIsInitializing) {
         _motorMixer.motorsSwitchOn();
         // reset the PID integral values when we switch the motors on
         switchPID_integrationOn();
@@ -270,6 +272,13 @@ void FlightController::setControlMode(control_mode_e controlMode)
 void FlightController::setPID_TuningMode(pid_tuning_mode_e pidTuningMode)
 {
     _pidTuningMode = pidTuningMode;
+}
+
+void FlightController::setMaxAngleRates(float maxRollRateDPS, float maxPitchRateDPS, float maxYawRateDPS)
+{
+    _maxRollRateDPS = maxRollRateDPS;
+    _maxPitchRateDPS = maxPitchRateDPS;
+    _maxYawRateDPS = maxYawRateDPS;
 }
 
 void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
@@ -473,7 +482,7 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
 
         MotorMixerBase::commands_t commands {
             .throttle  = queueItem.throttle,
-            // scale roll, pitch, and yaw to range [0.0F, 1.0F]
+            // scale roll, pitch, and yaw from DPS range to range [-1.0F, 1.0F]
             .roll   = _fcM.outputs[FD_ROLL] / _rollRateAtMaxPowerDPS,
             .pitch  = _fcM.outputs[FD_PITCH] / _pitchRateAtMaxPowerDPS,
             .yaw    = _fcM.outputs[FD_YAW] / _yawRateAtMaxPowerDPS

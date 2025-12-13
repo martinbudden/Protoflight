@@ -194,7 +194,6 @@ public:
         control_mode_e controlMode;
     };
 
-    typedef std::array<PIDF_uint16_t, PID_COUNT> pidf_uint16_array_t;
     enum pid_tuning_mode_e {
         PID_TUNING_STANDARD = 0,
         PID_TUNING_SIMPLIFIED_RP,
@@ -221,6 +220,7 @@ public:
     void motorsSwitchOff();
     void motorsSwitchOn();
     bool motorsIsDisabled() const;
+    //! Sets blackboxActive flag so that ahrsData messages are sent to the blackbox task
     void setBlackboxActive(bool isActive) { _sh.blackboxActive = isActive; }
 
     virtual uint32_t getOutputPowerTimeMicroseconds() const override; //!!TODO: is this still needed?
@@ -230,7 +230,6 @@ public:
 
     pid_tuning_mode_e getPID_TuningMode() const { return _pidTuningMode; }
     void setPID_TuningMode(pid_tuning_mode_e pidTuningMode);
-
 
     const std::string& getPID_Name(pid_index_e pidIndex) const;
 
@@ -281,6 +280,10 @@ public:
     Debug& getDebug() { return _debug; }
     inline uint32_t getTimeChecksMicroseconds(size_t index) const { return _sh.timeChecksMicroseconds[index]; } //!< Instrumentation time checks
 
+    void setMaxAngleRates(float maxRollRateDPS, float maxPitchRateDPS, float maxYawRateDPS);
+    float getMaxRollAngleDegrees() const { return _maxRollAngleDegrees; }
+    float getMaxPitchAngleDegrees() const { return _maxPitchAngleDegrees; }
+
     void setFiltersConfig(const filters_config_t& filtersConfig);
     const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
 
@@ -321,6 +324,7 @@ public:
     void recoverFromYawSpin(const xyz_t& gyroRPS, float deltaT);
 
     void calculateDMaxMultipliers();
+    void initializeSetpointFilters(float setpointDeltaT);
     void applyDynamicPID_AdjustmentsOnThrottleChange(float throttle, uint32_t tickCount);
     void updateSetpoints(const controls_t& controls);
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
@@ -344,8 +348,11 @@ private:
     const float _takeOffThrottleThreshold {0.2F};
     const uint32_t _takeOffTickThreshold {1000};
     // other constants
-    const float _maxRollRateDPS {500.0F};
-    const float _maxPitchRateDPS {500.0F};
+    float _maxRollRateDPS {500.0F};
+    float _maxPitchRateDPS {500.0F};
+    float _maxYawRateDPS {500.0F};
+    const float _maxRollAngleDegrees { 60.0F }; // used for angle mode
+    const float _maxPitchAngleDegrees { 60.0F }; // used for angle mode
     const float _rollRateAtMaxPowerDPS {1000.0};
     const float _pitchRateAtMaxPowerDPS {1000.0};
     const float _yawRateAtMaxPowerDPS {1000.0};
@@ -431,9 +438,9 @@ private:
         float outputThrottle {0.0F}; // throttle value is scaled to the range [-1,0, 1.0]
         std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID constants
         PowerTransferFilter2 antiGravityThrottleFilter {};
-        std::array<PowerTransferFilter1, PID_COUNT> dTermFilters1;
-        std::array<PowerTransferFilter1, PID_COUNT> dTermFilters2;
-        std::array<PowerTransferFilter3, RP_AXIS_COUNT> setpointDerivativeFilters;
+        std::array<PowerTransferFilter1, PID_COUNT> dTermFilters1 {};
+        std::array<PowerTransferFilter1, PID_COUNT> dTermFilters2 {};
+        std::array<PowerTransferFilter3, RP_AXIS_COUNT> setpointDerivativeFilters {};
 #if defined(USE_D_MAX)
         std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilters {};
         std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxLowpassFilters {};
@@ -462,12 +469,20 @@ private:
     };
 public:
     //!Default PIDs. For compatibility these are the same values as used by Betaflight.
-    static constexpr FlightController::pidf_uint16_array_t DefaultPIDs = {{
+    static constexpr std::array<PIDF_uint16_t, PID_COUNT> DefaultPIDs = {{
+#if true
+        { 45, 0, 0, 0, 0 }, // roll rate
+        { 47, 0, 0, 0, 0 }, // pitch rate
+        { 45, 0, 0, 0, 0 }, // yaw rate
+        { 50, 0, 0, 0, 0 }, // roll angle
+        { 50, 0, 0, 0, 0 }, // pitch angle
+#else
         { 45, 80, 30, 120, 0 }, // roll rate
         { 47, 84, 34, 125, 0 }, // pitch rate
         { 45, 80,  0, 120, 0 }, // yaw rate
         { 50, 75, 75,  50, 0 }, // roll angle
         { 50, 75, 75,  50, 0 }, // pitch angle
+#endif
 #if defined(USE_SIN_ANGLE_PIDS)
         { 50, 75, 75,  50, 0 }, // roll sin angle
         { 50, 75, 75,  50, 0 }, // pitch sin angle

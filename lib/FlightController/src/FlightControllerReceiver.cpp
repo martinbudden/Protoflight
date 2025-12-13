@@ -21,6 +21,39 @@ void FlightController::setYawSpinThresholdDPS(float yawSpinThresholdDPS)
 #endif
 }
 
+void FlightController::initializeSetpointFilters(float setpointDeltaT) // NOLINT(readability-make-member-function-const)
+{
+    if (_antiGravityConfig.cutoff_hz == 0) {
+        _sh.antiGravityThrottleFilter.setToPassthrough();
+    } else {
+        _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, setpointDeltaT);
+    }
+    // Feedforward filters
+    if (_filtersConfig.rc_smoothing_feedforward_cutoff == 0) {
+        for (auto& filter : _sh.setpointDerivativeFilters) {
+            filter.setToPassthrough();
+        }
+    } else {
+        for (auto& filter : _sh.setpointDerivativeFilters) {
+            filter.setCutoffFrequencyAndReset(_filtersConfig.rc_smoothing_feedforward_cutoff, setpointDeltaT);
+        }
+    }
+
+#if defined(USE_D_MAX)
+    for (auto& filter : _sh.dMaxRangeFilters) {
+        filter.setCutoffFrequency(DMAX_RANGE_HZ, setpointDeltaT);
+    }
+    for (auto& filter : _sh.dMaxLowpassFilters) {
+        filter.setCutoffFrequency(DMAX_LOWPASS_HZ, setpointDeltaT);
+    }
+#endif
+#if defined(USE_ITERM_RELAX)
+    for (auto& filter : _sh.iTermRelaxFilters) {
+        filter.setCutoffFrequency(_iTermRelaxConfig.iterm_relax_cutoff, setpointDeltaT);
+    }
+#endif
+}
+
 /*!
 NOTE: CALLED FROM WITHIN THE RECEIVER TASK
 
@@ -43,35 +76,7 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
         --_rxM.setpointTickCountCounter;
         if (_rxM.setpointTickCountCounter == 0) {
             _rxM.setpointDeltaT = 0.001F * static_cast<float>(_rxM.setpointTickCountSum) / static_cast<float>(rx_t::SETPOINT_TICKCOUNT_COUNTER_START);
-            if (_antiGravityConfig.cutoff_hz == 0) {
-                _sh.antiGravityThrottleFilter.setToPassthrough();
-            } else {
-                _sh.antiGravityThrottleFilter.setCutoffFrequency(_antiGravityConfig.cutoff_hz, _rxM.setpointDeltaT);
-            }
-            // Feedforward filters
-            if (_filtersConfig.rc_smoothing_feedforward_cutoff == 0) {
-                for (auto& filter : _sh.setpointDerivativeFilters) {
-                    filter.setToPassthrough();
-                }
-            } else {
-                for (auto& filter : _sh.setpointDerivativeFilters) {
-                    filter.setCutoffFrequencyAndReset(_filtersConfig.rc_smoothing_feedforward_cutoff, _rxM.setpointDeltaT);
-                }
-            }
-
-#if defined(USE_D_MAX)
-            for (auto& filter : _sh.dMaxRangeFilters) {
-                filter.setCutoffFrequency(DMAX_RANGE_HZ, _rxM.setpointDeltaT);
-            }
-            for (auto& filter : _sh.dMaxLowpassFilters) {
-                filter.setCutoffFrequency(DMAX_LOWPASS_HZ, _rxM.setpointDeltaT);
-            }
-#endif
-#if defined(USE_ITERM_RELAX)
-            for (auto& filter : _sh.iTermRelaxFilters) {
-                filter.setCutoffFrequency(_iTermRelaxConfig.iterm_relax_cutoff, _rxM.setpointDeltaT);
-            }
-#endif
+            initializeSetpointFilters(_rxM.setpointDeltaT);
         }
     }
 
@@ -146,6 +151,9 @@ void FlightController::updateSetpoints(const controls_t& controls)
 {
     detectCrashOrSpin();
 
+#if defined(USE_ANGLE_MODE_LOCKED_ON)
+    _rxM.useAngleMode = true;
+#endif
     setControlMode(controls.controlMode);
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     if (_dynamicNotchFilter) {
@@ -164,7 +172,9 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // Pushing the ROLL stick to the right gives a positive value of rollStick and we want this to be left side up.
     // For NED left side up is positive roll, so sign of setpoint is same sign as rollStick.
     // So sign of _rollStick is left unchanged.
-    _sh.PIDS[ROLL_RATE_DPS].setSetpoint(controls.rollStickDPS);
+    if (!_rxM.useAngleMode) {
+        _sh.PIDS[ROLL_RATE_DPS].setSetpoint(controls.rollStickDPS);
+    }
     if (_rxM.setpointDeltaT != 0) {
         float setpointDerivative = _sh.PIDS[ROLL_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
         setpointDerivative = _sh.setpointDerivativeFilters[ROLL_RATE_DPS].filter(setpointDerivative);
@@ -185,7 +195,9 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // Pushing the  PITCH stick forward gives a positive value of _pitchStick and we want this to be nose down.
     // For NED nose down is negative pitch, so sign of setpoint is opposite sign as _pitchStick.
     // So sign of _pitchStick is negated.
-    _sh.PIDS[PITCH_RATE_DPS].setSetpoint(-controls.pitchStickDPS);
+    if (!_rxM.useAngleMode) {
+        _sh.PIDS[PITCH_RATE_DPS].setSetpoint(-controls.pitchStickDPS);
+    }
     if (_rxM.setpointDeltaT != 0) {
         float setpointDerivative = _sh.PIDS[PITCH_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
         setpointDerivative = _sh.setpointDerivativeFilters[PITCH_RATE_DPS].filter(setpointDerivative);
@@ -232,7 +244,9 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // Angle Mode is used if the controlMode is set to angle mode, or failsafe is on.
     // Angle Mode is prevented when in Ground Mode, so the aircraft doesn't try and self-level while it is still on the ground.
     // This value is cached here, to avoid evaluating a reasonably complex condition in updateOutputsUsingPIDs()
+#if !defined(USE_ANGLE_MODE_LOCKED_ON)
     _rxM.useAngleMode = (_fcC.controlMode >= CONTROL_MODE_ANGLE) && !_sh.groundMode;
+#endif
 }
 
 /*!

@@ -152,9 +152,9 @@ public:
         LOG2_ANGLE_MODE         = 0,
         LOG2_HORIZON_MODE       = 1,
         LOG2_MAG_MODE           = 2,
-        LOG2_ALT_HOLD_MODE      = 3,
+        LOG2_ALTITUDE_HOLD_MODE = 3,
         LOG2_GPS_HOME_MODE      = 4,
-        LOG2_POS_HOLD_MODE      = 5,
+        LOG2_POSITION_HOLD_MODE = 5,
         LOG2_HEADFREE_MODE      = 6,
         LOG2_CHIRP_MODE         = 7,
         LOG2_PASSTHRU_MODE      = 8,
@@ -165,9 +165,9 @@ public:
     static constexpr uint32_t ANGLE_MODE      = 1U << LOG2_ANGLE_MODE;
     static constexpr uint32_t HORIZON_MODE    = 1U << LOG2_HORIZON_MODE;
     static constexpr uint32_t MAG_MODE        = 1U << LOG2_MAG_MODE;
-    static constexpr uint32_t ALT_HOLD_MODE   = 1U << LOG2_ALT_HOLD_MODE;
+    static constexpr uint32_t ALTITUDE_HOLD_MODE = 1U << LOG2_ALTITUDE_HOLD_MODE;
     static constexpr uint32_t GPS_HOME_MODE   = 1U << LOG2_GPS_HOME_MODE;
-    static constexpr uint32_t POS_HOLD_MODE   = 1U << LOG2_POS_HOLD_MODE;
+    static constexpr uint32_t POSITION_HOLD_MODE = 1U << LOG2_POSITION_HOLD_MODE;
     static constexpr uint32_t HEADFREE_MODE   = 1U << LOG2_HEADFREE_MODE;
     static constexpr uint32_t CHIRP_MODE      = 1U << LOG2_CHIRP_MODE;
     static constexpr uint32_t PASSTHRU_MODE   = 1U << LOG2_PASSTHRU_MODE;
@@ -216,7 +216,7 @@ public:
     void setRX_Config(const rx_config_t& rxConfig);
 
     const rates_t& getRates() const { return _rates; }
-    void setRates(const rates_t& rates) { _rates = rates; }
+    void setRates(const rates_t& rates);
     void setRatesToPassThrough();
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
@@ -250,8 +250,6 @@ private:
         .throttleLimitPercent = 100
     };
     Blackbox* _blackbox {nullptr};
-    float _maxRollAngleDegrees { 60.0F }; // used for angle mode
-    float _maxPitchAngleDegrees { 60.0F }; // used for angle mode
     uint32_t _armingFlags {};
     uint32_t _armingDisabledFlags {};
     uint32_t _flightModeFlags {};

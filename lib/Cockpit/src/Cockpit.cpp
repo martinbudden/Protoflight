@@ -199,15 +199,15 @@ void Cockpit::updateControls(const controls_t& controls)
         _flightModeFlags &= ~ANGLE_MODE;
     }
     if (_receiver.getChannelPWM(ALTITUDE_MODE_CHANNEL)) {
-        if ((_flightModeFlags & ALT_HOLD_MODE) == 0) {
+        if ((_flightModeFlags & ALTITUDE_HOLD_MODE) == 0) {
             // not currently in altitude hold mode, so set the altitude hold setpoint
             if (_autopilot.setAltitudeHoldSetpoint()) {
                 // only switch to altitude hold mode if the autopilot supports it
-                _flightModeFlags |= ALT_HOLD_MODE;
+                _flightModeFlags |= ALTITUDE_HOLD_MODE;
             }
         }
     }
-    if (_flightModeFlags & (POS_HOLD_MODE | GPS_HOME_MODE | GPS_RESCUE_MODE)) {
+    if (_flightModeFlags & (POSITION_HOLD_MODE | GPS_HOME_MODE | GPS_RESCUE_MODE)) {
         const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightModeFlags);
         _flightController.updateSetpoints(flightControls);
         return;
@@ -216,7 +216,7 @@ void Cockpit::updateControls(const controls_t& controls)
     FlightController::control_mode_e controlMode = (_flightModeFlags & ANGLE_MODE) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE;
 
     float throttleStick {};
-    if (_flightModeFlags & ALT_HOLD_MODE) {
+    if (_flightModeFlags & ALTITUDE_HOLD_MODE) {
         throttleStick = _autopilot.calculateThrottleForAltitudeHold(controls);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     } else {
@@ -230,8 +230,8 @@ void Cockpit::updateControls(const controls_t& controls)
         .rollStickDPS = applyRates(Cockpit::ROLL, controls.rollStick),
         .pitchStickDPS = applyRates(Cockpit::PITCH, controls.pitchStick),
         .yawStickDPS = applyRates(Cockpit::YAW, controls.yawStick),
-        .rollStickDegrees = controls.rollStick * _maxRollAngleDegrees,
-        .pitchStickDegrees = controls.pitchStick * _maxPitchAngleDegrees,
+        .rollStickDegrees = controls.rollStick * _flightController.getMaxRollAngleDegrees(),
+        .pitchStickDegrees = controls.pitchStick * _flightController.getMaxPitchAngleDegrees(),
         .controlMode = controlMode
     };
 
@@ -274,4 +274,14 @@ void Cockpit::setFailsafeConfig(const failsafe_config_t& failsafeConfig)
 void Cockpit::setRX_Config(const rx_config_t& rxConfig)
 {
     _rxConfig = rxConfig;
+}
+
+void Cockpit::setRates(const rates_t& rates)
+{
+    _rates = rates;
+    const float maxAngleRateRollDPS = applyRates(ROLL, 1.0F);
+    const float maxAngleRatePitchDPS = applyRates(PITCH, 1.0F);
+    const float maxAngleRateYawDPS = applyRates(YAW, 1.0F);
+
+    _flightController.setMaxAngleRates(maxAngleRateRollDPS, maxAngleRatePitchDPS, maxAngleRateYawDPS);
 }

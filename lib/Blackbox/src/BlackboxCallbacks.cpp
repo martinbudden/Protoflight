@@ -21,8 +21,8 @@ BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, cons
 
 bool BlackboxCallbacks::isArmed() const
 {
-    // ARMING_FLAG(ARMED)
-    return _flightController.motorsIsOn();
+    return false;
+    //return _cockpit.isArmed();
 }
 
 bool BlackboxCallbacks::areMotorsRunning() const
