@@ -36,7 +36,13 @@ FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t o
     _rxC(_rxM)
 {
     _sh.antiGravityThrottleFilter.setToPassthrough();
+
+    static constexpr float outputSaturationValue = 1.0F / MIXER_OUTPUT_SCALE_FACTOR;
+    _sh.PIDS[ROLL_RATE_DPS].setOutputSaturationValue(outputSaturationValue);
+    _sh.PIDS[PITCH_RATE_DPS].setOutputSaturationValue(outputSaturationValue);
+    _sh.PIDS[YAW_RATE_DPS].setOutputSaturationValue(outputSaturationValue);
 }
+
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 // #defines to catch inadvertent use of _rxM or _ahM in this file.
 #define _rxM "error not modifiable in this task"
@@ -482,10 +488,10 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
 
         MotorMixerBase::commands_t commands {
             .throttle  = queueItem.throttle,
-            // scale roll, pitch, and yaw from DPS range to range [-1.0F, 1.0F]
-            .roll   = _fcM.outputs[FD_ROLL] / _rollRateAtMaxPowerDPS,
-            .pitch  = _fcM.outputs[FD_PITCH] / _pitchRateAtMaxPowerDPS,
-            .yaw    = _fcM.outputs[FD_YAW] / _yawRateAtMaxPowerDPS
+            // scale roll, pitch, and yaw from DPS range to [-1.0F, 1.0F]
+            .roll   = _fcM.outputs[FD_ROLL] * MIXER_OUTPUT_SCALE_FACTOR,
+            .pitch  = _fcM.outputs[FD_PITCH] * MIXER_OUTPUT_SCALE_FACTOR,
+            .yaw    = _fcM.outputs[FD_YAW] * MIXER_OUTPUT_SCALE_FACTOR
         };
 
         _motorMixer.outputToMotors(commands, deltaT, tickCount);

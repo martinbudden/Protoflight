@@ -264,13 +264,19 @@ public:
     static inline float pitchRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.x * FlightController::radiansToDegrees; }
     static inline float yawRateNED_DPS(const xyz_t& gyroENU_RPS) { return -gyroENU_RPS.z * FlightController::radiansToDegrees; }
 
-    static inline float rollSinAngleNED(const Quaternion& orientation) { return -orientation.sinRollClipped(); } // sin(x-180) = -sin(x)
-    static inline float rollCosAngleNED(const Quaternion& orientation) { return orientation.cosRoll(); }
-    static inline float rollAngleDegreesNED(const Quaternion& orientation) { return orientation.calculateRollDegrees() - 180.0F; };
+    static inline float rollSinAngleNED(const Quaternion& orientation) { return orientation.sinPitchClipped(); } // sin(x-180) = -sin(x)
+    static inline float rollCosAngleNED(const Quaternion& orientation) { return orientation.cosPitch(); }
+    static inline float rollAngleDegreesNED(const Quaternion& orientation) {
+        float ret = orientation.calculatePitchDegrees();
+        if (ret <= -180.0F) { ret = -ret - 180.0F; }
+        return ret;
+    };
 
-    static inline float pitchSinAngleNED(const Quaternion& orientation) { return -orientation.sinPitchClipped(); } // NOTE: this is cheaper to calculate than sinRoll
-    static inline float pitchCosAngleNED(const Quaternion& orientation)  { return orientation.cosPitch(); }
-    static inline float pitchAngleDegreesNED(const Quaternion& orientation) { return -orientation.calculatePitchDegrees(); };
+    static inline float pitchSinAngleNED(const Quaternion& orientation) { return orientation.sinRollClipped(); } // NOTE: this is cheaper to calculate than sinRoll
+    static inline float pitchCosAngleNED(const Quaternion& orientation)  { return orientation.cosRoll(); }
+    static inline float pitchAngleDegreesNED(const Quaternion& orientation) { return orientation.calculateRollDegrees(); };
+
+    static inline float yawAngleDegreesNED(const Quaternion& orientation) { return -orientation.calculateYawDegrees(); };
 
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
     const MotorMixerBase& getMotorMixer() const { return _motorMixer; }
@@ -353,9 +359,6 @@ private:
     float _maxYawRateDPS {500.0F};
     const float _maxRollAngleDegrees { 60.0F }; // used for angle mode
     const float _maxPitchAngleDegrees { 60.0F }; // used for angle mode
-    const float _rollRateAtMaxPowerDPS {1000.0};
-    const float _pitchRateAtMaxPowerDPS {1000.0};
-    const float _yawRateAtMaxPowerDPS {1000.0};
 
     //
     // configuration and runtime data is const once it has been set in set*Config()
@@ -459,6 +462,8 @@ private:
     ah_t _ahM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the AHRS Task
     shared_t _sh;       //!< member data that is set in the context of more than one task
 
+    // Betaflight compatible mixer output scale factor: scales roll, pitch, and yaw from DPS range to [-1.0F, 1.0F]
+    static constexpr float MIXER_OUTPUT_SCALE_FACTOR = 0.001F;
     // Betaflight-compatible PID scale factors.
     static constexpr PIDF::PIDF_t _scaleFactors = {
         0.032029F,

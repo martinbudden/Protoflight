@@ -352,9 +352,9 @@ void ScreenM5::updateAHRS_Data() const
     const Quaternion orientation = ahrsData.orientation;
 
     const TD_AHRS::data_t tdAhrsData {
-        .roll = orientation.calculateRollDegrees(),
-        .pitch = orientation.calculatePitchDegrees(),
-        .yaw = orientation.calculateYawDegrees(),
+        .roll = FlightController::rollAngleDegreesNED(orientation),
+        .pitch = FlightController::pitchAngleDegreesNED(orientation),
+        .yaw = FlightController::yawAngleDegreesNED(orientation),
         .gyroRPS = ahrsData.accGyroRPS.gyroRPS,
         .acc = ahrsData.accGyroRPS.acc,
         .gyroOffset = {},

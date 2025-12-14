@@ -151,9 +151,6 @@ void FlightController::updateSetpoints(const controls_t& controls)
 {
     detectCrashOrSpin();
 
-#if defined(USE_ANGLE_MODE_LOCKED_ON)
-    _rxM.useAngleMode = true;
-#endif
     setControlMode(controls.controlMode);
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     if (_dynamicNotchFilter) {
