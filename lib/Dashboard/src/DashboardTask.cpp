@@ -41,7 +41,8 @@ Task function for the AHRS. Sets up and runs the task loop() function.
     _previousWakeTimeTicks = xTaskGetTickCount();
     while (true) {
         // delay until the end of the next taskIntervalTicks
-        vTaskDelayUntil(&_previousWakeTimeTicks, taskIntervalTicks);
+        const BaseType_t wasDelayed = xTaskDelayUntil(&_previousWakeTimeTicks, taskIntervalTicks);
+        (void)wasDelayed;
         _dashboard.updateDashboard();
     }
 #else
