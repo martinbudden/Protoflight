@@ -3,13 +3,13 @@
 | Library                | On github | release | platformio | Arduino |
 | ---------------------- | --------- | ------- | ---------- | ------- |
 | Filters                | yes       | 0.9.4   | yes        | no      |
-| PIDF                   | yes       | 0.4.1   | yes        | no      |
-| VectorQuaternionMatrix | yes       | 0.4.6   | yes        | no      |
+| PIDF                   | yes       | 0.4.2   | yes        | no      |
+| VectorQuaternionMatrix | yes       | 0.4.7   | yes        | no      |
 | MotorMixers            | yes       | 0.0.5   | yes        | no      |
-| SensorFusion           | yes       | 0.2.10  | yes        | no      |
+| SensorFusion           | yes       | 0.2.11  | yes        | no      |
 | StreamBuf              | yes       | 0.0.4   | yes        | no      |
 | Sensors                | yes       | 0.0.4   | yes        | no      |
-| TaskBase               | yes       | 0.0.12  | yes        | no      |
+| TaskBase               | yes       | 0.0.13  | yes        | no      |
 | StabilizedVehicle      | yes       | 0.5.23  | yes        | no      |
 | Receiver               | yes       | 0.5.13  | yes        | no      |
 | Backchannel            | yes       | 0.1.12  | yes        | no      |
@@ -23,13 +23,13 @@
 ```text
 Libraries
 ├── Filters @ 0.9.4
-├── PIDF @ 0.4.1
-├── TaskBase @ 0.0.12
-├── VectorQuaternionMatrix @ 0.4.6
+├── PIDF @ 0.4.2
+├── TaskBase @ 0.0.13
+├── VectorQuaternionMatrix @ 0.4.7
 ├── FlashKLV @ 0.0.3
 │
-├── SensorFusion @ 0.2.10
-│   └── VectorQuaternionMatrix @ 0.4.6
+├── SensorFusion @ 0.2.11
+│   └── VectorQuaternionMatrix @ 0.4.7
 │
 ├── Sensors @ 0.0.4
 │   └── VectorQuaternionMatrix @ 0.4.6
