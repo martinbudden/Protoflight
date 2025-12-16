@@ -266,11 +266,7 @@ public:
 
     static inline float rollSinAngleNED(const Quaternion& orientation) { return orientation.sinPitchClipped(); } // sin(x-180) = -sin(x)
     static inline float rollCosAngleNED(const Quaternion& orientation) { return orientation.cosPitch(); }
-    static inline float rollAngleDegreesNED(const Quaternion& orientation) {
-        float ret = orientation.calculatePitchDegrees();
-        if (ret <= -180.0F) { ret = -ret - 180.0F; }
-        return ret;
-    };
+    static inline float rollAngleDegreesNED(const Quaternion& orientation) { return orientation.calculatePitchDegrees(); }
 
     static inline float pitchSinAngleNED(const Quaternion& orientation) { return orientation.sinRollClipped(); } // NOTE: this is cheaper to calculate than sinRoll
     static inline float pitchCosAngleNED(const Quaternion& orientation)  { return orientation.cosRoll(); }

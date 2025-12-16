@@ -555,7 +555,7 @@ bool DisplayPortMax7456::drawScreen() // NOLINT(readability-function-cognitive-c
         maxSpiBufStartIndex -= 4;
 
         // Initialise the transfer buffer
-        while ((spiBufIndex < maxSpiBufStartIndex) && (_pos < posLimit) && (compareTimeUs(timeUs(), startTime) < maxEncodeTime)) { // cppcheck-suppress knownConditionTrueFalse
+        while ((spiBufIndex < maxSpiBufStartIndex) && (_pos < posLimit) && (timeDifferenceUs(timeUs(), startTime) < maxEncodeTime)) { // cppcheck-suppress knownConditionTrueFalse
             if (buffer[_pos] != _shadowBuffer[_pos]) {
                 if (buffer[_pos] == 0xff) {
                     buffer[_pos] = ' ';
