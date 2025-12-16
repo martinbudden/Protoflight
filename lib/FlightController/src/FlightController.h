@@ -55,6 +55,7 @@ public:
         CONTROL_MODE_ANGLE = 1,
         CONTROL_MODE_HORIZON = 2,
     };
+    enum failsafe_e { FAILSAFE_OFF, FAILSAFE_ON };
     static constexpr int TIME_CHECKS_COUNT = 4;
     //enum { AXIS_COUNT = 3 }; //!< roll, pitch, and yaw axis count
     enum { RP_AXIS_COUNT = 2 }; //!< roll and pitch axis count
@@ -328,7 +329,8 @@ public:
     void calculateDMaxMultipliers();
     void initializeSetpointFilters(float setpointDeltaT);
     void applyDynamicPID_AdjustmentsOnThrottleChange(float throttle, uint32_t tickCount);
-    void updateSetpoints(const controls_t& controls);
+    void clearDynamicPID_Adjustments();
+    void updateSetpoints(const controls_t& controls, failsafe_e failsafe);
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
 
     float calculateITermError(size_t axis, float measurement);
@@ -405,7 +407,6 @@ private:
         uint32_t setpointTickCountCounter {SETPOINT_TICKCOUNT_COUNTER_START};
         float setpointDeltaT {};
         float throttlePrevious {0.0F};
-        float iTermAccelerator {0.0F};
         float yawRateSetpointDPS {0.0F};
         uint32_t useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
         float TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
@@ -430,8 +431,8 @@ private:
         bool groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
         bool crashDetected {false};
         bool blackboxActive {false};
-#if defined(USE_YAW_SPIN_RECOVERY)
         bool yawSpinRecovery {false};
+#if defined(USE_YAW_SPIN_RECOVERY)
         float yawSpinThresholdDPS {0.0F};
 #endif
         float outputThrottle {0.0F}; // throttle value is scaled to the range [-1,0, 1.0]

@@ -103,10 +103,10 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     // ****
 
     static constexpr float ANTIGRAVITY_KI = 0.34F;
-    _rxM.iTermAccelerator =  throttleDerivative * _antiGravity.IGain * ANTIGRAVITY_KI;
-    _sh.PIDS[ROLL_RATE_DPS].setI(_fcC.pidConstants[ROLL_RATE_DPS].ki + _rxM.iTermAccelerator);
-    _sh.PIDS[PITCH_RATE_DPS].setI(_fcC.pidConstants[PITCH_RATE_DPS].ki + _rxM.iTermAccelerator);
-    _debug.set(DEBUG_ANTI_GRAVITY, 2, lrintf(1.0F + _rxM.iTermAccelerator/_sh.PIDS[PITCH_RATE_DPS].getI()*1000.0F));
+    const float iTermAccelerator =  throttleDerivative * _antiGravity.IGain * ANTIGRAVITY_KI;
+    _sh.PIDS[ROLL_RATE_DPS].setI(_fcC.pidConstants[ROLL_RATE_DPS].ki + iTermAccelerator);
+    _sh.PIDS[PITCH_RATE_DPS].setI(_fcC.pidConstants[PITCH_RATE_DPS].ki + iTermAccelerator);
+    _debug.set(DEBUG_ANTI_GRAVITY, 2, lrintf(1.0F + iTermAccelerator/_sh.PIDS[PITCH_RATE_DPS].getI()*1000.0F));
 
 
     // ****
@@ -135,6 +135,15 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
     _debug.set(DEBUG_ANTI_GRAVITY, 3, lrintf(PTermBoostPitch * 1000.0F));
 }
 
+void FlightController::clearDynamicPID_Adjustments()
+{
+    _sh.PIDS[ROLL_RATE_DPS].setI(_fcC.pidConstants[ROLL_RATE_DPS].ki);
+    _sh.PIDS[PITCH_RATE_DPS].setI(_fcC.pidConstants[PITCH_RATE_DPS].ki);
+    _rxM.TPA = 1.0F;
+    _sh.PIDS[ROLL_RATE_DPS].setP(_fcC.pidConstants[ROLL_RATE_DPS].kp);
+    _sh.PIDS[PITCH_RATE_DPS].setP(_fcC.pidConstants[PITCH_RATE_DPS].kp);
+}
+
 /*!
 NOTE: CALLED FROM WITHIN THE RECEIVER TASK
 
@@ -147,7 +156,7 @@ How often it is called depends on the type of transmitter and receiver,
 but is typically at intervals of between 40 milliseconds and 5 milliseconds (ie 25Hz to 200Hz).
 In particular it runs much less frequently than `updateOutputsUsingPIDs()` which typically runs at 1000Hz to 8000Hz.
 */
-void FlightController::updateSetpoints(const controls_t& controls)
+void FlightController::updateSetpoints(const controls_t& controls, failsafe_e failsafe)
 {
     detectCrashOrSpin();
 
@@ -161,7 +170,11 @@ void FlightController::updateSetpoints(const controls_t& controls)
     // output throttle may be changed by spin recovery
     _sh.outputThrottle = controls.throttleStick;
 
-    applyDynamicPID_AdjustmentsOnThrottleChange(controls.throttleStick, controls.tickCount);
+    if (failsafe == FAILSAFE_ON || _sh.crashDetected || _sh.yawSpinRecovery) {
+        clearDynamicPID_Adjustments();
+    } else {
+        applyDynamicPID_AdjustmentsOnThrottleChange(controls.throttleStick, controls.tickCount);
+    }
 
     //
     // Roll axis
@@ -173,9 +186,13 @@ void FlightController::updateSetpoints(const controls_t& controls)
         _sh.PIDS[ROLL_RATE_DPS].setSetpoint(controls.rollStickDPS);
     }
     if (_rxM.setpointDeltaT != 0) {
-        float setpointDerivative = _sh.PIDS[ROLL_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
-        setpointDerivative = _sh.setpointDerivativeFilters[ROLL_RATE_DPS].filter(setpointDerivative);
-        _sh.PIDS[ROLL_RATE_DPS].setSetpointDerivative(setpointDerivative);
+        if (failsafe == FAILSAFE_ON || _sh.crashDetected || _sh.yawSpinRecovery) {
+            _sh.PIDS[ROLL_RATE_DPS].setSetpointDerivative(0.0F);
+        } else {
+            float setpointDerivative = _sh.PIDS[ROLL_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
+            setpointDerivative = _sh.setpointDerivativeFilters[ROLL_RATE_DPS].filter(setpointDerivative);
+            _sh.PIDS[ROLL_RATE_DPS].setSetpointDerivative(setpointDerivative);
+        }
     }
 #if defined(USE_ITERM_RELAX)
     _rxM.setpointLPs[ROLL_RATE_DPS] = _sh.iTermRelaxFilters[ROLL_RATE_DPS].filter(controls.rollStickDPS);
@@ -196,9 +213,13 @@ void FlightController::updateSetpoints(const controls_t& controls)
         _sh.PIDS[PITCH_RATE_DPS].setSetpoint(-controls.pitchStickDPS);
     }
     if (_rxM.setpointDeltaT != 0) {
-        float setpointDerivative = _sh.PIDS[PITCH_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
-        setpointDerivative = _sh.setpointDerivativeFilters[PITCH_RATE_DPS].filter(setpointDerivative);
-        _sh.PIDS[PITCH_RATE_DPS].setSetpointDerivative(setpointDerivative);
+        if (failsafe == FAILSAFE_ON || _sh.crashDetected || _sh.yawSpinRecovery) {
+            _sh.PIDS[PITCH_RATE_DPS].setSetpointDerivative(0.0F);
+        } else {
+            float setpointDerivative = _sh.PIDS[PITCH_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
+            setpointDerivative = _sh.setpointDerivativeFilters[PITCH_RATE_DPS].filter(setpointDerivative);
+            _sh.PIDS[PITCH_RATE_DPS].setSetpointDerivative(setpointDerivative);
+        }
     }
 #if defined(USE_ITERM_RELAX)
     _rxM.setpointLPs[PITCH_RATE_DPS] = _sh.iTermRelaxFilters[PITCH_RATE_DPS].filter(controls.pitchStickDPS);

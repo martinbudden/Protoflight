@@ -209,7 +209,7 @@ void Cockpit::updateControls(const controls_t& controls)
     }
     if (_flightModeFlags & (POSITION_HOLD_MODE | GPS_HOME_MODE | GPS_RESCUE_MODE)) {
         const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightModeFlags);
-        _flightController.updateSetpoints(flightControls);
+        _flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
         return;
     }
 
@@ -235,7 +235,7 @@ void Cockpit::updateControls(const controls_t& controls)
         .controlMode = controlMode
     };
 
-    _flightController.updateSetpoints(flightControls);
+    _flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
 }
 
 void Cockpit::checkFailsafe(uint32_t tickCount)
@@ -257,7 +257,7 @@ void Cockpit::checkFailsafe(uint32_t tickCount)
                 .pitchStickDegrees = 0.0F,
                 .controlMode = FlightController::CONTROL_MODE_ANGLE
             };
-            _flightController.updateSetpoints(flightControls);
+            _flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_ON);
         } else {
             // we've lost contact for an extended period, so disarm.
             _failsafe.phase = FAILSAFE_DISARMED;
