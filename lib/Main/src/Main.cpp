@@ -134,7 +134,7 @@ void Main::setup()
     _tasks.cmsTask = CMS_Task::createTask(taskInfo, *cms, CMS_TASK_PRIORITY, CMS_TASK_CORE, CMS_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
-#if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
+#if defined(USE_BACKCHANNEL) && defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
     BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, nvs, _tasks.dashboardTask);
     _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
