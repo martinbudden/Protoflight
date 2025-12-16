@@ -117,7 +117,7 @@ void Main::loadPID_ProfileFromNonVolatileStorage(FlightController& flightControl
         std::array<char, 128> buf;
         sprintf(&buf[0], "**** %15s PID loaded from NVS: p:%6d, i:%6d, d:%6d, s:%6d, k:%6d\r\n", pidName.c_str(), pid16.kp, pid16.ki, pid16.kd, pid16.ks, pid16.kk);
         print(&buf[0]);
-        sprintf(&buf[0], "     %15s                      p:%6.3f, i:%6.3f, d:%6.3f, s:%6.3f, k:%6.3f\r\n", "", pid.getP(), pid.getI(), pid.getD(), pid.getS(), pid.getK());
+        sprintf(&buf[0], "     %15s                      p:%6.3f, i:%6.3f, d:%6.3f, s:%6.3f, k:%6.3f\r\n", "", static_cast<double>(pid.getP()), static_cast<double>(pid.getI()), static_cast<double>(pid.getD()), static_cast<double>(pid.getS()), static_cast<double>(pid.getK()));
         print(&buf[0]);
 #endif
     }
