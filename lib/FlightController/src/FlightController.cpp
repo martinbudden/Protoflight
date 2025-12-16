@@ -493,7 +493,6 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
             .pitch  = _fcM.outputs[FD_PITCH] * MIXER_OUTPUT_SCALE_FACTOR,
             .yaw    = _fcM.outputs[FD_YAW] * MIXER_OUTPUT_SCALE_FACTOR
         };
-
         _motorMixer.outputToMotors(commands, deltaT, tickCount);
     }
 
