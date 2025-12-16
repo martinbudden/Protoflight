@@ -262,9 +262,7 @@ void FlightController::updateSetpoints(const controls_t& controls, failsafe_e fa
     // Angle Mode is used if the controlMode is set to angle mode, or failsafe is on.
     // Angle Mode is prevented when in Ground Mode, so the aircraft doesn't try and self-level while it is still on the ground.
     // This value is cached here, to avoid evaluating a reasonably complex condition in updateOutputsUsingPIDs()
-#if !defined(USE_ANGLE_MODE_LOCKED_ON)
     _rxM.useAngleMode = (_fcC.controlMode >= CONTROL_MODE_ANGLE) && !_sh.groundMode;
-#endif
 }
 
 /*!

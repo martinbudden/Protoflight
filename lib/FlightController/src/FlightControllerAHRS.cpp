@@ -244,9 +244,13 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsData)
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const timeUs32_t time0 = timeUs();
 #endif
-    if (_rxC.useAngleMode || true) {
+#if defined(USE_ANGLE_MODE_LOCKED_ON)
+    updateRateSetpointsForAngleMode(ahrsData.orientation, ahrsData.deltaT);
+#else
+    if (_rxC.useAngleMode) {
         updateRateSetpointsForAngleMode(ahrsData.orientation, ahrsData.deltaT);
     }
+#endif
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const timeUs32_t time1 = timeUs();
     _sh.timeChecksMicroseconds[0] = time1 - time0;
