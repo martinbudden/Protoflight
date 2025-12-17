@@ -275,6 +275,15 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
+    case OME_UINT8_FIXED:
+        if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
+            const auto* ptr = reinterpret_cast<const OSD_UINT8_FIXED_t*>(entry->data);
+            formatFixed6point3(*ptr->val*ptr->multiplier, &_menuDrawBuf[0]);
+            ui2a(*ptr->val, &_menuDrawBuf[0]);
+            count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
+            clearFlag(entryFlags, OME_PRINT_VALUE);
+        }
+        break;
     case OME_INT8:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
@@ -286,6 +295,15 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
     case OME_UINT16:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const OSD_UINT16_t*>(entry->data);
+            ui2a(*ptr->val, &_menuDrawBuf[0]);
+            count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
+            clearFlag(entryFlags, OME_PRINT_VALUE);
+        }
+        break;
+    case OME_UINT16_FIXED:
+        if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
+            const auto* ptr = reinterpret_cast<const OSD_UINT16_FIXED_t*>(entry->data);
+            formatFixed6point3(*ptr->val*ptr->multiplier, &_menuDrawBuf[0]);
             ui2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
@@ -604,7 +622,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
             }
         }
         break;
-    case OME_UINT8_AS_FLOAT:
+    case OME_UINT8_FIXED:
         [[fallthrough]];
     case OME_UINT8:
         if (entry->data) {
@@ -628,7 +646,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
             }
         }
         break;
-    case OME_UINT16_AS_FLOAT:
+    case OME_UINT16_FIXED:
         [[fallthrough]];
     case OME_UINT16:
         if (entry->data) {

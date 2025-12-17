@@ -225,7 +225,7 @@ static auto entryDMax           = OSD_UINT16_t { &data.pidSettings.d_max_gain, 0
 static auto entryI_gains        = OSD_UINT16_t { &data.pidSettings.i_gain, 0, 200, 1 };
 static auto entryRollPitchRatio = OSD_UINT16_t { &data.pidSettings.roll_pitch_ratio, 0, 200, 1 };
 static auto entryPitchPI_gains  = OSD_UINT16_t { &data.pidSettings.pitch_pi_gain, 0, 200, 1 };
-static auto entryMultiplier     = OSD_UINT16_t { &data.pidSettings.multiplier, 0, 200, 1 };
+static auto entryMasterMultiplier = OSD_UINT16_FIXED_t { &data.pidSettings.multiplier, 10, 200, 5, 10 };
 // NOLINTEND(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
 
 #if defined(USE_D_MAX)
@@ -250,7 +250,7 @@ static const std::array<CMSX::OSD_Entry, 13> menuSimplifiedTuningEntries
 
     { "PITCH:ROLL D",      OME_UINT16, nullptr, &entryRollPitchRatio },
     { "PITCH:ROLL P,I&FF", OME_UINT16, nullptr, &entryPitchPI_gains },
-    { "MASTER MULT",       OME_UINT16, nullptr, &entryMultiplier },
+    { "MASTER MULT",       OME_UINT16_FIXED, nullptr, &entryMasterMultiplier },
 
     { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}

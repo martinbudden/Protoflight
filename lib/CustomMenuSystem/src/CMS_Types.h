@@ -19,8 +19,8 @@ static constexpr uint16_t OME_UINT16 = 11;
 static constexpr uint16_t OME_INT16 = 12;
 static constexpr uint16_t OME_UINT32 = 13;
 static constexpr uint16_t OME_INT32 = 14;
-static constexpr uint16_t OME_UINT8_AS_FLOAT = 15;
-static constexpr uint16_t OME_UINT16_AS_FLOAT = 16;
+static constexpr uint16_t OME_UINT8_FIXED = 15;
+static constexpr uint16_t OME_UINT16_FIXED = 16;
 
 static constexpr uint16_t OME_VISIBLE = 17;
 static constexpr uint16_t OME_MENU = 18;
@@ -98,7 +98,7 @@ struct OSD_INT32_t {
     int32_t step;
 };
 
-struct OSD_UINT8_AS_FLOAT_t {
+struct OSD_UINT8_FIXED_t {
     uint8_t* val;
     uint8_t min;
     uint8_t max;
@@ -106,7 +106,7 @@ struct OSD_UINT8_AS_FLOAT_t {
     uint16_t multiplier;
 };
 
-struct OSD_UINT16_AS_FLOAT_t {
+struct OSD_UINT16_FIXED_t {
     uint16_t* val;
     uint16_t min;
     uint16_t max;
