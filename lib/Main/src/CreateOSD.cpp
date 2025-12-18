@@ -27,5 +27,4 @@ OSD* Main::createOSD(DisplayPortBase& displayPort, const FlightController& fligh
     (void)nvs;
     return nullptr;
 #endif
-
 }
