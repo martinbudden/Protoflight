@@ -34,14 +34,14 @@ static const void* menuRcOnDisplayUpdate(CMSX& cmsx, [[maybe_unused]] DisplayPor
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryRcRoll     = OSD_UINT16_t { &rcData[0], 1, 2500, 0 };
-static auto entryRcPitch    = OSD_UINT16_t { &rcData[1], 1, 2500, 0 };
-static auto entryRcThrottle = OSD_UINT16_t { &rcData[2], 1, 2500, 0 };
-static auto entryRcYaw      = OSD_UINT16_t { &rcData[3], 1, 2500, 0 };
-static auto entryRcAux1     = OSD_UINT16_t { &rcData[4], 1, 2500, 0 };
-static auto entryRcAux2     = OSD_UINT16_t { &rcData[5], 1, 2500, 0 };
-static auto entryRcAux3     = OSD_UINT16_t { &rcData[6], 1, 2500, 0 };
-static auto entryRcAux4     = OSD_UINT16_t { &rcData[7], 1, 2500, 0 };
+static auto entryRcRoll     = osd_uint16_t { &rcData[0], 1, 2500, 0 };
+static auto entryRcPitch    = osd_uint16_t { &rcData[1], 1, 2500, 0 };
+static auto entryRcThrottle = osd_uint16_t { &rcData[2], 1, 2500, 0 };
+static auto entryRcYaw      = osd_uint16_t { &rcData[3], 1, 2500, 0 };
+static auto entryRcAux1     = osd_uint16_t { &rcData[4], 1, 2500, 0 };
+static auto entryRcAux2     = osd_uint16_t { &rcData[5], 1, 2500, 0 };
+static auto entryRcAux3     = osd_uint16_t { &rcData[6], 1, 2500, 0 };
+static auto entryRcAux4     = osd_uint16_t { &rcData[7], 1, 2500, 0 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 9> menuRcEntries
@@ -91,9 +91,9 @@ static const void* menuMiscOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& 
 
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryMotorIdle      = OSD_UINT16_t { &motorIdle, 1, 2000, 10 };
-static auto entryFpvCamAngle    = OSD_UINT8_t  { &fpvCamAngleDegrees, 1, 90, 1 };
-static auto entryCrashFlipRate  = OSD_UINT8_t  { &crashFlipRate, 1, 100, 1 };
+static auto entryMotorIdle      = osd_uint16_t { &motorIdle, 1, 2000, 10 };
+static auto entryFpvCamAngle    = osd_uint8_t  { &fpvCamAngleDegrees, 1, 90, 1 };
+static auto entryCrashFlipRate  = osd_uint8_t  { &crashFlipRate, 1, 100, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 8> menuMiscEntries

@@ -23,10 +23,10 @@ enum { PWM_MIN = 1000, PWM_MAX = 2000 };
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
 static_assert(static_cast<int>(LOOKUP_TABLES::FAILSAFE_PROCEDURE_COUNT) == static_cast<int>(Cockpit::FAILSAFE_PROCEDURE_COUNT));
-static auto entryFailsafeProcedure   = OSD_TABLE_t  { &failsafeConfig.procedure, LOOKUP_TABLES::FAILSAFE_PROCEDURE_COUNT - 1, &LOOKUP_TABLES::failsafeProcedureNames[0] };
-static auto entryFailsafeDelay       = OSD_UINT8_t  { &failsafeConfig.delay_deciseconds, 0, 200, 1 };
-static auto entryFailsafeLandingTime = OSD_UINT8_t  { &failsafeConfig.landing_time_seconds, 0, 200, 1 };
-static auto entryFailsafeThrottle    = OSD_UINT16_t { &failsafeConfig.throttle_pwm, PWM_MIN, PWM_MAX, 1 };
+static auto entryFailsafeProcedure   = osd_table_t  { &failsafeConfig.procedure, LOOKUP_TABLES::FAILSAFE_PROCEDURE_COUNT - 1, &LOOKUP_TABLES::failsafeProcedureNames[0] };
+static auto entryFailsafeDelay       = osd_uint8_t  { &failsafeConfig.delay_deciseconds, 0, 200, 1 };
+static auto entryFailsafeLandingTime = osd_uint8_t  { &failsafeConfig.landing_time_seconds, 0, 200, 1 };
+static auto entryFailsafeThrottle    = osd_uint16_t { &failsafeConfig.throttle_pwm, PWM_MIN, PWM_MAX, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 // NOLINTBEGIN(hicpp-signed-bitwise)

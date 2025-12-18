@@ -42,63 +42,63 @@ static constexpr uint16_t OME_SLIDER_GYRO       = 0x2000;  // Value should be re
 static constexpr uint16_t OME_SLIDER_DTERM      = 0x4000;  // Value should be read only if simplified D term slider is enabled
 
 
-struct OSD_String_t {
+struct osd_string_t {
     uint8_t* val;
 };
 
-struct OSD_TABLE_t {
+struct osd_table_t {
     uint8_t* val;
     uint8_t max;
     const char * const* names;
 };
 
-struct OSD_BOOL_t {
+struct osd_bool_t {
     bool* val;
 };
 
-struct OSD_UINT8_t {
+struct osd_uint8_t {
     uint8_t* val;
     uint8_t min;
     uint8_t max;
     uint8_t step;
 };
 
-struct OSD_INT8_t {
+struct osd_int8_t {
     int8_t* val;
     int8_t min;
     int8_t max;
     int8_t step;
 };
 
-struct OSD_UINT16_t {
+struct osd_uint16_t {
     uint16_t* val;
     uint16_t min;
     uint16_t max;
     uint16_t step;
 };
 
-struct OSD_INT16_t {
+struct osd_int16_t {
     int16_t* val;
     int16_t min;
     int16_t max;
     int16_t step;
 };
 
-struct OSD_UINT32_t {
+struct osd_uint32_t {
     uint32_t* val;
     uint32_t min;
     uint32_t max;
     uint32_t step;
 };
 
-struct OSD_INT32_t {
+struct osd_int32_t {
     int32_t* val;
     int32_t min;
     int32_t max;
     int32_t step;
 };
 
-struct OSD_UINT8_FIXED_t {
+struct osd_uint8_fixed_t {
     uint8_t* val;
     uint8_t min;
     uint8_t max;
@@ -106,7 +106,7 @@ struct OSD_UINT8_FIXED_t {
     uint16_t multiplier;
 };
 
-struct OSD_UINT16_FIXED_t {
+struct osd_uint16_fixed_t {
     uint16_t* val;
     uint16_t min;
     uint16_t max;

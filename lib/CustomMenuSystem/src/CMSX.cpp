@@ -169,7 +169,7 @@ uint32_t CMSX::drawMenuTableEntry(DisplayPortBase& displayPort, const OSD_Entry*
     uint32_t count = 0;
 
     if (((entryFlags & OME_PRINT_VALUE) || (entryFlags & OME_SCROLLING_TICKER)) && entry->data) {
-        const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        const auto* ptr = reinterpret_cast<const osd_table_t*>(entry->data); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         //const size_t labelLength = strnlen(entry->text , MENU_DRAW_BUFFER_LEN) + 1; // account for the space between label and display data
         const uint8_t index = std::clamp(*ptr->val, static_cast<uint8_t>(0), ptr->max);
         const char* str = static_cast<const char *>(ptr->names[index]);   // lookup table display text NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -260,7 +260,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         break;
     case OME_BOOL:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_BOOL_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_bool_t*>(entry->data);
             _menuDrawBuf[0] = *ptr->val ? '1' : '0';
             _menuDrawBuf[1] = 0;
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
@@ -269,7 +269,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         break;
     case OME_UINT8:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_uint8_t*>(entry->data);
             ui2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
@@ -277,7 +277,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         break;
     case OME_UINT8_FIXED:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_UINT8_FIXED_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_uint8_fixed_t*>(entry->data);
             formatFixed6point3(*ptr->val*ptr->multiplier, &_menuDrawBuf[0]);
             ui2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
@@ -286,7 +286,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         break;
     case OME_INT8:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_int8_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
@@ -294,7 +294,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         break;
     case OME_UINT16:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_UINT16_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_uint16_t*>(entry->data);
             ui2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
@@ -302,7 +302,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         break;
     case OME_UINT16_FIXED:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_UINT16_FIXED_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_uint16_fixed_t*>(entry->data);
             formatFixed6point3(*ptr->val*ptr->multiplier, &_menuDrawBuf[0]);
             ui2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
@@ -311,7 +311,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         break;
     case OME_INT16:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_INT16_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_int16_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
@@ -319,7 +319,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         break;
     case OME_UINT32:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_UINT32_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_uint32_t*>(entry->data);
             ui2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
@@ -327,7 +327,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         break;
     case OME_INT32:
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_INT32_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_int32_t*>(entry->data);
             i2a(*ptr->val, &_menuDrawBuf[0]);
             count += drawMenuItemValue(displayPort, row, NUMBER_FIELD_LEN);
             clearFlag(entryFlags, OME_PRINT_VALUE);
@@ -531,7 +531,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
 #if defined(USE_OSD)
     case OME_VISIBLE:
         if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_UINT16_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_uint16_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
             if ((key == KEY_RIGHT) && (!_elementEditing)) {
                 _elementEditing = true;
@@ -566,7 +566,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
         break;
     case OME_TABLE:
         if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_TABLE_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_table_t*>(entry->data);
             const uint8_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -588,7 +588,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
         break;
     case OME_BOOL:
         if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_BOOL_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_bool_t*>(entry->data);
             const bool previousValue = *ptr->val;
             *ptr->val = (key == KEY_RIGHT) ? true : false;
             setFlag(entryFlags, OME_PRINT_VALUE);
@@ -602,7 +602,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
         break;
     case OME_INT8:
         if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_INT8_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_int8_t*>(entry->data);
             const int8_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -626,7 +626,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
         [[fallthrough]];
     case OME_UINT8:
         if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_UINT8_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_uint8_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -650,7 +650,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
         [[fallthrough]];
     case OME_UINT16:
         if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_UINT16_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_uint16_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -672,7 +672,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
         break;
     case OME_INT16:
         if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_INT16_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_int16_t*>(entry->data);
             const int16_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -695,7 +695,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
         break;
     case OME_UINT32:
         if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_UINT32_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_uint32_t*>(entry->data);
             const uint32_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
@@ -717,7 +717,7 @@ uint16_t CMSX::handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entr
         break;
     case OME_INT32:
         if (entry->data) {
-            const auto* ptr = reinterpret_cast<const OSD_INT32_t*>(entry->data);
+            const auto* ptr = reinterpret_cast<const osd_int32_t*>(entry->data);
             const int32_t previousValue = *ptr->val;
             if (key == KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {

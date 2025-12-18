@@ -48,23 +48,23 @@ static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
 
-static auto entryRcRatesRoll  = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 255, 1 };
-static auto entryRcRatesPitch = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 255, 1 };
-static auto entryRcRatesYaw   = OSD_UINT8_t { &data.rates.rcRates[FlightController::FD_YAW], 1, 255, 1 };
+static auto entryRcRatesRoll  = osd_uint8_t { &data.rates.rcRates[FlightController::FD_ROLL], 1, 255, 1 };
+static auto entryRcRatesPitch = osd_uint8_t { &data.rates.rcRates[FlightController::FD_PITCH], 1, 255, 1 };
+static auto entryRcRatesYaw   = osd_uint8_t { &data.rates.rcRates[FlightController::FD_YAW], 1, 255, 1 };
 
-static auto entryRatesRoll    = OSD_UINT8_t { &data.rates.rates[FlightController::FD_ROLL], 1, 255, 1 };
-static auto entryRatesPitch   = OSD_UINT8_t { &data.rates.rates[FlightController::FD_PITCH], 1, 255, 1 };
-static auto entryRatesYaw     = OSD_UINT8_t { &data.rates.rates[FlightController::FD_YAW], 1, 255, 1 };
+static auto entryRatesRoll    = osd_uint8_t { &data.rates.rates[FlightController::FD_ROLL], 1, 255, 1 };
+static auto entryRatesPitch   = osd_uint8_t { &data.rates.rates[FlightController::FD_PITCH], 1, 255, 1 };
+static auto entryRatesYaw     = osd_uint8_t { &data.rates.rates[FlightController::FD_YAW], 1, 255, 1 };
 
-static auto entryRcExpoRoll   = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_ROLL], 1, 100, 1 };
-static auto entryRcExpoPitch  = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_PITCH], 1, 100, 1 };
-static auto entryRcExpoYaw    = OSD_UINT8_t { &data.rates.rcExpos[FlightController::FD_YAW], 1, 100, 1 };
+static auto entryRcExpoRoll   = osd_uint8_t { &data.rates.rcExpos[FlightController::FD_ROLL], 1, 100, 1 };
+static auto entryRcExpoPitch  = osd_uint8_t { &data.rates.rcExpos[FlightController::FD_PITCH], 1, 100, 1 };
+static auto entryRcExpoYaw    = osd_uint8_t { &data.rates.rcExpos[FlightController::FD_YAW], 1, 100, 1 };
 
-static auto entryThrottleMid  = OSD_UINT8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
-static auto entryThrottleExpo = OSD_UINT8_t { &data.rates.throttleExpo, 1, 100, 1 };
+static auto entryThrottleMid  = osd_uint8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
+static auto entryThrottleExpo = osd_uint8_t { &data.rates.throttleExpo, 1, 100, 1 };
 static_assert(static_cast<int>(LOOKUP_TABLES::THROTTLE_LIMIT_NAMES_COUNT) == static_cast<int>(Cockpit::THROTTLE_LIMIT_TYPE_COUNT));
-static auto entryThrottleLimitType = OSD_TABLE_t { &data.rates.throttleLimitType, LOOKUP_TABLES::THROTTLE_LIMIT_NAMES_COUNT - 1, &LOOKUP_TABLES::throttleLimitTypeNames[0] };
-static auto entryThrottleLimitPercent = OSD_UINT8_t { &data.rates.throttleLimitPercent, 25, 100, 1 };
+static auto entryThrottleLimitType = osd_table_t { &data.rates.throttleLimitType, LOOKUP_TABLES::THROTTLE_LIMIT_NAMES_COUNT - 1, &LOOKUP_TABLES::throttleLimitTypeNames[0] };
+static auto entryThrottleLimitPercent = osd_uint8_t { &data.rates.throttleLimitPercent, 25, 100, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 10> menuRatesEntries
@@ -125,12 +125,12 @@ static const void* menuIMU_FiltersOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPor
 }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access,fuchsia-statically-constructed-objects)
-static auto entryGyroLPF1 = OSD_UINT16_t { &data.imuFiltersConfig.gyro_lpf1_hz, 0, IMU_Filters::GYRO_LPF_MAX_HZ, 1 };
-static auto entryGyroLPF2 = OSD_UINT16_t { &data.imuFiltersConfig.gyro_lpf2_hz, 0, IMU_Filters::GYRO_LPF_MAX_HZ, 1 };
-static auto entryGyroNF1  = OSD_UINT16_t { &data.imuFiltersConfig.gyro_notch1_hz, 0, 500, 1 };
-static auto entryGyroNF1C = OSD_UINT16_t { &data.imuFiltersConfig.gyro_notch1_cutoff, 0, 500, 1 };
-static auto entryGyroNF2  = OSD_UINT16_t { &data.imuFiltersConfig.gyro_notch2_hz, 0, 500, 1 };
-static auto entryGyroNF2C = OSD_UINT16_t { &data.imuFiltersConfig.gyro_notch2_cutoff, 0, 500, 1 };
+static auto entryGyroLPF1 = osd_uint16_t { &data.imuFiltersConfig.gyro_lpf1_hz, 0, IMU_Filters::GYRO_LPF_MAX_HZ, 1 };
+static auto entryGyroLPF2 = osd_uint16_t { &data.imuFiltersConfig.gyro_lpf2_hz, 0, IMU_Filters::GYRO_LPF_MAX_HZ, 1 };
+static auto entryGyroNF1  = osd_uint16_t { &data.imuFiltersConfig.gyro_notch1_hz, 0, 500, 1 };
+static auto entryGyroNF1C = osd_uint16_t { &data.imuFiltersConfig.gyro_notch1_cutoff, 0, 500, 1 };
+static auto entryGyroNF2  = osd_uint16_t { &data.imuFiltersConfig.gyro_notch2_hz, 0, 500, 1 };
+static auto entryGyroNF2C = osd_uint16_t { &data.imuFiltersConfig.gyro_notch2_cutoff, 0, 500, 1 };
 // NOLINTEND(cppcoreguidelines-pro-type-union-access,fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 9> menuIMU_FiltersEntries
@@ -214,18 +214,18 @@ static const void* menuSimplifiedTuningOnExit(CMSX& cmsx, [[maybe_unused]] Displ
 
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
-static auto entryTablePID_TuningMode  = OSD_TABLE_t  { &pidTuningMode,  LOOKUP_TABLES::PID_TUNING_MODES_COUNT - 1, &LOOKUP_TABLES::PID_TuningModes[0] };
+static auto entryTablePID_TuningMode  = osd_table_t  { &pidTuningMode,  LOOKUP_TABLES::PID_TUNING_MODES_COUNT - 1, &LOOKUP_TABLES::PID_TuningModes[0] };
 
-static auto entryD_gains        = OSD_UINT16_t { &data.pidSettings.d_gain, 0, 200, 1 };
-static auto entryPI_gains       = OSD_UINT16_t { &data.pidSettings.pi_gain, 0, 200, 1 };
-static auto entryK_gains        = OSD_UINT16_t { &data.pidSettings.k_gain, 0, 200, 1 };
+static auto entryD_gains        = osd_uint16_t { &data.pidSettings.d_gain, 0, 200, 1 };
+static auto entryPI_gains       = osd_uint16_t { &data.pidSettings.pi_gain, 0, 200, 1 };
+static auto entryK_gains        = osd_uint16_t { &data.pidSettings.k_gain, 0, 200, 1 };
 #if defined(USE_D_MAX)
-static auto entryDMax           = OSD_UINT16_t { &data.pidSettings.d_max_gain, 0, 200, 1 };
+static auto entryDMax           = osd_uint16_t { &data.pidSettings.d_max_gain, 0, 200, 1 };
 #endif
-static auto entryI_gains        = OSD_UINT16_t { &data.pidSettings.i_gain, 0, 200, 1 };
-static auto entryRollPitchRatio = OSD_UINT16_t { &data.pidSettings.roll_pitch_ratio, 0, 200, 1 };
-static auto entryPitchPI_gains  = OSD_UINT16_t { &data.pidSettings.pitch_pi_gain, 0, 200, 1 };
-static auto entryMasterMultiplier = OSD_UINT16_FIXED_t { &data.pidSettings.multiplier, 10, 200, 5, 10 };
+static auto entryI_gains        = osd_uint16_t { &data.pidSettings.i_gain, 0, 200, 1 };
+static auto entryRollPitchRatio = osd_uint16_t { &data.pidSettings.roll_pitch_ratio, 0, 200, 1 };
+static auto entryPitchPI_gains  = osd_uint16_t { &data.pidSettings.pitch_pi_gain, 0, 200, 1 };
+static auto entryMasterMultiplier = osd_uint16_fixed_t { &data.pidSettings.multiplier, 10, 200, 5, 10 };
 // NOLINTEND(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
 
 #if defined(USE_D_MAX)
@@ -289,23 +289,23 @@ static const void* menuPID_TuningOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPort
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryRollPID_P  = OSD_UINT16_t { &data.pids[0].kp, 0, 200, 1 };
-static auto entryRollPID_I  = OSD_UINT16_t { &data.pids[0].ki, 0, 200, 1 };
-static auto entryRollPID_D  = OSD_UINT16_t { &data.pids[0].kd, 0, 200, 1 };
-static auto entryRollPID_K  = OSD_UINT16_t { &data.pids[0].kk, 0, 200, 1 };
-static auto entryRollPID_S  = OSD_UINT16_t { &data.pids[0].ks, 0, 200, 1 };
+static auto entryRollPID_P  = osd_uint16_t { &data.pids[0].kp, 0, 200, 1 };
+static auto entryRollPID_I  = osd_uint16_t { &data.pids[0].ki, 0, 200, 1 };
+static auto entryRollPID_D  = osd_uint16_t { &data.pids[0].kd, 0, 200, 1 };
+static auto entryRollPID_K  = osd_uint16_t { &data.pids[0].kk, 0, 200, 1 };
+static auto entryRollPID_S  = osd_uint16_t { &data.pids[0].ks, 0, 200, 1 };
 
-static auto entryPitchPID_P = OSD_UINT16_t { &data.pids[1].kp, 0, 200, 1 };
-static auto entryPitchPID_I = OSD_UINT16_t { &data.pids[1].ki, 0, 200, 1 };
-static auto entryPitchPID_D = OSD_UINT16_t { &data.pids[1].kd, 0, 200, 1 };
-static auto entryPitchPID_K = OSD_UINT16_t { &data.pids[1].kk, 0, 200, 1 };
-static auto entryPitchPID_S = OSD_UINT16_t { &data.pids[1].ks, 0, 200, 1 };
+static auto entryPitchPID_P = osd_uint16_t { &data.pids[1].kp, 0, 200, 1 };
+static auto entryPitchPID_I = osd_uint16_t { &data.pids[1].ki, 0, 200, 1 };
+static auto entryPitchPID_D = osd_uint16_t { &data.pids[1].kd, 0, 200, 1 };
+static auto entryPitchPID_K = osd_uint16_t { &data.pids[1].kk, 0, 200, 1 };
+static auto entryPitchPID_S = osd_uint16_t { &data.pids[1].ks, 0, 200, 1 };
 
-static auto entryYawPID_P   = OSD_UINT16_t { &data.pids[2].kp, 0, 200, 1 };
-static auto entryYawPID_I   = OSD_UINT16_t { &data.pids[2].ki, 0, 200, 1 };
-static auto entryYawPID_D   = OSD_UINT16_t { &data.pids[2].kd, 0, 200, 1 };
-static auto entryYawPID_K   = OSD_UINT16_t { &data.pids[2].kk, 0, 200, 1 };
-static auto entryYawPID_S   = OSD_UINT16_t { &data.pids[2].ks, 0, 200, 1 };
+static auto entryYawPID_P   = osd_uint16_t { &data.pids[2].kp, 0, 200, 1 };
+static auto entryYawPID_I   = osd_uint16_t { &data.pids[2].ki, 0, 200, 1 };
+static auto entryYawPID_D   = osd_uint16_t { &data.pids[2].kd, 0, 200, 1 };
+static auto entryYawPID_K   = osd_uint16_t { &data.pids[2].kk, 0, 200, 1 };
+static auto entryYawPID_S   = osd_uint16_t { &data.pids[2].ks, 0, 200, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 18> menuPID_TuningEntries
@@ -354,8 +354,8 @@ static std::array<const char * const, 4> pidProfileNames { "P1", "P2", "P3", "P4
 //
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryRateProfile = OSD_TABLE_t { &rateProfileIndex, 4-1, &rateProfileNames[0] };
-static auto entryPID_Profile = OSD_TABLE_t { &pidProfileIndex, 4-1, &pidProfileNames[0] };
+static auto entryRateProfile = osd_table_t { &rateProfileIndex, 4-1, &rateProfileNames[0] };
+static auto entryPID_Profile = osd_table_t { &pidProfileIndex, 4-1, &pidProfileNames[0] };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 10> menuProfileEntries

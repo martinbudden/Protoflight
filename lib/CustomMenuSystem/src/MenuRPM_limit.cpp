@@ -24,9 +24,9 @@ static const void* menuRPM_limitOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortB
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryRPM_limit      = OSD_BOOL_t   { &dummy0 };
-static auto entryRPM_limitValue = OSD_UINT16_t { &dummy1, 0, UINT16_MAX, 100};
-static auto entryKV             = OSD_UINT16_t { &dummy2, 0, UINT16_MAX, 1 };
+static auto entryRPM_limit      = osd_bool_t   { &dummy0 };
+static auto entryRPM_limitValue = osd_uint16_t { &dummy1, 0, UINT16_MAX, 100};
+static auto entryKV             = osd_uint16_t { &dummy2, 0, UINT16_MAX, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 7> menuRPM_limitEntries
