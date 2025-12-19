@@ -19,9 +19,12 @@
 
 class AHRS;
 class AHRS_Task;
+class AltitudeMessageQueue;
+class AltitudeTask;
 class Autopilot;
 class BackchannelBase;
 class BackchannelTask;
+class BarometerBase;
 class Blackbox;
 class BlackboxTask;
 class ButtonsBase;
@@ -83,6 +86,10 @@ enum { BLACKBOX_TASK_INTERVAL_MICROSECONDS = 2000 }; // 500 Hz
 enum { CMS_TASK_INTERVAL_MICROSECONDS = 50000 }; // 20 Hz
 #endif
 
+#if !defined(ALTITUDE_TASK_INTERVAL_MICROSECONDS)
+enum { ALTITUDE_TASK_INTERVAL_MICROSECONDS = 2000 }; // 500 Hz
+#endif
+
 enum {
     AHRS_TASK_PRIORITY = 6,
     FC_TASK_PRIORITY = 5,
@@ -94,6 +101,7 @@ enum {
     OSD_TASK_PRIORITY = 2,
     CMS_TASK_PRIORITY = 2,
     DASHBOARD_TASK_PRIORITY = 2,
+    ALTITUDE_TASK_PRIORITY = 2,
 };
 
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
@@ -126,6 +134,7 @@ enum {
     OSD_TASK_CORE = CPU_CORE_0,
     CMS_TASK_CORE = CPU_CORE_0,
     DASHBOARD_TASK_CORE = CPU_CORE_0,
+    ALTITUDE_TASK_CORE = CPU_CORE_0,
 };
 
 class Main {
@@ -149,6 +158,7 @@ private:
     static OSD* createOSD(DisplayPortBase& displayPort, const FlightController& flightController, const Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
     static MSP_Serial* createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd);
     static CMS* createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, OSD* osd, VTX* vtx);
+    static BarometerBase* createBarometer();
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, NonVolatileStorage& nvs, const TaskBase* dashboardTask);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
@@ -169,6 +179,7 @@ private:
         BlackboxTask* blackboxTask;
         OSD_Task* osdTask;
         CMS_Task* cmsTask;
+        AltitudeTask* altitudeTask;
     };
 private:
     tasks_t _tasks {};

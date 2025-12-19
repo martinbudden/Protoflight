@@ -3,13 +3,13 @@
 #include "FlightController.h"
 #include "Geodetic.h"
 
-#include <AHRS_MessageQueue.h>
 #include <CockpitBase.h>
 #include <Filters.h>
 #include <PIDF.h>
 
 
-class BarometerBase;
+class AHRS_MessageQueue;
+class AltitudeMessageQueue;
 
 #if !defined(MAX_WAYPOINT_COUNT)
 enum { MAX_WAYPOINT_COUNT = 16 };
@@ -19,8 +19,8 @@ enum { MAX_WAYPOINT_COUNT = 16 };
 class Autopilot {
 public:
     virtual ~Autopilot() = default;
-    Autopilot(const AHRS_MessageQueue& messageQueue) : _messageQueue(messageQueue) {}
-    Autopilot(const AHRS_MessageQueue& messageQueue, BarometerBase& barometer) : _messageQueue(messageQueue), _barometer(&barometer) {}
+    Autopilot(const AHRS_MessageQueue& ahrsMessageQueue) : _ahrsMessageQueue(ahrsMessageQueue) {}
+    Autopilot(const AHRS_MessageQueue& ahrsMessageQueue, AltitudeMessageQueue& altitudeMessageQueue) : _ahrsMessageQueue(ahrsMessageQueue), _altitudeMessageQueue(&altitudeMessageQueue) {}
 private:
     // Autopilot is not copyable or moveable
     Autopilot(const Autopilot&) = delete;
@@ -79,9 +79,12 @@ public:
     bool setAltitudeHoldSetpoint(); //!< use the current altitude to set the setpoint for altitude hold
     float calculateThrottleForAltitudeHold(const CockpitBase::controls_t& controls);
     FlightController::controls_t calculateFlightControls(const CockpitBase::controls_t& controls, uint32_t flightModeModeFlags);
+
+    AltitudeMessageQueue* getAltitudeMessageQueue() { return _altitudeMessageQueue; }
+    //const AltitudeMessageQueue* getAltitudeMessageQueue() const { return _altitudeMessageQueue; }
 private:
-    const AHRS_MessageQueue& _messageQueue;
-    BarometerBase* _barometer {nullptr};
+    const AHRS_MessageQueue& _ahrsMessageQueue;
+    AltitudeMessageQueue* _altitudeMessageQueue {nullptr};
     altitude_t _altitude {};
     std::array<earth_frame_t, EARTH_FRAME_AXIS_COUNT> _earthFrames {};
     autopilot_config_t _autopilotConfig;

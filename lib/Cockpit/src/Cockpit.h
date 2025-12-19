@@ -178,6 +178,7 @@ public:
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
     const Autopilot& getAutopilot() const { return _autopilot; }
+    Autopilot& getAutopilot() { return _autopilot; }
     FlightController& getFlightController() { return _flightController; }
     NonVolatileStorage& getNonVolatileStorage() { return _nvs; }
 

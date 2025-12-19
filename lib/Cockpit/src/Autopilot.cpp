@@ -1,5 +1,7 @@
 #include "Autopilot.h"
 #include <AHRS.h>
+#include <AHRS_MessageQueue.h>
+#include <AltitudeMessageQueue.h>
 #include <BarometerBase.h>
 
 
@@ -49,39 +51,33 @@ void Autopilot::setAltitudeHoldConfig(const altitude_hold_config_t& altitudeHold
 
 bool Autopilot::setAltitudeHoldSetpoint()
 {
-    if (_barometer == nullptr) {
+    if (_altitudeMessageQueue == nullptr) {
         // no barometer, so cannot go into altitude hold mode
         return false;
     }
 
-    const float altitudeMeters = _barometer->readAltitudeMeters();
-    _altitude.pid.setSetpoint(altitudeMeters);
+    altitude_data_t altitudeData {};
+    _altitudeMessageQueue->PEEK_ALTITUDE_DATA(altitudeData);
+    _altitude.pid.setSetpoint(altitudeData.altitudeMeters);
     return true;
 }
 
 float Autopilot::calculateThrottleForAltitudeHold(const CockpitBase::controls_t& controls)
 {
-    if (_barometer == nullptr) {
+    if (_altitudeMessageQueue == nullptr) {
         return controls.throttleStick;
     }
 
-    //const AHRS::ahrs_data_t queueItem = _messageQueue.getQueueItem();
-    //const Quaternion orientation = queueItem.orientation;
+    altitude_data_t altitudeData {};
+    _altitudeMessageQueue->PEEK_ALTITUDE_DATA(altitudeData);
 
-    const float altitudeMeters = _barometer->readAltitudeMeters();
+    //const AHRS::ahrs_data_t queueItem = _ahrsMessageQueue.getQueueItem();
+    //const Quaternion orientation = queueItem.orientation;
     const float cosTiltAngle = 1.0F; //!!TODO:get from AHRS
     const float deltaT = 0.001F; //!!TODO:set in startup
 
-    const float dBoost = 1.0F;
-    const float altitudeDeltaFilteredMeters = _altitude.dTermLPF.filter(altitudeMeters - _altitude.pid.getPreviousMeasurement());
-
-#if defined(USE_ALTITUDE_HOLD_ITERM_RELAX)
-    const float altitudeErrorMeters = _altitude.pid.getSetpoint() - altitudeMeters;
-    const float iTermRelax = (std::fabs(altitudeErrorMeters) < 2.0F) ? 1.0F : 0.1F;
-    float throttle = _altitude.pid.updateDeltaITerm(altitudeMeters, altitudeDeltaFilteredMeters*dBoost, altitudeErrorMeters*iTermRelax, deltaT);
-#else
-    float throttle = _altitude.pid.updateDelta(altitudeMeters, altitudeDeltaFilteredMeters*dBoost, deltaT);
-#endif
+    const float altitudeDeltaFilteredMeters = _altitude.dTermLPF.filter(altitudeData.altitudeMeters - _altitude.pid.getPreviousMeasurement());
+    float throttle = _altitude.pid.updateDelta(altitudeData.altitudeMeters, altitudeDeltaFilteredMeters, deltaT);
 
     throttle += _altitude.hoverThrottle;
 

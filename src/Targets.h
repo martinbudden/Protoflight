@@ -36,7 +36,10 @@ Targets
     #define IMU_SPI_PINS        SPI_1_PINS
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
 
-    //#define USE_BAROMETER_BMP280
+    #define USE_ALTITUDE_HOLD
+    #define USE_BAROMETER
+    #define USE_BAROMETER_BMP280
+    #define BAROMETER_I2C_INDEX BUS_INDEX_0
     #define BAROMETER_I2C_PINS  I2C_X_PINS
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
@@ -165,6 +168,7 @@ Targets
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
     #define USE_BAROMETER_BMP280
+    #define BAROMETER_I2C_INDEX BUS_INDEX_0
     #define BAROMETER_I2C_PINS  I2C_X_PINS
 
     #define SDCARD_SPI_PINS     SPI_X_PINS

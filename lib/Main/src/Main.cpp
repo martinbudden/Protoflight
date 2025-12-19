@@ -1,5 +1,7 @@
 #include "Main.h"
 
+#include "AltitudeKalmanFilter.h"
+#include "AltitudeTask.h"
 #include "CMS_Task.h"
 #include "Cockpit.h"
 #include "DashboardTask.h"
@@ -11,6 +13,7 @@
 #include "OSD_Task.h"
 
 #include <AHRS.h>
+#include <AHRS_MessageQueue.h>
 #include <AHRS_Task.h>
 #include <BackchannelTask.h>
 #include <BlackboxTask.h>
@@ -133,6 +136,21 @@ void Main::setup()
     assert(cms != nullptr);
     _tasks.cmsTask = CMS_Task::createTask(taskInfo, *cms, CMS_TASK_PRIORITY, CMS_TASK_CORE, CMS_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
+#endif
+#if defined(USE_ALTITUDE_HOLD)
+    BarometerBase* barometer = createBarometer();
+    static AltitudeKalmanFilter altitudeKalmanFilter;
+    if (barometer) {
+        assert(cockpit.getAutopilot().getAltitudeMessageQueue() != nullptr && "AltitudeMessageQueue not created");
+        const AltitudeTask::parameters_t parameters {
+            .altitudeKalmanFilter = altitudeKalmanFilter,
+            .ahrsMessageQueue = flightController.getAHRS_MessageQueue(),
+            .altitudeMessageQueue = *cockpit.getAutopilot().getAltitudeMessageQueue(),
+            .barometer = *barometer
+        };
+        _tasks.altitudeTask = AltitudeTask::createTask(taskInfo, parameters, ALTITUDE_TASK_PRIORITY, ALTITUDE_TASK_CORE, ALTITUDE_TASK_INTERVAL_MICROSECONDS);
+        printTaskInfo(taskInfo);
+    }
 #endif
 #if defined(USE_BACKCHANNEL) && defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
     BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, nvs, _tasks.dashboardTask);
