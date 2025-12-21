@@ -11,10 +11,10 @@
 | Sensors                | yes       | 0.0.5   | yes        | no      |
 | TaskBase               | yes       | 0.0.13  | yes        | no      |
 | StabilizedVehicle      | yes       | 0.5.24  | yes        | no      |
-| Receiver               | yes       | 0.5.13  | yes        | no      |
-| Backchannel            | yes       | 0.1.12  | yes        | no      |
-| MultiWiiSerialProtocol | yes       | 0.0.14  | yes        | no      |
-| Blackbox               | yes       | 0.0.23  | yes        | no      |
+| Receiver               | yes       | 0.5.14  | yes        | no      |
+| Backchannel            | yes       | 0.1.13  | yes        | no      |
+| MultiWiiSerialProtocol | yes       | 0.0.16  | yes        | no      |
+| Blackbox               | yes       | 0.0.24  | yes        | no      |
 | FlashKLV               | yes       | 0.0.3   | yes        | no      |
 | IMU                    | yes       | 0.9.8 - superseded   | yes        | no      |
 
@@ -47,32 +47,32 @@ Libraries
 │   └── SensorFusion @ 0.2.11
 │       └── VectorQuaternionMatrix @ 0.4.7
 │
-├── Receiver @ 0.5.13
-│   └── TaskBase @ 0.0.12
+├── Receiver @ 0.5.14
+│   └── TaskBase @ 0.0.13
 │
-└── Backchannel @ 0.1.12
-    ├── TaskBase @ 0.0.12
-    ├── Receiver @ 0.5.13
-    └── StabilizedVehicle @ 0.5.22
+└── Backchannel @ 0.1.13
+    ├── TaskBase @ 0.0.13
+    ├── Receiver @ 0.5.14
+    └── StabilizedVehicle @ 0.5.24
 
-└── MultiWiiSerialProtocol @ 0.0.15
-    ├── TaskBase @ 0.0.12
-    └── StreamBuf @ 0.0.3
+└── MultiWiiSerialProtocol @ 0.0.16
+    ├── TaskBase @ 0.0.13
+    └── StreamBuf @ 0.0.4
 
-└── Blackbox @ 0.0.23
-    ├── TaskBase @ 0.0.12
-    └── StreamBuf @ 0.0.3
+└── Blackbox @ 0.0.24
+    ├── TaskBase @ 0.0.13
+    └── StreamBuf @ 0.0.4
 
 └── Protoflight @ 0.0.1
     ├── Sensors @ 0.0.5
     ├── Filters @ 0.9.4
     ├── PIDF @ 0.4.2
-    ├── MotorMixers @ 0.0.5
+    ├── MotorMixers @ 0.0.6
     ├── StabilizedVehicle @ 0.5.24
-    ├── Receiver @ 0.5.13
-    ├── MultiWiiSerialProtocol @ 0.0.15
-    ├── Blackbox @ 0.0.23
-    └── Backchannel @ 0.1.12
+    ├── Receiver @ 0.5.14
+    ├── MultiWiiSerialProtocol @ 0.0.16
+    ├── Blackbox @ 0.0.24
+    └── Backchannel @ 0.1.13
 
 
 └── IMU @ 0.9.8 - superseded
