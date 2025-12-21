@@ -2,6 +2,9 @@
 
 #include <Debug.h>
 #include <cmath>
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
 
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -215,7 +218,11 @@ void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function
         _debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(timeUs() - startTimeUs));
         break;
     case STEP_UPDATE_FILTERS:
+#if (__cplusplus >= 202002L)
+        for (auto notchIndex : std::views::iota(size_t{0}, size_t{_notchCount})) {
+#else
         for (size_t notchIndex = 0; notchIndex < _notchCount; ++notchIndex) {
+#endif
             // Only update notch filter coefficients if the corresponding peak got its center frequency updated in the previous step
             if (_peaks[notchIndex].bin != 0 && _peaks[notchIndex].value > _noiseThreshold) {
                 // setNotchFrequency is a reasonably expensive function involving calculation of sin and cos
@@ -238,7 +245,11 @@ Use all the notch filters to filter the value
 */
 void DynamicNotchFilter::filter(xyz_t& value)
 {
+#if (__cplusplus >= 202002L)
+    for (auto notchIndex : std::views::iota(size_t{0}, size_t{_notchCount})) {
+#else
     for (size_t notchIndex = 0; notchIndex < _notchCount; ++notchIndex) {
+#endif
         value.x = _notchFilters[X][notchIndex].filter(value.x);
         value.y = _notchFilters[Y][notchIndex].filter(value.y);
         value.z = _notchFilters[Z][notchIndex].filter(value.z);

@@ -16,6 +16,10 @@
 #include <esp32-hal.h>
 #endif
 
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
+
 
 /*!
 Constructor. Sets member data.
@@ -366,7 +370,11 @@ void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGra
 void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig) // NOLINT(readability-make-member-function-const)
 {
     _dMaxConfig = dMaxConfig;
+#if (__cplusplus >= 202002L)
+    for (auto axis : std::views::iota(size_t{0}, size_t{RPY_AXIS_COUNT})) {
+#else
     for (size_t axis = 0; axis < RPY_AXIS_COUNT; ++axis) {
+#endif
         const uint8_t dMax = dMaxConfig.d_max[axis];
         const PIDF_uint16_t pid16 = getPID_Constants(static_cast<pid_index_e>(axis));
         if (pid16.kd > 0 && dMax > pid16.kd) {
@@ -437,7 +445,11 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
 {
     flight_controller_quadcopter_telemetry_t telemetry;
 
+#if (__cplusplus >= 202002L)
+    for (auto ii : std::views::iota(size_t{0}, size_t{_motorMixer.getMotorCount()})) {
+#else
     for (size_t ii = 0; ii < _motorMixer.getMotorCount(); ++ ii) {
+#endif
         telemetry.motors[ii].power = _motorMixer.getMotorOutput(ii);
         telemetry.motors[ii].rpm = _motorMixer.getMotorRPM(ii);
     }

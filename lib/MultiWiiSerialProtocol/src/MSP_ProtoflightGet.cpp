@@ -12,7 +12,11 @@
 #include <MSP_Protocol.h>
 #include <RPM_Filters.h>
 #include <ReceiverBase.h>
+
 #include <cassert>
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
 
 
 const char* const targetName = "TARGETNAME";
@@ -120,7 +124,13 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeStringWithZeroTerminator("Martin Budden"); // pilot/aircraft name
         break;
     case MSP_MOTOR:
+        // Range-based for over the view
+        // std::ranges::for_each( std::views::iota(size_t{0}, size_t{8}), [&](size_t) { dst.writeU16(0); } );
+#if (__cplusplus >= 202002L)
+        for ([[maybe_unused]] auto _ : std::views::iota(size_t{0}, size_t{8})) {
+#else
         for (size_t ii = 0; ii < 8; ++ii) {
+#endif
             dst.writeU16(0);
         }
         break;
@@ -136,7 +146,11 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU16(controls.roll);
         dst.writeU16(controls.pitch);
         dst.writeU16(controls.yaw);
+#if (__cplusplus >= 202002L)
+        for (auto ii : std::views::iota(size_t{0}, size_t{_receiver.getAuxiliaryChannelCount()})) {
+#else
         for (size_t ii = 0; ii < _receiver.getAuxiliaryChannelCount(); ++ii) {
+#endif
             dst.writeU16(_receiver.getAuxiliaryChannel(ii));
         }
         break;
@@ -197,7 +211,11 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_PID: {
+#if (__cplusplus >= 202002L)
+        for (auto ii : std::views::iota(size_t{0}, size_t{FlightController::PID_COUNT})) {
+#else
         for (size_t ii = 0; ii < FlightController::PID_COUNT; ++ii) {
+#endif
             const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
             const FlightController::PIDF_uint16_t pid = _flightController.getPID_MSP(pidIndex);
             dst.writeU8(static_cast<uint8_t>(pid.kp));
@@ -211,7 +229,11 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_PIDNAMES:
+#if (__cplusplus >= 202002L)
+        for (auto ii : std::views::iota(size_t{0}, size_t{FlightController::PID_COUNT})) {
+#else
         for (size_t ii = 0; ii < FlightController::PID_COUNT; ++ii) {
+#endif
             const std::string& pidName = _flightController.getPID_Name(static_cast<FlightController::pid_index_e>(ii));
             dst.writeStringWithZeroTerminator(pidName);
         }
@@ -497,7 +519,11 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     case MSP_ANALOG:
         return RESULT_CMD_UNKNOWN;
     case MSP_DEBUG: {
+#if (__cplusplus >= 202002L)
+        for (auto ii : std::views::iota(size_t{0}, size_t{Debug::VALUE_COUNT})) {
+#else
         for (size_t ii = 0; ii < Debug::VALUE_COUNT; ++ii) {
+#endif
             dst.writeU16(static_cast<uint16_t>(_debug.get(ii)));
         }
         break;

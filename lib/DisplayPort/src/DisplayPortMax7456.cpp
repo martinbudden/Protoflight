@@ -1,5 +1,10 @@
 #include "DisplayPortMax7456.h"
+
+#include <algorithm> // for std::ranges::equal
 #include <cstring>
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,modernize-macro-to-enum,cppcoreguidelines-macro-usage)
 
@@ -272,7 +277,11 @@ DisplayPortMax7456::init_status_e DisplayPortMax7456::init(const config_t* max74
     _backgroundType = DisplayPortBase::BACKGROUND_TRANSPARENT;
 
     // initialize all layers
+#if (__cplusplus >= 202002L)
+    for (auto ii : std::views::iota(size_t{0}, size_t{MAX7456_SUPPORTED_LAYER_COUNT})) {
+#else
     for (size_t ii = 0; ii < MAX7456_SUPPORTED_LAYER_COUNT; ++ii) {
+#endif
         clearLayer(static_cast<layer_e>(ii));
     }
 
@@ -459,12 +468,18 @@ bool DisplayPortMax7456::dmaInProgress()
 
 bool DisplayPortMax7456::buffersSynced() const
 {
+#if (__cplusplus >= 202002L)
+    const auto foregroundSpan = std::span(_displayLayers[LAYER_FOREGROUND].buffer).first(_maxScreenSize);
+    const auto shadowSpan = std::span(_shadowBuffer).first(_maxScreenSize);
+    return std::ranges::equal(foregroundSpan, shadowSpan);
+#else
     for (size_t ii = 0; ii < _maxScreenSize; ++ii) {
         if (_displayLayers[LAYER_FOREGROUND].buffer[ii] != _shadowBuffer[ii]) {
             return false;
         }
     }
     return true;
+#endif
 }
 
 void DisplayPortMax7456::concludeCurrentSPI_Transaction()

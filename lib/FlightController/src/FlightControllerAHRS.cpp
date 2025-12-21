@@ -5,6 +5,10 @@
 #include <Debug.h>
 #include <TimeMicroseconds.h>
 
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
+
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
 // #defines to catch inadvertent use of _fcM or _rxM in this file.
@@ -24,7 +28,11 @@ They are boosted when the DTerm error is small and the setpoint change is also s
 void FlightController::calculateDMaxMultipliers()
 {
 #if defined(USE_D_MAX)
+#if (__cplusplus >= 202002L)
+    for (auto ii : std::views::iota(size_t{0}, size_t{RP_AXIS_COUNT})) {
+#else
     for (size_t ii = 0; ii <= RP_AXIS_COUNT; ++ii) {
+#endif
         _ahM.dMaxMultiplier[ii] = 1.0F;
         if (_dMax.percent[ii] > 1.0F) {
             const float deltaT = static_cast<float>(_taskIntervalMicroseconds) * 0.000001F;

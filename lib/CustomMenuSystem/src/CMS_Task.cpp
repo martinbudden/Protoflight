@@ -41,6 +41,7 @@ Task function for the AHRS. Sets up and runs the task loop() function.
     _previousWakeTimeTicks = xTaskGetTickCount();
     while (true) {
         // delay until the end of the next taskIntervalTicks
+#define FRAMEWORK_FREERTOS_VERSION (tskKERNEL_VERSION_MAJOR * 10000 + tskKERNEL_VERSION_MINOR * 100 + tskKERNEL_VERSION_BUILD)
 #if (tskKERNEL_VERSION_MAJOR > 10) || ((tskKERNEL_VERSION_MAJOR == 10) && (tskKERNEL_VERSION_MINOR >= 5))
             const BaseType_t wasDelayed = xTaskDelayUntil(&_previousWakeTimeTicks, taskIntervalTicks);
             if (wasDelayed) {

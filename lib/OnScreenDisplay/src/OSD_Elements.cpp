@@ -23,19 +23,20 @@ void OSD_Elements::init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t colu
 
     if (columnCount !=0  && rowCount != 0) {
         // Ensure that all OSD elements are on the canvas once the number of row and columns is known
-        for (size_t ii = 0; ii < OSD_ELEMENT_COUNT; ++ii) { // NOLINT(modernize-loop-convert)
-            const uint16_t elementPos = _config.element_pos[ii];
+        //for (size_t ii = 0; ii < OSD_ELEMENT_COUNT; ++ii) { // NOLINT(modernize-loop-convert)
+        for (auto& elementPos : _config.element_pos) {
+            //const uint16_t elementPos = _config.element_pos[ii];
             const uint16_t elementTopBits = elementPos & (ELEMENT_TYPE_MASK | PROFILE_MASK);
 
             uint8_t posX = OSD_X(elementPos);
             uint8_t posY = OSD_Y(elementPos);
             if (posX >= columnCount) {
                 posX = columnCount - 1;
-                _config.element_pos[ii] = elementTopBits | OSD_POS(posX, posY);
+                elementPos = elementTopBits | OSD_POS(posX, posY);
             }
             if (posY >= rowCount) {
                 posY = rowCount - 1;
-                _config.element_pos[ii] = elementTopBits | OSD_POS(posX, posY);
+                elementPos = elementTopBits | OSD_POS(posX, posY);
             }
         }
     }

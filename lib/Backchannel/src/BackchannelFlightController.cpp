@@ -194,7 +194,7 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
         AHRS::ahrs_data_t ahrsData;
         _flightController.getAHRS_MessageQueue().PEEK_AHRS_DATA(ahrsData);
         const size_t len = packTelemetryData_AHRS(_transmitDataBufferPtr, _telemetryID, _sequenceNumber, _ahrs, ahrsData);
-        TD_AHRS* td = reinterpret_cast<TD_AHRS*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
+        auto* td = reinterpret_cast<TD_AHRS*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         // convert from ENU to NED
         const Quaternion orientationENU = ahrsData.orientation;
         td->data.roll = -orientationENU.calculatePitchDegrees(),
@@ -215,7 +215,7 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
         );
         // use empty slots to add additional time checks
         // timings [0-3] are set in AHRS readIMUandUpdateOrientation(), timings [4-7] are free to use
-        TD_TASK_INTERVALS_EXTENDED* td = reinterpret_cast<TD_TASK_INTERVALS_EXTENDED*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
+        auto* td = reinterpret_cast<TD_TASK_INTERVALS_EXTENDED*>(_transmitDataBufferPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         td->data.ahrsTimeChecksMicroseconds[4] = _flightController.getTimeChecksMicroseconds(0);
         td->data.ahrsTimeChecksMicroseconds[5] = _flightController.getTimeChecksMicroseconds(1);
         td->data.ahrsTimeChecksMicroseconds[6] = _flightController.getTimeChecksMicroseconds(2);

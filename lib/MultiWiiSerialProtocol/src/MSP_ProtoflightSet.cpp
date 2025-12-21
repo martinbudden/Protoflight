@@ -9,6 +9,10 @@
 #include <MSP_Protocol.h>
 #include <ReceiverBase.h>
 
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
+
 
 MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) // NOLINT(readability-function-cognitive-complexity)
 {
@@ -29,7 +33,11 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
     case MSP_SET_PID_CONTROLLER:
         return RESULT_ERROR;
     case MSP_SET_PID: {
-        for (size_t ii = 0; ii <= FlightController::YAW_RATE_DPS; ++ii) {
+#if (__cplusplus >= 202002L)
+        for (auto ii : std::views::iota(size_t{0}, size_t{FlightController::RPY_AXIS_COUNT})) {
+#else
+        for (size_t ii = 0; ii < FlightController::RPY_AXIS_COUNT; ++ii) {
+#endif
             const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
             _flightController.setPID_P_MSP(pidIndex, src.readU8());
             _flightController.setPID_I_MSP(pidIndex, src.readU8());

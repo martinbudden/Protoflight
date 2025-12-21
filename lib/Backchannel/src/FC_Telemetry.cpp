@@ -8,6 +8,9 @@
 #include <StreamBuf.h>
 
 #include <cstring>
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
 
 
 #if false
@@ -17,14 +20,18 @@ Packs the FlightController PID telemetry data into a TD_FC_PIDS packet. Returns 
 size_t packTelemetryData_PID(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, const FlightController& flightController)
 {
     static_assert(static_cast<int>(TD_FC_PIDS::PID_COUNT) == static_cast<int>(FlightController::PID_COUNT));
-    TD_FC_PIDS* td = reinterpret_cast<TD_FC_PIDS*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
+    auto* td = reinterpret_cast<TD_FC_PIDS*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 
     td->id = id;
     td->type = TD_FC_PIDS::TYPE;
     td->len = sizeof(TD_FC_PIDS);
     td->sequenceNumber = static_cast<uint8_t>(sequenceNumber);
 
+#if (__cplusplus >= 202002L)
+    for (auto ii : std::views::iota(size_t{FlightController::PID_BEGIN}, size_t{FlightController::PID_COUNT})) {
+#else
     for (size_t ii = FlightController::PID_BEGIN; ii < FlightController::PID_COUNT; ++ii) {
+#endif
         td->spids[ii].setpoint = flightController.getPID_Setpoint(static_cast<FlightController::pid_index_e>(ii));
         td->spids[ii].pid = flightController.getPID_Constants(static_cast<FlightController::pid_index_e>(ii));
     }
@@ -38,7 +45,7 @@ Packs the FlightController telemetry data into a TD_FC_QUADCOPTER packet. Return
 */
 size_t packTelemetryData_FC_QUADCOPTER(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, const FlightController& flightController)
 {
-    TD_FC_QUADCOPTER* td = reinterpret_cast<TD_FC_QUADCOPTER*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
+    auto* td = reinterpret_cast<TD_FC_QUADCOPTER*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 
     td->id = id;
     td->type = TD_FC_QUADCOPTER::TYPE;
@@ -55,7 +62,11 @@ size_t packTelemetryData_FC_QUADCOPTER(uint8_t* telemetryDataPtr, uint32_t id, u
     const flight_controller_quadcopter_telemetry_t telemetryData = flightController.getTelemetryData();
     //!!memcpy(&td->data, &telemetryData, sizeof(flight_controller_quadcopter_telemetry_t));
     //!!td->pidErrors[TD_FC_QUADCOPTER::ROLL_RATE_DPS] = telemetryData.rollRateError;
+#if (__cplusplus >= 202002L)
+    for (auto ii : std::views::iota(size_t{0}, size_t{TD_FC_QUADCOPTER::MOTOR_COUNT})) {
+#else
     for (size_t ii = 0; ii < TD_FC_QUADCOPTER::MOTOR_COUNT; ++ii) {
+#endif
         td->data.motors[ii].power = telemetryData.motors[ii].power;
         td->data.motors[ii].rpm = telemetryData.motors[ii].rpm;
     }
@@ -67,7 +78,7 @@ size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t se
 {
     (void) sequenceNumber;
 
-    TD_MSP* td = reinterpret_cast<TD_MSP*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
+    auto* td = reinterpret_cast<TD_MSP*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     td->id = id;
 
     td->data.msp.headerDollar = '$';
@@ -95,7 +106,7 @@ Packs the TD_Debug packet. Returns the length of the packet.
 */
 size_t packTelemetryData_Debug(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, const Debug& debug)
 {
-    TD_DEBUG* td = reinterpret_cast<TD_DEBUG*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,hicpp-use-auto,modernize-use-auto)
+    auto* td = reinterpret_cast<TD_DEBUG*>(telemetryDataPtr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 
     td->id = id;
     td->type = TD_DEBUG::TYPE;
@@ -104,9 +115,7 @@ size_t packTelemetryData_Debug(uint8_t* telemetryDataPtr, uint32_t id, uint32_t 
     td->sequenceNumber = static_cast<uint8_t>(sequenceNumber);
 
     static_assert(static_cast<int>(TD_DEBUG::VALUE_COUNT) == static_cast<int>(Debug::VALUE_COUNT));
-    for (size_t ii = 0; ii < TD_DEBUG::VALUE_COUNT; ++ii) {
-        td->data.values[ii] = debug.get(ii);
-    }
+    td->data.values = debug.getValues();
     td->data.mode = debug.getMode();
 
     return td->len;

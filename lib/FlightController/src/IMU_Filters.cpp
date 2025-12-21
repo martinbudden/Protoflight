@@ -2,6 +2,10 @@
 #include "RPM_Filters.h"
 #include <MotorMixerBase.h>
 
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
+
 
 IMU_Filters::IMU_Filters(size_t motorCount, Debug& debug, float looptimeSeconds) :
     _debug(debug),
@@ -122,7 +126,7 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
             _rpmFilters->filter(gyroRPS, 2);
             _rpmFilters->filter(gyroRPS, 3);
         } else {
-            for (size_t ii = 0; ii < _motorCount; ++ii) {
+            for (auto ii : std::views::iota(size_t{0}, _motorCount)) {
                _rpmFilters->filter(gyroRPS, ii);
             }
         }

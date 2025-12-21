@@ -7,6 +7,9 @@
 #include "OSD_Elements.h"
 #include <algorithm>
 #include <cstring>
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
 
 
 //NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -357,18 +360,72 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
 
     if (displayWasCleared) {
         //Serial.printf("drawMenu setting entryFlags\r\n"); // called
+#if (__cplusplus >= 202002L)
+        // Iterate over indices [0, _pageMaxRow)
+        for (auto ii : std::views::iota(size_t{0}, std::span(_pageTop, _pageMaxRow).size())) {
+            _entryFlags[ii] |= OME_PRINT_LABEL | OME_PRINT_VALUE;
+        }
+#else
         uint8_t ii = 0;
         for (const OSD_Entry* entry = _pageTop; entry <= _pageTop + _pageMaxRow; ++entry, ++ii) {
             _entryFlags[ii] |= OME_PRINT_LABEL | OME_PRINT_VALUE;
         }
+#endif
+#if false
+    auto view = std::ranges::subrange(_pageTop, _pageTop + _pageMaxRow);
+
+    // Iterate using ranges
+    for (auto&& entry : view) {
+        if (entry.text) {
+            std::cout << "Text: " << entry.text 
+                      << " | Flags: " << entry.flags << "\n";
+        }
+        if (entry.fnPtr) {
+            entry.fnPtr(entry.data);
+        }
+    }
+}
+#endif
     } else if (drawDynamicValues) {
         //Serial.printf("drawMenu drawDynamicValues\r\n");
+#if (__cplusplus >= 202002L)
+        auto entries = std::span(_pageTop, _pageMaxRow);
+        // Iterate over indices [0, _pageMaxRow)
+        for (auto ii : std::views::iota(size_t{0}, entries.size())) {
+            if (entries[ii].flags & OME_DYNAMIC) {
+                _entryFlags[ii] |= OME_PRINT_VALUE;
+            }
+        }
+#if false
+        auto indexed = std::views::iota(size_t{0}, entries.size())
+                 | std::views::transform([&](size_t i) { return std::pair{i, entries[i]}; });
+        for (auto [i, entry] : indexed) {
+            if (entry.flags & OME_DYNAMIC) {
+                _entryFlags[i] |= OME_PRINT_VALUE;
+            }
+        }
+    // pure one-liner C++20 ranges pipeline without explicit for loop
+    // Still uses std::views::iota for indices, std::span for safe pointer-to-range conversion, and std::ranges::for_each to apply the update.
+    std::ranges::for_each(
+        std::views::iota(size_t{0}, entries.size())
+        | std::views::filter([&](size_t i) { return entries[i].flags & OME_DYNAMIC; }),
+        [&](size_t i) { _entryFlags[i] |= OME_PRINT_VALUE; }
+    );
+    // C++23 only
+    std::ranges::for_each(
+        std::views::zip(_entryFlags, entries)
+        | std::views::filter([](auto&& pair) { return std::get<1>(pair).flags & OME_DYNAMIC; }),
+        [](auto&& pair) { std::get<0>(pair) |= OME_PRINT_VALUE; }
+    );
+#endif
+#else
         uint8_t ii = 0;
         for (const OSD_Entry* entry = _pageTop; entry <= _pageTop + _pageMaxRow; ++entry, ++ii) {
             if (entry->flags & OME_DYNAMIC) {
                 _entryFlags[ii] |= OME_PRINT_VALUE;
             }
         }
+#endif
     }
 
     // skip labels, strings, and dynamic read-only entries

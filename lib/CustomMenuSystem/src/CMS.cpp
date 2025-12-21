@@ -7,6 +7,10 @@
 #include <MSP_Box.h>
 #include <ReceiverBase.h>
 
+#if (__cplusplus >= 202002L)
+#include <ranges>
+#endif
+
 
 CMS::CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, OSD* osd, VTX* vtx) :
     _displayPort(displayPort),
@@ -90,7 +94,11 @@ void CMS::setExternKey(CMSX::key_e externKey)
 uint16_t CMS::handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount)
 {
     uint16_t ret = 0;
+#if (__cplusplus >= 202002L)
+    for ([[maybe_unused]] auto _ : std::views::iota(size_t{0}, repeatCount)) {
+#else
     for (size_t ii = 0; ii < repeatCount ; ++ii) {
+#endif
         ret = _cmsx.handleKey(*_displayPort, key);
     }
     return ret;
@@ -182,7 +190,11 @@ DisplayPortBase* CMS::displayPortSelectNext()
 
 bool CMS::displayPortSelect(const DisplayPortBase* displayPort)
 {
+#if (__cplusplus >= 202002L)
+    for ([[maybe_unused]] auto _ : std::views::iota(size_t{0}, size_t{_deviceCount})) { // cppcheck-suppress useStlAlgorithm
+#else
     for (size_t ii = 0; ii < _deviceCount; ++ii) {
+#endif
         if (displayPortSelectNext() == displayPort) {
             return true;
         }
