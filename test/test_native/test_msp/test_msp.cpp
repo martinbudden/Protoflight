@@ -10,7 +10,7 @@ void setUp() {
 void tearDown() {
 }
 
-// NOLINTBEGIN(cppcoreguidelines-explicit-virtual-functions,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-use-override,misc-const-correctness,misc-non-private-member-variables-in-classes,modernize-use-override,readability-redundant-access-specifiers)
+// NOLINTBEGIN(cppcoreguidelines-explicit-virtual-functions,cppcoreguidelines-pro-bounds-pointer-arithmetic,misc-const-correctness,misc-non-private-member-variables-in-classes,readability-redundant-access-specifiers)
 void test_msp_out()
 {
     static MSP_Base msp;
@@ -330,7 +330,7 @@ class MSP_Test : public MSP_Base {
 public:
     enum { MSP_SET_NAME = 11 };
 public:
-    virtual result_e processSetCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
+    result_e processSetCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
 public:
     std::array<uint8_t, 8> _name;
 };
@@ -494,7 +494,7 @@ void test_msp_set_name_loop()
     TEST_ASSERT_EQUAL(msp._name[6], 0);
     TEST_ASSERT_EQUAL(msp._name[7], 0xFF);
 }
-// NOLINTEND(cppcoreguidelines-explicit-virtual-functions,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-use-override,misc-const-correctness,misc-non-private-member-variables-in-classes,modernize-use-override,readability-redundant-access-specifiers)
+// NOLINTEND(cppcoreguidelines-explicit-virtual-functions,cppcoreguidelines-pro-bounds-pointer-arithmetic,misc-const-correctness,misc-non-private-member-variables-in-classes,readability-redundant-access-specifiers)
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {

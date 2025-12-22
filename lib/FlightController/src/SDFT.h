@@ -10,7 +10,7 @@ typedef std::complex<float> complex_float_t;
 template <size_t N>
 constexpr std::array<complex_float_t, N> sdftGenerateTwiddlesArray(float R) {
     std::array<complex_float_t, N> twiddles = {};
-    const float m = static_cast<float>(M_PI) / static_cast<float>(N);
+    const float m = 3.14159265358979323846F / static_cast<float>(N);
     for (size_t ii = 0; ii < N; ++ii) {
         const float phi = m*static_cast<float>(ii);
         twiddles[ii] = complex_float_t(R*cosf(phi), R*sinf(phi));

@@ -78,8 +78,8 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
 
-    static constexpr float radiansToDegrees {180.0F / static_cast<float>(M_PI)};
-    static constexpr float gyroScale {radiansToDegrees * 10.0F};
+    static constexpr float RADIANS_TO_DEGREES {180.0F / 3.14159265358979323846F};
+    static constexpr float gyroScale {RADIANS_TO_DEGREES * 10.0F};
 
     mainState.gyroADC[0] = static_cast<int16_t>(std::lroundf(ahrsData.accGyroRPS.gyroRPS.x * gyroScale));
     mainState.gyroADC[1] = static_cast<int16_t>(std::lroundf(ahrsData.accGyroRPS.gyroRPS.y * gyroScale));

@@ -11,6 +11,7 @@
 #include "MSP_Serial.h"
 #include "NonVolatileStorage.h"
 #include "OSD_Task.h"
+#include "version.h"
 
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
@@ -25,6 +26,7 @@
 #include <ReceiverBase.h>
 #include <ReceiverTask.h>
 #include <VehicleControllerTask.h>
+#include <ctime>
 
 
 /*!
@@ -61,10 +63,6 @@ void Main::setup()
     nvs.setCurrentPidProfileIndex(nvs.loadPidProfileIndex());
     nvs.setCurrentRateProfileIndex(nvs.loadRateProfileIndex());
 
-#if defined(FRAMEWORK_ARDUINO) || defined(FRAMEWORK_ARDUINO_ESP32)
-    delay(500); // delay to allow serial port to initialize before first print
-#endif
-
     // create the IMU and get its sample rate
     static IMU_Base& imuSensor = createIMU(nvs);
     const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSensor.getGyroSampleRateHz());
@@ -89,6 +87,16 @@ void Main::setup()
     [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs, blackbox, vtx, osd);
     [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, imuSensor, osd, vtx);
     [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
+
+#if defined(FRAMEWORK_ARDUINO_ESP32)
+    Serial.printf("\r\n\r\n%s %d.%d.%d\r\n", FC_FIRMWARE_NAME, FC_VERSION_MAJOR, FC_VERSION_MINOR, FC_VERSION_PATCH_LEVEL);
+    //Serial.printf("Build Time:%d\r\n", buildTimeUnix);
+    
+    //const std::time_t timestamp = buildTimeUnix;
+    //const std::tm* tm = gmtime(&timestamp);
+    //Serial.printf("Build Time:%4d-%02d-%02dT%02d:%02d\r\n", tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
+    //Serial.printf("Git Revision:%s\r\n\r\n\r\n", gitRevision);
+#endif
 
 
     //
@@ -137,9 +145,9 @@ void Main::setup()
     _tasks.cmsTask = CMS_Task::createTask(taskInfo, *cms, CMS_TASK_PRIORITY, CMS_TASK_CORE, CMS_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
-#if defined(USE_ALTITUDE_HOLD)
-    BarometerBase* barometer = createBarometer();
+#if defined(USE_BAROMETER) || defined(USE_GPS) || defined(USE_RANGEFINDER)
     static AltitudeKalmanFilter altitudeKalmanFilter;
+    BarometerBase* barometer = createBarometer();
     if (barometer) {
         assert(cockpit.getAutopilot().getAltitudeMessageQueue() != nullptr && "AltitudeMessageQueue not created");
         const AltitudeTask::parameters_t parameters {

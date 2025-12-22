@@ -19,25 +19,13 @@
 #endif
 
 
-const char* const targetName = "TARGETNAME";
-
-const char* const buildDate = "MMM DD YYYY"; // MMM = Jan/Feb/...
-
-const char* const buildTime = "HH:MM:SS";
-
 //enum  gyroHardware_e { GYRO_NONE = 0, GYRO_DEFAULT = 1, GYRO_VIRTUAL = 20 };
 //enum  accelerationSensor_e { ACC_DEFAULT = 0, ACC_NONE = 1, ACC_VIRTUAL = 21 };
 
 enum { SIGNATURE_LENGTH = 32 };
 
-enum { U_ID_0 = 0 };
-enum { U_ID_1 = 1 };
-enum { U_ID_2 = 2 };
 
 
-static const char* const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; // 4 UPPER CASE alpha numeric characters that identify the flight controller.
-static const char* const TARGET_BOARD_IDENTIFIER = "A405";
-static const char* const boardIdentifier = TARGET_BOARD_IDENTIFIER;
 
 /*!
 Returns true if the command was processed, false otherwise.
@@ -489,8 +477,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         // Signature
         dst.writeData(getSignature(), SIGNATURE_LENGTH);
 #else
-        std::array<uint8_t, SIGNATURE_LENGTH> emptySignature;
-        memset(&emptySignature[0], 0, sizeof(emptySignature));
+        std::array<uint8_t, SIGNATURE_LENGTH> emptySignature {};
         dst.writeData(&emptySignature, sizeof(emptySignature));
 #endif
         dst.writeU8(0xFF); // unknown MCU type

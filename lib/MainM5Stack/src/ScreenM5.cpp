@@ -29,7 +29,7 @@ enum {
     SCREEN_HEIGHT_M5_PAPER=960
 };
 
-static constexpr float radiansToDegrees {180.0 / M_PI};
+static constexpr float RADIANS_TO_DEGREES {180.0 / M_PI};
 
 ScreenM5::ScreenM5(const DisplayPortBase& displayPort, const AHRS& ahrs, const FlightController& flightController, ReceiverBase& receiver) :
     ScreenBase(displayPort, ahrs, flightController, receiver),
@@ -204,7 +204,7 @@ void ScreenM5::update128x128(const TD_AHRS::data_t& ahrsData) const
 
     yPos += 25;
     M5.Lcd.setCursor(0, yPos);
-    M5.Lcd.printf("x:%4.0f y:%4.0f z:%4.0f", ahrsData.gyroRPS.x*radiansToDegrees, ahrsData.gyroRPS.y*radiansToDegrees, ahrsData.gyroRPS.z*radiansToDegrees);
+    M5.Lcd.printf("x:%4.0f y:%4.0f z:%4.0f", ahrsData.gyroRPS.x*RADIANS_TO_DEGREES, ahrsData.gyroRPS.y*RADIANS_TO_DEGREES, ahrsData.gyroRPS.z*RADIANS_TO_DEGREES);
 
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);
@@ -288,7 +288,7 @@ void ScreenM5::update320x240(const TD_AHRS::data_t& ahrsData) const
 
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);
-    M5.Lcd.printf("gx:%5.0F gy:%5.0f gz:%5.0f", ahrsData.gyroRPS.x*radiansToDegrees, ahrsData.gyroRPS.y*radiansToDegrees, ahrsData.gyroRPS.z*radiansToDegrees);
+    M5.Lcd.printf("gx:%5.0F gy:%5.0f gz:%5.0f", ahrsData.gyroRPS.x*RADIANS_TO_DEGREES, ahrsData.gyroRPS.y*RADIANS_TO_DEGREES, ahrsData.gyroRPS.z*RADIANS_TO_DEGREES);
 
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);

@@ -5,7 +5,7 @@
 class PositionController
 {
 public:
-    static constexpr float M_PI_F = static_cast<float>(M_PI);
+    static constexpr float M_PI_F = 3.14159265358979323846F;
     float cross(const xy_t& A, const xy_t& B) { return A.x*B.y - A.y*B.x; }
     /**
     * The current target bearing

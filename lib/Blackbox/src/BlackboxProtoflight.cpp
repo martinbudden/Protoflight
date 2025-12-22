@@ -24,8 +24,8 @@ Returns true iff transmission is complete, otherwise call again later to continu
 */
 Blackbox::write_e BlackboxProtoflight::writeSystemInformation()
 {
-    static constexpr float radiansToDegrees {180.0F / static_cast<float>(M_PI)};
-    static constexpr float gyroScale {radiansToDegrees * 10.0F};
+    static constexpr float RADIANS_TO_DEGREES {180.0F / 3.14159265358979323846F};
+    static constexpr float gyroScale {RADIANS_TO_DEGREES * 10.0F};
 
     enum { PWM_TYPE_BRUSHED = 4 };
     enum { SERIALRX_TARGET_CUSTOM = 11 };

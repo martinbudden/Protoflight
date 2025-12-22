@@ -129,7 +129,7 @@ void CMSX::padRight(char *buf, uint8_t size)
 // Pad buffer to the left, i.e. align right
 void CMSX::padLeft(char *buf, uint8_t size)
 {
-    auto len = static_cast<uint8_t>(strnlen(buf, size));
+    auto len = static_cast<int32_t>(std::min(strlen(buf), size_t{size}));
 
     int32_t ii = size - 1;
     const int32_t jj = size - len;
@@ -232,7 +232,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
         if ((entryFlags & OME_PRINT_VALUE) && entry->data) {
             // A label with optional string, immediately following text
             strncpy(&_menuDrawBuf[0], reinterpret_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
-            count += drawMenuItemValue(displayPort, row, static_cast<uint8_t>(strnlen(&_menuDrawBuf[0], MENU_DRAW_BUFFER_LEN)));
+            count += drawMenuItemValue(displayPort, row, static_cast<uint8_t>(std::min(strlen(&_menuDrawBuf[0]), size_t{MENU_DRAW_BUFFER_LEN})));
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;
@@ -250,7 +250,7 @@ uint32_t CMSX::drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entr
             }
             strncat(&_menuDrawBuf[0], ">", MENU_DRAW_BUFFER_LEN);
             row = _smallScreen ? row - 1 : row;
-            count += drawMenuItemValue(displayPort, row, static_cast<uint8_t>(strnlen(&_menuDrawBuf[0], MENU_DRAW_BUFFER_LEN)));
+            count += drawMenuItemValue(displayPort, row, static_cast<uint8_t>(std::min(strlen(&_menuDrawBuf[0]), size_t{MENU_DRAW_BUFFER_LEN})));
             clearFlag(entryFlags, OME_PRINT_VALUE);
         }
         break;

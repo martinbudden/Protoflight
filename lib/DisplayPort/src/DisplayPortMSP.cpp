@@ -51,10 +51,10 @@ uint32_t DisplayPortMSP::writeString(uint8_t x, uint8_t y, const char *text, uin
         buf[3] |= ATTR_BLINK;
     }
 
-    const auto len = static_cast<uint8_t>(strnlen(text, MSP_OSD_MAX_STRING_LENGTH));
+    const size_t len = strlen(text);
     memcpy(&buf[4], text, len);
 
-    return output(&buf[0], len + 4);
+    return output(&buf[0], static_cast<uint8_t>(len + 4));
 }
 
 uint32_t DisplayPortMSP::writeChar(uint8_t x, uint8_t y, uint8_t c, uint8_t attr)

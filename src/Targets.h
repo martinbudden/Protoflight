@@ -19,7 +19,7 @@ Targets
 
 #if defined(TARGET_M5STACK_STAMPS3_FLY)
 
-    #define BOARD_IDENTIFIER    "M5Stack_StampS3_Fly"
+    #define BOARD_IDENTIFIER    "EPS3"
 
     #define SPI_1_PINS          spi_pins_t{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=11}
     #define I2C_X_PINS          i2c_pins_t{.sda=3,.scl=4,.irq=BUS_I2C::IRQ_NOT_SET}
@@ -49,7 +49,7 @@ Targets
 
 #elif defined(TARGET_M5STACK_ATOMS3R)
 
-    #define BOARD_IDENTIFIER    "M5Stack_AtomS3"
+    #define BOARD_IDENTIFIER    "EPS3"
 
     #define I2C_X_PINS          i2c_pins_t{.sda=45,.scl=0,.irq=16}
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
@@ -73,7 +73,7 @@ Targets
 
     #undef USE_SIN_ANGLE_PIDS
 
-    #define BOARD_IDENTIFIER    "M5Stack_Core2"
+    #define BOARD_IDENTIFIER    "EPS3"
 
     #define SPI_X_PINS          spi_pins_t{.cs=4,.sck=18,.cipo=38,.copi=23,.irq=0xFF}
     #define I2C_X_PINS          i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
@@ -121,7 +121,7 @@ Targets
 
 #elif defined(TARGET_WAVESHARE_ESP32_S3)
 
-    #define BOARD_IDENTIFIER    "WAVESHARE_ESP32_S3"
+    #define BOARD_IDENTIFIER    "EPS3"
 
     #define IMU_SPI_PINS        spi_pins_t{.cs=41,.sck=01,.cipo=42,.copi=02,.irq=04}
     #define IMU_SPI_INDEX       BUS_INDEX_1
@@ -148,7 +148,7 @@ Targets
 
 #elif defined(TARGET_NATIVE)
 
-    #define BOARD_IDENTIFIER    "BOARD_NONE"
+    #define BOARD_IDENTIFIER    "NONE"
 
     #define SPI_X_PINS          spi_pins_t{.cs=0,.sck=0,.cipo=0,.copi=0,.irq=0xFF}
     #define I2C_X_PINS          i2c_pins_t{.sda=0,.scl=0,.irq=BUS_I2C::IRQ_NOT_SET}
@@ -193,7 +193,7 @@ Targets
 
 #elif defined(TARGET_PICO)
 
-    #define BOARD_IDENTIFIER "RPI_Pico"
+    #define BOARD_IDENTIFIER "2040"
 
     #define SPI_0_PINS          spi_pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
     #define SPI_1_PINS          spi_pins_t{.cs=13,.sck=14,.cipo=12,.copi=15,.irq=0xFF} // !!TODO check
@@ -228,7 +228,7 @@ Targets
 
 #elif defined(TARGET_PICO2)
 
-    #define BOARD_IDENTIFIER    "RPI_Pico2"
+    #define BOARD_IDENTIFIER    "235A"
 
     #define SPI_0_PINS          spi_pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
     #define SPI_1_PINS          spi_pins_t{.cs=13,.sck=14,.cipo=12,.copi=15,.irq=0xFF} // !!TODO check
@@ -276,7 +276,7 @@ Targets
 
 #elif defined(TARGET_MADFLIGHT_FC2)
 
-    #define BOARD_IDENTIFIER    "Madflight_FC2"
+    #define BOARD_IDENTIFIER    "EPS3"
     // ESP32 S3
     // see https://madflight.com/Board-ESP-FC2/
     // pins: https://github.com/qqqlab/madflight/blob/main/src/brd/madflight_FC3.h
@@ -325,7 +325,7 @@ Targets
     #define GPS_UART_INDEX              1
 
 #elif defined(TARGET_MADFLIGHT_FC3)
-    #define BOARD_IDENTIFIER    "Madflight_FC3"
+    #define BOARD_IDENTIFIER    "235A"
     // RPI PICO RP2350
     // see https://madflight.com/Board-FC3/
     // pins: https://github.com/qqqlab/madflight/blob/main/src/brd/madflight_FC3.h
@@ -385,7 +385,7 @@ Targets
 
 #elif defined(TARGET_CODECELL)
 
-    #define BOARD_IDENTIFIER    "CodeCell_ESP32C3"
+    #define BOARD_IDENTIFIER    "EPC3"
 
     #define I2C_X_PINS          i2c_pins_t{.sda=8,.scl=9,.irq=BUS_I2C::IRQ_NOT_SET}
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
@@ -403,7 +403,7 @@ Targets
 
 #elif defined(TARGET_AFROFLIGHT_F301CB)
 
-    #define BOARD_IDENTIFIER    "AfroFlight_F301CB"
+    #define BOARD_IDENTIFIER    "F301"
 
     //#define USE_D_MAX
     //#define USE_ITERM_RELAX
@@ -446,7 +446,7 @@ Targets
 
 #elif defined(TARGET_SEED_XIAO_NRF52840_SENSE)
 
-    #define BOARD_IDENTIFIER    "NRF52840_Sense"
+    #define BOARD_IDENTIFIER    "5284"
 
     #define I2C_X_PINS          i2c_pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
     #define UART_0_PINS         uart_pins_t{.rx=0,.tx=0}
@@ -469,7 +469,7 @@ Targets
 
 #elif defined(TARGET_ADAFRUIT_FEATHER_F405)
 
-    #define BOARD_IDENTIFIER    "Feather_F405"
+    #define BOARD_IDENTIFIER    "F405"
 
     #define SPI_1_PINS          stm32_spi_pins_t{.cs={PB,11},.sck={PB,14},.cipo={PB,14},.copi={PB,15},.irq={PB,10}}
     #define SPI_X_PINS          stm32_spi_pins_t{.cs={PC,8},.sck={PC,9},.cipo={PC,10},.copi={PC,11},.irq={0,0xFF}}
@@ -514,7 +514,7 @@ Targets
 
 #elif defined(TARGET_STM32F3_DISCOVERY)
 
-    #define BOARD_IDENTIFIER    "STM32F3_Discovery"
+    #define BOARD_IDENTIFIER    "F303"
     // https://www.st.com/resource/en/user_manual/um1570-discovery-kit-with-stm32f303vc-mcu-stmicroelectronics.pdf
     // https://www.st.com/resource/en/schematic_pack/mb1035-f303c-e02_schematic.pdf
     // https://www.st.com/resource/en/datasheet/stm32f303vc.pdf

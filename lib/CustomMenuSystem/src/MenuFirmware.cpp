@@ -1,5 +1,6 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
+#include "version.h"
 #include <IMU_Base.h>
 
 std::array<char, CMSX::CALIBRATION_STATUS_MAX_LENGTH> CMSX::GyroCalibrationStatus {};
@@ -70,8 +71,8 @@ static const std::array<CMSX::OSD_Entry, 7> menuFirmwareEntries
 {{
     { "-- INFO --", OME_LABEL, nullptr, nullptr },
 
-    //{ "FWID",   OME_STRING, nullptr, FC_FIRMWARE_IDENTIFIER },
-    //{ "FWVER",  OME_STRING, nullptr, FC_VERSION_STRING },
+    { "FW ID",   OME_STRING, nullptr, FC_FIRMWARE_IDENTIFIER },
+    { "FW VER",  OME_STRING, nullptr, FC_VERSION_STRING },
     //{ "GITREV", OME_STRING, nullptr, __REVISION__ },
     //{ "TARGET", OME_STRING, nullptr, __TARGET__ },
 #if defined(USE_BOARD_INFO)

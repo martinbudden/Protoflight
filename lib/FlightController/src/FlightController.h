@@ -49,7 +49,7 @@ private:
     FlightController(FlightController&&) = delete;
     FlightController& operator=(FlightController&&) = delete;
 public:
-    static constexpr float radiansToDegrees = static_cast<float>(180.0 / M_PI);
+    static constexpr float RADIANS_TO_DEGREES = static_cast<float>(180.0 / 3.14159265358979323846);
     enum control_mode_e {
         CONTROL_MODE_RATE = 0,
         CONTROL_MODE_ANGLE = 1,
@@ -261,9 +261,9 @@ public:
 
     // Functions to calculate roll, pitch, and yaw rates in the NED coordinate frame, converting from gyroRPS in the ENU coordinate frame
     // Note that for NED, roll is about the y-axis and pitch is about the x-axis.
-    static inline float rollRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.y * FlightController::radiansToDegrees; }
-    static inline float pitchRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.x * FlightController::radiansToDegrees; }
-    static inline float yawRateNED_DPS(const xyz_t& gyroENU_RPS) { return -gyroENU_RPS.z * FlightController::radiansToDegrees; }
+    static inline float rollRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.y * RADIANS_TO_DEGREES; }
+    static inline float pitchRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.x * RADIANS_TO_DEGREES; }
+    static inline float yawRateNED_DPS(const xyz_t& gyroENU_RPS) { return -gyroENU_RPS.z * RADIANS_TO_DEGREES; }
 
     static inline float rollSinAngleNED(const Quaternion& orientation) { return orientation.sinPitchClipped(); } // sin(x-180) = -sin(x)
     static inline float rollCosAngleNED(const Quaternion& orientation) { return orientation.cosPitch(); }
