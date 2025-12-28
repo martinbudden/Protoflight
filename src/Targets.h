@@ -7,8 +7,6 @@ Targets
 */
 #if !defined(TARGET_AFROFLIGHT_F301CB)
 
-#define USE_BAROMETER
-#define USE_GPS
 #define USE_OSD_PROFILES
 #define USE_OSD_STATS
 #define USE_SIN_ANGLE_PIDS
@@ -93,6 +91,7 @@ Targets
     #define IMU_I2C_PINS        I2C_X_PINS
     #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
 
+    //#define USE_BAROMETER
     //#define USE_BAROMETER_BMP280
     #define BAROMETER_I2C_PINS  I2C_X_PINS
 
@@ -105,9 +104,12 @@ Targets
     #define MSP_UART_INDEX      0
     #define MSP_UART_PINS       UART_0_PINS
     #define USE_DASHBOARD
-    //#define USE_OSD
+    #define USE_OSD
     //#define USE_CMS
     //#define USE_VTX
+    //#define USE_GPS
+    #define GPS_UART_INDEX      0
+    #define GPS_UART_PINS       UART_0_PINS
 
     #define USE_BACKCHANNEL
 
@@ -167,6 +169,7 @@ Targets
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
+    #define USE_BAROMETER
     #define USE_BAROMETER_BMP280
     #define BAROMETER_I2C_INDEX BUS_INDEX_0
     #define BAROMETER_I2C_PINS  I2C_X_PINS
@@ -250,7 +253,7 @@ Targets
     #define IMU_I2C_PINS        I2C_0_PINS
 #endif
 
-    #define USE_RECEIVER_SBUS
+    //#define USE_RECEIVER_SBUS
     #define RECEIVER_UART_INDEX 0
     #define RECEIVER_PINS       UART_0_PINS
 
@@ -438,8 +441,8 @@ Targets
     #define MSP_UART_PINS       UART_1_PINS
 
     #define USE_MSP_DISPLAYPORT
-    #define MSP_DISPLAYPORT_UART_INDEX      1
-    #define MSP_DISPLAYPORT_UART_PINS       UART_1_PINS
+    #define MSP_DISPLAYPORT_UART_INDEX  1
+    #define MSP_DISPLAYPORT_UART_PINS   UART_1_PINS
 
     #define USE_OSD
     //#define USE_CMS
@@ -521,6 +524,7 @@ Targets
 
     #define SPI_1_PINS          stm32_spi_pins_t{.cs={PE,3},.sck={PA,5},.cipo={PA,6},.copi={PA,7},.irq={PE,0}}
     #define UART_0_PINS         stm32_uart_pins_t{.rx={PA,0},.tx={PA,0}}
+    #define UART_1_PINS         stm32_uart_pins_t{.rx={PA,0},.tx={PA,0}}
     #define MOTOR_PINS          stm32_motor_pins_t{.m0={PA,0,0,0},.m1={PA,0,0,0},.m2={PA,0,0,0},.m3={PA,0,0,0}} // BR, TR, BL, TL
     // LED3 PE9 // red
     // LED4 PE8 // blue
@@ -538,6 +542,10 @@ Targets
     #define USE_RECEIVER_IBUS
     #define RECEIVER_UART_INDEX 0
     #define RECEIVER_PINS       UART_0_PINS
+
+    #define USE_GPS
+    #define GPS_UART_INDEX      1
+    #define GPS_UART_PINS       UART_1_PINS
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 

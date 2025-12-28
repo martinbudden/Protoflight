@@ -137,6 +137,11 @@ public:
         std::array<float, RP_AXIS_COUNT> percent;
         std::array<uint8_t, RP_AXIS_COUNT> max;
     };
+    struct crash_flip_config_t {
+        uint8_t motor_percent;
+        uint8_t rate;
+        uint8_t auto_rearm;
+    };
 #if defined(USE_YAW_SPIN_RECOVERY)
     enum yaw_spin_recovery_mode_e { YAW_SPIN_RECOVERY_OFF = 0, YAW_SPIN_RECOVERY_ON, YAW_SPIN_RECOVERY_AUTO };
     struct yaw_spin_recovery_config_t {
@@ -299,6 +304,9 @@ public:
     void setAntiGravityConfig(const anti_gravity_config_t& antiGravityConfig);
     const anti_gravity_config_t& getAntiGravityConfig() const { return _antiGravityConfig; }
 
+    void setCrashFlipConfig(const crash_flip_config_t& crashFlipConfig);
+    const crash_flip_config_t& getCrashFlipConfig() const { return _crashFlipConfig; }
+
 #if defined(USE_D_MAX)
     void setDMaxConfig(const d_max_config_t& dMaxConfig);
     const d_max_config_t& getDMaxConfig() const { return _dMaxConfig; }
@@ -323,6 +331,7 @@ public:
     [[noreturn]] static void Task(void* arg);
 public:
     void detectCrashOrSpin();
+    void applyCrashFlipToMotors(const xyz_t& gyroRPS, float deltaT);
     void setYawSpinThresholdDPS(float yawSpinThresholdDPS);
     void recoverFromYawSpin(const xyz_t& gyroRPS, float deltaT);
 
@@ -368,6 +377,7 @@ private:
     tpa_runtime_t _tpa { 0.0F, 1.0F, 0.0F, 1.0F };
     anti_gravity_config_t _antiGravityConfig {};
     anti_gravity_runtime_t _antiGravity {};
+    crash_flip_config_t _crashFlipConfig {};
 #if defined(USE_D_MAX)
     d_max_config_t _dMaxConfig {};
     d_max_runtime_t _dMax {};
@@ -431,6 +441,7 @@ private:
         bool groundMode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
         bool crashDetected {false};
         bool blackboxActive {false};
+        bool crashFlipModeActive {false};
         bool yawSpinRecovery {false};
 #if defined(USE_YAW_SPIN_RECOVERY)
         float yawSpinThresholdDPS {0.0F};

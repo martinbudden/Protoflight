@@ -401,7 +401,7 @@ classDiagram
     %%CockpitBase --o ReceiverTask : calls updateControls
 
     class Autopilot {
-        array~Geodetic~ _waypoints
+        array~geographic_coordinate_t~ _waypoints
         altitudeHoldCalculateThrottle()
         calculateFlightControls()
     }
@@ -651,7 +651,7 @@ classDiagram
     ReceiverTask o-- ReceiverWatcher : calls newReceiverPacketAvailable
 
     class Autopilot {
-        array~Geodetic~ _waypoints
+        array~geographic_coordinate_t~ _waypoints
         altitudeHoldCalculateThrottle()
         calculateFlightControls()
     }
@@ -1068,7 +1068,7 @@ classDiagram
     %%CockpitBase --o ReceiverTask : calls updateControls
 
     class Autopilot {
-        array~Geodetic~ _waypoints
+        array~geographic_coordinate_t~ _waypoints
         altitudeHoldCalculateThrottle()
         calculateFlightControls()
     }
@@ -1106,7 +1106,7 @@ classDiagram
     class GPS_Task:::taskClass {
     }
     class GPS_MessageQueue {
-        Geodetic location
+        geographic_coordinate_t location
     }
     GPS_MessageQueue --o GPS_Task : calls SEND
     GPS_Task o-- GPS_Base : calls read

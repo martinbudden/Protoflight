@@ -36,7 +36,6 @@ public:
     inline void SEND_ALTITUDE_DATA(const altitude_data_t& altitudeData) { _altitudeData = altitudeData; }
     inline int32_t PEEK_ALTITUDE_DATA(altitude_data_t& altitudeData) const { altitudeData = _altitudeData; return 0; }
 #endif // USE_FREERTOS
-    const altitude_data_t& getReceivedAHRS_Data() const { return _altitudeData; } //!< May only be called within task after WAIT has completed
 private:
     altitude_data_t _altitudeData {};
 #if defined(FRAMEWORK_USE_FREERTOS)

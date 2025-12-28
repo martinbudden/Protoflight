@@ -366,6 +366,11 @@ void FlightController::setAntiGravityConfig(const anti_gravity_config_t& antiGra
     };
 }
 
+void FlightController::setCrashFlipConfig(const crash_flip_config_t& crashFlipConfig)
+{
+    _crashFlipConfig = crashFlipConfig;
+}
+
 #if defined(USE_D_MAX)
 void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig) // NOLINT(readability-make-member-function-const)
 {

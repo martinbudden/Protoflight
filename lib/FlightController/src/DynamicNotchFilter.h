@@ -54,7 +54,7 @@ public:
         float value;
     };
     struct state_t {
-        int step;
+        uint32_t step;
         size_t axis;
     };
 public:

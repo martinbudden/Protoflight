@@ -11,6 +11,9 @@
 #if defined(USE_VTX)
 #include "VTX.h"
 #endif
+#if defined(USE_GPS)
+#include "GPS.h"
+#endif
 #include <MotorMixerBase.h>
 
 #if defined(USE_FLASH_KLV)
@@ -139,6 +142,9 @@ public:
     FlightController::anti_gravity_config_t loadFlightControllerAntiGravityConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerAntiGravityConfig(const FlightController::anti_gravity_config_t& config, uint8_t pidProfileIndex);
 
+    FlightController::crash_flip_config_t loadFlightControllerCrashFlipConfig() const;
+    int32_t storeFlightControllerCrashFlipConfig(const FlightController::crash_flip_config_t& config);
+
 #if defined(USE_D_MAX)
     FlightController::d_max_config_t loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const;
     int32_t storeFlightControllerDMaxConfig(const FlightController::d_max_config_t& config, uint8_t pidProfileIndex);
@@ -164,14 +170,18 @@ public:
     int32_t storeRPM_FiltersConfig(const RPM_Filters::config_t& config);
 #endif
 #if defined(USE_VTX)
-    VTX::config_t loadVTXConfig() const;
-    int32_t storeVTXConfig(const VTX::config_t& config);
+    VTX::config_t loadVTX_Config() const;
+    int32_t storeVTX_Config(const VTX::config_t& config);
 #endif
 #if defined(USE_OSD)
     OSD::config_t loadOSD_Config() const;
     int32_t storeOSD_Config(const OSD::config_t& config);
     bool loadOSD_ElementsConfig(OSD_Elements::config_t & config) const;
     int32_t storeOSD_ElementsConfig(const OSD_Elements::config_t& config);
+#endif
+#if defined(USE_GPS)
+    GPS::config_t loadGPS_Config() const;
+    int32_t storeGPS_Config(const GPS::config_t& config);
 #endif
 #if defined USE_ALTITUDE_HOLD
     Autopilot::autopilot_config_t loadAutopilotConfig() const;

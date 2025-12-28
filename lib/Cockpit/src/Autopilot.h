@@ -1,10 +1,12 @@
 #pragma once
 
 #include "FlightController.h"
-#include "Geodetic.h"
 
 #include <CockpitBase.h>
 #include <Filters.h>
+#if defined(USE_GPS)
+#include <GeographicCoordinate.h>
+#endif
 #include <PIDF.h>
 
 
@@ -93,6 +95,8 @@ private:
     // all positions are specified in meters from home position
     xyz_t _currentPositionMeters {};
     xyz_t _targetPositionMeters {};
+#if defined(USE_GPS)
     // waypoints are specified as latitude/longitude/altitude coordinates
-    std::array<Geodetic, MAX_WAYPOINT_COUNT> _waypoints;
+    std::array<geographic_coordinate_t, MAX_WAYPOINT_COUNT> _waypoints;
+#endif
 };

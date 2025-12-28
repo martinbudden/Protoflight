@@ -10,10 +10,10 @@
 
 
 // DEBUG_MAX7456_SIGNAL
-#define DEBUG_MAX7456_SIGNAL_MODEREG       0
-#define DEBUG_MAX7456_SIGNAL_SENSE         1
-#define DEBUG_MAX7456_SIGNAL_REINIT        2
-#define DEBUG_MAX7456_SIGNAL_ROWS          3
+static constexpr uint8_t DEBUG_MAX7456_SIGNAL_MODEREG = 0;
+static constexpr uint8_t DEBUG_MAX7456_SIGNAL_SENSE   = 1;
+static constexpr uint8_t DEBUG_MAX7456_SIGNAL_REINIT  = 2;
+static constexpr uint8_t DEBUG_MAX7456_SIGNAL_ROWS    = 3;
 
 // DEBUG_MAX7456_SPI_CLOCK
 #define DEBUG_MAX7456_SPI_CLOCK_OVERCLOCK   0
@@ -26,9 +26,9 @@
 #define SYNC_MODE_INTERNAL          0x30
 #define SYNC_MODE_EXTERNAL          0x20
 
-#define VIDEO_MODE_PAL              0x40
-#define VIDEO_MODE_NTSC             0x00
-#define VIDEO_MODE_MASK             0x40
+static constexpr uint8_t VIDEO_MODE_PAL     = 0x40;
+static constexpr uint8_t VIDEO_MODE_NTSC    = 0x00;
+static constexpr uint8_t VIDEO_MODE_MASK    = 0x40;
 #define VIDEO_MODE_IS_PAL(val)      (((val) & VIDEO_MODE_MASK) == VIDEO_MODE_PAL)
 #define VIDEO_MODE_IS_NTSC(val)     (((val) & VIDEO_MODE_MASK) == VIDEO_MODE_NTSC)
 
@@ -219,7 +219,7 @@ void DisplayPortMax7456::reInit()
     case VIDEO_SYSTEM_AUTO: {
         const uint8_t data = _bus.readRegister(MAX7456ADD_STAT);
         if (VIN_IS_NTSC(data)) {
-            _videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
+            _videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE; // cppcheck-suppress badBitmaskCheck
         } else if (VIN_IS_PAL(data)) {
             _videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
         } else {
@@ -233,7 +233,7 @@ void DisplayPortMax7456::reInit()
         _rowCount = VIDEO_LINES_PAL;
         break;
     case VIDEO_SYSTEM_NTSC:
-        _videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
+        _videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE; // cppcheck-suppress badBitmaskCheck
         _rowCount = VIDEO_LINES_NTSC;
         break;
     }
@@ -505,8 +505,8 @@ bool DisplayPortMax7456::reInitIfRequired(bool forceStallCheck)
         concludeCurrentSPI_Transaction();
         // Adjust output format based on the current input format.
         const uint8_t videoSense = _bus.readRegister(MAX7456ADD_STAT);
-        _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_MODEREG, _videoSignalReg & VIDEO_MODE_MASK);
-        _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_SENSE, videoSense & 0x7);
+        _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_MODEREG, static_cast<int16_t>(_videoSignalReg & VIDEO_MODE_MASK));
+        _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_SENSE, static_cast<int16_t>(videoSense & 0x7));
         _debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_ROWS, getRowCount());
         if (videoSense & STAT_LOS) {
             _videoDetectTimeMs = 0;

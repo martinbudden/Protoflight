@@ -71,6 +71,9 @@ constexpr uint16_t AltitudeHoldConfigKey = 0x606;
 constexpr uint16_t MotorConfigKey = 0x607;
 constexpr uint16_t MotorMixerConfigKey = 0x0608;
 constexpr uint16_t VTX_ConfigKey = 0x0609;
+constexpr uint16_t GPS_ConfigKey = 0x060A;
+constexpr uint16_t FlightControllerCrashFlipConfigKey = 0x060B;
+
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 static const char* nonVolatileStorageNamespace {"PTFL"}; // Protoflight
@@ -377,6 +380,21 @@ int32_t NonVolatileStorage::storeFlightControllerAntiGravityConfig(const FlightC
 }
 
 
+FlightController::crash_flip_config_t NonVolatileStorage::loadFlightControllerCrashFlipConfig() const
+{
+    {FlightController::crash_flip_config_t config {};
+    if (loadItem(FlightControllerCrashFlipConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::flightControllerCrashFlipConfig;
+}
+
+int32_t NonVolatileStorage::storeFlightControllerCrashFlipConfig(const FlightController::crash_flip_config_t& config)
+{
+    return storeItem(FlightControllerCrashFlipConfigKey, &config, sizeof(config), &DEFAULTS::flightControllerCrashFlipConfig);
+}
+
+
 #if defined(USE_D_MAX)
 FlightController::d_max_config_t NonVolatileStorage::loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const
 {
@@ -505,7 +523,7 @@ int32_t NonVolatileStorage::storeOSD_ElementsConfig(const OSD_Elements::config_t
 }
 #endif
 #if defined(USE_VTX)
-VTX::config_t NonVolatileStorage::loadVTXConfig() const
+VTX::config_t NonVolatileStorage::loadVTX_Config() const
 {
     {VTX::config_t config {};
     if (loadItem(VTX_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
@@ -513,9 +531,23 @@ VTX::config_t NonVolatileStorage::loadVTXConfig() const
     }}
     return DEFAULTS::vtxConfig;
 }
-int32_t NonVolatileStorage::storeVTXConfig(const VTX::config_t& config)
+int32_t NonVolatileStorage::storeVTX_Config(const VTX::config_t& config)
 {
     return storeItem(VTX_ConfigKey, &config, sizeof(config), &DEFAULTS::vtxConfig);
+}
+#endif
+#if defined(USE_GPS)
+GPS::config_t NonVolatileStorage::loadGPS_Config() const
+{
+    {GPS::config_t config {};
+    if (loadItem(GPS_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::gpsConfig;
+}
+int32_t NonVolatileStorage::storeGPS_Config(const GPS::config_t& config)
+{
+    return storeItem(GPS_ConfigKey, &config, sizeof(config), &DEFAULTS::gpsConfig);
 }
 #endif
 #if defined(USE_ALTITUDE_HOLD)
@@ -786,6 +818,8 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
     storeFlightControllerTPA_Config(flightController.getTPA_Config(), pidProfile);
 
     storeFlightControllerAntiGravityConfig(flightController.getAntiGravityConfig(), pidProfile);
+
+    storeFlightControllerCrashFlipConfig(flightController.getCrashFlipConfig());
 
 #if defined(USE_D_MAX)
     storeFlightControllerDMaxConfig(flightController.getDMaxConfig(), pidProfile);

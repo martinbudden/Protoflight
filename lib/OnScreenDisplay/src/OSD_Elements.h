@@ -2,6 +2,7 @@
 
 #include "Targets.h"
 
+#include <GPS_MessageData.h>
 #include <TimeMicroseconds.h>
 #include <array>
 #include <bitset>
@@ -12,6 +13,7 @@ class Debug;
 class DisplayPortBase;
 class FlightController;
 class OSD;
+
 
 enum  osd_elements_e {
     OSD_RSSI_VALUE,
@@ -232,6 +234,8 @@ public:
     uint32_t displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t c, uint8_t attr);
 
 // element drawing functions
+    void formatDistanceString(char* buf, float distance, char leadingSymbol);
+    static int printFloat(char* buffer, char leadingSymbol, float value, unsigned decimalPlaces, bool round, char trailingSymbol);
     void formatPID(char* buf, const char* label, uint8_t axis);
     void draw_RSSI_VALUE(DisplayPortBase& displayPort);
     void draw_MAIN_BATTERY_VOLTAGE(DisplayPortBase& displayPort);
@@ -335,7 +339,9 @@ private:
     config_t _config {};
     std::array<uint8_t, OSD_ELEMENT_COUNT> _activeElements;
     std::bitset<OSD_ELEMENT_COUNT> _blinkBits {};
-
+#if defined (USE_GPS)
+    gps_message_data_t _gpsData {};
+#endif
     // drawing functions
     static std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> DrawFunctions;
     static std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> DrawBackgroundFunctions;

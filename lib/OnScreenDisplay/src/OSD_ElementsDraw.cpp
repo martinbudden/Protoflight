@@ -154,6 +154,36 @@ void OSD_Elements::initDrawFunctions()
     DrawBackgroundFunctions[OSD_CAMERA_FRAME]       = &OSD_Elements::drawBackground_CAMERA_FRAME;
 };
 
+void OSD_Elements::formatDistanceString(char* buf, float distance, char leadingSymbol)
+{
+    float convertedDistance = distance;
+    float unitTransition = 1000.0F;
+    char unitSymbol = SYM_M;
+    char unitSymbolExtended = SYM_KM;
+
+    static constexpr float METERS_TO_FEET = 3.28084F;
+    if (_osd.getConfig().units == OSD::UNITS_IMPERIAL) {
+        convertedDistance = static_cast<float>(distance) * METERS_TO_FEET;
+        unitTransition = 5280;
+        unitSymbol = SYM_FT;
+        unitSymbolExtended = SYM_MILES;
+    }
+
+    unsigned decimalPlaces = 0;
+    float displayDistance = convertedDistance;
+    char displaySymbol = unitSymbol;
+    if (convertedDistance >= unitTransition) {
+        displayDistance = convertedDistance / unitTransition;
+        displaySymbol = unitSymbolExtended;
+        if (displayDistance >= 10) { // >= 10 miles or km - 1 decimal place
+            decimalPlaces = 1;
+        } else {                     // < 10 miles or km - 2 decimal places
+            decimalPlaces = 2;
+        }
+    }
+    printFloat(buf, leadingSymbol, displayDistance, decimalPlaces, false, displaySymbol);
+}
+
 void OSD_Elements::formatPID(char* buf, const char* label, uint8_t axis) // NOLINT(readability-non-const-parameter)
 {
     const FlightController::PIDF_uint16_t pid = _flightController.getPID_MSP(axis);
@@ -340,11 +370,53 @@ void OSD_Elements::draw_MAH_DRAWN(DisplayPortBase& displayPort)
 void OSD_Elements::draw_GPS_SPEED(DisplayPortBase& displayPort)
 {
     (void)displayPort;
+#if defined(USE_GPS)
+    static constexpr float CMPS_TO_KMPH = 36.0F / 1000.0F;
+    static constexpr float CMPS_TO_MPH = 10000.0F / 5080.0F / 88.0F;
+
+    uint8_t speedSymbol = SYM_KPH;
+    float speedConversionFactor = CMPS_TO_KMPH;
+    if (_osd.getConfig().units != OSD::UNITS_METRIC) {
+        speedSymbol = SYM_MPH;
+        speedConversionFactor = CMPS_TO_MPH;
+    }
+    if (_gpsData.fix & gps_message_data_t::FIX) {
+        //speed = gpsConfig()->gps_use_3d_speed ? gpsSol.speed3d : gpsSol.groundSpeed)
+        const int speed = static_cast<int>(_gpsData.groundSpeed_cmps * speedConversionFactor);
+        sprintf(&_activeElement.buf[0], "%c%3d%c", SYM_SPEED, speed, speedSymbol);
+    } else {
+        sprintf(&_activeElement.buf[0], "%c%c%c", SYM_SPEED, SYM_HYPHEN, speedSymbol);
+    }
+#endif
 }
 
 void OSD_Elements::draw_GPS_SATS(DisplayPortBase& displayPort)
 {
     (void)displayPort;
+#if defined(USE_GPS)
+    enum { GPS_SATELLITE_COUNT_CRITICAL =  4 };
+    if ((_gpsData.fix == 0) || (_gpsData.satelliteCount < GPS_SATELLITE_COUNT_CRITICAL) ) {
+        _activeElement.attr = DisplayPortBase::SEVERITY_CRITICAL;
+    }
+#if defined(USE_GPS_RESCUE)
+    else if ((gpsSol.numSat < gpsRescueConfig()->minSats) && gpsRescueIsConfigured()) {
+        element->attr = DISPLAYPORT_SEVERITY_WARNING;
+    }
+#endif
+    else {
+        _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
+    }
+
+    if (_gpsData.isHealthy) {
+        size_t pos = printf(&_activeElement.buf[0], "%c%c%2d", SYM_SAT_L, SYM_SAT_R, _gpsData.satelliteCount);
+        if (_osd.getConfig().gps_sats_show_pdop) { // add on the GPS module PDOP estimate
+            _activeElement.buf[pos++] = ' ';
+            printFloat(&_activeElement.buf[pos], SYM_NONE, _gpsData.dilutionOfPrecisionPositional / 100.0F, 1, true, SYM_NONE);
+        }
+    } else {
+        sprintf(&_activeElement.buf[0], "%c%cNC", SYM_SAT_L, SYM_SAT_R);
+    }
+#endif
 }
 
 void OSD_Elements::draw_ALTITUDE(DisplayPortBase& displayPort)
@@ -506,6 +578,7 @@ void OSD_Elements::draw_ANTI_GRAVITY(DisplayPortBase& displayPort)
 void OSD_Elements::draw_G_FORCE(DisplayPortBase& displayPort)
 {
     (void)displayPort;
+    //OSD::printFloat(&_activeElement.buf[0], SYM_NONE, osdGForce, 1, true, 'G');
 }
 
 void OSD_Elements::draw_MOTOR_DIAGNOSTICS(DisplayPortBase& displayPort)
@@ -531,6 +604,14 @@ void OSD_Elements::draw_LINK_QUALITY(DisplayPortBase& displayPort)
 void OSD_Elements::draw_FLIGHT_DISTANCE(DisplayPortBase& displayPort)
 {
     (void)displayPort;
+#if defined(USE_GPS)
+    if ((_gpsData.fix & gps_message_data_t::FIX) && (_gpsData.fix & gps_message_data_t::FIX_HOME)) {
+        formatDistanceString(&_activeElement.buf[0], _gpsData.distanceFlownMeters, SYM_TOTAL_DISTANCE);
+    } else {
+        // We use this symbol when we don't have a FIX
+        sprintf(&_activeElement.buf[0], "%c%c", SYM_TOTAL_DISTANCE, SYM_HYPHEN);
+    }
+#endif
 }
 
 void OSD_Elements::draw_STICK_OVERLAY(DisplayPortBase& displayPort)
@@ -673,4 +754,41 @@ void OSD_Elements::draw_CUSTOM_MSG(DisplayPortBase& displayPort)
 void OSD_Elements::draw_LIDAR_DISTANCE(DisplayPortBase& displayPort)
 {
     (void)displayPort;
+}
+
+int OSD_Elements::printFloat(char* buffer, char leadingSymbol, float value, unsigned decimalPlaces, bool round, char trailingSymbol)
+{
+    int pos = 0;
+    int multiplier = 1;
+    for (size_t ii = 0; ii < decimalPlaces; ++ii) {
+        multiplier *= 10;
+    }
+
+    value *= static_cast<float>(multiplier);
+    const int scaledValueAbs = std::abs(round ? static_cast<int>(lrintf(value)) : static_cast<int>(value));
+    const int integerPart = scaledValueAbs / multiplier;
+    const int fractionalPart = scaledValueAbs % multiplier;
+
+// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    if (leadingSymbol != SYM_NONE) {
+        buffer[pos++] = leadingSymbol;
+    }
+    if (value < 0 && (integerPart || fractionalPart)) {
+        buffer[pos++] = '-';
+    }
+
+    pos += sprintf(buffer + pos, "%01d", integerPart);
+    if (decimalPlaces) {
+        std::array<char, 16> mask {};
+        sprintf(&mask[0], ".%%0%uu", decimalPlaces); // builds up the format string to be like ".%03u" for decimalPlaces == 3 as an example
+        pos += sprintf(buffer + pos, &mask[0], fractionalPart);
+    }
+
+    if (trailingSymbol != SYM_NONE) {
+        buffer[pos++] = trailingSymbol;
+    }
+    buffer[pos] = '\0';
+// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+
+    return pos;
 }

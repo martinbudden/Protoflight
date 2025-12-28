@@ -62,6 +62,16 @@ void FlightController::calculateDMaxMultipliers()
 /*!
 NOTE: CALLED FROM WITHIN THE AHRS TASK
 */
+void FlightController::applyCrashFlipToMotors(const xyz_t& gyroRPS, float deltaT)
+{
+    (void)gyroRPS;
+    (void)deltaT;
+}
+
+
+/*!
+NOTE: CALLED FROM WITHIN THE AHRS TASK
+*/
 void FlightController::recoverFromYawSpin(const xyz_t& gyroRPS, float deltaT)
 {
 #if defined(USE_YAW_SPIN_RECOVERY)
@@ -239,6 +249,11 @@ void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsData)
 #endif
     }
 #endif
+    if (_sh.crashFlipModeActive) {
+        applyCrashFlipToMotors(ahrsData.accGyroRPS.gyroRPS, ahrsData.deltaT);
+        return;
+    }
+
 #if defined(USE_YAW_SPIN_RECOVERY)
     if (_sh.yawSpinRecovery) {
         recoverFromYawSpin(ahrsData.accGyroRPS.gyroRPS, ahrsData.deltaT);

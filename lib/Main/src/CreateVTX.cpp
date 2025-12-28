@@ -11,7 +11,7 @@ VTX* Main::createVTX(NonVolatileStorage& nvs) // cppcheck-suppress constParamete
 {
 #if defined(USE_VTX)
     static VTX vtx;
-    vtx.setConfig(nvs.loadVTXConfig());
+    vtx.setConfig(nvs.loadVTX_Config());
 
     return &vtx;
 #else

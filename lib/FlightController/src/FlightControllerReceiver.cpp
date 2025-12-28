@@ -170,7 +170,7 @@ void FlightController::updateSetpoints(const controls_t& controls, failsafe_e fa
     // output throttle may be changed by spin recovery
     _sh.outputThrottle = controls.throttleStick;
 
-    if (failsafe == FAILSAFE_ON || _sh.crashDetected || _sh.yawSpinRecovery) {
+    if (failsafe == FAILSAFE_ON || _sh.crashDetected || _sh.yawSpinRecovery || _sh.crashFlipModeActive) {
         clearDynamicPID_Adjustments();
     } else {
         applyDynamicPID_AdjustmentsOnThrottleChange(controls.throttleStick, controls.tickCount);
@@ -186,7 +186,7 @@ void FlightController::updateSetpoints(const controls_t& controls, failsafe_e fa
         _sh.PIDS[ROLL_RATE_DPS].setSetpoint(controls.rollStickDPS);
     }
     if (_rxM.setpointDeltaT != 0) {
-        if (failsafe == FAILSAFE_ON || _sh.crashDetected || _sh.yawSpinRecovery) {
+        if (failsafe == FAILSAFE_ON || _sh.crashDetected || _sh.yawSpinRecovery || _sh.crashFlipModeActive) {
             _sh.PIDS[ROLL_RATE_DPS].setSetpointDerivative(0.0F);
         } else {
             float setpointDerivative = _sh.PIDS[ROLL_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;
@@ -213,7 +213,7 @@ void FlightController::updateSetpoints(const controls_t& controls, failsafe_e fa
         _sh.PIDS[PITCH_RATE_DPS].setSetpoint(-controls.pitchStickDPS);
     }
     if (_rxM.setpointDeltaT != 0) {
-        if (failsafe == FAILSAFE_ON || _sh.crashDetected || _sh.yawSpinRecovery) {
+        if (failsafe == FAILSAFE_ON || _sh.crashDetected || _sh.yawSpinRecovery || _sh.crashFlipModeActive) {
             _sh.PIDS[PITCH_RATE_DPS].setSetpointDerivative(0.0F);
         } else {
             float setpointDerivative = _sh.PIDS[PITCH_RATE_DPS].getSetpointDelta() / _rxM.setpointDeltaT;

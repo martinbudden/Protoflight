@@ -24,13 +24,49 @@ static constexpr uint8_t SYM_AH_DECORATION      = 0x13;
 static constexpr uint8_t SYM_AH_BAR9_0          = 0x80;
 #endif
 
-// Stick overlays
-static constexpr uint8_t SYM_STICK_OVERLAY_SPRITE_HIGH = 0x08;
-static constexpr uint8_t SYM_STICK_OVERLAY_SPRITE_MID  = 0x09;
-static constexpr uint8_t SYM_STICK_OVERLAY_SPRITE_LOW  = 0x0A;
-static constexpr uint8_t SYM_STICK_OVERLAY_CENTER      = 0x0B;
-static constexpr uint8_t SYM_STICK_OVERLAY_VERTICAL    = 0x16;
-static constexpr uint8_t SYM_STICK_OVERLAY_HORIZONTAL  = 0x17;
+//Misc
+static constexpr uint8_t SYM_NONE               = 0x00;
+static constexpr uint8_t SYM_END_OF_FONT        = 0xFF;
+static constexpr uint8_t SYM_BLANK              = 0x20;
+static constexpr uint8_t SYM_HYPHEN             = 0x2D;
+static constexpr uint8_t SYM_BLACKBOX_LOG       = 0x10;
+static constexpr uint8_t SYM_HOMEFLAG           = 0x11;
+
+// GPS and navigation
+static constexpr uint8_t SYM_LAT                = 0x89;
+static constexpr uint8_t SYM_LON                = 0x98;
+static constexpr uint8_t SYM_ALTITUDE           = 0x7F;
+static constexpr uint8_t SYM_TOTAL_DISTANCE     = 0x71;
+static constexpr uint8_t SYM_OVER_HOME          = 0x05;
+
+// RSSI
+static constexpr uint8_t SYM_RSSI               = 0x01;
+static constexpr uint8_t SYM_LINK_QUALITY       = 0x7B;
+
+// Throttle Position (%)
+static constexpr uint8_t SYM_THR                = 0x04;
+
+// Unit Icons (Metric)
+static constexpr uint8_t SYM_M                  = 0x0C;
+static constexpr uint8_t SYM_KM                 = 0x7D;
+static constexpr uint8_t SYM_C                  = 0x0E;
+
+// Unit Icons (Imperial)
+static constexpr uint8_t SYM_FT                 = 0x0F;
+static constexpr uint8_t SYM_MILES              = 0x7E;
+static constexpr uint8_t SYM_F                  = 0x0D;
+
+// Heading Graphics
+static constexpr uint8_t SYM_HEADING_N          = 0x18;
+static constexpr uint8_t SYM_HEADING_S          = 0x19;
+static constexpr uint8_t SYM_HEADING_E          = 0x1A;
+static constexpr uint8_t SYM_HEADING_W          = 0x1B;
+static constexpr uint8_t SYM_HEADING_DIVIDED_LINE = 0x1C;
+static constexpr uint8_t SYM_HEADING_LINE       = 0x1D;
+
+// Satellite Graphics
+static constexpr uint8_t SYM_SAT_L              = 0x1E;
+static constexpr uint8_t SYM_SAT_R              = 0x1F;
 
 // Direction arrows
 static constexpr uint8_t SYM_ARROW_SOUTH        = 0x60;
@@ -52,3 +88,29 @@ static constexpr uint8_t SYM_ARROW_16           = 0x6F;
 
 static constexpr uint8_t SYM_ARROW_SMALL_UP     = 0x75;
 static constexpr uint8_t SYM_ARROW_SMALL_DOWN   = 0x76;
+
+// Time
+static constexpr uint8_t SYM_ON_M               = 0x9B;
+static constexpr uint8_t SYM_FLY_M              = 0x9C;
+
+// Lap Timer
+static constexpr uint8_t SYM_CHECKERED_FLAG     = 0x24;
+static constexpr uint8_t SYM_PREV_LAP_TIME      = 0x79;
+
+// Speed
+static constexpr uint8_t SYM_SPEED              = 0x70;
+static constexpr uint8_t SYM_KPH                = 0x9E;
+static constexpr uint8_t SYM_MPH                = 0x9D;
+static constexpr uint8_t SYM_MPS                = 0x9F;
+static constexpr uint8_t SYM_FTPS               = 0x99;
+
+// Menu cursor
+static constexpr uint8_t SYM_CURSOR             = SYM_AH_LEFT;
+
+// Stick overlays
+static constexpr uint8_t SYM_STICK_OVERLAY_SPRITE_HIGH = 0x08;
+static constexpr uint8_t SYM_STICK_OVERLAY_SPRITE_MID  = 0x09;
+static constexpr uint8_t SYM_STICK_OVERLAY_SPRITE_LOW  = 0x0A;
+static constexpr uint8_t SYM_STICK_OVERLAY_CENTER      = 0x0B;
+static constexpr uint8_t SYM_STICK_OVERLAY_VERTICAL    = 0x16;
+static constexpr uint8_t SYM_STICK_OVERLAY_HORIZONTAL  = 0x17;

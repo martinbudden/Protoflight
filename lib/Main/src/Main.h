@@ -36,6 +36,8 @@ class DashboardTask;
 class Debug;
 class DisplayPortBase;
 class FlightController;
+class GPS;
+class GPS_Task;
 class IMU_Filters;
 class IMU_FiltersBase;
 class MSP_Task;
@@ -86,6 +88,10 @@ enum { BLACKBOX_TASK_INTERVAL_MICROSECONDS = 2000 }; // 500 Hz
 enum { CMS_TASK_INTERVAL_MICROSECONDS = 50000 }; // 20 Hz
 #endif
 
+#if !defined(GPS_TASK_INTERVAL_MICROSECONDS)
+enum { GPS_TASK_INTERVAL_MICROSECONDS = 4000 }; // 250 Hz
+#endif
+
 #if !defined(ALTITUDE_TASK_INTERVAL_MICROSECONDS)
 enum { ALTITUDE_TASK_INTERVAL_MICROSECONDS = 2000 }; // 500 Hz
 #endif
@@ -100,6 +106,7 @@ enum {
     MSP_TASK_PRIORITY = 2,
     OSD_TASK_PRIORITY = 2,
     CMS_TASK_PRIORITY = 2,
+    GPS_TASK_PRIORITY = 2,
     DASHBOARD_TASK_PRIORITY = 2,
     ALTITUDE_TASK_PRIORITY = 2,
 };
@@ -133,6 +140,7 @@ enum {
     BLACKBOX_TASK_CORE = CPU_CORE_0,
     OSD_TASK_CORE = CPU_CORE_0,
     CMS_TASK_CORE = CPU_CORE_0,
+    GPS_TASK_CORE = CPU_CORE_0,
     DASHBOARD_TASK_CORE = CPU_CORE_0,
     ALTITUDE_TASK_CORE = CPU_CORE_0,
 };
@@ -159,6 +167,7 @@ private:
     static MSP_Serial* createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd);
     static CMS* createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, OSD* osd, VTX* vtx);
     static BarometerBase* createBarometer();
+    static GPS* createGPS(Debug& debug);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, NonVolatileStorage& nvs, const TaskBase* dashboardTask);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
@@ -179,6 +188,7 @@ private:
         BlackboxTask* blackboxTask;
         OSD_Task* osdTask;
         CMS_Task* cmsTask;
+        GPS_Task* gpsTask;
         AltitudeTask* altitudeTask;
     };
 private:

@@ -87,6 +87,7 @@ void Main::setup()
     [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, cockpit.getAutopilot(), imuFilters, debug, nvs, blackbox, vtx, osd);
     [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, imuSensor, osd, vtx);
     [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
+    [[maybe_unused]] GPS* gps = createGPS(debug);
 
 #if defined(FRAMEWORK_ARDUINO_ESP32)
     Serial.printf("\r\n\r\n%s %d.%d.%d\r\n", FC_FIRMWARE_NAME, FC_VERSION_MAJOR, FC_VERSION_MINOR, FC_VERSION_PATCH_LEVEL);
@@ -143,6 +144,11 @@ void Main::setup()
 #if defined(USE_CMS)
     assert(cms != nullptr);
     _tasks.cmsTask = CMS_Task::createTask(taskInfo, *cms, CMS_TASK_PRIORITY, CMS_TASK_CORE, CMS_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(taskInfo);
+#endif
+#if defined(USE_GPS) && false
+    assert(gps != nullptr);
+    _tasks.gpsTask = GPS_Task::createTask(taskInfo, *gps, GPS_TASK_PRIORITY, GPS_TASK_CORE, GPS_TASK_INTERVAL_MICROSECONDS);
     printTaskInfo(taskInfo);
 #endif
 #if defined(USE_BAROMETER) || defined(USE_GPS) || defined(USE_RANGEFINDER)

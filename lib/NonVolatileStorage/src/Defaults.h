@@ -8,15 +8,16 @@
 #include "FlightController.h"
 #include "IMU_Filters.h"
 #include <MotorMixerBase.h>
+
+#if defined(USE_GPS)
+#include <GPS.h>
+#endif
 #if defined(USE_OSD)
 #include <OSD.h>
 #endif
 #if defined(USE_VTX)
 #include <VTX.h>
 #endif
-
-enum units_e { UNITS_METRIC = 0, UNIT_IMPERIAL = 1 };
-
 
 namespace DEFAULTS {
 
@@ -97,6 +98,12 @@ static constexpr FlightController::anti_gravity_config_t flightControllerAntiGra
     .cutoff_hz = 5,
     .p_gain = 100,
     .i_gain = 80,
+};
+
+static constexpr FlightController::crash_flip_config_t flightControllerCrashFlipConfig = {
+    .motor_percent = 0,
+    .rate = 0,
+    .auto_rearm = false,
 };
 
 #if defined(USE_D_MAX)
@@ -299,7 +306,7 @@ static constexpr OSD::config_t osdConfig = {
     .core_temperature_alarm = 70, // a temperature above 70C should produce a warning, lockups have been reported above 80C
     .rssi_alarm = 20,
 
-    .units = UNITS_METRIC,
+    .units = OSD::UNITS_METRIC,
 
     .aux_scale = 200,
     .aux_channel = 1,
@@ -350,6 +357,27 @@ static constexpr VTX::config_t vtxConfig = {
     .power = 1,
     .lowPowerDisarm = 1,
     .softserialAlt = 0
+};
+#endif
+
+#if defined(USE_GPS)
+static constexpr GPS::config_t gpsConfig = {
+#if defined(USE_VIRTUAL_GPS)
+    .provider = GPS_VIRTUAL,
+#else
+    .provider = GPS::GPS_UBLOX,
+#endif
+    .sbasMode = GPS::SBAS_NONE,
+    .autoConfig = GPS::AUTO_CONFIG_ON,
+    .autoBaud = GPS::AUTO_BAUD_OFF,
+    .gps_ublox_acquire_model = GPS::MODEL_STATIONARY,
+    .gps_ublox_flight_model = GPS::MODEL_AIRBORNE_4G,
+    .gps_update_rate_hz = 10,
+    .gps_ublox_use_galileo = false,
+    .gps_set_home_point_once = false,
+    .gps_use_3d_speed = false,
+    .sbas_integrity = false,
+    .gps_ublox_utc_standard = GPS::UTC_STANDARD_AUTO,
 };
 #endif
 

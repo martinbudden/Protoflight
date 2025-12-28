@@ -29,6 +29,7 @@ public:
     enum { HD_ROWS = 20, HD_COLS = 53 };
     enum { FRAMERATE_DEFAULT_HZ = 12 };
     enum { ESC_RPM_ALARM_OFF = -1, ESC_TEMPERATURE_ALARM_OFF = 0, ESC_CURRENT_ALARM_OFF = -1 };
+    enum units_e { UNITS_METRIC = 0, UNITS_IMPERIAL = 1 };
 
     enum  state_e {
         STATE_INIT,
@@ -256,7 +257,6 @@ public:
     void processStats3();
     void updateAlarms();
     void syncBlink(timeUs32_t currentTimeUs);
-    static int printFloat(char* buffer, char leadingSymbol, float value, char *formatString, unsigned decimalPlaces, bool round, char trailingSymbol);
 private:
     DisplayPortBase* _displayPort {};
     OSD_Elements _elements;

@@ -49,34 +49,62 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
 
 #elif defined(USE_RECEIVER_SBUS)
 
-    static ReceiverSBUS receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
+    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE, ReceiverSBUS::DATA_BITS, ReceiverSBUS::STOP_BITS, ReceiverSBUS::PARITY);
+    static ReceiverIBUS receiver(serialPort);
     return receiver;
 
 #elif defined(USE_RECEIVER_IBUS)
 
-    static ReceiverIBUS receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIBUS::BAUD_RATE);
+    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIBUS::BAUD_RATE, ReceiverIBUS::DATA_BITS, ReceiverIBUS::STOP_BITS, ReceiverIBUS::PARITY);
+    static ReceiverIBUS receiver(serialPort);
     return receiver;
 
 #elif defined(USE_RECEIVER_CRSF)
 
-    static ReceiverCRSF receiver(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE);
+    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE, ReceiverCRSF::DATA_BITS, ReceiverCRSF::STOP_BITS, ReceiverCRSF::PARITY);
+    static ReceiverIBUS receiver(serialPort);
     return receiver;
 
 #else
 
-    // The receiver will exist for the duration of the program and so never needs to be deleted, so it is OK to leave its pointer dangling.
-    ReceiverBase* receiverPtr = nullptr;
     const Cockpit::rx_config_t& rxConfig = nvs.loadRX_Config();
     auto rxType = static_cast<Cockpit::serial_rx_type>(rxConfig.serial_rx_type);
+
+    uint32_t baudrate = ReceiverCRSF::BAUD_RATE;
+    uint8_t dataBits = ReceiverCRSF::DATA_BITS;
+    uint8_t stopBits = ReceiverCRSF::STOP_BITS;
+    uint8_t parity = ReceiverCRSF::PARITY;
+
     switch (rxType) {
     case Cockpit::SERIAL_RX_SBUS:
-        receiverPtr = new ReceiverSBUS(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE);
+        baudrate = ReceiverSBUS::BAUD_RATE;
+        dataBits = ReceiverSBUS::DATA_BITS;
+        stopBits = ReceiverSBUS::STOP_BITS;
+        parity   = ReceiverSBUS::PARITY;
         break;
     case Cockpit::SERIAL_RX_IBUS:
-        receiverPtr = new ReceiverIBUS(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIBUS::BAUD_RATE);
+        baudrate = ReceiverIBUS::BAUD_RATE;
+        dataBits = ReceiverIBUS::DATA_BITS;
+        stopBits = ReceiverIBUS::STOP_BITS;
+        parity   = ReceiverIBUS::PARITY;
+        break;
+    default:
+        break;
+    }
+
+    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, baudrate, dataBits, stopBits, parity);
+
+    // The receiver will exist for the duration of the program and so never needs to be deleted, so it is OK to leave its pointer dangling.
+    ReceiverBase* receiverPtr = nullptr;
+    switch (rxType) {
+    case Cockpit::SERIAL_RX_SBUS:
+        receiverPtr = new ReceiverSBUS(serialPort);
+        break;
+    case Cockpit::SERIAL_RX_IBUS:
+        receiverPtr = new ReceiverIBUS(serialPort);
         break;
     case Cockpit::SERIAL_RX_CRSF:
-        receiverPtr = new ReceiverCRSF(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE);
+        receiverPtr = new ReceiverCRSF(serialPort);
         break;
     default:
         assert(false && "Receiver type not supported");
