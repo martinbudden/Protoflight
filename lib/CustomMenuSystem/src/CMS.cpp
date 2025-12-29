@@ -12,12 +12,11 @@
 #endif
 
 
-CMS::CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, OSD* osd, VTX* vtx) :
+CMS::CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx) :
     _displayPort(displayPort),
     _cmsx(*this, imuFilters, imu, vtx),
     _receiver(receiver),
-    _cockpit(cockpit),
-    _osd(osd)
+    _cockpit(cockpit)
 {
 }
 

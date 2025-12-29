@@ -6,10 +6,10 @@
 /*!
 Statically allocate the CMS.
 */
-CMS* Main::createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, OSD* osd, VTX* vtx) // cppcheck-suppress constParameterReference
+CMS* Main::createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_CMS)
-    static CMS cms(&displayPort, receiver, cockpit, imuFilters, imu, osd, vtx);
+    static CMS cms(&displayPort, receiver, cockpit, imuFilters, imu, vtx);
 
     return &cms;
 #else
@@ -18,7 +18,6 @@ CMS* Main::createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver,
     (void)cockpit;
     (void)imuFilters;
     (void)imu;
-    (void)osd;
     (void)vtx;
 
     return nullptr;
