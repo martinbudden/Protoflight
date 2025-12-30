@@ -9,7 +9,7 @@
 #include <Debug.h>
 #include <IMU_Null.h>
 #include <MotorMixerBase.h>
-#include <ReceiverNull.h>
+#include <ReceiverVirtual.h>
 #include <SensorFusion.h>
 
 
@@ -32,31 +32,6 @@ static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, mot
 static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
 static Autopilot autopilot(ahrsMessageQueue);
 static NonVolatileStorage nvs;
-class ReceiverVirtual : public ReceiverNull {
-public:
-    enum { CHANNEL_COUNT = 18 };
-
-    virtual uint16_t getChannelPWM(size_t index) const override;
-    void setChannelPWM(size_t index, uint16_t pwmValue);
-    void setAuxiliaryChannelPWM(size_t index, uint16_t pwmValue) { setChannelPWM(index + ReceiverBase::STICK_COUNT, pwmValue); }
-private:
-    std::array<uint16_t, CHANNEL_COUNT> _pwmValues;
-};
-
-uint16_t ReceiverVirtual::getChannelPWM(size_t index) const
-{
-    if (index >= CHANNEL_COUNT) {
-        return CHANNEL_LOW;
-    }
-    return _pwmValues[index];
-}
-
-void ReceiverVirtual::setChannelPWM(size_t index, uint16_t pwmValue)
-{
-    if (index < CHANNEL_COUNT) {
-        _pwmValues[index] = pwmValue;
-    }
-}
 static ReceiverVirtual receiver;
 
 
