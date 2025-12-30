@@ -88,7 +88,7 @@ uint32_t Cockpit::getFlightModeFlags() const
 
 bool Cockpit::isRcModeActive(MSP_Box::box_id_e rcMode) const
 {
-    return _rcModes.isRcModeActive(rcMode);
+    return _rcModes.isModeActive(rcMode);
 }
 
 void Cockpit::setRatesToPassThrough()

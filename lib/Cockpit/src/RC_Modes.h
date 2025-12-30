@@ -2,6 +2,7 @@
 
 #include <MSP_Box.h>
 
+#include <algorithm>
 #include <array>
 #include <bitset>
 #include <cstdint>
@@ -25,8 +26,8 @@ public:
     static constexpr uint16_t CHANNEL_RANGE_MIN = 900;
     static constexpr uint16_t CHANNEL_RANGE_MAX = 2100;
 
-    //static uint16_t modeStepToChannelValue(uint8_t step) { return (CHANNEL_RANGE_MIN + static_cast<uint16_t>(25 * step)); }
-    //static uint8_t channelValueToStep(uint16_t channelValue) { return static_cast<uint8_t>((std::clamp(channelValue, CHANNEL_RANGE_MIN, CHANNEL_RANGE_MAX) - CHANNEL_RANGE_MIN) / 25); }
+    static uint16_t modeStepToChannelValue(uint8_t step) { return (CHANNEL_RANGE_MIN + static_cast<uint16_t>(25 * step)); }
+    static uint8_t channelValueToStep(uint16_t channelValue) { return static_cast<uint8_t>((std::clamp(channelValue, CHANNEL_RANGE_MIN, CHANNEL_RANGE_MAX) - CHANNEL_RANGE_MIN) / 25); }
 
     static bool pwmIsHigh(uint16_t x) { return x > 1750; }
     static bool pwmIsLow(uint16_t x) { return x < 1250; }
@@ -55,7 +56,7 @@ public:
     typedef std::bitset<MSP_Box::BOX_COUNT> box_bitset_t;
 public:
     void updateActivatedModes(const ReceiverBase& _receiver);
-    bool isRcModeActive(MSP_Box::box_id_e rcMode) const;
+    bool isModeActive(MSP_Box::box_id_e rcMode) const;
     const mode_activation_conditions_t& getModeActivationConditions() const { return _modeActivationConditions; }
     mode_activation_conditions_t& getModeActivationConditions() { return _modeActivationConditions; }
     void analyzeModeActivationConditions();

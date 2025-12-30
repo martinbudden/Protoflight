@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <cstring>
 
-bool RC_Modes::isRcModeActive(MSP_Box::box_id_e rcMode) const
+bool RC_Modes::isModeActive(MSP_Box::box_id_e rcMode) const
 {
     return _rcModeActivationMask.test(rcMode);
 /*!!
@@ -133,7 +133,7 @@ void RC_Modes::updateMasksForMac(const mode_activation_condition_t& mac, box_bit
 void RC_Modes::updateMasksForStickyModes(const mode_activation_condition_t& mac, box_bitset_t& andMask, box_bitset_t& newMask, bool rangeActive)
 {
     enum { STICKY_MODE_BOOT_DELAY_US = 5000000 }; // 5 seconds
-    if (isRcModeActive(mac.modeId)) {
+    if (isModeActive(mac.modeId)) {
         andMask.reset(mac.modeId);
         newMask.set(mac.modeId);
     } else {

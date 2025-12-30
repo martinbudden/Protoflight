@@ -32,7 +32,33 @@ static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, mot
 static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
 static Autopilot autopilot(ahrsMessageQueue);
 static NonVolatileStorage nvs;
-static ReceiverNull receiver;
+class ReceiverVirtual : public ReceiverNull {
+public:
+    enum { CHANNEL_COUNT = 18 };
+
+    virtual uint16_t getChannelPWM(size_t index) const override;
+    void setChannelPWM(size_t index, uint16_t pwmValue);
+    void setAuxiliaryChannelPWM(size_t index, uint16_t pwmValue) { setChannelPWM(index + ReceiverBase::STICK_COUNT, pwmValue); }
+private:
+    std::array<uint16_t, CHANNEL_COUNT> _pwmValues;
+};
+
+uint16_t ReceiverVirtual::getChannelPWM(size_t index) const
+{
+    if (index >= CHANNEL_COUNT) {
+        return CHANNEL_LOW;
+    }
+    return _pwmValues[index];
+}
+
+void ReceiverVirtual::setChannelPWM(size_t index, uint16_t pwmValue)
+{
+    if (index < CHANNEL_COUNT) {
+        _pwmValues[index] = pwmValue;
+    }
+}
+static ReceiverVirtual receiver;
+
 
 static const Cockpit::rates_t cockpitRates {
     .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
@@ -233,6 +259,60 @@ void test_cockpit_throttle()
     throttle = cockpit.mapThrottle(1.0F);
     TEST_ASSERT_EQUAL_FLOAT(1.0F, throttle);
 }
+
+void test_rc_modes()
+{
+    static RC_Modes rcModes;
+    enum { AUXILIARY_CHANNEL_HORIZON = 4 };
+    enum { AUXILIARY_CHANNEL_GPS_RESCUE = 5 };
+    enum { BOX_HORIZON_PERMANENT = 2 };
+    enum { BOX_GPS_RESCUE_PERMANENT = 46 };
+
+    auto& modeActivationConditions = rcModes.getModeActivationConditions();
+    {
+    const uint8_t macIndex = 0;
+    RC_Modes::mode_activation_condition_t& mac = modeActivationConditions[macIndex];
+    const MSP_Box::msp_box_t* box = MSP_Box::findBoxByPermanentId(BOX_HORIZON_PERMANENT);
+    TEST_ASSERT_FALSE(box == nullptr);
+
+    mac.modeId = static_cast<MSP_Box::box_id_e>(box->boxId);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_HORIZON, mac.modeId);
+    mac.auxChannelIndex = AUXILIARY_CHANNEL_HORIZON;
+    mac.range.startStep = RC_Modes::channelValueToStep(1250);
+    mac.range.endStep = RC_Modes::channelValueToStep(1450);
+    rcModes.analyzeModeActivationConditions();
+    }
+
+    {
+    const uint8_t macIndex = 1;
+    RC_Modes::mode_activation_condition_t& mac = modeActivationConditions[macIndex];
+    const MSP_Box::msp_box_t* box = MSP_Box::findBoxByPermanentId(BOX_GPS_RESCUE_PERMANENT);
+    TEST_ASSERT_FALSE(box == nullptr);
+
+    mac.modeId = static_cast<MSP_Box::box_id_e>(box->boxId);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_GPS_RESCUE, mac.modeId);
+    mac.auxChannelIndex = AUXILIARY_CHANNEL_GPS_RESCUE;
+    mac.range.startStep = RC_Modes::channelValueToStep(1750);
+    mac.range.endStep = RC_Modes::channelValueToStep(1850);
+    rcModes.analyzeModeActivationConditions();
+    }
+
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_HORIZON, 1100);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_HORIZON));
+
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_HORIZON, 1300);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_HORIZON));
+
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_GPS_RESCUE, 1500);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE));
+
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_GPS_RESCUE, 1800);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE));
+}
 // NOLINTEND(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
@@ -245,6 +325,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
     RUN_TEST(test_cockpit_defaults);
     RUN_TEST(test_cockpit_constrain);
     RUN_TEST(test_cockpit_throttle);
+    RUN_TEST(test_rc_modes);
 
     UNITY_END();
 }
