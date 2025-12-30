@@ -262,7 +262,7 @@ private:
     OSD_Elements _elements;
     const Cockpit& _cockpit;
     const AHRS_MessageQueue& _ahrsMessageQueue;
-    uint32_t  _resumeRefreshAtUs {};
+    uint32_t _resumeRefreshAtUs {};
     state_e _state { STATE_INIT };
     std::array<uint16_t, STATE_COUNT> _stateDurationFractionUs {};
     std::array<uint32_t, OSD_ELEMENT_COUNT> _elementDurationFractionUs {};

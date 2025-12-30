@@ -51,7 +51,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         static constexpr uint16_t SENSOR_GYROSCOPE = 0x01U << 5U;
         dst.writeU16(SENSOR_ACCELEROMETER | SENSOR_GYROSCOPE);
         std::bitset<MSP_Box::BOX_COUNT> flightModeFlags;
-        const size_t flagBits = _mspBox.packFlightModeFlags(flightModeFlags, _cockpit);
+        const size_t flagBitCount = _mspBox.packFlightModeFlags(flightModeFlags, _cockpit);
         dst.writeData(&flightModeFlags, 4); // unconditional part of flags, first 32 bits
         dst.writeU8(_nonVolatileStorage.getCurrentPidProfileIndex());
         dst.writeU16(10); //constrain(getAverageSystemLoadPercent(), 0, LOAD_PERCENTAGE_ONE))
@@ -64,7 +64,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
 
         // write flightModeFlags header. Lowest 4 bits contain number of bytes that follow
         // header is emmitted even when all bits fit into 32 bits to allow future extension
-        size_t byteCount = (flagBits - 32 + 7) / 8;        // 32 already stored, round up
+        size_t byteCount = (flagBitCount - 32 + 7) / 8;        // 32 already stored, round up
         byteCount = static_cast<uint8_t>(byteCount);
         if (byteCount > 15) {
             byteCount = 15; // limit to 16 bytes (128 bits)
@@ -232,11 +232,36 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_MODE_RANGES:
-        return RESULT_CMD_UNKNOWN;
+        for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
+            const MSP_Box::msp_box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
+            dst.writeU8(box->permanentId);
+            dst.writeU8(mac.auxChannelIndex);
+            dst.writeU8(mac.range.startStep);
+            dst.writeU8(mac.range.endStep);
+        }
+        break;
     case MSP_MODE_RANGES_EXTRA:
-        return RESULT_CMD_UNKNOWN;
+        dst.writeU8(RC_Modes::MAX_MODE_ACTIVATION_CONDITION_COUNT);
+        for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
+            const MSP_Box::msp_box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
+            const MSP_Box::msp_box_t* linkedBox = MSP_Box::findBoxByBoxId(mac.linkedTo);
+            dst.writeU8(box->permanentId);     // each element is aligned with MODE_RANGES by the permanentId
+            dst.writeU8(mac.modeLogic);
+            dst.writeU8(linkedBox->permanentId);
+        }
+        break;
     case MSP_ADJUSTMENT_RANGES:
-        return RESULT_CMD_UNKNOWN;
+#if false
+        for (int i = 0; i < MAX_ADJUSTMENT_RANGE_COUNT; i++) {
+            const adjustment_range_t& adjustmentRange = adjustmentRanges(i);
+            dst.writeU8(0); // was adjustmentRange.adjustmentIndex
+            dst.writeU8(adjustmentRange.auxChannelIndex);
+            dst.writeU8(adjustmentRange.range.startStep);
+            dst.writeU8(adjustmentRange.range.endStep);
+            dst.writeU8(adjustmentRange.adjustmentConfig);
+            dst.writeU8(adjustmentRange.auxSwitchChannelIndex);
+        }
+#endif
     case MSP_MOTOR_CONFIG:
         return RESULT_CMD_UNKNOWN;
     case MSP_COMPASS_CONFIG:
@@ -262,8 +287,8 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_RX_CONFIG: {
-        const Cockpit::rx_config_t& rxConfig = _cockpit.getRX_Config();
-        dst.writeU8(rxConfig.serial_rx_type);
+        const RX::config_t& rxConfig = _cockpit.getRX_Config();
+        dst.writeU8(rxConfig.serial_rx_provider);
         dst.writeU16(rxConfig.max_check);
         dst.writeU16(rxConfig.mid_rc);
         dst.writeU16(rxConfig.min_check);
@@ -296,10 +321,22 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(failsafeConfig.procedure);
         break;
     }
-    case MSP_RXFAIL_CONFIG:
+    case MSP_RXFAIL_CONFIG: {
+#if false
+        const RX::failsafe_channel_configs_t& rxFailsafeChannelConfigs = _cockpit.getRX_FailsafeChannelConfigs();
+        for (size_t ii = 0; ii < rxRuntimeState.channelCount; ++ii) {
+            dst.writeU8(rxFailsafeChannelConfigs[ii].mode);
+            dst.writeU16(RX::failStepToChannelValue(rxFailsafeChannelConfigs[ii].step));
+        }
+        break;
+#endif
         return RESULT_CMD_UNKNOWN;
-    case MSP_RSSI_CONFIG:
-        return RESULT_CMD_UNKNOWN;
+    }
+    case MSP_RSSI_CONFIG: {
+        const RX::config_t& rxConfig = _cockpit.getRX_Config();
+        dst.writeU8(rxConfig.rssi_channel);
+        break;
+    }
     case MSP_RX_MAP:
         return RESULT_CMD_UNKNOWN;
     case MSP_CF_SERIAL_CONFIG:

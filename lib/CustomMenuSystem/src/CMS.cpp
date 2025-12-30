@@ -67,9 +67,9 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         if (!_cockpit.isArmed() && !_cockpit.isRcModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
             const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW )
-            if (Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch)) {
+            if (RC_Modes::pwmIsLow(controls.yaw) && RC_Modes::pwmIsHigh(controls.pitch)) {
 #else
-            if (Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch) && Cockpit::pwmIsMid(controls.throttle)) {
+            if (RC_Modes::pwmIsLow(controls.yaw) && RC_Modes::pwmIsHigh(controls.pitch) && RC_Modes::pwmIsMid(controls.throttle)) {
 #endif
                 _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
                 _cmsx.menuOpen(*_displayPort);
@@ -115,19 +115,19 @@ bool CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(read
     const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
 
     CMSX::key_e key = CMSX::KEY_NONE;
-    if (_cockpit.isArmed() == false && Cockpit::pwmIsMid(controls.throttle) && Cockpit::pwmIsLow(controls.yaw) && Cockpit::pwmIsHigh(controls.pitch)) {
+    if (_cockpit.isArmed() == false && RC_Modes::pwmIsMid(controls.throttle) && RC_Modes::pwmIsLow(controls.yaw) && RC_Modes::pwmIsHigh(controls.pitch)) {
         key = CMSX::KEY_MENU;
-    } else if (Cockpit::pwmIsHigh(controls.pitch)) {
+    } else if (RC_Modes::pwmIsHigh(controls.pitch)) {
         key = CMSX::KEY_UP;
-    } else if (Cockpit::pwmIsLow(controls.pitch)) {
+    } else if (RC_Modes::pwmIsLow(controls.pitch)) {
         key = CMSX::KEY_DOWN;
-    } else if (Cockpit::pwmIsHigh(controls.roll)) {
+    } else if (RC_Modes::pwmIsHigh(controls.roll)) {
         key = CMSX::KEY_RIGHT;
-    } else if (Cockpit::pwmIsLow(controls.roll)) {
+    } else if (RC_Modes::pwmIsLow(controls.roll)) {
         key = CMSX::KEY_LEFT;
-    } else if (Cockpit::pwmIsHigh(controls.yaw)) {
+    } else if (RC_Modes::pwmIsHigh(controls.yaw)) {
         key = CMSX::KEY_ESC;
-    } else if (Cockpit::pwmIsLow(controls.yaw)) {
+    } else if (RC_Modes::pwmIsLow(controls.yaw)) {
         key = CMSX::KEY_SAVE_MENU;
     }
     if (key == CMSX::KEY_NONE) {

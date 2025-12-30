@@ -1,5 +1,8 @@
 #pragma once
 
+#include "RC_Modes.h"
+#include "RX.h"
+
 #include <CockpitBase.h>
 #include <Features.h>
 
@@ -105,44 +108,6 @@ public:
         uint8_t switch_mode;
         uint8_t stick_threshold_percent; // Stick deflection percentage to exit GPS Rescue procedure
     };
-    enum serial_rx_type {
-        SERIAL_RX_NONE = 0,
-        SERIAL_RX_SPEKTRUM_2048 = 1,
-        SERIAL_RX_SBUS = 2,
-        SERIAL_RX_SUMD = 3,
-        SERIAL_RX_SUMH = 4,
-        SERIAL_RX_XBUS_MODE_B = 5,
-        SERIAL_RX_XBUS_MODE_B_RJ01 = 6,
-        SERIAL_RX_IBUS = 7,
-        SERIAL_RX_JETIEXBUS = 8,
-        SERIAL_RX_CRSF = 9,
-        SERIAL_RX_SRXL = 10,
-        SERIAL_RX_TARGET_CUSTOM = 11,
-        SERIAL_RX_FPORT = 12,
-        SERIAL_RX_SRXL2 = 13,
-        SERIAL_RX_GHST = 14,
-        SERIAL_RX_SPEKTRUM_1024 = 15
-    };
-    enum { RX_MAPPABLE_CHANNEL_COUNT = 8 };
-    struct rx_config_t {
-        //uint8_t rc_map[RX_MAPPABLE_CHANNEL_COUNT];  // mapping of radio channels to internal RPYTA+ order
-        uint8_t serial_rx_type;
-        uint8_t serial_rx_inverted; // invert the serial RX protocol compared to its default setting
-        uint8_t half_duplex;        // allow rx to operate in half duplex mode on F4, ignored for F1 and F3.
-        uint8_t rssi_channel;
-        uint8_t rssi_scale;
-        uint8_t rssi_invert;
-        int8_t rssi_offset;         // offset applied to the RSSI value
-        uint8_t fpvCamAngleDegrees;         // Camera angle to be scaled into rc commands
-        uint8_t airModeActivateThreshold;   // Throttle setpoint percent where airmode gets activated
-        uint8_t spektrum_sat_bind;  // number of bind pulses for Spektrum satellite receivers
-        uint16_t mid_rc;            // Some radios have not a neutral point centered on 1500. can be changed here
-        uint16_t min_check;         // minimum rc end
-        uint16_t max_check;         // maximum rc end
-        uint16_t rx_min_usec;
-        uint16_t rx_max_usec;
-    };
-
     // arming flags
     static constexpr uint32_t ARMED = 0x01;
     static constexpr uint32_t WAS_EVER_ARMED = 0x02;
@@ -213,8 +178,10 @@ public:
     const failsafe_config_t& getFailsafeConfig() const { return _failsafeConfig; }
     void setFailsafeConfig(const failsafe_config_t& failsafeConfig);
 
-    const rx_config_t& getRX_Config() const { return _rxConfig; }
-    void setRX_Config(const rx_config_t& rxConfig);
+    const RX::config_t& getRX_Config() const { return _rxConfig; }
+    void setRX_Config(const RX::config_t& rxConfig);
+    const RX::failsafe_channel_configs_t& getRX_FailsafeChannelConfigs() const { return _rxFailsafeChannelConfigs; }
+    void setRX_FailsafeChannelConfigs(const RX::failsafe_channel_configs_t& rxFailsafeChannelConfigs);
 
     const rates_t& getRates() const { return _rates; }
     void setRates(const rates_t& rates);
@@ -222,11 +189,9 @@ public:
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
 
-    bool isRcModeActive(uint8_t rcMode) const;
-    static bool pwmIsHigh(uint16_t x) { return x > 1750; }
-    static bool pwmIsLow(uint16_t x) { return x < 1250; }
-    static bool pwmIsMid(uint16_t x) { return (x > 1250) && (x <1750); }
-
+    bool isRcModeActive(MSP_Box::box_id_e rcMode) const;
+    const RC_Modes& getRC_Modes() const { return _rcModes; }
+    RC_Modes& getRC_Modes() { return _rcModes; }
     void setRecordToBlackboxWhenArmed(bool recordToBlackboxWhenArmed) { _recordToBlackboxWhenArmed = recordToBlackboxWhenArmed; }
     void startBlackboxRecording();
     void stopBlackboxRecording();
@@ -235,6 +200,7 @@ public:
     bool getRebootRequired() const;
 private:
     Features _features;
+    RC_Modes _rcModes;
     FlightController& _flightController;
     Autopilot& _autopilot;
     IMU_Filters& _imuFilters;
@@ -255,7 +221,8 @@ private:
     uint32_t _armingDisabledFlags {};
     uint32_t _flightModeFlags {};
     failsafe_config_t _failsafeConfig {};
-    rx_config_t _rxConfig {};
+    RX::config_t _rxConfig {};
+    RX::failsafe_channel_configs_t _rxFailsafeChannelConfigs {};
     // failsafe handling
     failsafe_t _failsafe {
         .phase = FAILSAFE_DISARMED,

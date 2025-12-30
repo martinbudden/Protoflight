@@ -86,15 +86,9 @@ uint32_t Cockpit::getFlightModeFlags() const
     return _flightModeFlags;
 }
 
-bool Cockpit::isRcModeActive(uint8_t rcMode) const
+bool Cockpit::isRcModeActive(MSP_Box::box_id_e rcMode) const
 {
-    if (rcMode == MSP_Box::BOX_OSD) {
-        return false;
-    }
-    if (rcMode == MSP_Box::BOX_STICK_COMMAND_DISABLE) {
-        return false;
-    }
-    return false; // !!TODO rcMode
+    return _rcModes.isRcModeActive(rcMode);
 }
 
 void Cockpit::setRatesToPassThrough()
@@ -105,7 +99,7 @@ void Cockpit::setRatesToPassThrough()
     //_rates.ratesType = RATES_TYPE_ACTUAL;
 }
 
-inline float constrainToLimit(float value, uint16_t limit)
+inline float clampToLimit(float value, uint16_t limit)
 {
     const auto limitF = static_cast<float>(limit);
     return value < -limitF ? -limitF : value > limitF ? limitF : value;
@@ -124,7 +118,7 @@ float Cockpit::applyRates(size_t axis, float rcCommand) const
     const float angleRate = 10.0F * (rcCommand*centerSensitivity + expo*stickMovement);
     //const float angleRate = 0.01F * (rcCommand*centerSensitivity + expo*stickMovement);
 
-    return constrainToLimit(angleRate, _rates.rateLimits[axis]);
+    return clampToLimit(angleRate, _rates.rateLimits[axis]);
 }
 
 /*!
@@ -191,6 +185,8 @@ void Cockpit::updateControls(const controls_t& controls)
     _failsafe.tickCount = controls.tickCount;
 
     handleOnOffSwitch();
+    _rcModes.updateActivatedModes(_receiver);
+
     // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
     enum { CONTROL_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_MODE_CHANNEL = ReceiverBase::AUX3 };
     if (_receiver.getChannelPWM(CONTROL_MODE_CHANNEL)) {
@@ -271,9 +267,14 @@ void Cockpit::setFailsafeConfig(const failsafe_config_t& failsafeConfig)
     _failsafeConfig = failsafeConfig;
 }
 
-void Cockpit::setRX_Config(const rx_config_t& rxConfig)
+void Cockpit::setRX_Config(const RX::config_t& rxConfig)
 {
     _rxConfig = rxConfig;
+}
+
+void Cockpit::setRX_FailsafeChannelConfigs(const RX::failsafe_channel_configs_t& rxFailsafeChannelConfigs)
+{
+    _rxFailsafeChannelConfigs = rxFailsafeChannelConfigs;
 }
 
 void Cockpit::setRates(const rates_t& rates)

@@ -4,6 +4,7 @@
 #include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
+#include "ProtoflightSerialPort.h"
 
 #include <AHRS.h>
 #include <MSP_Protocol.h>
@@ -58,8 +59,32 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         src.readU8();
         break;
     }
-    case MSP_SET_MODE_RANGE:
-        return RESULT_ERROR;
+    case MSP_SET_MODE_RANGE: {
+        uint8_t index = src.readU8();
+        auto& modeActivationConditions = _cockpit.getRC_Modes().getModeActivationConditions();
+        if (index < RC_Modes::MAX_MODE_ACTIVATION_CONDITION_COUNT) {
+            RC_Modes::mode_activation_condition_t& mac = modeActivationConditions[index];
+            index = src.readU8();
+            const MSP_Box::msp_box_t* box = MSP_Box::findBoxByPermanentId(index);
+            if (box) {
+                mac.modeId = static_cast<MSP_Box::box_id_e>(box->boxId);
+                mac.auxChannelIndex = src.readU8();
+                mac.range.startStep = src.readU8();
+                mac.range.endStep = src.readU8();
+                if (src.bytesRemaining() != 0) {
+                    mac.modeLogic = static_cast<RC_Modes::mode_logic_e>(src.readU8());
+                    index = src.readU8();
+                    mac.linkedTo = static_cast<MSP_Box::box_id_e>(MSP_Box::findBoxByPermanentId(index)->boxId);
+                }
+                _cockpit.getRC_Modes().analyzeModeActivationConditions();
+            } else {
+                return RESULT_ERROR;
+            }
+        } else {
+            return RESULT_ERROR;
+        }
+        break;
+    }
     case MSP_SET_ADJUSTMENT_RANGE:
         return RESULT_ERROR;
     case MSP_SET_RC_TUNING: {
@@ -331,8 +356,41 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         _flightController.getMotorMixer().setMixerConfig(mixerConfig);
         break;
     }
-    case MSP_SET_RX_CONFIG:
-        return RESULT_ERROR;
+    case MSP_SET_RX_CONFIG: {
+        RX::config_t rxConfig = _cockpit.getRX_Config();
+
+        rxConfig.serial_rx_provider = src.readU8();
+        rxConfig.max_check = src.readU16();
+        rxConfig.mid_rc = src.readU16();
+        rxConfig.min_check = src.readU16();
+        rxConfig.spektrum_sat_bind = src.readU8();
+        if (src.bytesRemaining() >= 4) {
+            rxConfig.rx_min_usec = src.readU16();
+            rxConfig.rx_max_usec = src.readU16();
+        }
+        if (src.bytesRemaining() >= 4) {
+            src.readU8(); // not required in API 1.44, was rxConfig.rcInterpolation
+            src.readU8(); // not required in API 1.44, was rxConfig.rcInterpolationInterval
+            rxConfig.airModeActivateThreshold = static_cast<uint8_t>((src.readU16() - 1000) / 10);
+        }
+        if (src.bytesRemaining() >= 6) {
+#if defined(USE_RX_SPI)
+            rxSpiConfigMutable()->rx_spi_protocol = src.readU8();
+            rxSpiConfigMutable()->rx_spi_id = src.readU32();
+            rxSpiConfigMutable()->rx_spi_rf_channel_count = src.readU8();
+#else
+            src.readU8();
+            src.readU32();
+            src.readU8();
+#endif
+        }
+        if (src.bytesRemaining() >= 1) {
+            rxConfig.fpvCamAngleDegrees = src.readU8();
+        }
+
+        _cockpit.setRX_Config(rxConfig);
+        break;
+    }
     case MSP_SET_FAILSAFE_CONFIG: {
         Cockpit::failsafe_config_t failsafeConfig{};
         failsafeConfig.delay_deciseconds = src.readU8();
@@ -344,14 +402,50 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         _cockpit.setFailsafeConfig(failsafeConfig);
         break;
     }
-    case MSP_SET_RXFAIL_CONFIG:
+    case MSP_SET_RXFAIL_CONFIG: {
+        const size_t index = src.readU8();
+        if (index < RX::MAX_SUPPORTED_RC_CHANNEL_COUNT) {
+            RX::failsafe_channel_configs_t rxFailsafeChannelConfigs = _cockpit.getRX_FailsafeChannelConfigs();
+            rxFailsafeChannelConfigs[index].mode = src.readU8();
+            rxFailsafeChannelConfigs[index].step = RX::channelValueToFailStep(src.readU16());
+            _cockpit.setRX_FailsafeChannelConfigs(rxFailsafeChannelConfigs);
+            break;
+        }
         return RESULT_ERROR;
-    case MSP_SET_RSSI_CONFIG:
-        return RESULT_ERROR;
+    }
+    case MSP_SET_RSSI_CONFIG: {
+        RX::config_t rxConfig = _cockpit.getRX_Config();
+        rxConfig.rssi_channel = src.readU8();
+        _cockpit.setRX_Config(rxConfig);
+        break;
+    }
     case MSP_SET_RX_MAP:
         return RESULT_ERROR;
-    case MSP_SET_CF_SERIAL_CONFIG:
+    case MSP_SET_CF_SERIAL_CONFIG: {
+#if false
+        const uint8_t portConfigSize = sizeof(uint8_t) + sizeof(uint16_t) + (sizeof(uint8_t) * 4);
+        const size_t dataSize = src.bytesRemaining();
+        if (dataSize % portConfigSize != 0) {
+            return RESULT_ERROR;
+        }
+        uint8_t remainingPortsInPacket = dataSize / portConfigSize;
+        while (remainingPortsInPacket--) {
+            const uint8_t identifier = src.readU8();
+            ProtoFlightSerialPort::config_t* config = nullptr; //!!TODO serialFindPortConfigurationMutable(identifier);
+            if (!config) {
+                return RESULT_ERROR;
+            }
+            config->functionMask = src.readU16();
+            config->msp_baudrateIndex = src.readU8();
+            config->gps_baudrateIndex = src.readU8();
+            config->telemetry_baudrateIndex = src.readU8();
+            config->blackbox_baudrateIndex = src.readU8();
+        }
+        break;
+#else
         return RESULT_ERROR;
+#endif
+    }
     case MSP2_COMMON_SET_SERIAL_CONFIG:
         return RESULT_ERROR;
     case MSP_SET_ACC_TRIM:

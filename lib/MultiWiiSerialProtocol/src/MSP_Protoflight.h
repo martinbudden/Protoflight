@@ -20,7 +20,7 @@ class VTX;
 class MSP_Protoflight : public MSP_Base {
 public:
     virtual ~MSP_Protoflight() = default;
-    MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const Autopilot& autopilot, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd);
+    MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd);
 public:
     enum { RATEPROFILE_MASK = (1 << 7) };
     enum { RTC_NOT_SUPPORTED = 0xFF };

@@ -623,17 +623,17 @@ int32_t NonVolatileStorage::storeFailsafeConfig(const Cockpit::failsafe_config_t
     return storeItem(FailsafeConfigKey, &config, sizeof(config), &DEFAULTS::cockpitFailSafeConfig);
 }
 
-Cockpit::rx_config_t NonVolatileStorage::loadRX_Config() // NOLINT(readability-make-member-function-const)
+RX::config_t NonVolatileStorage::loadRX_Config() // NOLINT(readability-make-member-function-const)
 {
-    {Cockpit::rx_config_t config {};
+    {RX::config_t config {};
     if (loadItem(RX_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
     }}
-    return DEFAULTS::cockpitRX_Config;
+    return DEFAULTS::RX_Config;
 }
 
-int32_t NonVolatileStorage::storeRX_Config(const Cockpit::rx_config_t& config)
+int32_t NonVolatileStorage::storeRX_Config(const RX::config_t& config)
 {
-    return storeItem(RX_ConfigKey, &config, sizeof(config), &DEFAULTS::cockpitRX_Config);
+    return storeItem(RX_ConfigKey, &config, sizeof(config), &DEFAULTS::RX_Config);
 }
 
 Cockpit::rates_t NonVolatileStorage::loadRates(uint8_t rateProfileIndex) const

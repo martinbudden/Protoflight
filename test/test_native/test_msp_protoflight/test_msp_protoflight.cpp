@@ -50,7 +50,7 @@ void test_msp_set_failsafe_config()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
 
-    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
+    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
     static MSP_Stream mspStream(msp);
 
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
@@ -124,7 +124,7 @@ void test_msp_pid_in()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
 
-    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
+    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -171,7 +171,7 @@ void test_msp_features()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
 
-    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
+    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
@@ -199,7 +199,7 @@ void test_msp_raw_imu()
     static Autopilot autopilot(ahrsMessageQueue);
     static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
 
-    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, autopilot, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
+    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
     static MSP_Stream mspStream(msp);
     //static const MSP_Serial mspSerial(mspStream, msp);
 

@@ -201,8 +201,9 @@ static constexpr Cockpit::failsafe_config_t cockpitFailSafeConfig = {
     .stick_threshold_percent = 30,
 };
 
-static constexpr Cockpit::rx_config_t cockpitRX_Config = {
-    .serial_rx_type = Cockpit::SERIAL_RX_CRSF,
+static constexpr RX::config_t RX_Config = {
+    // .rc_map = {},
+    .serial_rx_provider = RX::SERIAL_CRSF,
     .serial_rx_inverted = 0,
     .half_duplex = 0,
     .rssi_channel = 0,

@@ -1,6 +1,6 @@
-#include "Cockpit.h"
 #include "Main.h"
 #include "NonVolatileStorage.h"
+#include "RX.h"
 
 #if defined(M5_UNIFIED)
 #include <M5Unified.h>
@@ -67,8 +67,8 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
 
 #else
 
-    const Cockpit::rx_config_t& rxConfig = nvs.loadRX_Config();
-    auto rxType = static_cast<Cockpit::serial_rx_type>(rxConfig.serial_rx_type);
+    const RX::config_t& rxConfig = nvs.loadRX_Config();
+    auto rxType = static_cast<RX::serial_type_e>(rxConfig.serial_rx_provider);
 
     uint32_t baudrate = ReceiverCRSF::BAUD_RATE;
     uint8_t dataBits = ReceiverCRSF::DATA_BITS;
@@ -76,13 +76,13 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
     uint8_t parity = ReceiverCRSF::PARITY;
 
     switch (rxType) {
-    case Cockpit::SERIAL_RX_SBUS:
+    case RX::SERIAL_SBUS:
         baudrate = ReceiverSBUS::BAUD_RATE;
         dataBits = ReceiverSBUS::DATA_BITS;
         stopBits = ReceiverSBUS::STOP_BITS;
         parity   = ReceiverSBUS::PARITY;
         break;
-    case Cockpit::SERIAL_RX_IBUS:
+    case RX::SERIAL_IBUS:
         baudrate = ReceiverIBUS::BAUD_RATE;
         dataBits = ReceiverIBUS::DATA_BITS;
         stopBits = ReceiverIBUS::STOP_BITS;
@@ -97,13 +97,13 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
     // The receiver will exist for the duration of the program and so never needs to be deleted, so it is OK to leave its pointer dangling.
     ReceiverBase* receiverPtr = nullptr;
     switch (rxType) {
-    case Cockpit::SERIAL_RX_SBUS:
+    case RX::SERIAL_SBUS:
         receiverPtr = new ReceiverSBUS(serialPort);
         break;
-    case Cockpit::SERIAL_RX_IBUS:
+    case RX::SERIAL_IBUS:
         receiverPtr = new ReceiverIBUS(serialPort);
         break;
-    case Cockpit::SERIAL_RX_CRSF:
+    case RX::SERIAL_CRSF:
         receiverPtr = new ReceiverCRSF(serialPort);
         break;
     default:
