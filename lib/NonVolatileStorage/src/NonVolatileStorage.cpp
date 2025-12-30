@@ -73,6 +73,9 @@ constexpr uint16_t MotorMixerConfigKey = 0x0608;
 constexpr uint16_t VTX_ConfigKey = 0x0609;
 constexpr uint16_t GPS_ConfigKey = 0x060A;
 constexpr uint16_t FlightControllerCrashFlipConfigKey = 0x060B;
+constexpr uint16_t RC_ModeActivationConditionsKey = 0x060C;
+constexpr uint16_t RC_AdjustmentRangesKey = 0x060D;
+constexpr uint16_t FeaturesConfigKey = 0x060E;
 
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
@@ -614,6 +617,7 @@ Cockpit::failsafe_config_t NonVolatileStorage::loadFailsafeConfig() // NOLINT(re
 {
     {Cockpit::failsafe_config_t config {};
     if (loadItem(FailsafeConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
     }}
     return DEFAULTS::cockpitFailSafeConfig;
 }
@@ -623,10 +627,25 @@ int32_t NonVolatileStorage::storeFailsafeConfig(const Cockpit::failsafe_config_t
     return storeItem(FailsafeConfigKey, &config, sizeof(config), &DEFAULTS::cockpitFailSafeConfig);
 }
 
+Features::config_t NonVolatileStorage::loadFeaturesConfig()
+{
+    {Features::config_t config {};
+    if (loadItem(FeaturesConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
+    }}
+    return DEFAULTS::featuresConfig;
+}
+
+int32_t NonVolatileStorage::storeFeaturesConfig(const Features::config_t& config)
+{
+    return storeItem(FeaturesConfigKey, &config, sizeof(config), &DEFAULTS::featuresConfig);
+}
+
 RX::config_t NonVolatileStorage::loadRX_Config() // NOLINT(readability-make-member-function-const)
 {
     {RX::config_t config {};
     if (loadItem(RX_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+        return config;
     }}
     return DEFAULTS::RX_Config;
 }
@@ -634,6 +653,36 @@ RX::config_t NonVolatileStorage::loadRX_Config() // NOLINT(readability-make-memb
 int32_t NonVolatileStorage::storeRX_Config(const RX::config_t& config)
 {
     return storeItem(RX_ConfigKey, &config, sizeof(config), &DEFAULTS::RX_Config);
+}
+
+
+RC_Modes::mode_activation_conditions_t NonVolatileStorage::loadRC_ModeActivationConditions()
+{
+    {RC_Modes::mode_activation_conditions_t modeActivationConditions {};
+    if (loadItem(RC_ModeActivationConditionsKey, &modeActivationConditions, sizeof(modeActivationConditions))) {
+        return modeActivationConditions;
+    }}
+    return DEFAULTS::RC_ModeActivationConditions;
+}
+
+int32_t NonVolatileStorage::storeRC_ModeActivationConditions(const RC_Modes::mode_activation_conditions_t& modeActivationConditions)
+{
+    return storeItem(RC_ModeActivationConditionsKey, &modeActivationConditions, sizeof(modeActivationConditions), &DEFAULTS::RC_ModeActivationConditions);
+}
+
+
+RC_Adjustments::adjustment_ranges_t NonVolatileStorage::loadRC_AdjustmentRanges()
+{
+    {RC_Adjustments::adjustment_ranges_t adjustmentRanges {};
+    if (loadItem(RC_AdjustmentRangesKey, &adjustmentRanges, sizeof(adjustmentRanges))) {
+        return adjustmentRanges;
+    }}
+    return DEFAULTS::RC_AdjustmentRanges;
+}
+
+int32_t NonVolatileStorage::storeRC_AdjustmentRanges(const RC_Adjustments::adjustment_ranges_t& adjustmentRanges)
+{
+    return storeItem(RC_AdjustmentRangesKey, &adjustmentRanges, sizeof(adjustmentRanges), &DEFAULTS::RC_ModeActivationConditions);
 }
 
 Cockpit::rates_t NonVolatileStorage::loadRates(uint8_t rateProfileIndex) const
@@ -847,6 +896,9 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
 #endif
 
     storeRates(cockpit.getRates(), ratesProfile);
+    storeRC_ModeActivationConditions(cockpit.getRC_Modes().getModeActivationConditions());
+    storeRC_AdjustmentRanges(cockpit.getRC_Adjustments().getAdjustmentRanges());
+    storeFeaturesConfig(cockpit.getFeaturesConfig());
 
     return OK;
 }

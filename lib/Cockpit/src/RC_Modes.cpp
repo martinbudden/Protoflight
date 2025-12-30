@@ -9,6 +9,11 @@
 #include <cstring>
 
 
+void RC_Modes::setModeActivationConditions(const mode_activation_conditions_t& modeActivationConditions)
+{
+    _modeActivationConditions = modeActivationConditions;
+}
+
 const RC_Modes::mode_activation_condition_t& RC_Modes::getModeActivationCondition(size_t index) const
 {
     assert(index < MAX_MODE_ACTIVATION_CONDITION_COUNT);

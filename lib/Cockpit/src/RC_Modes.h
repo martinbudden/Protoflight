@@ -12,7 +12,6 @@ class ReceiverBase;
 
 class RC_Modes {
 public:
-public:
     virtual ~RC_Modes() = default;
     RC_Modes() = default;
 private:
@@ -54,9 +53,11 @@ public:
     };
     typedef std::array<mode_activation_condition_t, MAX_MODE_ACTIVATION_CONDITION_COUNT> mode_activation_conditions_t;
 public:
+    void setModeActivationConditions(const mode_activation_conditions_t& modeActivationConditions);
+    const mode_activation_conditions_t& getModeActivationConditions() const { return _modeActivationConditions; }
+
     void updateActivatedModes(const ReceiverBase& _receiver);
     bool isModeActive(MSP_Box::id_e rcMode) const;
-    const mode_activation_conditions_t& getModeActivationConditions() const { return _modeActivationConditions; }
     const mode_activation_condition_t& getModeActivationCondition(size_t index) const;
     void setModeActivationCondition(size_t index, const mode_activation_condition_t& modeActivationCondition);
     void analyzeModeActivationConditions();

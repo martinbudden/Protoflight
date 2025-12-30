@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Features.h"
+#include "RC_Adjustments.h"
 #include "RC_Modes.h"
 #include "RX.h"
 
 #include <CockpitBase.h>
-#include <Features.h>
 
 #include <array>
 #include <cstddef>
@@ -155,9 +156,10 @@ public:
     void handleOnOffSwitch();
     virtual void updateControls(const controls_t& controls) override;
 
-    bool featureIsEnabled(uint32_t mask) const { return _features.featureIsEnabled(mask); }
+    bool featureIsEnabled(uint32_t mask) const { return _features.isEnabled(mask); }
     uint32_t enabledFeatures() const { return _features.enabledFeatures(); }
-    void setFeatures(uint32_t features) { _features.setFeatures(features); }
+    void setFeatures(uint32_t features) { _features.set(features); }
+    Features::config_t getFeaturesConfig() const { return Features::config_t { .enabledFeatures = enabledFeatures() }; } 
 
     bool isArmed() const;
     bool wasEverArmed() const;
@@ -192,6 +194,9 @@ public:
     bool isRcModeActive(MSP_Box::id_e rcMode) const;
     const RC_Modes& getRC_Modes() const { return _rcModes; }
     RC_Modes& getRC_Modes() { return _rcModes; }
+    const RC_Adjustments& getRC_Adjustments() const { return _rcAdjustments; }
+    RC_Adjustments& getRC_Adjustments() { return _rcAdjustments; }
+
     void setRecordToBlackboxWhenArmed(bool recordToBlackboxWhenArmed) { _recordToBlackboxWhenArmed = recordToBlackboxWhenArmed; }
     void startBlackboxRecording();
     void stopBlackboxRecording();
@@ -201,6 +206,7 @@ public:
 private:
     Features _features;
     RC_Modes _rcModes;
+    RC_Adjustments _rcAdjustments;
     FlightController& _flightController;
     Autopilot& _autopilot;
     IMU_Filters& _imuFilters;

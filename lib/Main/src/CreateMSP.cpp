@@ -3,7 +3,6 @@
 #include "Main.h"
 #include "SerialPort.h"
 
-#include <Features.h>
 #include <MSP_Serial.h>
 #include <MSP_Stream.h>
 

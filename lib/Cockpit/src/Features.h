@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+
 class Features {
 public:
     enum  features_e {
@@ -30,8 +31,14 @@ public:
         FEATURE_ANTI_GRAVITY        = (1U << 28U),
         //FEATURE_DYNAMIC_FILTER    = (1U << 29U), (removed)
     };
+    struct config_t {
+        uint32_t enabledFeatures;
+    };
 public:
-    bool featureIsEnabled(uint32_t mask) const;
+    bool isEnabled(uint32_t mask) const;
+    void set(uint32_t mask);
+    void clear(uint32_t mask);
     uint32_t enabledFeatures() const;
-    void setFeatures(uint32_t features);
+private:
+    uint32_t _featureMask;
 };

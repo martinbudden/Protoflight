@@ -21,6 +21,9 @@ Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightCon
     cockpit.setCurrentPidProfileIndex(nvs.getCurrentPidProfileIndex());
     cockpit.setCurrentRateProfileIndex(nvs.getCurrentRateProfileIndex());
     cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()));
+    cockpit.getRC_Modes().setModeActivationConditions(nvs.loadRC_ModeActivationConditions());
+    cockpit.getRC_Adjustments().setAdjustmentRanges(nvs.loadRC_AdjustmentRanges());
+    cockpit.setFeatures(nvs.loadFeaturesConfig().enabledFeatures);
 
     return cockpit;
 }

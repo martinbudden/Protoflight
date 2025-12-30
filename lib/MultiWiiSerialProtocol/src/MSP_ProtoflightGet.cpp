@@ -1,5 +1,4 @@
 #include "Cockpit.h"
-#include "Features.h"
 #include "FlightController.h"
 #include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
@@ -245,7 +244,10 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
             const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
             const MSP_Box::box_t* linkedBox = MSP_Box::findBoxByBoxId(mac.linkedTo);
-            dst.writeU8(box->permanentId);     // each element is aligned with MODE_RANGES by the permanentId
+            if (box == nullptr || linkedBox == nullptr) {
+                return RESULT_CMD_UNKNOWN;
+            }
+            dst.writeU8(box->permanentId); // each element is aligned with MODE_RANGES by the permanentId
             dst.writeU8(mac.modeLogic);
             dst.writeU8(linkedBox->permanentId);
         }

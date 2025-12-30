@@ -21,6 +21,10 @@
 
 namespace DEFAULTS {
 
+static constexpr Features::config_t featuresConfig {
+    .enabledFeatures = Features::FEATURE_RX_SERIAL | Features::FEATURE_ANTI_GRAVITY | Features::FEATURE_AIRMODE
+};
+
 static constexpr MotorMixerBase::mixer_config_t motorMixerConfig {
     .type = MotorMixerBase::QUAD_X,
     .yaw_motors_reversed = true,
@@ -219,6 +223,10 @@ static constexpr RX::config_t RX_Config = {
     .rx_min_usec = 885,
     .rx_max_usec = 2115,
 };
+
+static constexpr RC_Modes::mode_activation_conditions_t RC_ModeActivationConditions = {};
+
+static constexpr RC_Adjustments::adjustment_ranges_t RC_AdjustmentRanges = {};
 
 #if defined(USE_ALTITUDE_HOLD)
 static constexpr Autopilot::autopilot_config_t autopilotConfig = {

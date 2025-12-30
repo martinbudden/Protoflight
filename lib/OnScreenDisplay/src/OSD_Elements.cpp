@@ -1,3 +1,4 @@
+#include "Cockpit.h"
 #include "DisplayPortBase.h"
 #include "OSD_Elements.h"
 
@@ -250,11 +251,11 @@ void OSD_Elements::addActiveElements()
     //}
 #endif
 #if defined(USE_DSHOT)
-    //if ((featureIsEnabled(FEATURE_ESC_SENSOR))) {
+    if (_cockpit.featureIsEnabled(Features::FEATURE_ESC_SENSOR)) {
         addActiveElement(OSD_ESC_TEMPERATURE);
         addActiveElement(OSD_ESC_RPM);
         addActiveElement(OSD_ESC_RPM_FREQUENCY);
-    //}
+    }
 #endif
 #if defined(USE_GPS_LAP_TIMER)
     if (sensors(SENSOR_GPS)) {

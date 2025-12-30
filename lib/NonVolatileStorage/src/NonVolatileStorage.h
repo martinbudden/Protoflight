@@ -115,8 +115,17 @@ public:
     Cockpit::failsafe_config_t loadFailsafeConfig();
     int32_t storeFailsafeConfig(const Cockpit::failsafe_config_t& config);
 
+    Features::config_t loadFeaturesConfig();
+    int32_t storeFeaturesConfig(const Features::config_t& config);
+
     RX::config_t loadRX_Config();
     int32_t storeRX_Config(const RX::config_t& config);
+
+    RC_Modes::mode_activation_conditions_t loadRC_ModeActivationConditions();
+    int32_t storeRC_ModeActivationConditions(const RC_Modes::mode_activation_conditions_t& modeActivationConditions);
+
+    RC_Adjustments::adjustment_ranges_t loadRC_AdjustmentRanges();
+    int32_t storeRC_AdjustmentRanges(const RC_Adjustments::adjustment_ranges_t& adjustmentRanges);
 
     Cockpit::rates_t loadRates(uint8_t rateProfileIndex) const;
     int32_t storeRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex);
