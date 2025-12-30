@@ -5,9 +5,24 @@
 #include <TimeMicroseconds.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 
-bool RC_Modes::isModeActive(MSP_Box::box_id_e rcMode) const
+
+const RC_Modes::mode_activation_condition_t& RC_Modes::getModeActivationCondition(size_t index) const
+{
+    assert(index < MAX_MODE_ACTIVATION_CONDITION_COUNT);
+    return _modeActivationConditions[index];
+}
+
+void RC_Modes::setModeActivationCondition(size_t index, const mode_activation_condition_t& modeActivationCondition)
+{
+    if (index < MAX_MODE_ACTIVATION_CONDITION_COUNT) {
+        _modeActivationConditions[index] = modeActivationCondition;
+    }
+}
+
+bool RC_Modes::isModeActive(MSP_Box::id_e rcMode) const
 {
     return _rcModeActivationMask.test(rcMode);
 /*!!
@@ -22,7 +37,7 @@ bool RC_Modes::isModeActive(MSP_Box::box_id_e rcMode) const
 }
 
 
-bool RC_Modes::isModeActivationConditionPresent(MSP_Box::box_id_e modeId)
+bool RC_Modes::isModeActivationConditionPresent(MSP_Box::id_e modeId)
 {
 #if false
     for (const auto& mac : _modeActivationConditions) {
@@ -38,7 +53,7 @@ bool RC_Modes::isModeActivationConditionPresent(MSP_Box::box_id_e modeId)
 #endif
 }
 
-bool RC_Modes::isModeActivationConditionLinked(MSP_Box::box_id_e modeId)
+bool RC_Modes::isModeActivationConditionLinked(MSP_Box::id_e modeId)
 {
 #if false
     for (const auto& modeActivationCondition : _modeActivationConditions) {
@@ -55,7 +70,7 @@ bool RC_Modes::isModeActivationConditionLinked(MSP_Box::box_id_e modeId)
 }
 
 #if false
-void RC_Modes::removeModeActivationCondition(const MSP_Box::box_id_e modeId)
+void RC_Modes::removeModeActivationCondition(const MSP_Box::id_e modeId)
 {
     (void)modeId;
 
@@ -112,7 +127,7 @@ void RC_Modes::analyzeModeActivationConditions()
  *       T       F      - all previous AND macs active, no previous active OR macs
  *       T       T      - at least 1 previous inactive AND mac, no previous active OR macs
  */
-void RC_Modes::updateMasksForMac(const mode_activation_condition_t& mac, box_bitset_t& andMask, box_bitset_t& newMask, bool rangeActive)
+void RC_Modes::updateMasksForMac(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andMask, MSP_Box::bitset_t& newMask, bool rangeActive)
 {
     if (andMask.test(mac.modeId) || !newMask.test(mac.modeId)) {
         const bool bAnd = mac.modeLogic == MODE_LOGIC_AND;
@@ -130,7 +145,7 @@ void RC_Modes::updateMasksForMac(const mode_activation_condition_t& mac, box_bit
     }
 }
 
-void RC_Modes::updateMasksForStickyModes(const mode_activation_condition_t& mac, box_bitset_t& andMask, box_bitset_t& newMask, bool rangeActive)
+void RC_Modes::updateMasksForStickyModes(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andMask, MSP_Box::bitset_t& newMask, bool rangeActive)
 {
     enum { STICKY_MODE_BOOT_DELAY_US = 5000000 }; // 5 seconds
     if (isModeActive(mac.modeId)) {
@@ -158,9 +173,9 @@ bool RC_Modes::isRangeActive(const ReceiverBase& receiver, uint8_t auxChannelInd
 
 void RC_Modes::updateActivatedModes(const ReceiverBase& receiver)
 {
-    box_bitset_t newMask {};
-    box_bitset_t andMask {};
-    box_bitset_t stickyModes {};
+    MSP_Box::bitset_t newMask {};
+    MSP_Box::bitset_t andMask {};
+    MSP_Box::bitset_t stickyModes {};
     stickyModes.set(MSP_Box::BOX_PARALYZE);
 
     // determine which conditions set/clear the mode

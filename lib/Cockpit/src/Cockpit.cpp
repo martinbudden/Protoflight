@@ -86,7 +86,7 @@ uint32_t Cockpit::getFlightModeFlags() const
     return _flightModeFlags;
 }
 
-bool Cockpit::isRcModeActive(MSP_Box::box_id_e rcMode) const
+bool Cockpit::isRcModeActive(MSP_Box::id_e rcMode) const
 {
     return _rcModes.isModeActive(rcMode);
 }

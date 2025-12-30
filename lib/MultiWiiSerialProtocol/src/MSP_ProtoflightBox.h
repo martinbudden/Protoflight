@@ -28,6 +28,6 @@ class Cockpit;
 
 class MSP_ProtoflightBox : public MSP_Box {
 public:
-    size_t packFlightModeFlags(std::bitset<BOX_COUNT>& flightModeFlags, const Cockpit& cockpit);
-    static bool getBoxIdState(const Cockpit& cockpit, box_id_e boxId);
+    size_t packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags, const Cockpit& cockpit);
+    static bool getBoxIdState(const Cockpit& cockpit, id_e boxId);
 };

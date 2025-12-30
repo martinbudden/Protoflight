@@ -46,34 +46,34 @@ public:
         uint8_t endStep;
     };
     struct mode_activation_condition_t {
-        MSP_Box::box_id_e modeId;
+        MSP_Box::id_e modeId;
         uint8_t auxChannelIndex;
         channel_range_t range;
         mode_logic_e modeLogic;
-        MSP_Box::box_id_e  linkedTo;
+        MSP_Box::id_e  linkedTo;
     };
     typedef std::array<mode_activation_condition_t, MAX_MODE_ACTIVATION_CONDITION_COUNT> mode_activation_conditions_t;
-    typedef std::bitset<MSP_Box::BOX_COUNT> box_bitset_t;
 public:
     void updateActivatedModes(const ReceiverBase& _receiver);
-    bool isModeActive(MSP_Box::box_id_e rcMode) const;
+    bool isModeActive(MSP_Box::id_e rcMode) const;
     const mode_activation_conditions_t& getModeActivationConditions() const { return _modeActivationConditions; }
-    mode_activation_conditions_t& getModeActivationConditions() { return _modeActivationConditions; }
+    const mode_activation_condition_t& getModeActivationCondition(size_t index) const;
+    void setModeActivationCondition(size_t index, const mode_activation_condition_t& modeActivationCondition);
     void analyzeModeActivationConditions();
 private:
     bool isRangeActive(const ReceiverBase& _receiver, uint8_t auxChannelIndex, const channel_range_t& range);
-    bool isModeActivationConditionPresent(MSP_Box::box_id_e modeId);
-    bool isModeActivationConditionLinked(MSP_Box::box_id_e modeId);
-    //void removeModeActivationCondition(MSP_Box::box_id_e modeId);
+    bool isModeActivationConditionPresent(MSP_Box::id_e modeId);
+    bool isModeActivationConditionLinked(MSP_Box::id_e modeId);
+    //void removeModeActivationCondition(MSP_Box::id_e modeId);
     bool isModeActivationConditionConfigured(const mode_activation_condition_t& mac, const mode_activation_condition_t& emptyMac);
     static bool isRangeUsable(const channel_range_t& range) { return range.startStep < range.endStep; }
-    void updateMasksForMac(const mode_activation_condition_t& mac, box_bitset_t& andMask, box_bitset_t& newMask, bool rangeActive);
-    void updateMasksForStickyModes(const mode_activation_condition_t& mac, box_bitset_t& andMask, box_bitset_t& newMask, bool rangeActive);
+    void updateMasksForMac(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andMask, MSP_Box::bitset_t& newMask, bool rangeActive);
+    void updateMasksForStickyModes(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andMask, MSP_Box::bitset_t& newMask, bool rangeActive);
 private:
     size_t _activeMacCount = 0;
     size_t _activeLinkedMacCount = 0;
-    box_bitset_t _rcModeActivationMask {};
-    box_bitset_t _stickyModesEverDisabled {};
+    MSP_Box::bitset_t _rcModeActivationMask {};
+    MSP_Box::bitset_t _stickyModesEverDisabled {};
     std::array<uint8_t, MAX_MODE_ACTIVATION_CONDITION_COUNT> _activeMacArray {};
     std::array<uint8_t, MAX_MODE_ACTIVATION_CONDITION_COUNT> _activeLinkedMacArray {};
     std::array<mode_activation_condition_t, MAX_MODE_ACTIVATION_CONDITION_COUNT> _modeActivationConditions {};

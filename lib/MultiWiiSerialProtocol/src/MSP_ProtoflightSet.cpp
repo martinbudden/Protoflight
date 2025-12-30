@@ -60,29 +60,30 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         break;
     }
     case MSP_SET_MODE_RANGE: {
-        auto& modeActivationConditions = _cockpit.getRC_Modes().getModeActivationConditions();
         const uint8_t macIndex = src.readU8();
-        if (macIndex < RC_Modes::MAX_MODE_ACTIVATION_CONDITION_COUNT) {
-            RC_Modes::mode_activation_condition_t& mac = modeActivationConditions[macIndex];
-            const uint8_t boxId = src.readU8();
-            const MSP_Box::msp_box_t* box = MSP_Box::findBoxByPermanentId(boxId);
-            if (box) {
-                mac.modeId = static_cast<MSP_Box::box_id_e>(box->boxId);
-                mac.auxChannelIndex = src.readU8();
-                mac.range.startStep = src.readU8();
-                mac.range.endStep = src.readU8();
-                if (src.bytesRemaining() != 0) {
-                    mac.modeLogic = static_cast<RC_Modes::mode_logic_e>(src.readU8());
-                    const uint8_t linkedToIndex = src.readU8();
-                    mac.linkedTo = static_cast<MSP_Box::box_id_e>(MSP_Box::findBoxByPermanentId(linkedToIndex)->boxId);
-                }
-                _cockpit.getRC_Modes().analyzeModeActivationConditions();
-            } else {
-                return RESULT_ERROR;
-            }
-        } else {
+        if (macIndex >= RC_Modes::MAX_MODE_ACTIVATION_CONDITION_COUNT) {
             return RESULT_ERROR;
         }
+        const uint8_t boxId = src.readU8();
+        const MSP_Box::box_t* box = MSP_Box::findBoxByPermanentId(boxId);
+        if (box == nullptr) {
+            return RESULT_ERROR;
+        }
+        RC_Modes::mode_activation_condition_t mac = _cockpit.getRC_Modes().getModeActivationCondition(macIndex);
+        mac.modeId = static_cast<MSP_Box::id_e>(box->id);
+        mac.auxChannelIndex = src.readU8();
+        mac.range.startStep = src.readU8();
+        mac.range.endStep = src.readU8();
+        if (src.bytesRemaining() >= 2) {
+            mac.modeLogic = static_cast<RC_Modes::mode_logic_e>(src.readU8());
+            const uint8_t linkedToIndex = src.readU8();
+            const MSP_Box::box_t* linkBox = MSP_Box::findBoxByPermanentId(linkedToIndex);
+            if (linkBox) {
+                mac.linkedTo = static_cast<MSP_Box::id_e>(linkBox->id);
+            }
+        }
+        _cockpit.getRC_Modes().setModeActivationCondition(macIndex, mac);
+        _cockpit.getRC_Modes().analyzeModeActivationConditions();
         break;
     }
     case MSP_SET_ADJUSTMENT_RANGE:

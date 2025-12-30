@@ -50,7 +50,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         static constexpr uint16_t SENSOR_ACCELEROMETER = 0x01;
         static constexpr uint16_t SENSOR_GYROSCOPE = 0x01U << 5U;
         dst.writeU16(SENSOR_ACCELEROMETER | SENSOR_GYROSCOPE);
-        std::bitset<MSP_Box::BOX_COUNT> flightModeFlags;
+        MSP_Box::bitset_t flightModeFlags;
         const size_t flagBitCount = _mspBox.packFlightModeFlags(flightModeFlags, _cockpit);
         dst.writeData(&flightModeFlags, 4); // unconditional part of flags, first 32 bits
         dst.writeU8(_nonVolatileStorage.getCurrentPidProfileIndex());
@@ -233,7 +233,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     }
     case MSP_MODE_RANGES:
         for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
-            const MSP_Box::msp_box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
+            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
             dst.writeU8(box->permanentId);
             dst.writeU8(mac.auxChannelIndex);
             dst.writeU8(mac.range.startStep);
@@ -243,8 +243,8 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     case MSP_MODE_RANGES_EXTRA:
         dst.writeU8(RC_Modes::MAX_MODE_ACTIVATION_CONDITION_COUNT);
         for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
-            const MSP_Box::msp_box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
-            const MSP_Box::msp_box_t* linkedBox = MSP_Box::findBoxByBoxId(mac.linkedTo);
+            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
+            const MSP_Box::box_t* linkedBox = MSP_Box::findBoxByBoxId(mac.linkedTo);
             dst.writeU8(box->permanentId);     // each element is aligned with MODE_RANGES by the permanentId
             dst.writeU8(mac.modeLogic);
             dst.writeU8(linkedBox->permanentId);

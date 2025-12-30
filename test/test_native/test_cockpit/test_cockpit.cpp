@@ -243,32 +243,35 @@ void test_rc_modes()
     enum { BOX_HORIZON_PERMANENT = 2 };
     enum { BOX_GPS_RESCUE_PERMANENT = 46 };
 
-    auto& modeActivationConditions = rcModes.getModeActivationConditions();
     {
     const uint8_t macIndex = 0;
-    RC_Modes::mode_activation_condition_t& mac = modeActivationConditions[macIndex];
-    const MSP_Box::msp_box_t* box = MSP_Box::findBoxByPermanentId(BOX_HORIZON_PERMANENT);
+    RC_Modes::mode_activation_condition_t mac = rcModes.getModeActivationCondition(macIndex);
+    const MSP_Box::box_t* box = MSP_Box::findBoxByPermanentId(BOX_HORIZON_PERMANENT);
     TEST_ASSERT_FALSE(box == nullptr);
 
-    mac.modeId = static_cast<MSP_Box::box_id_e>(box->boxId);
+    mac.modeId = static_cast<MSP_Box::id_e>(box->id);
     TEST_ASSERT_EQUAL(MSP_Box::BOX_HORIZON, mac.modeId);
     mac.auxChannelIndex = AUXILIARY_CHANNEL_HORIZON;
     mac.range.startStep = RC_Modes::channelValueToStep(1250);
     mac.range.endStep = RC_Modes::channelValueToStep(1450);
+
+    rcModes.setModeActivationCondition(macIndex, mac);
     rcModes.analyzeModeActivationConditions();
     }
 
     {
     const uint8_t macIndex = 1;
-    RC_Modes::mode_activation_condition_t& mac = modeActivationConditions[macIndex];
-    const MSP_Box::msp_box_t* box = MSP_Box::findBoxByPermanentId(BOX_GPS_RESCUE_PERMANENT);
+    RC_Modes::mode_activation_condition_t mac = rcModes.getModeActivationCondition(macIndex);
+    const MSP_Box::box_t* box = MSP_Box::findBoxByPermanentId(BOX_GPS_RESCUE_PERMANENT);
     TEST_ASSERT_FALSE(box == nullptr);
 
-    mac.modeId = static_cast<MSP_Box::box_id_e>(box->boxId);
+    mac.modeId = static_cast<MSP_Box::id_e>(box->id);
     TEST_ASSERT_EQUAL(MSP_Box::BOX_GPS_RESCUE, mac.modeId);
     mac.auxChannelIndex = AUXILIARY_CHANNEL_GPS_RESCUE;
     mac.range.startStep = RC_Modes::channelValueToStep(1750);
     mac.range.endStep = RC_Modes::channelValueToStep(1850);
+
+    rcModes.setModeActivationCondition(macIndex, mac);
     rcModes.analyzeModeActivationConditions();
     }
 

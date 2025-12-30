@@ -26,7 +26,7 @@
 /*!
 return state of given boxId box, handling ARM and FLIGHT_MODE
 */
-bool MSP_ProtoflightBox::getBoxIdState(const Cockpit& cockpit, MSP_Box::box_id_e boxId)
+bool MSP_ProtoflightBox::getBoxIdState(const Cockpit& cockpit, MSP_Box::id_e boxId)
 {
     static constexpr std::array<uint8_t, BOX_ID_FLIGHTMODE_LAST + 1> boxIdToFlightModeMap = {
         /*[BOX_ARM]*/           0, // not used
@@ -56,7 +56,7 @@ bool MSP_ProtoflightBox::getBoxIdState(const Cockpit& cockpit, MSP_Box::box_id_e
 pack used flightModeFlags into supplied bitset
 returns number of bits used
 */
-size_t MSP_ProtoflightBox::packFlightModeFlags(std::bitset<MSP_Box::BOX_COUNT>& flightModeFlags, const Cockpit& cockpit)
+size_t MSP_ProtoflightBox::packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags, const Cockpit& cockpit)
 {
     // Serialize the flags in the order we delivered them, ignoring BOX NAMES and BOX INDEXES
     flightModeFlags.reset();
@@ -64,8 +64,8 @@ size_t MSP_ProtoflightBox::packFlightModeFlags(std::bitset<MSP_Box::BOX_COUNT>& 
     // only active boxIds are sent in status over MSP, other bits are not counted
     size_t mspBoxIdx = 0;    // index of active boxId (matches sent permanentId and boxNames)
     for (int boxId = 0; boxId < MSP_Box::BOX_COUNT; ++boxId) {
-        if (getActiveBoxId(static_cast<MSP_Box::box_id_e>(boxId))) {
-            if (getBoxIdState(cockpit, static_cast<MSP_Box::box_id_e>(boxId))) {
+        if (getActiveBoxId(static_cast<MSP_Box::id_e>(boxId))) {
+            if (getBoxIdState(cockpit, static_cast<MSP_Box::id_e>(boxId))) {
                 flightModeFlags.set(mspBoxIdx); // box is enabled
             }
             ++mspBoxIdx; // box is active, count it

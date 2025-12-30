@@ -189,7 +189,7 @@ public:
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
 
-    bool isRcModeActive(MSP_Box::box_id_e rcMode) const;
+    bool isRcModeActive(MSP_Box::id_e rcMode) const;
     const RC_Modes& getRC_Modes() const { return _rcModes; }
     RC_Modes& getRC_Modes() { return _rcModes; }
     void setRecordToBlackboxWhenArmed(bool recordToBlackboxWhenArmed) { _recordToBlackboxWhenArmed = recordToBlackboxWhenArmed; }
