@@ -191,38 +191,36 @@ void FlightController::setSimplifiedPID_Settings(const simplified_pid_settings_t
     const float kGain = static_cast<float>(settings.k_gain) / 100.0F;
     const float iGain = static_cast<float>(settings.i_gain) / 100.0F;
 
-    static constexpr float PID_GAIN_MAX = 250.0F;
-    static constexpr float K_GAIN_MAX = 1000.0F;
     PIDF_uint16_t pid16 {};
 
-    pid16.kp = static_cast<uint16_t>(std::clamp(DefaultPIDs[ROLL_RATE_DPS].kp * masterMultiplier * piGain, 0.0F, PID_GAIN_MAX));
-    pid16.ki = static_cast<uint16_t>(std::clamp(DefaultPIDs[ROLL_RATE_DPS].ki * masterMultiplier * piGain * iGain, 0.0F, PID_GAIN_MAX));
-    pid16.kd = static_cast<uint16_t>(std::clamp(DefaultPIDs[ROLL_RATE_DPS].kd * masterMultiplier * dGain, 0.0F, PID_GAIN_MAX));
-    pid16.kk = static_cast<uint16_t>(std::clamp(DefaultPIDs[ROLL_RATE_DPS].kk * masterMultiplier * kGain, 0.0F, K_GAIN_MAX));
+    pid16.kp = std::clamp(static_cast<uint16_t>(DefaultPIDs[ROLL_RATE_DPS].kp * masterMultiplier * piGain), uint16_t{0}, PID_GAIN_MAX);
+    pid16.ki = std::clamp(static_cast<uint16_t>(DefaultPIDs[ROLL_RATE_DPS].ki * masterMultiplier * piGain * iGain), uint16_t{0}, PID_GAIN_MAX);
+    pid16.kd = std::clamp(static_cast<uint16_t>(DefaultPIDs[ROLL_RATE_DPS].kd * masterMultiplier * dGain), uint16_t{0}, PID_GAIN_MAX);
+    pid16.kk = std::clamp(static_cast<uint16_t>(DefaultPIDs[ROLL_RATE_DPS].kk * masterMultiplier * kGain), uint16_t{0}, K_GAIN_MAX);
     setPID_Constants(ROLL_RATE_DPS, pid16);
 
-    pid16.kp = static_cast<uint16_t>(std::clamp(DefaultPIDs[PITCH_RATE_DPS].kp * masterMultiplier * piGain, 0.0F, PID_GAIN_MAX));
+    pid16.kp = std::clamp(static_cast<uint16_t>(DefaultPIDs[PITCH_RATE_DPS].kp * masterMultiplier * piGain), uint16_t{0}, PID_GAIN_MAX);
     const float pitchPI_gain = static_cast<float>(settings.pitch_pi_gain) / 100.0F;
-    pid16.ki = static_cast<uint16_t>(std::clamp(DefaultPIDs[PITCH_RATE_DPS].ki * masterMultiplier * piGain * iGain * pitchPI_gain, 0.0F, PID_GAIN_MAX));
+    pid16.ki = std::clamp(static_cast<uint16_t>(DefaultPIDs[PITCH_RATE_DPS].ki * masterMultiplier * piGain * iGain * pitchPI_gain), uint16_t{0}, PID_GAIN_MAX);
     const float pitchDGain = static_cast<float>(settings.roll_pitch_ratio) / 100.0F;
-    pid16.kd = static_cast<uint16_t>(std::clamp(DefaultPIDs[PITCH_RATE_DPS].kd * masterMultiplier * dGain * pitchDGain, 0.0F, PID_GAIN_MAX));
-    pid16.kk = static_cast<uint16_t>(std::clamp(DefaultPIDs[PITCH_RATE_DPS].kk * masterMultiplier * kGain, 0.0F, K_GAIN_MAX));
+    pid16.kd = std::clamp(static_cast<uint16_t>(DefaultPIDs[PITCH_RATE_DPS].kd * masterMultiplier * dGain * pitchDGain), uint16_t{0}, PID_GAIN_MAX);
+    pid16.kk = std::clamp(static_cast<uint16_t>(DefaultPIDs[PITCH_RATE_DPS].kk * masterMultiplier * kGain), uint16_t{0}, K_GAIN_MAX);
     setPID_Constants(PITCH_RATE_DPS, pid16);
 
     if (_pidTuningMode == PID_TUNING_SIMPLIFIED_RPY) {
-        pid16.kp = static_cast<uint16_t>(std::clamp(DefaultPIDs[YAW_RATE_DPS].kp * masterMultiplier * piGain, 0.0F, PID_GAIN_MAX));
-        pid16.ki = static_cast<uint16_t>(std::clamp(DefaultPIDs[YAW_RATE_DPS].ki * masterMultiplier * piGain * iGain, 0.0F, PID_GAIN_MAX));
-        pid16.kd = static_cast<uint16_t>(std::clamp(DefaultPIDs[YAW_RATE_DPS].kd * masterMultiplier * dGain, 0.0F, PID_GAIN_MAX));
-        pid16.kk = static_cast<uint16_t>(std::clamp(DefaultPIDs[YAW_RATE_DPS].kk * masterMultiplier * kGain, 0.0F, K_GAIN_MAX));
+        pid16.kp = std::clamp(static_cast<uint16_t>(DefaultPIDs[YAW_RATE_DPS].kp * masterMultiplier * piGain), uint16_t{0}, PID_GAIN_MAX);
+        pid16.ki = std::clamp(static_cast<uint16_t>(DefaultPIDs[YAW_RATE_DPS].ki * masterMultiplier * piGain * iGain), uint16_t{0}, PID_GAIN_MAX);
+        pid16.kd = std::clamp(static_cast<uint16_t>(DefaultPIDs[YAW_RATE_DPS].kd * masterMultiplier * dGain), uint16_t{0}, PID_GAIN_MAX);
+        pid16.kk = std::clamp(static_cast<uint16_t>(DefaultPIDs[YAW_RATE_DPS].kk * masterMultiplier * kGain), uint16_t{0}, K_GAIN_MAX);
         setPID_Constants(YAW_RATE_DPS, pid16);
     }
 
 #if defined(USE_D_MAX)
     const float dMaxGainRoll = static_cast<float>(settings.d_max_gain + (100 - settings.d_max_gain) * DefaultPIDs[ROLL_RATE_DPS].kd) / (100.0F*D_MAX_DEFAULT_ROLL);
-    _dMaxConfig.d_max[ROLL_RATE_DPS] = static_cast<uint8_t>(std::clamp(D_MAX_DEFAULT_ROLL * masterMultiplier * dGain * dMaxGainRoll, 0.0F, PID_GAIN_MAX));
+    _dMaxConfig.d_max[ROLL_RATE_DPS] = std::clamp(static_cast<uint8_t>(D_MAX_DEFAULT_ROLL * masterMultiplier * dGain * dMaxGainRoll), uint8_t{0}, uint8_t{PID_GAIN_MAX});
 
     const float dMaxGainPitch = static_cast<float>(settings.d_max_gain + (100 - settings.d_max_gain) * DefaultPIDs[PITCH_RATE_DPS].kd) / (100.0F*D_MAX_DEFAULT_PITCH);
-    _dMaxConfig.d_max[PITCH_RATE_DPS] = static_cast<uint8_t>(std::clamp(D_MAX_DEFAULT_PITCH * masterMultiplier * dGain * pitchDGain * dMaxGainPitch, 0.0F, PID_GAIN_MAX));
+    _dMaxConfig.d_max[PITCH_RATE_DPS] = std::clamp(static_cast<uint8_t>(D_MAX_DEFAULT_PITCH * masterMultiplier * dGain * pitchDGain * dMaxGainPitch), uint8_t{0}, uint8_t{PID_GAIN_MAX});
 #endif
 }
 

@@ -38,7 +38,7 @@ Blackbox::write_e BlackboxProtoflight::writeSystemInformation()
 // See https://github.com/betaflight/blackbox-log-viewer/blob/master/src/flightlog_parser.js for parsing of fields
     //enum { PID_ROLL, PID_PITCH, PID_YAW, PID_LEVEL, PID_MAG, PID_ITEM_COUNT };
 
-    const Cockpit::rates_t rates = _cockpit.getRates();
+    const rates_t rates = _cockpit.getRates();
 
     const MotorMixerBase& motorMixer = _flightController.getMotorMixer();
 #if defined(USE_DYNAMIC_IDLE)
@@ -132,18 +132,18 @@ H levelPID:50,50,75
 //H magPID:40
 //H velPID:55,55,75
 */
-        BLACKBOX_PRINT_HEADER_LINE("rc_rates", "%d,%d,%d",                  rates.rcRates[Cockpit::ROLL],
-                                                                            rates.rcRates[Cockpit::PITCH],
-                                                                            rates.rcRates[Cockpit::YAW]);
-        BLACKBOX_PRINT_HEADER_LINE("rc_expo", "%d,%d,%d",                   rates.rcExpos[Cockpit::ROLL],
-                                                                            rates.rcExpos[Cockpit::PITCH],
-                                                                            rates.rcExpos[Cockpit::YAW]);
-        BLACKBOX_PRINT_HEADER_LINE("rates", "%d,%d,%d",                     rates.rates[Cockpit::ROLL],
-                                                                            rates.rates[Cockpit::PITCH],
-                                                                            rates.rates[Cockpit::YAW]);
-        BLACKBOX_PRINT_HEADER_LINE("rate_limits", "%d,%d,%d",               rates.rateLimits[Cockpit::ROLL],
-                                                                            rates.rateLimits[Cockpit::PITCH],
-                                                                            rates.rateLimits[Cockpit::YAW]);
+        BLACKBOX_PRINT_HEADER_LINE("rc_rates", "%d,%d,%d",                  rates.rcRates[rates_t::ROLL],
+                                                                            rates.rcRates[rates_t::PITCH],
+                                                                            rates.rcRates[rates_t::YAW]);
+        BLACKBOX_PRINT_HEADER_LINE("rc_expo", "%d,%d,%d",                   rates.rcExpos[rates_t::ROLL],
+                                                                            rates.rcExpos[rates_t::PITCH],
+                                                                            rates.rcExpos[rates_t::YAW]);
+        BLACKBOX_PRINT_HEADER_LINE("rates", "%d,%d,%d",                     rates.rates[rates_t::ROLL],
+                                                                            rates.rates[rates_t::PITCH],
+                                                                            rates.rates[rates_t::YAW]);
+        BLACKBOX_PRINT_HEADER_LINE("rate_limits", "%d,%d,%d",               rates.rateLimits[rates_t::ROLL],
+                                                                            rates.rateLimits[rates_t::PITCH],
+                                                                            rates.rateLimits[rates_t::YAW]);
         BLACKBOX_PRINT_HEADER_LINE("rollPID", "%d,%d,%d",                   _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kp,
                                                                             _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).ki,
                                                                             _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kd);

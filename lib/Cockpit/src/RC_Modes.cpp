@@ -29,7 +29,7 @@ void RC_Modes::setModeActivationCondition(size_t index, const mode_activation_co
 
 bool RC_Modes::isModeActive(MSP_Box::id_e rcMode) const
 {
-    return _rcModeActivationMask.test(rcMode);
+    return _rcModeActivationBitset.test(rcMode);
 /*!!
     if (rcMode == BOX_OSD) {
         return false;
@@ -132,36 +132,36 @@ void RC_Modes::analyzeModeActivationConditions()
  *       T       F      - all previous AND macs active, no previous active OR macs
  *       T       T      - at least 1 previous inactive AND mac, no previous active OR macs
  */
-void RC_Modes::updateMasksForMac(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andMask, MSP_Box::bitset_t& newMask, bool rangeActive)
+void RC_Modes::updateMasksForMac(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitset, bool rangeActive)
 {
-    if (andMask.test(mac.modeId) || !newMask.test(mac.modeId)) {
+    if (andBitset.test(mac.modeId) || !newBitset.test(mac.modeId)) {
         const bool bAnd = mac.modeLogic == MODE_LOGIC_AND;
         if (!bAnd) { // OR mode_activation_condition
             if (rangeActive) {
-                andMask.reset(mac.modeId);
-                newMask.set(mac.modeId);
+                andBitset.reset(mac.modeId);
+                newBitset.set(mac.modeId);
             }
         } else { // AND mode_activation_condition
-            andMask.set(mac.modeId);
+            andBitset.set(mac.modeId);
             if (!rangeActive) {
-                newMask.set(mac.modeId);
+                newBitset.set(mac.modeId);
             }
         }
     }
 }
 
-void RC_Modes::updateMasksForStickyModes(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andMask, MSP_Box::bitset_t& newMask, bool rangeActive)
+void RC_Modes::updateMasksForStickyModes(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitset, bool rangeActive)
 {
     enum { STICKY_MODE_BOOT_DELAY_US = 5000000 }; // 5 seconds
     if (isModeActive(mac.modeId)) {
-        andMask.reset(mac.modeId);
-        newMask.set(mac.modeId);
+        andBitset.reset(mac.modeId);
+        newBitset.set(mac.modeId);
     } else {
-        if (_stickyModesEverDisabled.test(mac.modeId)) {
-            updateMasksForMac(mac, andMask, newMask, rangeActive);
+        if (_stickyModesEverDisabledBitset.test(mac.modeId)) {
+            updateMasksForMac(mac, andBitset, newBitset, rangeActive);
         } else {
-            if (timeUs() >= STICKY_MODE_BOOT_DELAY_US && !rangeActive) {
-                _stickyModesEverDisabled.set(mac.modeId);
+            if (timeUs() >= STICKY_MODE_BOOT_DELAY_US && !rangeActive) { // cppcheck-suppress knownConditionTrueFalse
+                _stickyModesEverDisabledBitset.set(mac.modeId);
             }
         }
     }
@@ -178,8 +178,8 @@ bool RC_Modes::isRangeActive(const ReceiverBase& receiver, uint8_t auxChannelInd
 
 void RC_Modes::updateActivatedModes(const ReceiverBase& receiver)
 {
-    MSP_Box::bitset_t newMask {};
-    MSP_Box::bitset_t andMask {};
+    MSP_Box::bitset_t newBitset {};
+    MSP_Box::bitset_t andBitset {};
     MSP_Box::bitset_t stickyModes {};
     stickyModes.set(MSP_Box::BOX_PARALYZE);
 
@@ -188,10 +188,10 @@ void RC_Modes::updateActivatedModes(const ReceiverBase& receiver)
     for (const auto& modeActivationCondition : _modeActivationConditions) {
         if (stickyModes.test(modeActivationCondition.modeId)) {
             const bool rangeActive = isRangeActive(receiver, modeActivationCondition.auxChannelIndex, modeActivationCondition.range);
-            updateMasksForStickyModes(modeActivationCondition, andMask, newMask, rangeActive);
+            updateMasksForStickyModes(modeActivationCondition, andBitset, newBitset, rangeActive);
         } else if (modeActivationCondition.modeId < MSP_Box::BOX_COUNT) {
             const bool rangeActive = isRangeActive(receiver, modeActivationCondition.auxChannelIndex, modeActivationCondition.range);
-            updateMasksForMac(modeActivationCondition, andMask, newMask, rangeActive);
+            updateMasksForMac(modeActivationCondition, andBitset, newBitset, rangeActive);
         }
         ++ii;
         if (ii == _activeMacCount) {
@@ -202,15 +202,24 @@ void RC_Modes::updateActivatedModes(const ReceiverBase& receiver)
     // Update linked modes
     ii = 0;
     for (const auto& modeActivationCondition : _modeActivationConditions) {
-        const bool rangeActive = andMask.test(modeActivationCondition.linkedTo) != newMask.test(modeActivationCondition.linkedTo);
-        updateMasksForMac(modeActivationCondition, andMask, newMask, rangeActive);
+        const bool rangeActive = andBitset.test(modeActivationCondition.linkedTo) != newBitset.test(modeActivationCondition.linkedTo);
+        updateMasksForMac(modeActivationCondition, andBitset, newBitset, rangeActive);
         ++ii;
         if (ii == _activeLinkedMacCount) {
             break;
         }
     }
 
-    _rcModeActivationMask = newMask ^ andMask;
+    _rcModeActivationBitset = newBitset ^ andBitset;
+#if false
+    enum { ANGLE_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_HOLD_MODE_CHANNEL = ReceiverBase::AUX3 };
+    if (receiver.getChannelPWM(ANGLE_MODE_CHANNEL)) {
+        _rcModeActivationBitset.set(MSP_Box::BOX_ANGLE);
+    }
+    if (receiver.getChannelPWM(ALTITUDE_HOLD_MODE_CHANNEL)) {
+        _rcModeActivationBitset.set(MSP_Box::BOX_ALTHOLD);
+    }
+#endif
 
     //airmodeEnabled = featureIsEnabled(FEATURE_AIRMODE) || IS_RC_MODE_ACTIVE(BOX_AIRMODE);
 }

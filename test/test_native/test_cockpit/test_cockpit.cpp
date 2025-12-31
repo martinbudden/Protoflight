@@ -35,16 +35,16 @@ static NonVolatileStorage nvs;
 static ReceiverVirtual receiver;
 
 
-static const Cockpit::rates_t cockpitRates {
-    .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
+static const rates_t cockpitRates {
+    .rateLimits = { rates_t::LIMIT_MAX, rates_t::LIMIT_MAX, rates_t::LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },
     .rates = { 67, 67, 67 },
     .throttleMidpoint = 50,
     .throttleExpo = 0,
-    .throttleLimitType = Cockpit::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitType = rates_t::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
-    //.ratesType = Cockpit::RATES_TYPE_ACTUAL
+    //.ratesType = rates_t::RATES_TYPE_ACTUAL
 };
 
 void setUp() {
@@ -55,27 +55,27 @@ void tearDown() {
 
 void test_cockpit()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
     cockpit.setRates(cockpitRates);
 
-    Cockpit::rates_t rates = cockpit.getRates();
+    rates_t rates = cockpit.getRates();
 
     // rates.rcRates apply a linear scale factor
     rates.rcRates = {100, 100, 100};
     rates.rcExpos = {0, 0, 0};
     rates.rates = {0, 0, 0};
-    //rates.ratesType = Cockpit::RATES_TYPE_ACTUAL;
+    //rates.ratesType = rates_t::RATES_TYPE_ACTUAL;
     cockpit.setRates(rates);
 
-    float roll = cockpit.applyRates(Cockpit::ROLL, 0.0F);
+    float roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.25F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.25F);
     TEST_ASSERT_EQUAL_FLOAT(250.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.5F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.5F);
     TEST_ASSERT_EQUAL_FLOAT(500.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.75F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.75F);
     TEST_ASSERT_EQUAL_FLOAT(750.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 1.0F);
+    roll = cockpit.applyRates(rates_t::ROLL, 1.0F);
     TEST_ASSERT_EQUAL_FLOAT(1000.0, roll);
 
     // rates.rates apply a nonlinear scale factor
@@ -83,62 +83,62 @@ void test_cockpit()
     rates.rates = {60, 60, 60};
     cockpit.setRates(rates);
 
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.0F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.25F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.25F);
     TEST_ASSERT_EQUAL_FLOAT(37.5F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.50F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.50F);
     TEST_ASSERT_EQUAL_FLOAT(150.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.75F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.75F);
     TEST_ASSERT_EQUAL_FLOAT(337.5F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 1.0F);
+    roll = cockpit.applyRates(rates_t::ROLL, 1.0F);
     TEST_ASSERT_EQUAL_FLOAT(600.0F, roll); // 100.0F / (1.0F - 0.60F)
 }
 
 void test_cockpit_passthrough()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
 
-    float roll = cockpit.applyRates(Cockpit::ROLL, 0.0F);
+    float roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.25F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.25F);
     TEST_ASSERT_EQUAL_FLOAT(250.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.5F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.5F);
     TEST_ASSERT_EQUAL_FLOAT(500.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.75F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.75F);
     TEST_ASSERT_EQUAL_FLOAT(750.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 1.0F);
+    roll = cockpit.applyRates(rates_t::ROLL, 1.0F);
     TEST_ASSERT_EQUAL_FLOAT(1000.0F, roll);
 }
 
 void test_cockpit_set_passthrough()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
 
     cockpit.setRatesToPassThrough();
 
-    float roll = cockpit.applyRates(Cockpit::ROLL, 0.0F);
+    float roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.25F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.25F);
     TEST_ASSERT_EQUAL_FLOAT(250.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.5F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.5F);
     TEST_ASSERT_EQUAL_FLOAT(500.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.75F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.75F);
     TEST_ASSERT_EQUAL_FLOAT(750.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 1.0F);
+    roll = cockpit.applyRates(rates_t::ROLL, 1.0F);
     TEST_ASSERT_EQUAL_FLOAT(1000.0F, roll);
 }
 
 void test_cockpit_defaults()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
     cockpit.setRates(cockpitRates);
 
-    const Cockpit::rates_t rates = cockpit.getRates();
+    const rates_t rates = cockpit.getRates();
 
-    TEST_ASSERT_EQUAL(Cockpit::RATE_LIMIT_MAX, rates.rateLimits[0]);
-    TEST_ASSERT_EQUAL(Cockpit::RATE_LIMIT_MAX, rates.rateLimits[1]);
-    TEST_ASSERT_EQUAL(Cockpit::RATE_LIMIT_MAX, rates.rateLimits[2]);
+    TEST_ASSERT_EQUAL(rates_t::LIMIT_MAX, rates.rateLimits[0]);
+    TEST_ASSERT_EQUAL(rates_t::LIMIT_MAX, rates.rateLimits[1]);
+    TEST_ASSERT_EQUAL(rates_t::LIMIT_MAX, rates.rateLimits[2]);
     TEST_ASSERT_EQUAL(7, rates.rcRates[0]);
     TEST_ASSERT_EQUAL(7, rates.rcRates[1]);
     TEST_ASSERT_EQUAL(7, rates.rcRates[2]);
@@ -150,46 +150,46 @@ void test_cockpit_defaults()
     TEST_ASSERT_EQUAL(67, rates.rates[2]);
     TEST_ASSERT_EQUAL(50, rates.throttleMidpoint);
     TEST_ASSERT_EQUAL(0, rates.throttleExpo);
-    TEST_ASSERT_EQUAL(Cockpit::THROTTLE_LIMIT_TYPE_OFF, rates.throttleLimitType);
+    TEST_ASSERT_EQUAL(rates_t::THROTTLE_LIMIT_TYPE_OFF, rates.throttleLimitType);
     TEST_ASSERT_EQUAL(100, rates.throttleLimitPercent);
-    //TEST_ASSERT_EQUAL(Cockpit::RATES_TYPE_ACTUAL, rates.ratesType);
+    //TEST_ASSERT_EQUAL(rates_t::RATES_TYPE_ACTUAL, rates.ratesType);
 
-    float roll = cockpit.applyRates(Cockpit::ROLL, 0.0F);
+    float roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.25F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.25F);
     TEST_ASSERT_EQUAL_FLOAT(55.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.5F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.5F);
     TEST_ASSERT_EQUAL_FLOAT(185.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.75F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.75F);
     TEST_ASSERT_EQUAL_FLOAT(390.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 1.0F);
+    roll = cockpit.applyRates(rates_t::ROLL, 1.0F);
     TEST_ASSERT_EQUAL_FLOAT(670.0F, roll);
 }
 
 void test_cockpit_constrain()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
     cockpit.setRates(cockpitRates);
 
-    Cockpit::rates_t rates = cockpit.getRates(); // NOLINT(misc-const-correctness)
+    rates_t rates = cockpit.getRates(); // NOLINT(misc-const-correctness)
     rates.rcRates = {200, 200, 200};
     cockpit.setRates(rates);
 
-    float roll = cockpit.applyRates(Cockpit::ROLL, 0.0F);
+    float roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.25F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.25F);
     TEST_ASSERT_EQUAL_FLOAT(500.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.5F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.5F);
     TEST_ASSERT_EQUAL_FLOAT(1000.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 0.75F);
+    roll = cockpit.applyRates(rates_t::ROLL, 0.75F);
     TEST_ASSERT_EQUAL_FLOAT(1500.0F, roll);
-    roll = cockpit.applyRates(Cockpit::ROLL, 1.0F);
+    roll = cockpit.applyRates(rates_t::ROLL, 1.0F);
     TEST_ASSERT_EQUAL_FLOAT(1998.0F, roll);
 }
 
 void test_cockpit_throttle()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
     cockpit.setRates(cockpitRates);
 
     float throttle = cockpit.mapThrottle(0.0F);
@@ -203,7 +203,7 @@ void test_cockpit_throttle()
     throttle = cockpit.mapThrottle(1.0F);
     TEST_ASSERT_EQUAL_FLOAT(1.0F, throttle);
 
-    Cockpit::rates_t rates = cockpit.getRates();
+    rates_t rates = cockpit.getRates();
     rates.throttleLimitPercent = 80;
     cockpit.setRates(rates);
 
@@ -291,6 +291,92 @@ void test_rc_modes()
     rcModes.updateActivatedModes(receiver);
     TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE));
 }
+
+void test_rc_modes_init()
+{
+    static RC_Modes rcModes;
+    enum { AUXILIARY_CHANNEL_ARM = ReceiverBase::AUX1 };
+    enum { AUXILIARY_CHANNEL_ANGLE_MODE = ReceiverBase::AUX2 };
+    enum { AUXILIARY_CHANNEL_ALTITUDE_HOLD = ReceiverBase::AUX3 };
+    enum { BOX_ARM_PERMANENT = 0 };
+    enum { BOX_ANGLE_PERMANENT = 1 };
+    enum { BOX_ALTHOLD_PERMANENT = 3 };
+
+    static constexpr uint8_t MAC_INDEX_ARM = 0;
+    static constexpr uint8_t MAC_INDEX_ANGLE = 1;
+    static constexpr uint8_t MAC_INDEX_ALTHOLD = 2;
+
+    RC_Modes::mode_activation_condition_t macArm = rcModes.getModeActivationCondition(MAC_INDEX_ARM);
+    const MSP_Box::box_t* boxArm = MSP_Box::findBoxByPermanentId(BOX_ARM_PERMANENT);
+    TEST_ASSERT_FALSE(boxArm == nullptr);
+    macArm.modeId = static_cast<MSP_Box::id_e>(boxArm->id);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_ARM, macArm.modeId);
+    macArm.auxChannelIndex = AUXILIARY_CHANNEL_ARM;
+    macArm.range.startStep = RC_Modes::RANGE_STEP_MID;
+    macArm.range.endStep = RC_Modes::RANGE_STEP_MAX;
+    rcModes.setModeActivationCondition(MAC_INDEX_ARM, macArm);
+
+    RC_Modes::mode_activation_condition_t macAngle = rcModes.getModeActivationCondition(MAC_INDEX_ANGLE);
+    const MSP_Box::box_t* boxAngle = MSP_Box::findBoxByPermanentId(BOX_ANGLE_PERMANENT);
+    TEST_ASSERT_FALSE(boxAngle == nullptr);
+    macAngle.modeId = static_cast<MSP_Box::id_e>(boxAngle->id);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_ANGLE, macAngle.modeId);
+    macAngle.auxChannelIndex = AUXILIARY_CHANNEL_ANGLE_MODE;
+    macAngle.range.startStep = RC_Modes::RANGE_STEP_MID;
+    macAngle.range.endStep = RC_Modes::RANGE_STEP_MAX;
+    rcModes.setModeActivationCondition(MAC_INDEX_ANGLE, macAngle);
+
+    RC_Modes::mode_activation_condition_t macAltitudeHold = rcModes.getModeActivationCondition(MAC_INDEX_ALTHOLD);
+    const MSP_Box::box_t* boxAltitudeHold = MSP_Box::findBoxByPermanentId(BOX_ALTHOLD_PERMANENT);
+    TEST_ASSERT_FALSE(boxAltitudeHold == nullptr);
+    macAltitudeHold.modeId = static_cast<MSP_Box::id_e>(boxAltitudeHold->id);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_ALTHOLD, macAltitudeHold.modeId);
+    macAltitudeHold.auxChannelIndex = AUXILIARY_CHANNEL_ALTITUDE_HOLD;
+    macAltitudeHold.range.startStep = RC_Modes::RANGE_STEP_MID;
+    macAltitudeHold.range.endStep = RC_Modes::RANGE_STEP_MAX;
+    rcModes.setModeActivationCondition(MAC_INDEX_ALTHOLD, macAltitudeHold);
+
+    rcModes.analyzeModeActivationConditions();
+
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ARM, 899);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ARM, 900);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ARM, 1000);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ARM, 1499);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ARM, 1500);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ARM, 2000);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ARM, 2099);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ARM, 2100);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ANGLE_MODE, 1100);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ANGLE));
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ANGLE_MODE, 1600);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ANGLE));
+
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ALTITUDE_HOLD, 1400);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ALTHOLD));
+    receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ALTITUDE_HOLD, 1800);
+    rcModes.updateActivatedModes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ALTHOLD));
+}
 // NOLINTEND(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
@@ -304,6 +390,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
     RUN_TEST(test_cockpit_constrain);
     RUN_TEST(test_cockpit_throttle);
     RUN_TEST(test_rc_modes);
+    RUN_TEST(test_rc_modes_init);
 
     UNITY_END();
 }

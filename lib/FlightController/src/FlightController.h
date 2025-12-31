@@ -57,7 +57,6 @@ public:
     };
     enum failsafe_e { FAILSAFE_OFF, FAILSAFE_ON };
     static constexpr int TIME_CHECKS_COUNT = 4;
-    //enum { AXIS_COUNT = 3 }; //!< roll, pitch, and yaw axis count
     enum { RP_AXIS_COUNT = 2 }; //!< roll and pitch axis count
     enum flight_dynamics_index_e { FD_ROLL = 0, FD_PITCH = 1, FD_YAW = 2, RPY_AXIS_COUNT = 3 };
     enum pid_index_e {
@@ -206,6 +205,8 @@ public:
         PID_TUNING_SIMPLIFIED_RPY,
         PID_TUNING_MODE_COUNT
     };
+    static constexpr uint16_t PID_GAIN_MAX = 250;
+    static constexpr uint16_t K_GAIN_MAX = 1000;
     struct simplified_pid_settings_t {
         uint16_t multiplier;
         uint16_t roll_pitch_ratio;

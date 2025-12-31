@@ -444,7 +444,7 @@ Targets
     #define MSP_DISPLAYPORT_UART_INDEX  1
     #define MSP_DISPLAYPORT_UART_PINS   UART_1_PINS
 
-    #define USE_OSD
+    //#define USE_OSD
     //#define USE_CMS
 
 #elif defined(TARGET_SEED_XIAO_NRF52840_SENSE)

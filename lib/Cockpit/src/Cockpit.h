@@ -4,6 +4,7 @@
 #include "RC_Adjustments.h"
 #include "RC_Modes.h"
 #include "RX.h"
+#include "Rates.h"
 
 #include <CockpitBase.h>
 
@@ -54,23 +55,8 @@ enum { ARMING_DISABLE_FLAGS_COUNT = 27 };
 
 class Cockpit : public CockpitBase {
 public:
-    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters,  Debug& _debug, NonVolatileStorage& nvs);
+    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters,  Debug& debug, NonVolatileStorage& nvs, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs);
 public:
-    enum { ROLL = 0, PITCH = 1, YAW = 2, AXIS_COUNT = 3 };
-    enum { RATE_LIMIT_MAX = 1998 };
-    enum throttleLimitType_e { THROTTLE_LIMIT_TYPE_OFF = 0, THROTTLE_LIMIT_TYPE_SCALE, THROTTLE_LIMIT_TYPE_CLIP, THROTTLE_LIMIT_TYPE_COUNT };
-    enum ratesType_e { RATES_TYPE_BETAFLIGHT = 0, RATES_TYPE_RACEFLIGHT, RATES_TYPE_KISS, RATES_TYPE_ACTUAL, RATES_TYPE_QUICK, RATES_TYPE_COUNT } ;
-    struct rates_t {
-        std::array<uint16_t, AXIS_COUNT> rateLimits;
-        std::array<uint8_t, AXIS_COUNT> rcRates; // center sensitivity
-        std::array<uint8_t, AXIS_COUNT> rcExpos; // movement sensitivity, nonlinear
-        std::array<uint8_t, AXIS_COUNT> rates; // movement sensitivity, linear
-        uint8_t throttleMidpoint; // not used
-        uint8_t throttleExpo;
-        uint8_t throttleLimitType; // not used
-        uint8_t throttleLimitPercent; // Sets the maximum pilot commanded throttle limit
-        //uint8_t ratesType; // not used
-    };
     enum failsafe_phase_e {
         FAILSAFE_DISARMED = 0,
         FAILSAFE_IDLE,
@@ -113,33 +99,6 @@ public:
     static constexpr uint32_t ARMED = 0x01;
     static constexpr uint32_t WAS_EVER_ARMED = 0x02;
     static constexpr uint32_t WAS_ARMED_WITH_PREARM = 0x04;
-    // flight mode flags
-    enum log2_flight_mode_flag_e {
-        LOG2_ANGLE_MODE         = 0,
-        LOG2_HORIZON_MODE       = 1,
-        LOG2_MAG_MODE           = 2,
-        LOG2_ALTITUDE_HOLD_MODE = 3,
-        LOG2_GPS_HOME_MODE      = 4,
-        LOG2_POSITION_HOLD_MODE = 5,
-        LOG2_HEADFREE_MODE      = 6,
-        LOG2_CHIRP_MODE         = 7,
-        LOG2_PASSTHRU_MODE      = 8,
-        LOG2_RANGEFINDER_MODE   = 9,
-        LOG2_FAILSAFE_MODE      = 10,
-        LOG2_GPS_RESCUE_MODE    = 11
-    };
-    static constexpr uint32_t ANGLE_MODE      = 1U << LOG2_ANGLE_MODE;
-    static constexpr uint32_t HORIZON_MODE    = 1U << LOG2_HORIZON_MODE;
-    static constexpr uint32_t MAG_MODE        = 1U << LOG2_MAG_MODE;
-    static constexpr uint32_t ALTITUDE_HOLD_MODE = 1U << LOG2_ALTITUDE_HOLD_MODE;
-    static constexpr uint32_t GPS_HOME_MODE   = 1U << LOG2_GPS_HOME_MODE;
-    static constexpr uint32_t POSITION_HOLD_MODE = 1U << LOG2_POSITION_HOLD_MODE;
-    static constexpr uint32_t HEADFREE_MODE   = 1U << LOG2_HEADFREE_MODE;
-    static constexpr uint32_t CHIRP_MODE      = 1U << LOG2_CHIRP_MODE;
-    static constexpr uint32_t PASSTHRU_MODE   = 1U << LOG2_PASSTHRU_MODE;
-    static constexpr uint32_t RANGEFINDER_MODE= 1U << LOG2_RANGEFINDER_MODE;
-    static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
-    static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
 public:
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
 
@@ -168,10 +127,6 @@ public:
     void setArmingDisabledFlag(arming_disabled_flags_e flag);
     void clearArmingDisabledFlag(arming_disabled_flags_e flag);
     uint32_t getArmingDisableFlags() const { return _armingDisabledFlags; }
-
-    bool isFlightModeFlagSet(uint32_t flightModeFlag) const;
-    void setFlightModeFlag(uint32_t flightModeFlag);
-    void clearFlightModeFlag(uint32_t flightModeFlag);
     uint32_t getFlightModeFlags() const;
 
     virtual void checkFailsafe(uint32_t tickCount) override;
@@ -204,22 +159,22 @@ public:
     void setRebootRequired();
     bool getRebootRequired() const;
 private:
-    Features _features;
     RC_Modes _rcModes;
     RC_Adjustments _rcAdjustments;
+    Features _features {};
     FlightController& _flightController;
     Autopilot& _autopilot;
     IMU_Filters& _imuFilters;
     Debug& _debug;
     NonVolatileStorage& _nvs;
     rates_t _rates {
-        .rateLimits = { RATE_LIMIT_MAX, RATE_LIMIT_MAX, RATE_LIMIT_MAX },
+        .rateLimits = { rates_t::LIMIT_MAX, rates_t::LIMIT_MAX, rates_t::LIMIT_MAX },
         .rcRates = { 100, 100, 100 },
         .rcExpos = { 0, 0, 0 },
         .rates = { 0, 0, 0 },
         .throttleMidpoint = 50,
         .throttleExpo = 0,
-        .throttleLimitType = THROTTLE_LIMIT_TYPE_OFF,
+        .throttleLimitType = rates_t::THROTTLE_LIMIT_TYPE_OFF,
         .throttleLimitPercent = 100
     };
     Blackbox* _blackbox {nullptr};
@@ -241,4 +196,5 @@ private:
     bool _recordToBlackboxWhenArmed { false };
     bool _rebootRequired {false};
     bool _onOffSwitchPressed {false}; // on/off switch debouncing
+    bool _cliMode {false};
 };

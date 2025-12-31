@@ -86,44 +86,59 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         _cockpit.getRC_Modes().analyzeModeActivationConditions();
         break;
     }
-    case MSP_SET_ADJUSTMENT_RANGE:
+    case MSP_SET_ADJUSTMENT_RANGE: {
+        const uint8_t adjustmentRangeIndex = src.readU8();
+        if (adjustmentRangeIndex >= RC_Adjustments::MAX_ADJUSTMENT_RANGE_COUNT) {
+            return RESULT_ERROR;
+        }
+        RC_Adjustments& rcAdjustments = _cockpit.getRC_Adjustments();
+        RC_Adjustments::adjustment_range_t adjustmentRange = rcAdjustments.getAdjustmentRange(adjustmentRangeIndex);
+        src.readU8(); // was adjustmentRange.adjustmentIndex
+        adjustmentRange.auxChannelIndex = src.readU8();
+        adjustmentRange.range.startStep = src.readU8();
+        adjustmentRange.range.endStep = src.readU8();
+        adjustmentRange.adjustmentConfig = src.readU8();
+        adjustmentRange.auxSwitchChannelIndex = src.readU8();
+        rcAdjustments.setAdjustmentRange(adjustmentRangeIndex, adjustmentRange);
+        rcAdjustments.activeAdjustmentRangeReset();
         return RESULT_ERROR;
+    }
     case MSP_SET_RC_TUNING: {
         if (src.bytesRemaining() < 10) {
             return RESULT_ERROR;
         }
-        Cockpit::rates_t rates = _cockpit.getRates();
+        rates_t rates = _cockpit.getRates();
         uint8_t value = src.readU8();
-        if (rates.rcRates[Cockpit::PITCH] == rates.rcRates[Cockpit::ROLL]) {
-            rates.rcRates[Cockpit::PITCH] = value;
+        if (rates.rcRates[rates_t::PITCH] == rates.rcRates[rates_t::ROLL]) {
+            rates.rcRates[rates_t::PITCH] = value;
         }
-        rates.rcRates[Cockpit::ROLL] = value;
+        rates.rcRates[rates_t::ROLL] = value;
 
         value = src.readU8();
-        if (rates.rcExpos[Cockpit::PITCH] == rates.rcExpos[Cockpit::ROLL]) {
-            rates.rcExpos[Cockpit::PITCH] = value;
+        if (rates.rcExpos[rates_t::PITCH] == rates.rcExpos[rates_t::ROLL]) {
+            rates.rcExpos[rates_t::PITCH] = value;
         }
-        rates.rcExpos[Cockpit::ROLL] = value;
+        rates.rcExpos[rates_t::ROLL] = value;
 
-        rates.rcRates[Cockpit::ROLL] = src.readU8();
-        rates.rcRates[Cockpit::PITCH] = src.readU8();
-        rates.rcRates[Cockpit::YAW] = src.readU8();
+        rates.rcRates[rates_t::ROLL] = src.readU8();
+        rates.rcRates[rates_t::PITCH] = src.readU8();
+        rates.rcRates[rates_t::YAW] = src.readU8();
         src.readU8(); // skip tpa_rate
         rates.throttleMidpoint = src.readU8();
         rates.throttleExpo = src.readU8();
         src.readU16(); // skip tpa_breakpoint
 
         if (src.bytesRemaining() >= 1) {
-            rates.rcExpos[Cockpit::YAW] = src.readU8();
+            rates.rcExpos[rates_t::YAW] = src.readU8();
         }
         if (src.bytesRemaining() >= 1) {
-            rates.rcRates[Cockpit::YAW] = src.readU8();
+            rates.rcRates[rates_t::YAW] = src.readU8();
         }
         if (src.bytesRemaining() >= 1) {
-            rates.rcRates[Cockpit::PITCH] = src.readU8();
+            rates.rcRates[rates_t::PITCH] = src.readU8();
         }
         if (src.bytesRemaining() >= 1) {
-            rates.rcExpos[Cockpit::PITCH] = src.readU8();
+            rates.rcExpos[rates_t::PITCH] = src.readU8();
         }
         // version 1.41
         if (src.bytesRemaining() >= 2) {
@@ -132,9 +147,9 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         }
         // version 1.42
         if (src.bytesRemaining() >= 6) {
-            rates.rateLimits[Cockpit::ROLL] = src.readU16();
-            rates.rateLimits[Cockpit::PITCH] = src.readU16();
-            rates.rateLimits[Cockpit::YAW] = src.readU16();
+            rates.rateLimits[rates_t::ROLL] = src.readU16();
+            rates.rateLimits[rates_t::PITCH] = src.readU16();
+            rates.rateLimits[rates_t::YAW] = src.readU16();
         }
         // version 1.43
         if (src.bytesRemaining() >= 1) {

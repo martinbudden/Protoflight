@@ -31,6 +31,33 @@ private:
     Autopilot& operator=(Autopilot&&) = delete;
 public:
     enum earth_frame_axis_e { LONGITUDE, LATITUDE, EARTH_FRAME_AXIS_COUNT };
+    // flight mode flags
+    enum log2_flight_mode_flag_e {
+        LOG2_ANGLE_MODE         = 0,
+        LOG2_HORIZON_MODE       = 1,
+        LOG2_MAG_MODE           = 2,
+        LOG2_ALTITUDE_HOLD_MODE = 3,
+        LOG2_GPS_HOME_MODE      = 4,
+        LOG2_POSITION_HOLD_MODE = 5,
+        LOG2_HEADFREE_MODE      = 6,
+        LOG2_CHIRP_MODE         = 7,
+        LOG2_PASSTHRU_MODE      = 8,
+        LOG2_RANGEFINDER_MODE   = 9,
+        LOG2_FAILSAFE_MODE      = 10,
+        LOG2_GPS_RESCUE_MODE    = 11
+    };
+    static constexpr uint32_t ANGLE_MODE      = 1U << LOG2_ANGLE_MODE;
+    static constexpr uint32_t HORIZON_MODE    = 1U << LOG2_HORIZON_MODE;
+    static constexpr uint32_t MAG_MODE        = 1U << LOG2_MAG_MODE;
+    static constexpr uint32_t ALTITUDE_HOLD_MODE = 1U << LOG2_ALTITUDE_HOLD_MODE;
+    static constexpr uint32_t GPS_HOME_MODE   = 1U << LOG2_GPS_HOME_MODE;
+    static constexpr uint32_t POSITION_HOLD_MODE = 1U << LOG2_POSITION_HOLD_MODE;
+    static constexpr uint32_t HEADFREE_MODE   = 1U << LOG2_HEADFREE_MODE;
+    static constexpr uint32_t CHIRP_MODE      = 1U << LOG2_CHIRP_MODE;
+    static constexpr uint32_t PASSTHRU_MODE   = 1U << LOG2_PASSTHRU_MODE;
+    static constexpr uint32_t RANGEFINDER_MODE= 1U << LOG2_RANGEFINDER_MODE;
+    static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
+    static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
     struct PIDF_uint16_t {
         uint16_t kp;
         uint16_t ki;
@@ -78,6 +105,7 @@ public:
     void setAltitudeHoldConfig(const altitude_hold_config_t& altitudeHoldConfig);
     const altitude_hold_config_t& getAltitudeHoldConfig() const { return _altitudeHoldConfig; }
 
+    bool isAltitudeHoldSetpointSet() const; //!< returns true if setpoint has been set
     bool setAltitudeHoldSetpoint(); //!< use the current altitude to set the setpoint for altitude hold
     float calculateThrottleForAltitudeHold(const CockpitBase::controls_t& controls);
     FlightController::controls_t calculateFlightControls(const CockpitBase::controls_t& controls, uint32_t flightModeModeFlags);

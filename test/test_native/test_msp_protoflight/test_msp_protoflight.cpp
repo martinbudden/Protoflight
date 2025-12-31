@@ -33,26 +33,26 @@ void setUp() {
 void tearDown() {
 }
 
-// NOLINTBEGIN(misc-const-correctness)
+// NOLINTBEGIN(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
+static NonVolatileStorage nvs;
+static MadgwickFilter sensorFusionFilter;
+static IMU_Null imu;
+static Debug debug;
+enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
+static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
+static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT);
+static ReceiverVirtual receiver;
+static AHRS_MessageQueue ahrsMessageQueue;
+static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
+static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
+static Autopilot autopilot(ahrsMessageQueue);
+static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs, nullptr);
+static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
+static MSP_Stream mspStream(msp);
+
+
 void test_msp_set_failsafe_config()
 {
-    static NonVolatileStorage nvs;
-    static MadgwickFilter sensorFusionFilter;
-    static IMU_Null imu;
-    static Debug debug;
-    enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
-    static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT);
-    static ReceiverVirtual receiver;
-    static AHRS_MessageQueue ahrsMessageQueue;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
-    static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
-    static Autopilot autopilot(ahrsMessageQueue);
-    static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
-
-    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
-    static MSP_Stream mspStream(msp);
-
     mspStream.setPacketState(MSP_Stream::MSP_IDLE);
 
     MSP_Stream::packet_with_header_t pwh;
@@ -110,23 +110,6 @@ void test_msp_set_failsafe_config()
 
 void test_msp_pid_in()
 {
-    static NonVolatileStorage nvs;
-    static MadgwickFilter sensorFusionFilter;
-    static IMU_Null imu;
-    static Debug debug;
-    enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
-    static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT);
-    static ReceiverVirtual receiver;
-    static AHRS_MessageQueue ahrsMessageQueue;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
-    static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
-    static Autopilot autopilot(ahrsMessageQueue);
-    static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
-
-    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
-    static const MSP_Stream mspStream(msp);
-
     std::array<uint8_t, 128> buf;
     StreamBuf sbuf(&buf[0], sizeof(buf));
     for (uint8_t ii = 0; ii < 3*FlightController::PID_COUNT; ++ii) {
@@ -157,23 +140,6 @@ void test_msp_pid_in()
 
 void test_msp_features()
 {
-    static NonVolatileStorage nvs;
-    static MadgwickFilter sensorFusionFilter;
-    static IMU_Null imu;
-    static Debug debug;
-    enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
-    static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT);
-    static ReceiverVirtual receiver;
-    static AHRS_MessageQueue ahrsMessageQueue;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
-    static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
-    static Autopilot autopilot(ahrsMessageQueue);
-    static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
-
-    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
-    static const MSP_Stream mspStream(msp);
-
     std::array<uint8_t, 128> buf;
     StreamBuf sbuf(&buf[0], sizeof(buf));
     msp.processGetCommand(MSP_FEATURE_CONFIG, sbuf);
@@ -185,24 +151,6 @@ void test_msp_features()
 
 void test_msp_raw_imu()
 {
-    static NonVolatileStorage nvs;
-    static MadgwickFilter sensorFusionFilter;
-    static IMU_Null imu;
-    static Debug debug;
-    enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
-    static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT);
-    static ReceiverVirtual receiver;
-    static AHRS_MessageQueue ahrsMessageQueue;
-    static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
-    static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
-    static Autopilot autopilot(ahrsMessageQueue);
-    static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs);
-
-    static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
-    static MSP_Stream mspStream(msp);
-    //static const MSP_Serial mspSerial(mspStream, msp);
-
     imu.setAccRaw({3, 5, 7});
     imu.setGyroRaw({11, 13, 17});
 
@@ -267,7 +215,7 @@ void test_msp_raw_imu()
     TEST_ASSERT_EQUAL(98, pwh.checksum);
     TEST_ASSERT_EQUAL(18, pwh.dataLen);
 }
-// NOLINTEND(misc-const-correctness)
+// NOLINTEND(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {

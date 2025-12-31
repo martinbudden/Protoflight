@@ -4,16 +4,17 @@
 #include "FlightController.h"
 #include "IMU_Filters.h"
 #include "LookupTables.h"
+#include "Rates.h"
 
 /*
 Storage
 
 Only one menu can be active at one time, so we can save RAM by using a union.
 */
-union data_u {
-    Cockpit::rates_t rates;
+union data_u { // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    rates_t rates;
 
-    IMU_Filters::config_t imuFiltersConfig {};
+    IMU_Filters::config_t imuFiltersConfig;
 
     FlightController::simplified_pid_settings_t pidSettings;
     std::array<FlightController::PIDF_uint16_t, 3> pids;
@@ -62,7 +63,7 @@ static auto entryRcExpoYaw    = osd_uint8_t { &data.rates.rcExpos[FlightControll
 
 static auto entryThrottleMid  = osd_uint8_t { &data.rates.throttleMidpoint, 1, 100, 1 };
 static auto entryThrottleExpo = osd_uint8_t { &data.rates.throttleExpo, 1, 100, 1 };
-static_assert(static_cast<int>(LOOKUP_TABLES::THROTTLE_LIMIT_NAMES_COUNT) == static_cast<int>(Cockpit::THROTTLE_LIMIT_TYPE_COUNT));
+static_assert(static_cast<int>(LOOKUP_TABLES::THROTTLE_LIMIT_NAMES_COUNT) == static_cast<int>(rates_t::THROTTLE_LIMIT_TYPE_COUNT));
 static auto entryThrottleLimitType = osd_table_t { &data.rates.throttleLimitType, LOOKUP_TABLES::THROTTLE_LIMIT_NAMES_COUNT - 1, &LOOKUP_TABLES::throttleLimitTypeNames[0] };
 static auto entryThrottleLimitPercent = osd_uint8_t { &data.rates.throttleLimitPercent, 25, 100, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
@@ -216,16 +217,17 @@ static const void* menuSimplifiedTuningOnExit(CMSX& cmsx, [[maybe_unused]] Displ
 // NOLINTBEGIN(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
 static auto entryTablePID_TuningMode  = osd_table_t  { &pidTuningMode,  LOOKUP_TABLES::PID_TUNING_MODES_COUNT - 1, &LOOKUP_TABLES::PID_TuningModes[0] };
 
-static auto entryD_gains        = osd_uint16_t { &data.pidSettings.d_gain, 0, 200, 1 };
-static auto entryPI_gains       = osd_uint16_t { &data.pidSettings.pi_gain, 0, 200, 1 };
-static auto entryK_gains        = osd_uint16_t { &data.pidSettings.k_gain, 0, 200, 1 };
+static constexpr uint16_t PID_GAIN_MAX = FlightController::PID_GAIN_MAX;
+static auto entryD_gains        = osd_uint16_t { &data.pidSettings.d_gain, 0, PID_GAIN_MAX, 1 };
+static auto entryPI_gains       = osd_uint16_t { &data.pidSettings.pi_gain, 0, PID_GAIN_MAX, 1 };
+static auto entryK_gains        = osd_uint16_t { &data.pidSettings.k_gain, 0, PID_GAIN_MAX, 1 };
 #if defined(USE_D_MAX)
-static auto entryDMax           = osd_uint16_t { &data.pidSettings.d_max_gain, 0, 200, 1 };
+static auto entryDMax           = osd_uint16_t { &data.pidSettings.d_max_gain, 0, PID_GAIN_MAX, 1 };
 #endif
-static auto entryI_gains        = osd_uint16_t { &data.pidSettings.i_gain, 0, 200, 1 };
-static auto entryRollPitchRatio = osd_uint16_t { &data.pidSettings.roll_pitch_ratio, 0, 200, 1 };
-static auto entryPitchPI_gains  = osd_uint16_t { &data.pidSettings.pitch_pi_gain, 0, 200, 1 };
-static auto entryMasterMultiplier = osd_uint16_fixed_t { &data.pidSettings.multiplier, 10, 200, 5, 10 };
+static auto entryI_gains        = osd_uint16_t { &data.pidSettings.i_gain, 0, PID_GAIN_MAX, 1 };
+static auto entryRollPitchRatio = osd_uint16_t { &data.pidSettings.roll_pitch_ratio, 0, PID_GAIN_MAX, 1 };
+static auto entryPitchPI_gains  = osd_uint16_t { &data.pidSettings.pitch_pi_gain, 0, PID_GAIN_MAX, 1 };
+static auto entryMasterMultiplier = osd_uint16_fixed_t { &data.pidSettings.multiplier, 10, PID_GAIN_MAX, 5, 10 };
 // NOLINTEND(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
 
 #if defined(USE_D_MAX)
@@ -289,23 +291,23 @@ static const void* menuPID_TuningOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPort
 }
 
 // NOLINTBEGIN(fuchsia-statically-constructed-objects)
-static auto entryRollPID_P  = osd_uint16_t { &data.pids[0].kp, 0, 200, 1 };
-static auto entryRollPID_I  = osd_uint16_t { &data.pids[0].ki, 0, 200, 1 };
-static auto entryRollPID_D  = osd_uint16_t { &data.pids[0].kd, 0, 200, 1 };
-static auto entryRollPID_K  = osd_uint16_t { &data.pids[0].kk, 0, 200, 1 };
-static auto entryRollPID_S  = osd_uint16_t { &data.pids[0].ks, 0, 200, 1 };
+static auto entryRollPID_P  = osd_uint16_t { &data.pids[0].kp, 0, PID_GAIN_MAX, 1 };
+static auto entryRollPID_I  = osd_uint16_t { &data.pids[0].ki, 0, PID_GAIN_MAX, 1 };
+static auto entryRollPID_D  = osd_uint16_t { &data.pids[0].kd, 0, PID_GAIN_MAX, 1 };
+static auto entryRollPID_K  = osd_uint16_t { &data.pids[0].kk, 0, PID_GAIN_MAX, 1 };
+static auto entryRollPID_S  = osd_uint16_t { &data.pids[0].ks, 0, PID_GAIN_MAX, 1 };
 
-static auto entryPitchPID_P = osd_uint16_t { &data.pids[1].kp, 0, 200, 1 };
-static auto entryPitchPID_I = osd_uint16_t { &data.pids[1].ki, 0, 200, 1 };
-static auto entryPitchPID_D = osd_uint16_t { &data.pids[1].kd, 0, 200, 1 };
-static auto entryPitchPID_K = osd_uint16_t { &data.pids[1].kk, 0, 200, 1 };
-static auto entryPitchPID_S = osd_uint16_t { &data.pids[1].ks, 0, 200, 1 };
+static auto entryPitchPID_P = osd_uint16_t { &data.pids[1].kp, 0, PID_GAIN_MAX, 1 };
+static auto entryPitchPID_I = osd_uint16_t { &data.pids[1].ki, 0, PID_GAIN_MAX, 1 };
+static auto entryPitchPID_D = osd_uint16_t { &data.pids[1].kd, 0, PID_GAIN_MAX, 1 };
+static auto entryPitchPID_K = osd_uint16_t { &data.pids[1].kk, 0, PID_GAIN_MAX, 1 };
+static auto entryPitchPID_S = osd_uint16_t { &data.pids[1].ks, 0, PID_GAIN_MAX, 1 };
 
-static auto entryYawPID_P   = osd_uint16_t { &data.pids[2].kp, 0, 200, 1 };
-static auto entryYawPID_I   = osd_uint16_t { &data.pids[2].ki, 0, 200, 1 };
-static auto entryYawPID_D   = osd_uint16_t { &data.pids[2].kd, 0, 200, 1 };
-static auto entryYawPID_K   = osd_uint16_t { &data.pids[2].kk, 0, 200, 1 };
-static auto entryYawPID_S   = osd_uint16_t { &data.pids[2].ks, 0, 200, 1 };
+static auto entryYawPID_P   = osd_uint16_t { &data.pids[2].kp, 0, PID_GAIN_MAX, 1 };
+static auto entryYawPID_I   = osd_uint16_t { &data.pids[2].ki, 0, PID_GAIN_MAX, 1 };
+static auto entryYawPID_D   = osd_uint16_t { &data.pids[2].kd, 0, PID_GAIN_MAX, 1 };
+static auto entryYawPID_K   = osd_uint16_t { &data.pids[2].kk, 0, PID_GAIN_MAX, 1 };
+static auto entryYawPID_S   = osd_uint16_t { &data.pids[2].ks, 0, PID_GAIN_MAX, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 static const std::array<CMSX::OSD_Entry, 18> menuPID_TuningEntries

@@ -613,7 +613,7 @@ int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& 
 }
 
 
-Cockpit::failsafe_config_t NonVolatileStorage::loadFailsafeConfig() // NOLINT(readability-make-member-function-const)
+Cockpit::failsafe_config_t NonVolatileStorage::loadFailsafeConfig() const
 {
     {Cockpit::failsafe_config_t config {};
     if (loadItem(FailsafeConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
@@ -627,7 +627,7 @@ int32_t NonVolatileStorage::storeFailsafeConfig(const Cockpit::failsafe_config_t
     return storeItem(FailsafeConfigKey, &config, sizeof(config), &DEFAULTS::cockpitFailSafeConfig);
 }
 
-Features::config_t NonVolatileStorage::loadFeaturesConfig()
+Features::config_t NonVolatileStorage::loadFeaturesConfig() const
 {
     {Features::config_t config {};
     if (loadItem(FeaturesConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
@@ -641,7 +641,7 @@ int32_t NonVolatileStorage::storeFeaturesConfig(const Features::config_t& config
     return storeItem(FeaturesConfigKey, &config, sizeof(config), &DEFAULTS::featuresConfig);
 }
 
-RX::config_t NonVolatileStorage::loadRX_Config() // NOLINT(readability-make-member-function-const)
+RX::config_t NonVolatileStorage::loadRX_Config() const
 {
     {RX::config_t config {};
     if (loadItem(RX_ConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
@@ -656,7 +656,7 @@ int32_t NonVolatileStorage::storeRX_Config(const RX::config_t& config)
 }
 
 
-RC_Modes::mode_activation_conditions_t NonVolatileStorage::loadRC_ModeActivationConditions()
+RC_Modes::mode_activation_conditions_t NonVolatileStorage::loadRC_ModeActivationConditions() const
 {
     {RC_Modes::mode_activation_conditions_t modeActivationConditions {};
     if (loadItem(RC_ModeActivationConditionsKey, &modeActivationConditions, sizeof(modeActivationConditions))) {
@@ -671,7 +671,7 @@ int32_t NonVolatileStorage::storeRC_ModeActivationConditions(const RC_Modes::mod
 }
 
 
-RC_Adjustments::adjustment_ranges_t NonVolatileStorage::loadRC_AdjustmentRanges()
+RC_Adjustments::adjustment_ranges_t NonVolatileStorage::loadRC_AdjustmentRanges() const
 {
     {RC_Adjustments::adjustment_ranges_t adjustmentRanges {};
     if (loadItem(RC_AdjustmentRangesKey, &adjustmentRanges, sizeof(adjustmentRanges))) {
@@ -685,16 +685,16 @@ int32_t NonVolatileStorage::storeRC_AdjustmentRanges(const RC_Adjustments::adjus
     return storeItem(RC_AdjustmentRangesKey, &adjustmentRanges, sizeof(adjustmentRanges), &DEFAULTS::RC_ModeActivationConditions);
 }
 
-Cockpit::rates_t NonVolatileStorage::loadRates(uint8_t rateProfileIndex) const
+rates_t NonVolatileStorage::loadRates(uint8_t rateProfileIndex) const
 {
-    {Cockpit::rates_t rates {};
+    {rates_t rates {};
     if (rateProfileIndex < RATE_PROFILE_COUNT && loadItem(RatesKey + rateProfileIndex, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
         return rates;
     }}
     return DEFAULTS::cockpitRates;
 }
 
-int32_t NonVolatileStorage::storeRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex)
+int32_t NonVolatileStorage::storeRates(const rates_t& rates, uint8_t rateProfileIndex)
 {
     if (rateProfileIndex >= RATE_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;

@@ -27,16 +27,16 @@ enum { OUTPUT_TO_MOTORS_DENOMINATOR = 2 };
 enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 #endif
 
-static const Cockpit::rates_t cockpitRates {
-    .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
+static const rates_t cockpitRates {
+    .rateLimits = { rates_t::LIMIT_MAX, rates_t::LIMIT_MAX, rates_t::LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },
     .rates = { 67, 67, 67 },
     .throttleMidpoint = 50,
     .throttleExpo = 0,
-    .throttleLimitType = Cockpit::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitType = rates_t::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
-    //.ratesType = Cockpit::RATES_TYPE_ACTUAL
+    //.ratesType = rates_t::RATES_TYPE_ACTUAL
 };
 
 void setUp() {
@@ -62,7 +62,7 @@ void test_telemetry_msp()
     static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs);
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
 
     // statically allocate an MSP object
     static MSP_Protoflight msp(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);

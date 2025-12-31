@@ -112,23 +112,23 @@ public:
     IMU_Filters::config_t loadIMU_FiltersConfig() const;
     int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
 
-    Cockpit::failsafe_config_t loadFailsafeConfig();
+    Cockpit::failsafe_config_t loadFailsafeConfig() const;
     int32_t storeFailsafeConfig(const Cockpit::failsafe_config_t& config);
 
-    Features::config_t loadFeaturesConfig();
+    Features::config_t loadFeaturesConfig() const;
     int32_t storeFeaturesConfig(const Features::config_t& config);
 
-    RX::config_t loadRX_Config();
+    RX::config_t loadRX_Config() const;
     int32_t storeRX_Config(const RX::config_t& config);
 
-    RC_Modes::mode_activation_conditions_t loadRC_ModeActivationConditions();
+    RC_Modes::mode_activation_conditions_t loadRC_ModeActivationConditions() const;
     int32_t storeRC_ModeActivationConditions(const RC_Modes::mode_activation_conditions_t& modeActivationConditions);
 
-    RC_Adjustments::adjustment_ranges_t loadRC_AdjustmentRanges();
+    RC_Adjustments::adjustment_ranges_t loadRC_AdjustmentRanges() const;
     int32_t storeRC_AdjustmentRanges(const RC_Adjustments::adjustment_ranges_t& adjustmentRanges);
 
-    Cockpit::rates_t loadRates(uint8_t rateProfileIndex) const;
-    int32_t storeRates(const Cockpit::rates_t& rates, uint8_t rateProfileIndex);
+    rates_t loadRates(uint8_t rateProfileIndex) const;
+    int32_t storeRates(const rates_t& rates, uint8_t rateProfileIndex);
 
     VehicleControllerBase::PIDF_uint16_t loadPID(uint8_t pidIndex, uint8_t pidProfileIndex) const;
     int32_t storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex, uint8_t pidProfileIndex);

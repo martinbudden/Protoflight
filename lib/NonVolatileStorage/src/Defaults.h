@@ -7,7 +7,9 @@
 #endif
 #include "FlightController.h"
 #include "IMU_Filters.h"
+#include "Rates.h"
 #include <MotorMixerBase.h>
+#include <ReceiverBase.h>
 
 #if defined(USE_GPS)
 #include <GPS.h>
@@ -182,16 +184,16 @@ static constexpr RPM_Filters::config_t rpmFiltersConfig = {
 };
 #endif
 
-static constexpr Cockpit::rates_t cockpitRates = {
-    .rateLimits = { Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX, Cockpit::RATE_LIMIT_MAX},
+static constexpr rates_t cockpitRates = {
+    .rateLimits = { rates_t::LIMIT_MAX, rates_t::LIMIT_MAX, rates_t::LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },
     .rates = { 67, 67, 67 },
     .throttleMidpoint = 50,
     .throttleExpo = 0,
-    .throttleLimitType = Cockpit::THROTTLE_LIMIT_TYPE_OFF,
+    .throttleLimitType = rates_t::THROTTLE_LIMIT_TYPE_OFF,
     .throttleLimitPercent = 100,
-    //.ratesType = Cockpit::RATES_TYPE_ACTUAL
+    //.ratesType = rates_t::RATES_TYPE_ACTUAL
 };
 
 static constexpr Cockpit::failsafe_config_t cockpitFailSafeConfig = {
@@ -224,9 +226,178 @@ static constexpr RX::config_t RX_Config = {
     .rx_max_usec = 2115,
 };
 
-static constexpr RC_Modes::mode_activation_conditions_t RC_ModeActivationConditions = {};
+/*!
+Mode activation conditions.
+
+By default AUX1 is for arming, AUX2 for angle mode, and AUX3 for altitude hold.
+*/
+static constexpr RC_Modes::mode_activation_conditions_t RC_ModeActivationConditions = {{
+    {
+        .modeId = MSP_Box::BOX_ARM,
+        .auxChannelIndex = ReceiverBase::AUX1,
+        .range = { 
+            .startStep = RC_Modes::RANGE_STEP_MID,
+            .endStep = RC_Modes::RANGE_STEP_MAX
+        },
+        .modeLogic = {},
+        .linkedTo = {}
+    }, {
+        .modeId = MSP_Box::BOX_ANGLE,
+        .auxChannelIndex = ReceiverBase::AUX2,
+        .range = { 
+            .startStep = RC_Modes::RANGE_STEP_MID,
+            .endStep = RC_Modes::RANGE_STEP_MAX
+        },
+        .modeLogic = {},
+        .linkedTo = {}
+    }, {
+        .modeId = MSP_Box::BOX_ALTHOLD,
+        .auxChannelIndex = ReceiverBase::AUX2,
+        .range = { 
+            .startStep = RC_Modes::RANGE_STEP_MID,
+            .endStep = RC_Modes::RANGE_STEP_MAX
+        },
+        .modeLogic = {},
+        .linkedTo = {}
+    }, 
+    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+}};
 
 static constexpr RC_Adjustments::adjustment_ranges_t RC_AdjustmentRanges = {};
+
+static constexpr RC_Adjustments::adjustment_configs_t RC_AdjustmentConfigs = {{
+    {
+        .adjustmentFunction = ADJUSTMENT_RC_RATE,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_RC_EXPO,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_THROTTLE_EXPO,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_RATE,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_YAW_RATE,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_P,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_I,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_D,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_YAW_P,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_YAW_I,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_YAW_D,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_RATE_PROFILE,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
+        .data = { .switchPositions = 3 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_RATE,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_ROLL_RATE,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_P,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_I,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_D,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_ROLL_P,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_ROLL_I,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_ROLL_D,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_RC_RATE_YAW,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_F,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_FEEDFORWARD_TRANSITION,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_HORIZON_STRENGTH,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
+        .data = { .switchPositions = 255 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PID_AUDIO,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
+        .data = { .switchPositions = 7 } // ARRAYLEN(pidAudioPositionToModeMap)
+    }, {
+        .adjustmentFunction = ADJUSTMENT_PITCH_F,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_ROLL_F,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_YAW_F,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
+        .data = { .step = 1 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_OSD_PROFILE,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
+        .data = { .switchPositions = 3 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_LED_PROFILE,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
+        .data = { .switchPositions = 3 }
+    }, {
+        .adjustmentFunction = ADJUSTMENT_LED_DIMMER,
+        .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
+        .data = { .switchPositions = 100 }
+    },
+    {
+        .adjustmentFunction = ADJUSTMENT_NONE,
+        .mode = {},
+        .data = {}
+    },
+    {}, {}, {}
+}};
 
 #if defined(USE_ALTITUDE_HOLD)
 static constexpr Autopilot::autopilot_config_t autopilotConfig = {

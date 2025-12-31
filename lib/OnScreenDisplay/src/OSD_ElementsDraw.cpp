@@ -154,7 +154,7 @@ void OSD_Elements::initDrawFunctions()
     DrawBackgroundFunctions[OSD_CAMERA_FRAME]       = &OSD_Elements::drawBackground_CAMERA_FRAME;
 };
 
-void OSD_Elements::formatDistanceString(char* buf, float distance, char leadingSymbol)
+void OSD_Elements::formatDistanceString(char* buf, float distance, char leadingSymbol) // NOLINT(readability-non-const-parameter)
 {
     float convertedDistance = distance;
     float unitTransition = 1000.0F;
@@ -382,7 +382,7 @@ void OSD_Elements::draw_GPS_SPEED(DisplayPortBase& displayPort)
     }
     if (_gpsData.fix & gps_message_data_t::FIX) {
         //speed = gpsConfig()->gps_use_3d_speed ? gpsSol.speed3d : gpsSol.groundSpeed)
-        const int speed = static_cast<int>(_gpsData.groundSpeed_cmps * speedConversionFactor);
+        const int speed = static_cast<int>(static_cast<float>(_gpsData.groundSpeed_cmps) * speedConversionFactor);
         sprintf(&_activeElement.buf[0], "%c%3d%c", SYM_SPEED, speed, speedSymbol);
     } else {
         sprintf(&_activeElement.buf[0], "%c%c%c", SYM_SPEED, SYM_HYPHEN, speedSymbol);
@@ -601,7 +601,7 @@ void OSD_Elements::draw_LINK_QUALITY(DisplayPortBase& displayPort)
     (void)displayPort;
 }
 
-void OSD_Elements::draw_FLIGHT_DISTANCE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_FLIGHT_DISTANCE(DisplayPortBase& displayPort) // NOLINT(readability-make-member-function-const)
 {
     (void)displayPort;
 #if defined(USE_GPS)

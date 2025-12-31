@@ -3,6 +3,7 @@
 #include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
+#include "Rates.h"
 #include "VTX.h"
 #include "version.h"
 
@@ -172,29 +173,29 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(0); //armingConfig()->gyro_cal_on_first_arm);
         break;
     case MSP_RC_TUNING: {
-        const Cockpit::rates_t rates = _cockpit.getRates();
-        dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::ROLL]));
-        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[Cockpit::ROLL]));
-        dst.writeU8(static_cast<uint8_t>(rates.rates[Cockpit::ROLL]));
-        dst.writeU8(static_cast<uint8_t>(rates.rates[Cockpit::PITCH]));
-        dst.writeU8(static_cast<uint8_t>(rates.rates[Cockpit::YAW]));
+        const rates_t rates = _cockpit.getRates();
+        dst.writeU8(static_cast<uint8_t>(rates.rcRates[rates_t::ROLL]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[rates_t::ROLL]));
+        dst.writeU8(static_cast<uint8_t>(rates.rates[rates_t::ROLL]));
+        dst.writeU8(static_cast<uint8_t>(rates.rates[rates_t::PITCH]));
+        dst.writeU8(static_cast<uint8_t>(rates.rates[rates_t::YAW]));
         dst.writeU8(0); // was tpa_rate
         dst.writeU8(rates.throttleMidpoint);
         dst.writeU8(rates.throttleExpo);
         dst.writeU16(0); // was tpa_breakpoint
-        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[Cockpit::YAW]));
-        dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::YAW]));
-        dst.writeU8(static_cast<uint8_t>(rates.rcRates[Cockpit::PITCH]));
-        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[Cockpit::PITCH]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[rates_t::YAW]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcRates[rates_t::YAW]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcRates[rates_t::PITCH]));
+        dst.writeU8(static_cast<uint8_t>(rates.rcExpos[rates_t::PITCH]));
         // added in 1.41
         dst.writeU8(rates.throttleLimitType);
         dst.writeU8(rates.throttleLimitPercent);
         // added in 1.42
-        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[Cockpit::ROLL]));
-        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[Cockpit::PITCH]));
-        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[Cockpit::YAW]));
+        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[rates_t::ROLL]));
+        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[rates_t::PITCH]));
+        dst.writeU8(static_cast<uint8_t>(rates.rateLimits[rates_t::YAW]));
         // added in 1.43
-        dst.writeU8(Cockpit::RATES_TYPE_ACTUAL); // hardcoded, since we only support RATES_TYPE_ACTUAL rates.ratesType);
+        dst.writeU8(rates_t::TYPE_ACTUAL); // hardcoded, since we only support RATES_TYPE_ACTUAL rates.ratesType);
         break;
     }
     case MSP_PID: {
@@ -253,9 +254,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         }
         break;
     case MSP_ADJUSTMENT_RANGES:
-#if false
-        for (int i = 0; i < MAX_ADJUSTMENT_RANGE_COUNT; i++) {
-            const adjustment_range_t& adjustmentRange = adjustmentRanges(i);
+        for (const auto& adjustmentRange : _cockpit.getRC_Adjustments().getAdjustmentRanges()) {
             dst.writeU8(0); // was adjustmentRange.adjustmentIndex
             dst.writeU8(adjustmentRange.auxChannelIndex);
             dst.writeU8(adjustmentRange.range.startStep);
@@ -263,7 +262,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
             dst.writeU8(adjustmentRange.adjustmentConfig);
             dst.writeU8(adjustmentRange.auxSwitchChannelIndex);
         }
-#endif
+        break;
     case MSP_MOTOR_CONFIG:
         return RESULT_CMD_UNKNOWN;
     case MSP_COMPASS_CONFIG:

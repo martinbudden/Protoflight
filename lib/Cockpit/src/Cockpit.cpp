@@ -11,15 +11,16 @@
 
 #include <cmath>
 
-Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs) :
+Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs) :
     CockpitBase(receiver),
+    _rcAdjustments(defaultAdjustmentConfigs),
     _flightController(flightController),
     _autopilot(autopilot),
     _imuFilters(imuFilters),
     _debug(debug),
     _nvs(nvs)
 {
-    _flightController.setYawSpinThresholdDPS(1.25F*applyRates(YAW, 1.0F));
+    _flightController.setYawSpinThresholdDPS(1.25F*applyRates(rates_t::YAW, 1.0F));
 }
 
 void Cockpit::setRebootRequired()
@@ -64,22 +65,6 @@ void Cockpit::clearArmingDisabledFlag(arming_disabled_flags_e flag)
 {
     _armingDisabledFlags &= ~static_cast<uint32_t>(flag);
 }
-
-bool Cockpit::isFlightModeFlagSet(uint32_t flightModeFlag) const
-{
-    return _flightModeFlags & flightModeFlag;
-}
-
-void Cockpit::setFlightModeFlag(uint32_t flightModeFlag)
-{
-    _flightModeFlags |= flightModeFlag;
-}
-
-void Cockpit::clearFlightModeFlag(uint32_t flightModeFlag)
-{
-    _flightModeFlags &= ~flightModeFlag;
-}
-
 
 uint32_t Cockpit::getFlightModeFlags() const
 {
@@ -185,47 +170,46 @@ void Cockpit::updateControls(const controls_t& controls)
     _failsafe.tickCount = controls.tickCount;
 
     handleOnOffSwitch();
+
+    // set the RC modes according to the receiver channel values
     _rcModes.updateActivatedModes(_receiver);
 
-    // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
-    enum { CONTROL_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_MODE_CHANNEL = ReceiverBase::AUX3 };
-    if (_receiver.getChannelPWM(CONTROL_MODE_CHANNEL)) {
-        _flightModeFlags |= ANGLE_MODE;
-    } else {
-        _flightModeFlags &= ~ANGLE_MODE;
+    // process any in-flight adjustments
+    if (!_cliMode && !(isRcModeActive(MSP_Box::BOX_PARALYZE) && !isArmed())) {
+        _rcAdjustments.processAdjustments(_rates, _flightController, true); //!!TODO: check true parameter
     }
-    if (_receiver.getChannelPWM(ALTITUDE_MODE_CHANNEL)) {
-        if ((_flightModeFlags & ALTITUDE_HOLD_MODE) == 0) {
-            // not currently in altitude hold mode, so set the altitude hold setpoint
-            if (_autopilot.setAltitudeHoldSetpoint()) {
-                // only switch to altitude hold mode if the autopilot supports it
-                _flightModeFlags |= ALTITUDE_HOLD_MODE;
-            }
+
+    FlightController::control_mode_e controlMode = FlightController::CONTROL_MODE_RATE;
+
+    // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
+    if (isRcModeActive(MSP_Box::BOX_ANGLE)) {
+        controlMode = FlightController::CONTROL_MODE_ANGLE;
+        _flightModeFlags |= Autopilot::ANGLE_MODE;
+    } else {
+        _flightModeFlags &= ~Autopilot::ANGLE_MODE;
+    }
+    if (isRcModeActive(MSP_Box::BOX_ALTHOLD)) {
+        controlMode = FlightController::CONTROL_MODE_ANGLE;
+        // not currently in altitude hold mode, so set the altitude hold setpoint
+        if (!_autopilot.isAltitudeHoldSetpointSet()) {
+            _autopilot.setAltitudeHoldSetpoint();
         }
     }
-    if (_flightModeFlags & (POSITION_HOLD_MODE | GPS_HOME_MODE | GPS_RESCUE_MODE)) {
+    if (isRcModeActive(MSP_Box::BOX_POSHOLD) || isRcModeActive(MSP_Box::BOX_GPS_RESCUE)) {
         const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightModeFlags);
         _flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
         return;
     }
 
-    FlightController::control_mode_e controlMode = (_flightModeFlags & ANGLE_MODE) ? FlightController::CONTROL_MODE_ANGLE : FlightController::CONTROL_MODE_RATE;
-
-    float throttleStick {};
-    if (_flightModeFlags & ALTITUDE_HOLD_MODE) {
-        throttleStick = _autopilot.calculateThrottleForAltitudeHold(controls);
-        controlMode = FlightController::CONTROL_MODE_ANGLE;
-    } else {
-        throttleStick = mapThrottle(controls.throttleStick);
-    }
+    const float throttleStick = isRcModeActive(MSP_Box::BOX_ALTHOLD) ? _autopilot.calculateThrottleForAltitudeHold(controls) : mapThrottle(controls.throttleStick);
 
     // map the radio controls to FlightController units
     const FlightController::controls_t flightControls = {
         .tickCount = controls.tickCount,
         .throttleStick = throttleStick,
-        .rollStickDPS = applyRates(Cockpit::ROLL, controls.rollStick),
-        .pitchStickDPS = applyRates(Cockpit::PITCH, controls.pitchStick),
-        .yawStickDPS = applyRates(Cockpit::YAW, controls.yawStick),
+        .rollStickDPS = applyRates(rates_t::ROLL, controls.rollStick),
+        .pitchStickDPS = applyRates(rates_t::PITCH, controls.pitchStick),
+        .yawStickDPS = applyRates(rates_t::YAW, controls.yawStick),
         .rollStickDegrees = controls.rollStick * _flightController.getMaxRollAngleDegrees(),
         .pitchStickDegrees = controls.pitchStick * _flightController.getMaxPitchAngleDegrees(),
         .controlMode = controlMode
@@ -280,9 +264,9 @@ void Cockpit::setRX_FailsafeChannelConfigs(const RX::failsafe_channel_configs_t&
 void Cockpit::setRates(const rates_t& rates)
 {
     _rates = rates;
-    const float maxAngleRateRollDPS = applyRates(ROLL, 1.0F);
-    const float maxAngleRatePitchDPS = applyRates(PITCH, 1.0F);
-    const float maxAngleRateYawDPS = applyRates(YAW, 1.0F);
+    const float maxAngleRateRollDPS = applyRates(rates_t::ROLL, 1.0F);
+    const float maxAngleRatePitchDPS = applyRates(rates_t::PITCH, 1.0F);
+    const float maxAngleRateYawDPS = applyRates(rates_t::YAW, 1.0F);
 
     _flightController.setMaxAngleRates(maxAngleRateRollDPS, maxAngleRatePitchDPS, maxAngleRateYawDPS);
 }

@@ -23,6 +23,7 @@ void Autopilot::setAutopilotConfig(const autopilot_config_t& autopilotConfig)
         static_cast<float>(_autopilotConfig.altitudePID.kk) * ALTITUDE_F_SCALE,
     };
     _altitude.pid.setPID(altitudePID);
+    _altitude.pid.setSetpoint(std::numeric_limits<float>::lowest());
 
     static constexpr float POSITION_P_SCALE  = 0.0012F;
     static constexpr float POSITION_I_SCALE  = 0.0001F;
@@ -47,6 +48,11 @@ void Autopilot::setPositionConfig(const position_config_t& positionConfig)
 void Autopilot::setAltitudeHoldConfig(const altitude_hold_config_t& altitudeHoldConfig)
 {
     _altitudeHoldConfig = altitudeHoldConfig;
+}
+
+bool Autopilot::isAltitudeHoldSetpointSet() const
+{
+    return (_altitude.pid.getSetpoint() == std::numeric_limits<float>::lowest()) ? false : true;
 }
 
 bool Autopilot::setAltitudeHoldSetpoint()
