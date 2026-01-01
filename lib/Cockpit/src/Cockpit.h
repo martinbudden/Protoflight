@@ -101,6 +101,7 @@ public:
     static constexpr uint32_t WAS_ARMED_WITH_PREARM = 0x04;
 public:
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
+    void setOSD(OSD& osd) { _osd = &osd; }
 
     const Autopilot& getAutopilot() const { return _autopilot; }
     Autopilot& getAutopilot() { return _autopilot; }
@@ -112,7 +113,7 @@ public:
 
     uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
     void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex);
-    void handleOnOffSwitch();
+    void handleArmingSwitch();
     virtual void updateControls(const controls_t& controls) override;
 
     bool featureIsEnabled(uint32_t mask) const { return _features.isEnabled(mask); }
@@ -141,6 +142,7 @@ public:
     void setRX_FailsafeChannelConfigs(const RX::failsafe_channel_configs_t& rxFailsafeChannelConfigs);
 
     const rates_t& getRates() const { return _rates; }
+    rates_t& getRates() { return _rates; }
     void setRates(const rates_t& rates);
     void setRatesToPassThrough();
     float applyRates(size_t axis, float rcCommand) const;
@@ -178,6 +180,7 @@ private:
         .throttleLimitPercent = 100
     };
     Blackbox* _blackbox {nullptr};
+    OSD* _osd {nullptr};
     uint32_t _armingFlags {};
     uint32_t _armingDisabledFlags {};
     uint32_t _flightModeFlags {};

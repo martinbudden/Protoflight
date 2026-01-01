@@ -67,7 +67,9 @@ enum  osd_elements_e {
 #if defined(USE_RTC_TIME)
     OSD_RTC_DATETIME,
 #endif
+#if defined(USE_OSD_ADJUSTMENTS)
     OSD_ADJUSTMENT_RANGE,
+#endif
     OSD_CORE_TEMPERATURE,
     OSD_ANTI_GRAVITY,
     OSD_G_FORCE,
@@ -214,6 +216,8 @@ public:
     static uint16_t OSD_POS(uint8_t x, uint8_t y) { return (x & XY_POSITION_MASK) | ((y & XY_POSITION_MASK) << XY_POSITION_BITS); }
 
     void setProfile(uint8_t profile);
+    uint8_t getProfile() const { return _profile; }
+
     void addActiveElement(osd_elements_e element);
     void addActiveElements();
     bool isRenderPending() const;
@@ -237,6 +241,7 @@ public:
     void formatDistanceString(char* buf, float distance, char leadingSymbol);
     static int printFloat(char* buffer, char leadingSymbol, float value, unsigned decimalPlaces, bool round, char trailingSymbol);
     void formatPID(char* buf, const char* label, uint8_t axis);
+    // no need to qualify functions with #if defined(USE_...) since linker will remove unused functions
     void draw_RSSI_VALUE(DisplayPortBase& displayPort);
     void draw_MAIN_BATTERY_VOLTAGE(DisplayPortBase& displayPort);
     void draw_CROSSHAIRS(DisplayPortBase& displayPort); // only has background, but needs to be over other elements (like artificial horizon)

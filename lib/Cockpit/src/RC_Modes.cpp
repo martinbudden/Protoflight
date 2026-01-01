@@ -167,15 +167,6 @@ void RC_Modes::updateMasksForStickyModes(const mode_activation_condition_t& mac,
     }
 }
 
-bool RC_Modes::isRangeActive(const ReceiverBase& receiver, uint8_t auxChannelIndex, const channel_range_t& range)
-{
-    if (!isRangeUsable(range)) {
-        return false;
-    }
-    const uint16_t channelValue = receiver.getAuxiliaryChannel(auxChannelIndex);
-    return (channelValue >= CHANNEL_RANGE_MIN + (range.startStep * 25) && channelValue < CHANNEL_RANGE_MIN + (range.endStep * 25));
-}
-
 void RC_Modes::updateActivatedModes(const ReceiverBase& receiver)
 {
     MSP_Box::bitset_t newBitset {};
@@ -187,10 +178,10 @@ void RC_Modes::updateActivatedModes(const ReceiverBase& receiver)
     size_t ii = 0;
     for (const auto& modeActivationCondition : _modeActivationConditions) {
         if (stickyModes.test(modeActivationCondition.modeId)) {
-            const bool rangeActive = isRangeActive(receiver, modeActivationCondition.auxChannelIndex, modeActivationCondition.range);
+            const bool rangeActive = receiver.isRangeActive(modeActivationCondition.auxiliaryChannelIndex, modeActivationCondition.range);
             updateMasksForStickyModes(modeActivationCondition, andBitset, newBitset, rangeActive);
         } else if (modeActivationCondition.modeId < MSP_Box::BOX_COUNT) {
-            const bool rangeActive = isRangeActive(receiver, modeActivationCondition.auxChannelIndex, modeActivationCondition.range);
+            const bool rangeActive = receiver.isRangeActive(modeActivationCondition.auxiliaryChannelIndex, modeActivationCondition.range);
             updateMasksForMac(modeActivationCondition, andBitset, newBitset, rangeActive);
         }
         ++ii;

@@ -1,15 +1,16 @@
 #pragma once
 
+#include <ReceiverBase.h>
 #include <array>
-#include <cstddef>
-#include <cstdint>
 
 class Blackbox;
+class Cockpit;
 class FlightController;
+class OSD;
 struct rates_t;
 
 
-enum adjustment_function_e {
+enum adjustment_e {
     ADJUSTMENT_NONE = 0,
     ADJUSTMENT_RC_RATE,
     ADJUSTMENT_RC_EXPO,
@@ -64,14 +65,10 @@ public:
     enum { ADJUSTMENT_RANGE_COUNT_INVALID = -1 };
 
     enum adjustment_mode_e { ADJUSTMENT_MODE_STEP, ADJUSTMENT_MODE_SELECT };
-    struct channel_range_t {
-        uint8_t startStep;
-        uint8_t endStep;
-    };
     struct adjustment_range_t {
         // when aux channel is in range...
+        ReceiverBase::channel_range_t range;
         uint8_t auxChannelIndex;
-        channel_range_t range;
         // ..then apply the adjustment function to the auxSwitchChannel ...
         uint8_t adjustmentConfig;
         uint8_t auxSwitchChannelIndex;
@@ -79,7 +76,7 @@ public:
         uint16_t adjustmentScale;
     };
     struct timed_adjustment_state_t {
-        uint32_t timeoutAt;
+        uint32_t timeoutAtMilliseconds;
         uint8_t adjustmentRangeIndex;
         bool ready;
     };
@@ -92,7 +89,7 @@ public:
         uint8_t switchPositions;
     };
     struct adjustment_config_t {
-        adjustment_function_e adjustmentFunction;
+        adjustment_e adjustment;
         adjustment_mode_e mode;
         adjustment_data_u data;
     };
@@ -111,13 +108,19 @@ public:
     void setAdjustmentConfigs(const adjustment_configs_t& adjustmentConfigs);
     const adjustment_configs_t& getAdjustmentConfigs() const;
 
-    void processAdjustments(rates_t& rates, FlightController& flightController, bool isReceiverSignal);
+    void processAdjustments(const ReceiverBase& receiver, FlightController& flightController, Cockpit& cockpit, OSD* osd, bool isReceiverSignal);
 private:
-    void blackboxLogInflightAdjustmentEvent(adjustment_function_e adjustmentFunction, int32_t newValue);
-    int32_t applyStepAdjustment(rates_t& rates, FlightController& flightController, adjustment_function_e adjustmentFunction, int32_t delta);
-    void processStepwiseAdjustments(rates_t& rates, FlightController& flightController, bool isReceiverSignal);
-    void processContinuosAdjustments(rates_t& rates, FlightController& flightController);
+    enum { ADJUSTMENT_FUNCTION_CONFIG_INDEX_OFFSET = 1};
+    void blackboxLogInflightAdjustmentEvent(adjustment_e adjustment, int32_t newValue);
+    int32_t applyStepAdjustment(FlightController& flightController, rates_t& rates, adjustment_e adjustment, int32_t delta);
+    int32_t applyAbsoluteAdjustment(FlightController& flightController, rates_t& rates, adjustment_e adjustment, int32_t value);
+    uint8_t applySelectAdjustment(FlightController& flightController, Cockpit& cockpit, OSD* osd, adjustment_e adjustment, uint8_t position);
+    void setConfigDirty();
+    void setConfigDirtyIfNotPermanent(const ReceiverBase::channel_range_t& range);
+    void processStepwiseAdjustments(const ReceiverBase& receiver, FlightController& flightController, rates_t& rates, bool canUseRxData);
+    void processContinuosAdjustments(const ReceiverBase& receiver, FlightController& flightController, Cockpit& cockpit, OSD* osd);
     void calcActiveAdjustmentRanges();
+    void beeperConfirmationBeeps(uint8_t beepCount);
 
     const char *getRangeName();
     int getRangeValue();
@@ -127,7 +130,7 @@ private:
     int32_t _continuosAdjustmentCount {};
     std::array<timed_adjustment_state_t, MAX_ADJUSTMENT_RANGE_COUNT> _stepwiseAdjustments {};
     std::array<continuos_adjustment_state_t, MAX_ADJUSTMENT_RANGE_COUNT> _continuosAdjustments {};
-    adjustment_ranges_t _adjustmentRanges {};
-    adjustment_configs_t _adjustmentConfigs {};
+    std::array<adjustment_range_t, MAX_ADJUSTMENT_RANGE_COUNT> _adjustmentRanges {};
+    std::array<adjustment_config_t, ADJUSTMENT_FUNCTION_COUNT> _adjustmentConfigs {};
     const adjustment_configs_t* _defaultAdjustmentConfigs; 
 };

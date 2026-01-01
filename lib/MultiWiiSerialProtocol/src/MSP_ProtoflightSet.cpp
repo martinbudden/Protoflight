@@ -71,7 +71,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         }
         RC_Modes::mode_activation_condition_t mac = _cockpit.getRC_Modes().getModeActivationCondition(macIndex);
         mac.modeId = static_cast<MSP_Box::id_e>(box->id);
-        mac.auxChannelIndex = src.readU8();
+        mac.auxiliaryChannelIndex = src.readU8();
         mac.range.startStep = src.readU8();
         mac.range.endStep = src.readU8();
         if (src.bytesRemaining() >= 2) {

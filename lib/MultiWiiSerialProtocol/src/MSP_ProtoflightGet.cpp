@@ -235,7 +235,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
             const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
             dst.writeU8(box->permanentId);
-            dst.writeU8(mac.auxChannelIndex);
+            dst.writeU8(mac.auxiliaryChannelIndex);
             dst.writeU8(mac.range.startStep);
             dst.writeU8(mac.range.endStep);
         }

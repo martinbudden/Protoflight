@@ -251,7 +251,7 @@ void test_rc_modes()
 
     mac.modeId = static_cast<MSP_Box::id_e>(box->id);
     TEST_ASSERT_EQUAL(MSP_Box::BOX_HORIZON, mac.modeId);
-    mac.auxChannelIndex = AUXILIARY_CHANNEL_HORIZON;
+    mac.auxiliaryChannelIndex = AUXILIARY_CHANNEL_HORIZON;
     mac.range.startStep = RC_Modes::channelValueToStep(1250);
     mac.range.endStep = RC_Modes::channelValueToStep(1450);
 
@@ -267,7 +267,7 @@ void test_rc_modes()
 
     mac.modeId = static_cast<MSP_Box::id_e>(box->id);
     TEST_ASSERT_EQUAL(MSP_Box::BOX_GPS_RESCUE, mac.modeId);
-    mac.auxChannelIndex = AUXILIARY_CHANNEL_GPS_RESCUE;
+    mac.auxiliaryChannelIndex = AUXILIARY_CHANNEL_GPS_RESCUE;
     mac.range.startStep = RC_Modes::channelValueToStep(1750);
     mac.range.endStep = RC_Modes::channelValueToStep(1850);
 
@@ -295,9 +295,9 @@ void test_rc_modes()
 void test_rc_modes_init()
 {
     static RC_Modes rcModes;
-    enum { AUXILIARY_CHANNEL_ARM = ReceiverBase::AUX1 };
-    enum { AUXILIARY_CHANNEL_ANGLE_MODE = ReceiverBase::AUX2 };
-    enum { AUXILIARY_CHANNEL_ALTITUDE_HOLD = ReceiverBase::AUX3 };
+    enum { AUXILIARY_CHANNEL_ARM = ReceiverBase::AUX1 - ReceiverBase::AUX1 }; // NOLINT(misc-redundant-expression)
+    enum { AUXILIARY_CHANNEL_ANGLE_MODE = ReceiverBase::AUX2  - ReceiverBase::AUX1 };
+    enum { AUXILIARY_CHANNEL_ALTITUDE_HOLD = ReceiverBase::AUX3  - ReceiverBase::AUX1 };
     enum { BOX_ARM_PERMANENT = 0 };
     enum { BOX_ANGLE_PERMANENT = 1 };
     enum { BOX_ALTHOLD_PERMANENT = 3 };
@@ -311,9 +311,9 @@ void test_rc_modes_init()
     TEST_ASSERT_FALSE(boxArm == nullptr);
     macArm.modeId = static_cast<MSP_Box::id_e>(boxArm->id);
     TEST_ASSERT_EQUAL(MSP_Box::BOX_ARM, macArm.modeId);
-    macArm.auxChannelIndex = AUXILIARY_CHANNEL_ARM;
-    macArm.range.startStep = RC_Modes::RANGE_STEP_MID;
-    macArm.range.endStep = RC_Modes::RANGE_STEP_MAX;
+    macArm.auxiliaryChannelIndex = AUXILIARY_CHANNEL_ARM;
+    macArm.range.startStep = ReceiverBase::RANGE_STEP_MID;
+    macArm.range.endStep = ReceiverBase::RANGE_STEP_MAX;
     rcModes.setModeActivationCondition(MAC_INDEX_ARM, macArm);
 
     RC_Modes::mode_activation_condition_t macAngle = rcModes.getModeActivationCondition(MAC_INDEX_ANGLE);
@@ -321,9 +321,9 @@ void test_rc_modes_init()
     TEST_ASSERT_FALSE(boxAngle == nullptr);
     macAngle.modeId = static_cast<MSP_Box::id_e>(boxAngle->id);
     TEST_ASSERT_EQUAL(MSP_Box::BOX_ANGLE, macAngle.modeId);
-    macAngle.auxChannelIndex = AUXILIARY_CHANNEL_ANGLE_MODE;
-    macAngle.range.startStep = RC_Modes::RANGE_STEP_MID;
-    macAngle.range.endStep = RC_Modes::RANGE_STEP_MAX;
+    macAngle.auxiliaryChannelIndex = AUXILIARY_CHANNEL_ANGLE_MODE;
+    macAngle.range.startStep = ReceiverBase::RANGE_STEP_MID;
+    macAngle.range.endStep = ReceiverBase::RANGE_STEP_MAX;
     rcModes.setModeActivationCondition(MAC_INDEX_ANGLE, macAngle);
 
     RC_Modes::mode_activation_condition_t macAltitudeHold = rcModes.getModeActivationCondition(MAC_INDEX_ALTHOLD);
@@ -331,9 +331,9 @@ void test_rc_modes_init()
     TEST_ASSERT_FALSE(boxAltitudeHold == nullptr);
     macAltitudeHold.modeId = static_cast<MSP_Box::id_e>(boxAltitudeHold->id);
     TEST_ASSERT_EQUAL(MSP_Box::BOX_ALTHOLD, macAltitudeHold.modeId);
-    macAltitudeHold.auxChannelIndex = AUXILIARY_CHANNEL_ALTITUDE_HOLD;
-    macAltitudeHold.range.startStep = RC_Modes::RANGE_STEP_MID;
-    macAltitudeHold.range.endStep = RC_Modes::RANGE_STEP_MAX;
+    macAltitudeHold.auxiliaryChannelIndex = AUXILIARY_CHANNEL_ALTITUDE_HOLD;
+    macAltitudeHold.range.startStep = ReceiverBase::RANGE_STEP_MID;
+    macAltitudeHold.range.endStep = ReceiverBase::RANGE_STEP_MAX;
     rcModes.setModeActivationCondition(MAC_INDEX_ALTHOLD, macAltitudeHold);
 
     rcModes.analyzeModeActivationConditions();

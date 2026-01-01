@@ -138,8 +138,9 @@ void Cockpit::stopBlackboxRecording()
     }
 }
 
-void Cockpit::handleOnOffSwitch()
+void Cockpit::handleArmingSwitch()
 {
+#if defined(LIBRARY_RECEIVER_USE_ESPNOW)
     if (_receiver.getSwitch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
         _onOffSwitchPressed = true;
     } else {
@@ -158,6 +159,21 @@ void Cockpit::handleOnOffSwitch()
             }
         }
     }
+#else
+    if (isRcModeActive(MSP_Box::BOX_ARM)) {
+        if (!isArmed()) {
+            if (_recordToBlackboxWhenArmed) {
+                startBlackboxRecording();
+            }
+            setArmed();
+        }
+    } else {
+        if (isArmed()) {
+            setDisarmed();
+            stopBlackboxRecording();
+        }
+    }
+#endif
 }
 
 /*!
@@ -169,14 +185,14 @@ void Cockpit::updateControls(const controls_t& controls)
     _failsafe.phase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
     _failsafe.tickCount = controls.tickCount;
 
-    handleOnOffSwitch();
-
     // set the RC modes according to the receiver channel values
     _rcModes.updateActivatedModes(_receiver);
 
+    handleArmingSwitch();
+
     // process any in-flight adjustments
     if (!_cliMode && !(isRcModeActive(MSP_Box::BOX_PARALYZE) && !isArmed())) {
-        _rcAdjustments.processAdjustments(_rates, _flightController, true); //!!TODO: check true parameter
+        _rcAdjustments.processAdjustments(_receiver, _flightController, *this, _osd, true); //!!TODO: check true parameter
     }
 
     FlightController::control_mode_e controlMode = FlightController::CONTROL_MODE_RATE;

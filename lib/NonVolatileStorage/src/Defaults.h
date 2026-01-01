@@ -234,28 +234,28 @@ By default AUX1 is for arming, AUX2 for angle mode, and AUX3 for altitude hold.
 static constexpr RC_Modes::mode_activation_conditions_t RC_ModeActivationConditions = {{
     {
         .modeId = MSP_Box::BOX_ARM,
-        .auxChannelIndex = ReceiverBase::AUX1,
+        .auxiliaryChannelIndex = ReceiverBase::AUX1 - ReceiverBase::AUX1, // NOLINT(misc-redundant-expression)
         .range = { 
-            .startStep = RC_Modes::RANGE_STEP_MID,
-            .endStep = RC_Modes::RANGE_STEP_MAX
+            .startStep = ReceiverBase::RANGE_STEP_MID,
+            .endStep = ReceiverBase::RANGE_STEP_MAX
         },
         .modeLogic = {},
         .linkedTo = {}
     }, {
         .modeId = MSP_Box::BOX_ANGLE,
-        .auxChannelIndex = ReceiverBase::AUX2,
+        .auxiliaryChannelIndex = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .range = { 
-            .startStep = RC_Modes::RANGE_STEP_MID,
-            .endStep = RC_Modes::RANGE_STEP_MAX
+            .startStep = ReceiverBase::RANGE_STEP_MID,
+            .endStep = ReceiverBase::RANGE_STEP_MAX
         },
         .modeLogic = {},
         .linkedTo = {}
     }, {
         .modeId = MSP_Box::BOX_ALTHOLD,
-        .auxChannelIndex = ReceiverBase::AUX2,
+        .auxiliaryChannelIndex = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .range = { 
-            .startStep = RC_Modes::RANGE_STEP_MID,
-            .endStep = RC_Modes::RANGE_STEP_MAX
+            .startStep = ReceiverBase::RANGE_STEP_MID,
+            .endStep = ReceiverBase::RANGE_STEP_MAX
         },
         .modeLogic = {},
         .linkedTo = {}
@@ -267,132 +267,132 @@ static constexpr RC_Adjustments::adjustment_ranges_t RC_AdjustmentRanges = {};
 
 static constexpr RC_Adjustments::adjustment_configs_t RC_AdjustmentConfigs = {{
     {
-        .adjustmentFunction = ADJUSTMENT_RC_RATE,
+        .adjustment =ADJUSTMENT_RC_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_RC_EXPO,
+        .adjustment =ADJUSTMENT_RC_EXPO,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_THROTTLE_EXPO,
+        .adjustment =ADJUSTMENT_THROTTLE_EXPO,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_RATE,
+        .adjustment =ADJUSTMENT_PITCH_ROLL_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_YAW_RATE,
+        .adjustment =ADJUSTMENT_YAW_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_P,
+        .adjustment =ADJUSTMENT_PITCH_ROLL_P,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_I,
+        .adjustment =ADJUSTMENT_PITCH_ROLL_I,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_D,
+        .adjustment =ADJUSTMENT_PITCH_ROLL_D,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_YAW_P,
+        .adjustment =ADJUSTMENT_YAW_P,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_YAW_I,
+        .adjustment =ADJUSTMENT_YAW_I,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_YAW_D,
+        .adjustment =ADJUSTMENT_YAW_D,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_RATE_PROFILE,
+        .adjustment =ADJUSTMENT_RATE_PROFILE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 3 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_RATE,
+        .adjustment =ADJUSTMENT_PITCH_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_ROLL_RATE,
+        .adjustment =ADJUSTMENT_ROLL_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_P,
+        .adjustment =ADJUSTMENT_PITCH_P,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_I,
+        .adjustment =ADJUSTMENT_PITCH_I,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_D,
+        .adjustment =ADJUSTMENT_PITCH_D,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_ROLL_P,
+        .adjustment =ADJUSTMENT_ROLL_P,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_ROLL_I,
+        .adjustment =ADJUSTMENT_ROLL_I,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_ROLL_D,
+        .adjustment =ADJUSTMENT_ROLL_D,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_RC_RATE_YAW,
+        .adjustment =ADJUSTMENT_RC_RATE_YAW,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_ROLL_F,
+        .adjustment =ADJUSTMENT_PITCH_ROLL_F,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_FEEDFORWARD_TRANSITION,
+        .adjustment =ADJUSTMENT_FEEDFORWARD_TRANSITION,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_HORIZON_STRENGTH,
+        .adjustment =ADJUSTMENT_HORIZON_STRENGTH,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 255 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_PID_AUDIO,
+        .adjustment =ADJUSTMENT_PID_AUDIO,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 7 } // ARRAYLEN(pidAudioPositionToModeMap)
     }, {
-        .adjustmentFunction = ADJUSTMENT_PITCH_F,
+        .adjustment =ADJUSTMENT_PITCH_F,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_ROLL_F,
+        .adjustment =ADJUSTMENT_ROLL_F,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_YAW_F,
+        .adjustment =ADJUSTMENT_YAW_F,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_OSD_PROFILE,
+        .adjustment =ADJUSTMENT_OSD_PROFILE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 3 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_LED_PROFILE,
+        .adjustment =ADJUSTMENT_LED_PROFILE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 3 }
     }, {
-        .adjustmentFunction = ADJUSTMENT_LED_DIMMER,
+        .adjustment =ADJUSTMENT_LED_DIMMER,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 100 }
     },
     {
-        .adjustmentFunction = ADJUSTMENT_NONE,
+        .adjustment =ADJUSTMENT_NONE,
         .mode = {},
         .data = {}
     },

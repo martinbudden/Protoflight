@@ -232,6 +232,9 @@ public:
     OSD_Elements& getOSD_Elements() { return _elements; }
     const OSD_Elements& getOSD_Elements() const { return _elements; }
 
+    void setProfile(uint8_t profile) { _elements.setProfile(profile); }
+    uint8_t getProfile() const { return _elements.getProfile(); }
+
     void updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta); //!< OSD Task function, called by OSD_Task
     void updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta);
     void drawLogo(uint8_t x, uint8_t y);

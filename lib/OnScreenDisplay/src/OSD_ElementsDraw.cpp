@@ -74,7 +74,9 @@ void OSD_Elements::initDrawFunctions()
 #if defined(USE_RTC_TIME)
     DrawFunctions[OSD_RTC_DATETIME]     = &OSD_Elements::draw_RTC_DATETIME;
 #endif
+#if defined(USE_OSD_ADJUSTMENTS)
     DrawFunctions[OSD_ADJUSTMENT_RANGE] = &OSD_Elements::draw_ADJUSTMENT_RANGE;
+#endif
     DrawFunctions[OSD_CORE_TEMPERATURE] = &OSD_Elements::draw_CORE_TEMPERATURE;
     DrawFunctions[OSD_ANTI_GRAVITY]     = &OSD_Elements::draw_ANTI_GRAVITY;
     DrawFunctions[OSD_G_FORCE]          = &OSD_Elements::draw_G_FORCE;
