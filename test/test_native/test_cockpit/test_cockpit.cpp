@@ -377,6 +377,24 @@ void test_rc_modes_init()
     rcModes.updateActivatedModes(receiver);
     TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD));
 }
+
+void test_flightmode_flags()
+{
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
+
+    TEST_ASSERT_EQUAL(0, cockpit.getFlightModeFlags());
+    cockpit.setFlightModeFlag(Cockpit::LOG2_HORIZON_MODE);
+    uint32_t flags = Cockpit::HORIZON_MODE;
+    TEST_ASSERT_EQUAL(flags, cockpit.getFlightModeFlags());
+
+    cockpit.setFlightModeFlag(Cockpit::LOG2_ANGLE_MODE);
+    flags |= Cockpit::ANGLE_MODE;
+    TEST_ASSERT_EQUAL(flags, cockpit.getFlightModeFlags());
+
+    cockpit.setFlightModeFlag(Cockpit::LOG2_GPS_RESCUE_MODE);
+    flags |= Cockpit::GPS_RESCUE_MODE;
+    TEST_ASSERT_EQUAL(flags, cockpit.getFlightModeFlags());
+}
 // NOLINTEND(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
@@ -391,6 +409,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
     RUN_TEST(test_cockpit_throttle);
     RUN_TEST(test_rc_modes);
     RUN_TEST(test_rc_modes_init);
+    RUN_TEST(test_flightmode_flags);
 
     UNITY_END();
 }

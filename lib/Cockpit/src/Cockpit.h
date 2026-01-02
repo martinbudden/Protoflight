@@ -10,6 +10,7 @@
 #include <CockpitBase.h>
 #include <MSP_Box.h>
 
+#include <cassert>
 #include <cstddef>
 
 class Autopilot;
@@ -99,6 +100,34 @@ public:
     static constexpr uint32_t ARMED = 0x01;
     static constexpr uint32_t WAS_EVER_ARMED = 0x02;
     static constexpr uint32_t WAS_ARMED_WITH_PREARM = 0x04;
+    // flight mode flags
+    enum log2_flight_mode_flag_e {
+        LOG2_ANGLE_MODE         = 0,
+        LOG2_HORIZON_MODE       = 1,
+        LOG2_MAG_MODE           = 2,
+        LOG2_ALTITUDE_HOLD_MODE = 3,
+//        LOG2_GPS_HOME_MODE      = 4,
+        LOG2_POSITION_HOLD_MODE = 5,
+        LOG2_HEADFREE_MODE      = 6,
+        LOG2_CHIRP_MODE         = 7,
+        LOG2_PASSTHRU_MODE      = 8,
+//        LOG2_RANGEFINDER_MODE   = 9,
+        LOG2_FAILSAFE_MODE      = 10,
+        LOG2_GPS_RESCUE_MODE    = 11,
+        FLIGHT_MODE_FLAG_COUNT = 12
+    };
+    static constexpr uint32_t ANGLE_MODE      = 1U << LOG2_ANGLE_MODE;
+    static constexpr uint32_t HORIZON_MODE    = 1U << LOG2_HORIZON_MODE;
+    static constexpr uint32_t MAG_MODE        = 1U << LOG2_MAG_MODE;
+    static constexpr uint32_t ALTITUDE_HOLD_MODE = 1U << LOG2_ALTITUDE_HOLD_MODE;
+//    static constexpr uint32_t GPS_HOME_MODE   = 1U << LOG2_GPS_HOME_MODE;
+    static constexpr uint32_t POSITION_HOLD_MODE = 1U << LOG2_POSITION_HOLD_MODE;
+    static constexpr uint32_t HEADFREE_MODE   = 1U << LOG2_HEADFREE_MODE;
+    static constexpr uint32_t CHIRP_MODE      = 1U << LOG2_CHIRP_MODE;
+    static constexpr uint32_t PASSTHRU_MODE   = 1U << LOG2_PASSTHRU_MODE;
+//    static constexpr uint32_t RANGEFINDER_MODE= 1U << LOG2_RANGEFINDER_MODE;
+    static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
+    static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
 public:
     void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
     void setOSD(OSD& osd) { _osd = &osd; }
@@ -129,6 +158,7 @@ public:
     void clearArmingDisabledFlag(arming_disabled_flags_e flag);
     uint32_t getArmingDisableFlags() const { return _armingDisabledFlags; }
     uint32_t getFlightModeFlags() const;
+    void setFlightModeFlag(uint8_t flag) { assert(flag < FLIGHT_MODE_FLAG_COUNT && "Flightmode flag too big"); _flightModeFlags.set(flag); } // for testing
 
     virtual void checkFailsafe(uint32_t tickCount) override;
     failsafe_phase_e getFailsafePhase() const { return _failsafe.phase; }
@@ -190,7 +220,7 @@ private:
     OSD* _osd {nullptr};
     uint32_t _armingFlags {};
     uint32_t _armingDisabledFlags {};
-    std::bitset<MSP_Box::BOX_ID_FLIGHTMODE_COUNT> _flightModeFlags {};
+    std::bitset<FLIGHT_MODE_FLAG_COUNT> _flightModeFlags {};
     failsafe_config_t _failsafeConfig {};
     RX::config_t _rxConfig {};
     RX::failsafe_channel_configs_t _rxFailsafeChannelConfigs {};
@@ -211,33 +241,6 @@ private:
     RC_Adjustments _rcAdjustments;
 #endif
 public:
-    // flight mode flags
-    enum log2_flight_mode_flag_e {
-        LOG2_ANGLE_MODE         = 0,
-        LOG2_HORIZON_MODE       = 1,
-        LOG2_MAG_MODE           = 2,
-        LOG2_ALTITUDE_HOLD_MODE = 3,
-//        LOG2_GPS_HOME_MODE      = 4,
-        LOG2_POSITION_HOLD_MODE = 5,
-        LOG2_HEADFREE_MODE      = 6,
-        LOG2_CHIRP_MODE         = 7,
-        LOG2_PASSTHRU_MODE      = 8,
-//        LOG2_RANGEFINDER_MODE   = 9,
-        LOG2_FAILSAFE_MODE      = 10,
-        LOG2_GPS_RESCUE_MODE    = 11
-    };
-    static constexpr uint32_t ANGLE_MODE      = 1U << LOG2_ANGLE_MODE;
-    static constexpr uint32_t HORIZON_MODE    = 1U << LOG2_HORIZON_MODE;
-    static constexpr uint32_t MAG_MODE        = 1U << LOG2_MAG_MODE;
-    static constexpr uint32_t ALTITUDE_HOLD_MODE = 1U << LOG2_ALTITUDE_HOLD_MODE;
-//    static constexpr uint32_t GPS_HOME_MODE   = 1U << LOG2_GPS_HOME_MODE;
-    static constexpr uint32_t POSITION_HOLD_MODE = 1U << LOG2_POSITION_HOLD_MODE;
-    static constexpr uint32_t HEADFREE_MODE   = 1U << LOG2_HEADFREE_MODE;
-    static constexpr uint32_t CHIRP_MODE      = 1U << LOG2_CHIRP_MODE;
-    static constexpr uint32_t PASSTHRU_MODE   = 1U << LOG2_PASSTHRU_MODE;
-//    static constexpr uint32_t RANGEFINDER_MODE= 1U << LOG2_RANGEFINDER_MODE;
-    static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
-    static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
     static constexpr std::array<uint8_t, MSP_Box::BOX_ID_FLIGHTMODE_COUNT> BoxIdToFlightModeMap = {{
         /*[BOX_ARM]*/           0, // not used
         /*[BOX_ANGLE]*/         LOG2_ANGLE_MODE,
