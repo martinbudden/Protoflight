@@ -9,6 +9,7 @@ struct rates_t {
     enum { LIMIT_MAX = 1998 };
     enum { RC_RATES_MAX = 255 };
     enum { RC_EXPOS_MAX = 100 };
+    enum { THROTTLE_MAX = 100 };
     enum type_e { TYPE_BETAFLIGHT = 0, TYPE_RACEFLIGHT, TYPE_KISS, TYPE_ACTUAL, TYPE_QUICK, TYPE_COUNT } ;
     enum throttle_limit_type_e { THROTTLE_LIMIT_TYPE_OFF = 0, THROTTLE_LIMIT_TYPE_SCALE, THROTTLE_LIMIT_TYPE_CLIP, THROTTLE_LIMIT_TYPE_COUNT };
     

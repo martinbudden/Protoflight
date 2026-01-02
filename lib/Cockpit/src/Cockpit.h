@@ -5,12 +5,11 @@
 #include "RC_Modes.h"
 #include "RX.h"
 #include "Rates.h"
+#include "Targets.h"
 
 #include <CockpitBase.h>
 
-#include <array>
 #include <cstddef>
-#include <cstdint>
 
 class Autopilot;
 class Debug;
@@ -55,7 +54,7 @@ enum { ARMING_DISABLE_FLAGS_COUNT = 27 };
 
 class Cockpit : public CockpitBase {
 public:
-    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters,  Debug& debug, NonVolatileStorage& nvs, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs);
+    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs);
 public:
     enum failsafe_phase_e {
         FAILSAFE_DISARMED = 0,
@@ -151,8 +150,10 @@ public:
     bool isRcModeActive(MSP_Box::id_e rcMode) const;
     const RC_Modes& getRC_Modes() const { return _rcModes; }
     RC_Modes& getRC_Modes() { return _rcModes; }
+#if defined(USE_RC_ADJUSTMENTS)
     const RC_Adjustments& getRC_Adjustments() const { return _rcAdjustments; }
     RC_Adjustments& getRC_Adjustments() { return _rcAdjustments; }
+#endif
 
     void setRecordToBlackboxWhenArmed(bool recordToBlackboxWhenArmed) { _recordToBlackboxWhenArmed = recordToBlackboxWhenArmed; }
     void startBlackboxRecording();
@@ -162,7 +163,6 @@ public:
     bool getRebootRequired() const;
 private:
     RC_Modes _rcModes;
-    RC_Adjustments _rcAdjustments;
     Features _features {};
     FlightController& _flightController;
     Autopilot& _autopilot;
@@ -200,4 +200,7 @@ private:
     bool _rebootRequired {false};
     bool _onOffSwitchPressed {false}; // on/off switch debouncing
     bool _cliMode {false};
+#if defined(USE_RC_ADJUSTMENTS)
+    RC_Adjustments _rcAdjustments;
+#endif
 };

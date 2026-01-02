@@ -347,11 +347,11 @@ static constexpr RC_Adjustments::adjustment_configs_t RC_AdjustmentConfigs = {{
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_RC_RATE_YAW,
+        .adjustment =ADJUSTMENT_YAW_RC_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_ROLL_F,
+        .adjustment =ADJUSTMENT_PITCH_ROLL_K,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
@@ -367,15 +367,15 @@ static constexpr RC_Adjustments::adjustment_configs_t RC_AdjustmentConfigs = {{
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 7 } // ARRAYLEN(pidAudioPositionToModeMap)
     }, {
-        .adjustment =ADJUSTMENT_PITCH_F,
+        .adjustment =ADJUSTMENT_PITCH_K,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_ROLL_F,
+        .adjustment =ADJUSTMENT_ROLL_K,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_YAW_F,
+        .adjustment =ADJUSTMENT_YAW_K,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {

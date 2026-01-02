@@ -670,7 +670,7 @@ int32_t NonVolatileStorage::storeRC_ModeActivationConditions(const RC_Modes::mod
     return storeItem(RC_ModeActivationConditionsKey, &modeActivationConditions, sizeof(modeActivationConditions), &DEFAULTS::RC_ModeActivationConditions);
 }
 
-
+#if defined(USE_RC_ADJUSTMENTS)
 RC_Adjustments::adjustment_ranges_t NonVolatileStorage::loadRC_AdjustmentRanges() const
 {
     {RC_Adjustments::adjustment_ranges_t adjustmentRanges {};
@@ -684,6 +684,7 @@ int32_t NonVolatileStorage::storeRC_AdjustmentRanges(const RC_Adjustments::adjus
 {
     return storeItem(RC_AdjustmentRangesKey, &adjustmentRanges, sizeof(adjustmentRanges), &DEFAULTS::RC_ModeActivationConditions);
 }
+#endif
 
 rates_t NonVolatileStorage::loadRates(uint8_t rateProfileIndex) const
 {
@@ -897,7 +898,9 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
 
     storeRates(cockpit.getRates(), ratesProfile);
     storeRC_ModeActivationConditions(cockpit.getRC_Modes().getModeActivationConditions());
+#if defined(USE_RC_ADJUSTMENTS)
     storeRC_AdjustmentRanges(cockpit.getRC_Adjustments().getAdjustmentRanges());
+#endif
     storeFeaturesConfig(cockpit.getFeaturesConfig());
 
     return OK;

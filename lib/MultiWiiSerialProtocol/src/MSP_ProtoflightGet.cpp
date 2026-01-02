@@ -254,6 +254,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         }
         break;
     case MSP_ADJUSTMENT_RANGES:
+#if defined(USE_RC_ADJUSTMENTS)
         for (const auto& adjustmentRange : _cockpit.getRC_Adjustments().getAdjustmentRanges()) {
             dst.writeU8(0); // was adjustmentRange.adjustmentIndex
             dst.writeU8(adjustmentRange.auxChannelIndex);
@@ -263,6 +264,9 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
             dst.writeU8(adjustmentRange.auxSwitchChannelIndex);
         }
         break;
+#else
+        return RESULT_CMD_UNKNOWN;
+#endif
     case MSP_MOTOR_CONFIG:
         return RESULT_CMD_UNKNOWN;
     case MSP_COMPASS_CONFIG:

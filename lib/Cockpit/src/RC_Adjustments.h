@@ -32,8 +32,8 @@ enum adjustment_e {
     ADJUSTMENT_ROLL_P,
     ADJUSTMENT_ROLL_I,
     ADJUSTMENT_ROLL_D,
-    ADJUSTMENT_RC_RATE_YAW,
-    ADJUSTMENT_PITCH_ROLL_F,
+    ADJUSTMENT_YAW_RC_RATE,
+    ADJUSTMENT_PITCH_ROLL_K,
     ADJUSTMENT_FEEDFORWARD_TRANSITION,
     ADJUSTMENT_HORIZON_STRENGTH,
     ADJUSTMENT_ROLL_RC_RATE,
@@ -41,9 +41,9 @@ enum adjustment_e {
     ADJUSTMENT_ROLL_RC_EXPO,
     ADJUSTMENT_PITCH_RC_EXPO,
     ADJUSTMENT_PID_AUDIO,
-    ADJUSTMENT_PITCH_F,
-    ADJUSTMENT_ROLL_F,
-    ADJUSTMENT_YAW_F,
+    ADJUSTMENT_PITCH_K, // called ADJUSTMENT_PITCH_F in betaflight
+    ADJUSTMENT_ROLL_K,
+    ADJUSTMENT_YAW_K,
     ADJUSTMENT_OSD_PROFILE,
     ADJUSTMENT_LED_PROFILE,
     ADJUSTMENT_LED_DIMMER,
@@ -72,7 +72,7 @@ public:
         // ..then apply the adjustment function to the auxSwitchChannel ...
         uint8_t adjustmentConfig;
         uint8_t auxSwitchChannelIndex;
-        uint16_t adjustmentCenter;
+        uint8_t adjustmentCenter;
         uint16_t adjustmentScale;
     };
     struct timed_adjustment_state_t {
@@ -115,8 +115,6 @@ private:
     int32_t applyStepAdjustment(FlightController& flightController, rates_t& rates, adjustment_e adjustment, int32_t delta);
     int32_t applyAbsoluteAdjustment(FlightController& flightController, rates_t& rates, adjustment_e adjustment, int32_t value);
     uint8_t applySelectAdjustment(FlightController& flightController, Cockpit& cockpit, OSD* osd, adjustment_e adjustment, uint8_t position);
-    void setConfigDirty();
-    void setConfigDirtyIfNotPermanent(const ReceiverBase::channel_range_t& range);
     void processStepwiseAdjustments(const ReceiverBase& receiver, FlightController& flightController, rates_t& rates, bool canUseRxData);
     void processContinuosAdjustments(const ReceiverBase& receiver, FlightController& flightController, Cockpit& cockpit, OSD* osd);
     void calcActiveAdjustmentRanges();

@@ -11,14 +11,16 @@
 
 #include <cmath>
 
-Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs) :
+Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, [[maybe_unused]] const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs) :
     CockpitBase(receiver),
-    _rcAdjustments(defaultAdjustmentConfigs),
     _flightController(flightController),
     _autopilot(autopilot),
     _imuFilters(imuFilters),
     _debug(debug),
     _nvs(nvs)
+#if defined(USE_RC_ADJUSTMENTS)
+    ,_rcAdjustments(defaultAdjustmentConfigs)
+#endif
 {
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(rates_t::YAW, 1.0F));
 }
@@ -190,10 +192,12 @@ void Cockpit::updateControls(const controls_t& controls)
 
     handleArmingSwitch();
 
+#if defined(USE_RC_ADJUSTMENTS)
     // process any in-flight adjustments
     if (!_cliMode && !(isRcModeActive(MSP_Box::BOX_PARALYZE) && !isArmed())) {
         _rcAdjustments.processAdjustments(_receiver, _flightController, *this, _osd, true); //!!TODO: check true parameter
     }
+#endif
 
     FlightController::control_mode_e controlMode = FlightController::CONTROL_MODE_RATE;
 

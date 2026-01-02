@@ -124,9 +124,10 @@ public:
     RC_Modes::mode_activation_conditions_t loadRC_ModeActivationConditions() const;
     int32_t storeRC_ModeActivationConditions(const RC_Modes::mode_activation_conditions_t& modeActivationConditions);
 
+#if defined(USE_RC_ADJUSTMENTS)
     RC_Adjustments::adjustment_ranges_t loadRC_AdjustmentRanges() const;
     int32_t storeRC_AdjustmentRanges(const RC_Adjustments::adjustment_ranges_t& adjustmentRanges);
-
+#endif
     rates_t loadRates(uint8_t rateProfileIndex) const;
     int32_t storeRates(const rates_t& rates, uint8_t rateProfileIndex);
 

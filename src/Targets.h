@@ -11,6 +11,7 @@ Targets
 #define USE_OSD_STATS
 #define USE_SIN_ANGLE_PIDS
 #define USE_GYRO_FILTERS_EXTENDED
+#define USE_RC_ADJUSTMENTS
 
 #endif
 
@@ -436,11 +437,11 @@ Targets
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
-    //#define USE_MSP
+    #define USE_MSP
     #define MSP_UART_INDEX      1
     #define MSP_UART_PINS       UART_1_PINS
 
-    #define USE_MSP_DISPLAYPORT
+    //#define USE_MSP_DISPLAYPORT
     #define MSP_DISPLAYPORT_UART_INDEX  1
     #define MSP_DISPLAYPORT_UART_PINS   UART_1_PINS
 

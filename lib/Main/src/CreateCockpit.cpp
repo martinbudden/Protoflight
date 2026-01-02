@@ -20,11 +20,15 @@ Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightCon
     static Autopilot autopilot(flightController.getAHRS_MessageQueue());
 #endif
 
+#if defined(USE_RC_ADJUSTMENTS)
     static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, &DEFAULTS::RC_AdjustmentConfigs);
+    cockpit.getRC_Adjustments().setAdjustmentRanges(nvs.loadRC_AdjustmentRanges());
+#else
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
+#endif
     cockpit.setCurrentPidProfileIndex(nvs.getCurrentPidProfileIndex());
     cockpit.setCurrentRateProfileIndex(nvs.getCurrentRateProfileIndex());
     cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()));
-    cockpit.getRC_Adjustments().setAdjustmentRanges(nvs.loadRC_AdjustmentRanges());
     cockpit.setFeatures(nvs.loadFeaturesConfig().enabledFeatures);
     RC_Modes& rcModes = cockpit.getRC_Modes();
     rcModes.setModeActivationConditions(nvs.loadRC_ModeActivationConditions());

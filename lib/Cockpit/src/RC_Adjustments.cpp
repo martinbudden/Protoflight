@@ -92,7 +92,7 @@ int32_t RC_Adjustments::applyStepAdjustment(FlightController& flightController, 
 
     switch (adjustment) {
     case ADJUSTMENT_RC_RATE:
-        [[fallthrough]];
+        [[fallthrough]]; // for combined adjustment
     case ADJUSTMENT_ROLL_RC_RATE: {
         //newValue = constrain((int)controlRateConfig->rcRates[FD_ROLL] + delta, 1, CONTROL_RATE_CONFIG_RC_RATES_MAX);
         const uint8_t newValue = std::clamp(static_cast<uint8_t>(rates.rcRates[FlightController::FD_ROLL] + delta), uint8_t{1}, uint8_t{rates_t::RC_RATES_MAX});
@@ -101,7 +101,7 @@ int32_t RC_Adjustments::applyStepAdjustment(FlightController& flightController, 
         if (adjustment == ADJUSTMENT_ROLL_RC_RATE) {
             return newValue;
         }
-        [[fallthrough]]; // for combined ADJUSTMENT_RC_EXPO
+        [[fallthrough]]; // for combined adjustment
     }
     case ADJUSTMENT_PITCH_RC_RATE: {
         const uint8_t newValue = std::clamp(static_cast<uint8_t>(rates.rcRates[FlightController::FD_PITCH] + delta), uint8_t{1}, uint8_t{rates_t::RC_RATES_MAX});
@@ -109,7 +109,55 @@ int32_t RC_Adjustments::applyStepAdjustment(FlightController& flightController, 
         blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_RC_RATE, newValue);
         return newValue;
     }
+    case ADJUSTMENT_RC_EXPO:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_ROLL_RC_EXPO: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(rates.rcExpos[FlightController::FD_ROLL] + delta), uint8_t{1}, uint8_t{rates_t::RC_RATES_MAX});
+        rates.rcExpos[FlightController::FD_ROLL] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_RC_EXPO, newValue);
+        if (adjustment == ADJUSTMENT_ROLL_RC_EXPO) {
+            return newValue;
+        }
+        [[fallthrough]]; // for combined adjustment
+    }
+    case ADJUSTMENT_PITCH_RC_EXPO: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(rates.rcExpos[FlightController::FD_PITCH] + delta), uint8_t{1}, uint8_t{rates_t::RC_RATES_MAX});
+        rates.rcExpos[FlightController::FD_PITCH] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_RC_EXPO, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_THROTTLE_EXPO: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(rates.throttleExpo + delta), uint8_t{0}, uint8_t{rates_t::THROTTLE_MAX});
+        rates.throttleExpo = newValue;
+        //!!initRcProcessing();
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_THROTTLE_EXPO, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_PITCH_ROLL_RATE:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_PITCH_RATE: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(rates.rates[FlightController::FD_PITCH] + delta), uint8_t{1}, uint8_t{rates_t::RC_RATES_MAX});
+        rates.rates[FlightController::FD_PITCH] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_RATE, newValue);
+        if (adjustment == ADJUSTMENT_PITCH_RATE) {
+            return newValue;
+        }
+        [[fallthrough]]; // for combined adjustment
+    }
+    case ADJUSTMENT_ROLL_RATE: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(rates.rates[FlightController::FD_ROLL] + delta), uint8_t{1}, uint8_t{rates_t::RC_RATES_MAX});
+        rates.rates[FlightController::FD_ROLL] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_RATE, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_RATE: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(rates.rates[FlightController::FD_YAW] + delta), uint8_t{1}, uint8_t{rates_t::RC_RATES_MAX});
+        rates.rates[FlightController::FD_YAW] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_YAW_RATE, newValue);
+        return newValue;
+    }
     case ADJUSTMENT_PITCH_ROLL_P:
+        [[fallthrough]]; // for combined adjustment
     case ADJUSTMENT_PITCH_P: {
         const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::PITCH_RATE_DPS);
         const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.kp + delta), uint16_t{0}, FlightController::PID_GAIN_MAX);
@@ -118,7 +166,7 @@ int32_t RC_Adjustments::applyStepAdjustment(FlightController& flightController, 
         if (adjustment == ADJUSTMENT_PITCH_P) {
             return newValue;
         }
-        [[fallthrough]]; // for combined ADJUSTMENT_PITCH_ROLL_P
+        [[fallthrough]]; // for combined adjustment
     }
     case ADJUSTMENT_ROLL_P: {
         const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::ROLL_RATE_DPS);
@@ -127,6 +175,95 @@ int32_t RC_Adjustments::applyStepAdjustment(FlightController& flightController, 
         blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_P, newValue);
         return newValue;
     }
+    case ADJUSTMENT_PITCH_ROLL_I:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_PITCH_I: {
+        const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::PITCH_RATE_DPS);
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.ki + delta), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_I_MSP(FlightController::PITCH_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_I, newValue);
+        if (adjustment == ADJUSTMENT_PITCH_I) {
+            return newValue;
+        }
+        [[fallthrough]]; // for combined adjustment
+    }
+    case ADJUSTMENT_ROLL_I: {
+        const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::ROLL_RATE_DPS);
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.ki + delta), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_I_MSP(FlightController::ROLL_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_I, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_PITCH_ROLL_D:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_PITCH_D: {
+        const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::PITCH_RATE_DPS);
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.kd + delta), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_D_MSP(FlightController::PITCH_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_D, newValue);
+        if (adjustment == ADJUSTMENT_PITCH_D) {
+            return newValue;
+        }
+        // fall through for combined ADJUSTMENT_PITCH_ROLL_D
+        [[fallthrough]];
+    }
+    case ADJUSTMENT_ROLL_D: {
+        const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::ROLL_RATE_DPS);
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.kd + delta), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_D_MSP(FlightController::ROLL_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_D, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_P: {
+        const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::YAW_RATE_DPS);
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.kp + delta), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_P_MSP(FlightController::YAW_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_YAW_P, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_I: {
+        const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::YAW_RATE_DPS);
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.ki + delta), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_I_MSP(FlightController::YAW_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_YAW_I, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_D:
+        return -1;
+    case ADJUSTMENT_PITCH_ROLL_K:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_PITCH_K: {
+        const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::PITCH_RATE_DPS);
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.kk + delta), uint16_t{0}, FlightController::K_GAIN_MAX);
+        flightController.setPID_K_MSP(FlightController::PITCH_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_K, newValue);
+        if (adjustment == ADJUSTMENT_PITCH_K) {
+            return newValue;
+        }
+        [[fallthrough]]; // for combined adjustment
+    }
+    case ADJUSTMENT_ROLL_K: {
+        const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::ROLL_RATE_DPS);
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.kk + delta), uint16_t{0}, FlightController::K_GAIN_MAX);
+        flightController.setPID_K_MSP(FlightController::ROLL_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_K, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_K: {
+        const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::YAW_RATE_DPS);
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(pid.kk + delta), uint16_t{0}, FlightController::K_GAIN_MAX);
+        flightController.setPID_K_MSP(FlightController::YAW_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_YAW_K, newValue);
+        return newValue;
+    }
+#if defined(USE_FEEDFORWARD)
+    case ADJUSTMENT_FEEDFORWARD_TRANSITION: {
+        newValue = constrain(currentPidProfile->feedforward_transition + delta, 1, 100); // FIXME magic numbers repeated in cli.c
+        currentPidProfile->feedforward_transition = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_FEEDFORWARD_TRANSITION, newValue);
+        return newValue;
+    }
+#endif
     default:
         return -1;
     };
@@ -136,6 +273,7 @@ int32_t RC_Adjustments::applyAbsoluteAdjustment(FlightController& flightControll
 {
     switch (adjustment) {
     case ADJUSTMENT_RC_RATE:
+        [[fallthrough]]; // for combined adjustment
     case ADJUSTMENT_ROLL_RC_RATE: {
         const uint8_t newValue = std::clamp(static_cast<uint8_t>(value), uint8_t{1}, uint8_t{rates_t::RC_RATES_MAX});
         rates.rcRates[FlightController::FD_ROLL] = newValue;
@@ -151,7 +289,61 @@ int32_t RC_Adjustments::applyAbsoluteAdjustment(FlightController& flightControll
         blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_RC_RATE, newValue);
         return newValue;
     }
+    case ADJUSTMENT_YAW_RC_RATE: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(value), uint8_t{1}, uint8_t{rates_t::RC_RATES_MAX});
+        rates.rcRates[FlightController::FD_YAW] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_YAW_RC_RATE, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_RC_EXPO:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_ROLL_RC_EXPO: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(value), uint8_t{1}, uint8_t{rates_t::RC_EXPOS_MAX});
+        rates.rcExpos[rates_t::ROLL] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_RC_EXPO, newValue);
+        if (adjustment == ADJUSTMENT_ROLL_RC_EXPO) {
+            return newValue;
+        }
+        [[fallthrough]]; // for combined adjustment
+    }
+    case ADJUSTMENT_PITCH_RC_EXPO: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(value), uint8_t{1}, uint8_t{rates_t::RC_EXPOS_MAX});
+        rates.rcExpos[rates_t::PITCH] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_RC_EXPO, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_THROTTLE_EXPO: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(value), uint8_t{0}, uint8_t{rates_t::RC_EXPOS_MAX});
+        rates.throttleExpo = newValue;
+        //initRcProcessing();
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_THROTTLE_EXPO, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_PITCH_ROLL_RATE:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_PITCH_RATE: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(value), uint8_t{0}, uint8_t{rates_t::RC_RATES_MAX});
+        rates.rates[rates_t::PITCH] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_RATE, newValue);
+        if (adjustment == ADJUSTMENT_PITCH_RATE) {
+            return newValue;
+        }
+        [[fallthrough]]; // for combined adjustment
+    }
+    case ADJUSTMENT_ROLL_RATE: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(value), uint8_t{0}, uint8_t{rates_t::RC_RATES_MAX});
+        rates.rates[rates_t::ROLL] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_RATE, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_RATE: {
+        const uint8_t newValue = std::clamp(static_cast<uint8_t>(value), uint8_t{0}, uint8_t{rates_t::RC_RATES_MAX});
+        rates.rates[rates_t::YAW] = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_YAW_RATE, newValue);
+        return newValue;
+    }
     case ADJUSTMENT_PITCH_ROLL_P:
+        [[fallthrough]]; // for combined adjustment
     case ADJUSTMENT_PITCH_P: {
         const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::PID_GAIN_MAX);
         flightController.setPID_P_MSP(FlightController::PITCH_RATE_DPS, newValue);
@@ -167,12 +359,92 @@ int32_t RC_Adjustments::applyAbsoluteAdjustment(FlightController& flightControll
         blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_P, newValue);
         return newValue;
     }
+    case ADJUSTMENT_PITCH_ROLL_I:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_PITCH_I: {
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_I_MSP(FlightController::PITCH_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_I, newValue);
+        if (adjustment == ADJUSTMENT_PITCH_I) {
+            return newValue;
+        }
+        [[fallthrough]]; // for combined adjustment
+    }
+    case ADJUSTMENT_ROLL_I: {
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_I_MSP(FlightController::ROLL_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_I, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_PITCH_ROLL_D:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_PITCH_D: {
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_D_MSP(FlightController::PITCH_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_D, newValue);
+        if (adjustment == ADJUSTMENT_PITCH_D) {
+            return newValue;
+        }
+        // fall through for combined ADJUSTMENT_PITCH_ROLL_D
+        [[fallthrough]]; // for combined adjustment
+    }
+    case ADJUSTMENT_ROLL_D: {
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_D_MSP(FlightController::ROLL_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_D, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_P: {
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_P_MSP(FlightController::YAW_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_YAW_P, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_I: {
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::PID_GAIN_MAX);
+        flightController.setPID_I_MSP(FlightController::YAW_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_YAW_I, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_D:
+        return -1;
+    case ADJUSTMENT_PITCH_ROLL_K:
+        [[fallthrough]]; // for combined adjustment
+    case ADJUSTMENT_PITCH_K: {
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::K_GAIN_MAX);
+        flightController.setPID_K_MSP(FlightController::PITCH_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_PITCH_K, newValue);
+        if (adjustment == ADJUSTMENT_PITCH_K) {
+            return newValue;
+        }
+        [[fallthrough]]; // for combined adjustment
+    }
+    case ADJUSTMENT_ROLL_K: {
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::K_GAIN_MAX);
+        flightController.setPID_K_MSP(FlightController::ROLL_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_ROLL_K, newValue);
+        return newValue;
+    }
+    case ADJUSTMENT_YAW_K: {
+        const uint16_t newValue = std::clamp(static_cast<uint16_t>(value), uint16_t{0}, FlightController::K_GAIN_MAX);
+        flightController.setPID_K_MSP(FlightController::YAW_RATE_DPS, newValue);
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_YAW_K, newValue);
+        return newValue;
+    }
+#if defined(USE_FEEDFORWARD)
+    case ADJUSTMENT_FEEDFORWARD_TRANSITION: {
+        newValue = constrain(value, 1, 100); // FIXME magic numbers repeated in cli.c
+        currentPidProfile->feedforward_transition = newValue;
+        blackboxLogInflightAdjustmentEvent(ADJUSTMENT_FEEDFORWARD_TRANSITION, newValue);
+        return newValue;
+    }
+#endif
     default:
         return -1;
     };
 }
 
-uint8_t RC_Adjustments::applySelectAdjustment(FlightController& flightController, Cockpit& cockpit, OSD* osd, adjustment_e adjustment, uint8_t position)
+uint8_t RC_Adjustments::applySelectAdjustment(FlightController& flightController, Cockpit& cockpit, [[maybe_unused]] OSD* osd, adjustment_e adjustment, uint8_t position)
 {
     uint8_t beeps = 0;
 
@@ -258,18 +530,6 @@ void RC_Adjustments::calcActiveAdjustmentRanges()
     }
 }
 
-void RC_Adjustments::setConfigDirty()
-{
-}
-
-void RC_Adjustments::setConfigDirtyIfNotPermanent(const ReceiverBase::channel_range_t& range)
-{
-    if (!(range.startStep == ReceiverBase::RANGE_STEP_MIN && range.endStep == ReceiverBase::RANGE_STEP_MAX)) {
-        // Only set the configuration dirty if this range is NOT permanently enabled (and the config thus never used).
-        setConfigDirty();
-    }
-}
-
 void RC_Adjustments::processStepwiseAdjustments(const ReceiverBase& receiver, FlightController& flightController, rates_t& rates, bool canUseRxData)
 {
     enum { FREQUENCY_2HZ_IN_MILLISECONDS = 1000 / 2 };
@@ -284,17 +544,14 @@ void RC_Adjustments::processStepwiseAdjustments(const ReceiverBase& receiver, Fl
             adjustmentState.timeoutAtMilliseconds = 0;
             continue;
         }
-
         if (timeDifferenceMs(timeNowMs, adjustmentState.timeoutAtMilliseconds) >= 0) { // cppcheck-suppress knownConditionTrueFalse
 
             adjustmentState.timeoutAtMilliseconds = timeNowMs + FREQUENCY_2HZ_IN_MILLISECONDS;
             adjustmentState.ready = true;
         }
-
         if (!canUseRxData) {
             continue;
         }
-
         if (adjustmentConfig.mode == ADJUSTMENT_MODE_STEP) {
             int32_t delta {};
             const uint16_t auxChannelPWM = receiver.getAuxiliaryChannel(adjustmentRange.auxSwitchChannelIndex);
@@ -311,16 +568,11 @@ void RC_Adjustments::processStepwiseAdjustments(const ReceiverBase& receiver, Fl
             if (!adjustmentState.ready) {
                 continue;
             }
-
             [[maybe_unused]]const int newValue = applyStepAdjustment(flightController, rates, adjustment, delta);
-
-            setConfigDirty();
-            //!!pidInitConfig(currentPidProfile);
-
             adjustmentState.ready = false;
 
 #if defined(USE_OSD) && defined(USE_OSD_ADJUSTMENTS)
-            updateOsdAdjustmentData(newValue, adjustmentConfig->adjustmentFunction);
+            updateOsdAdjustmentData(newValue, adjustmentConfig->adjustment);
 #endif
         }
     }
@@ -348,21 +600,15 @@ void RC_Adjustments::processContinuosAdjustments(const ReceiverBase& receiver, F
                     const int32_t rangeWidth = (2100 - 900) / switchPositions;
                     const uint8_t position = static_cast<uint8_t>((std::clamp(auxChannelPWM, uint16_t{900}, uint16_t{2100 - 1}) - 900) / rangeWidth);
                     newValue = applySelectAdjustment(flightController, cockpit, osd, adjustment, position);
-
-                    setConfigDirtyIfNotPermanent(adjustmentRange.range);
                 } else {
                     // If setting is defined for step adjustment and center value has been specified, apply values directly (scaled) from aux channel
                     if (adjustmentRange.adjustmentCenter && (adjustmentConfig.mode == ADJUSTMENT_MODE_STEP)) {
                         const int value = (((auxChannelPWM - ReceiverBase::CHANNEL_MIDDLE) * adjustmentRange.adjustmentScale) / (ReceiverBase::CHANNEL_MIDDLE - ReceiverBase::CHANNEL_LOW)) + adjustmentRange.adjustmentCenter;
-
                         newValue = applyAbsoluteAdjustment(flightController, cockpit.getRates(), adjustment, value);
-
-                        setConfigDirtyIfNotPermanent(adjustmentRange.range);
-                        //!!pidInitConfig(currentPidProfile);
                     }
                 }
 #if defined(USE_OSD) && defined(USE_OSD_ADJUSTMENTS)
-                updateOsdAdjustmentData(newValue, adjustmentConfig->adjustmentFunction);
+                updateOsdAdjustmentData(newValue, adjustmentConfig->adjustment);
 #endif
                 adjustmentState.lastRcData = auxChannelPWM;
             }

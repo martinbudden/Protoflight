@@ -87,6 +87,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         break;
     }
     case MSP_SET_ADJUSTMENT_RANGE: {
+#if defined(USE_RC_ADJUSTMENTS)
         const uint8_t adjustmentRangeIndex = src.readU8();
         if (adjustmentRangeIndex >= RC_Adjustments::MAX_ADJUSTMENT_RANGE_COUNT) {
             return RESULT_ERROR;
@@ -101,7 +102,10 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         adjustmentRange.auxSwitchChannelIndex = src.readU8();
         rcAdjustments.setAdjustmentRange(adjustmentRangeIndex, adjustmentRange);
         rcAdjustments.activeAdjustmentRangeReset();
+        break;
+#else
         return RESULT_ERROR;
+#endif
     }
     case MSP_SET_RC_TUNING: {
         if (src.bytesRemaining() < 10) {
