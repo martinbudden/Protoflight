@@ -42,7 +42,7 @@ bool RC_Modes::isModeActive(MSP_Box::id_e rcMode) const
 }
 
 
-bool RC_Modes::isModeActivationConditionPresent(MSP_Box::id_e modeId)
+bool RC_Modes::isModeActivationConditionPresent(MSP_Box::id_e modeId) const
 {
 #if false
     for (const auto& mac : _modeActivationConditions) {
@@ -58,7 +58,7 @@ bool RC_Modes::isModeActivationConditionPresent(MSP_Box::id_e modeId)
 #endif
 }
 
-bool RC_Modes::isModeActivationConditionLinked(MSP_Box::id_e modeId)
+bool RC_Modes::isModeActivationConditionLinked(MSP_Box::id_e modeId) const
 {
 #if false
     for (const auto& modeActivationCondition : _modeActivationConditions) {
@@ -91,7 +91,7 @@ void RC_Modes::removeModeActivationCondition(const MSP_Box::id_e modeId)
 }
 #endif
 
-bool RC_Modes::isModeActivationConditionConfigured(const mode_activation_condition_t& mac, const mode_activation_condition_t& emptyMac)
+bool RC_Modes::isModeActivationConditionConfigured(const mode_activation_condition_t& mac, const mode_activation_condition_t& emptyMac) const
 {
     if (memcmp(&mac, &emptyMac, sizeof(emptyMac))) {
         return true;

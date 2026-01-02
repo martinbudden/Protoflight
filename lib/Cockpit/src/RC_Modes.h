@@ -47,11 +47,11 @@ public:
     const mode_activation_condition_t& getModeActivationCondition(size_t index) const;
     void setModeActivationCondition(size_t index, const mode_activation_condition_t& modeActivationCondition);
     void analyzeModeActivationConditions();
+    bool isModeActivationConditionPresent(MSP_Box::id_e modeId) const;
 private:
-    bool isModeActivationConditionPresent(MSP_Box::id_e modeId);
-    bool isModeActivationConditionLinked(MSP_Box::id_e modeId);
+    bool isModeActivationConditionLinked(MSP_Box::id_e modeId) const;
     //void removeModeActivationCondition(MSP_Box::id_e modeId);
-    bool isModeActivationConditionConfigured(const mode_activation_condition_t& mac, const mode_activation_condition_t& emptyMac);
+    bool isModeActivationConditionConfigured(const mode_activation_condition_t& mac, const mode_activation_condition_t& emptyMac) const;
     static bool isRangeUsable(const ReceiverBase::channel_range_t& range) { return range.startStep < range.endStep; }
     void updateMasksForMac(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitsets, bool rangeActive);
     void updateMasksForStickyModes(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitset, bool rangeActive);
