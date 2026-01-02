@@ -430,7 +430,7 @@ Targets
     #define USE_IMU_MPU6000
     #define IMU_I2C_PINS        I2C_X_PINS
 
-    //#define USE_RECEIVER_SBUS
+    #define USE_RECEIVER_SBUS
     //#define USE_RECEIVER_CRSF
     #define RECEIVER_UART_INDEX 0
     #define RECEIVER_PINS       UART_0_PINS

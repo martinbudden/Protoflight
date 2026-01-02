@@ -330,7 +330,7 @@ void test_rc_modes_init()
     const MSP_Box::box_t* boxAltitudeHold = MSP_Box::findBoxByPermanentId(BOX_ALTHOLD_PERMANENT);
     TEST_ASSERT_FALSE(boxAltitudeHold == nullptr);
     macAltitudeHold.modeId = static_cast<MSP_Box::id_e>(boxAltitudeHold->id);
-    TEST_ASSERT_EQUAL(MSP_Box::BOX_ALTHOLD, macAltitudeHold.modeId);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_ALTITUDE_HOLD, macAltitudeHold.modeId);
     macAltitudeHold.auxiliaryChannelIndex = AUXILIARY_CHANNEL_ALTITUDE_HOLD;
     macAltitudeHold.range.startStep = ReceiverBase::RANGE_STEP_MID;
     macAltitudeHold.range.endStep = ReceiverBase::RANGE_STEP_MAX;
@@ -372,10 +372,10 @@ void test_rc_modes_init()
 
     receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ALTITUDE_HOLD, 1400);
     rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ALTHOLD));
+    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD));
     receiver.setAuxiliaryChannelPWM(AUXILIARY_CHANNEL_ALTITUDE_HOLD, 1800);
     rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ALTHOLD));
+    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD));
 }
 // NOLINTEND(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
 

@@ -7,7 +7,7 @@ class Features {
 public:
     enum  features_e {
         FEATURE_RX_PPM              = (1U << 0U),
-        FEATURE_INFLIGHT_ACC_CAL    = (1U << 2U),
+        FEATURE_INFLIGHT_ACC_CALIBRATE = (1U << 2U),
         FEATURE_RX_SERIAL           = (1U << 3U),
         FEATURE_MOTOR_STOP          = (1U << 4U),
         FEATURE_SERVO_TILT          = (1U << 5U),

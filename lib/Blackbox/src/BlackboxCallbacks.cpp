@@ -13,19 +13,18 @@
 #endif
 
 
-BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const AHRS& ahrs, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const Debug& debug) :
+BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const Debug& debug) :
     _messageQueue(messageQueue),
-    _ahrs(ahrs),
     _flightController(flightController),
     _cockpit(cockpit),
+    _rcModes(cockpit.getRC_Modes()),
     _receiver(receiver),
     _debug(debug)
     {}
 
 bool BlackboxCallbacks::isArmed() const
 {
-    return false;
-    //return _cockpit.isArmed();
+    return _cockpit.isArmed();
 }
 
 bool BlackboxCallbacks::areMotorsRunning() const
@@ -33,16 +32,19 @@ bool BlackboxCallbacks::areMotorsRunning() const
     return _flightController.motorsIsOn();
 }
 
-bool BlackboxCallbacks::isBlackboxRcModeActive() const
+bool BlackboxCallbacks::isBlackboxModeActive() const
 {
-    // IS_RC_MODE_ACTIVE(BOX_BLACKBOX)
-    return true;
-};
+    return _cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_BLACKBOX);
+}
+
+bool BlackboxCallbacks::isBlackboxEraseModeActive() const
+{
+    return _rcModes.isModeActive(MSP_Box::BOX_BLACKBOX_ERASE);
+}
 
 bool BlackboxCallbacks::isBlackboxModeActivationConditionPresent() const
 {
-    //isModeActivationConditionPresent(BOX_BLACKBOX);
-    return true;
+    return _rcModes.isModeActivationConditionPresent(MSP_Box::BOX_BLACKBOX);
 }
 
 uint32_t BlackboxCallbacks::getArmingBeepTimeMicroseconds() const
@@ -52,10 +54,10 @@ uint32_t BlackboxCallbacks::getArmingBeepTimeMicroseconds() const
 
 uint32_t BlackboxCallbacks::rcModeActivationMask() const
 {
-    return 0;
+    return _cockpit.getFlightModeFlags();
 }
 
-void BlackboxCallbacks::loadSlowState(blackboxSlowState_t& slowState)
+void BlackboxCallbacks::loadSlowState(blackbox_slow_state_t& slowState)
 {
     //memcpy(&slowState->flightModeFlags, &_rcModeActivationBitset, sizeof(slowState->flightModeFlags)); //was flightModeFlags;
     slowState.flightModeFlags = _cockpit.getFlightModeFlags();
@@ -69,7 +71,7 @@ void BlackboxCallbacks::loadSlowState(blackboxSlowState_t& slowState)
 /*!
 Called from within Blackbox::logIteration().
 */
-void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t currentTimeUs)
+void BlackboxCallbacks::loadMainState(blackbox_main_state_t& mainState, uint32_t currentTimeUs)
 {
     (void)currentTimeUs;
 
@@ -103,9 +105,9 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
 
     // iterate through roll, pitch, and yaw PIDs
 #if (__cplusplus >= 202002L)
-    for (auto ii : std::views::iota(size_t{0}, size_t{blackboxMainState_t::XYZ_AXIS_COUNT})) {
+    for (auto ii : std::views::iota(size_t{0}, size_t{blackbox_main_state_t::XYZ_AXIS_COUNT})) {
 #else
-    for (size_t ii = 0; ii < blackboxMainState_t::XYZ_AXIS_COUNT; ++ii) {
+    for (size_t ii = 0; ii < blackbox_main_state_t::XYZ_AXIS_COUNT; ++ii) {
 #endif
         const auto pidIndex = static_cast<FlightController::pid_index_e>(ii);
         const PIDF& pid = _flightController.getPID(pidIndex);
@@ -130,7 +132,7 @@ void BlackboxCallbacks::loadMainState(blackboxMainState_t& mainState, uint32_t c
     mainState.rcCommand[2] = static_cast<int16_t>(controls.yaw - ReceiverBase::CHANNEL_MIDDLE);
     mainState.rcCommand[3] = static_cast<int16_t>(controls.throttle);
 
-    static_assert(static_cast<int>(blackboxMainState_t::DEBUG_VALUE_COUNT) == static_cast<int>(Debug::VALUE_COUNT));
+    static_assert(static_cast<int>(blackbox_main_state_t::DEBUG_VALUE_COUNT) == static_cast<int>(Debug::VALUE_COUNT));
     mainState.debug = _debug.getValues();
 
     const MotorMixerBase& motorMixer = _flightController.getMotorMixer();

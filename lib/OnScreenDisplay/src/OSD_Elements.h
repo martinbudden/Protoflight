@@ -347,6 +347,7 @@ private:
 #if defined (USE_GPS)
     gps_message_data_t _gpsData {};
 #endif
+private:
     // drawing functions
     static std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> DrawFunctions;
     static std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> DrawBackgroundFunctions;

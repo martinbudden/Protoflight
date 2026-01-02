@@ -80,7 +80,10 @@ void Main::setup()
     Cockpit& cockpit = createCockpit(receiver, flightController, debug, imuFilters, nvs);
 
     // create the optional components according to build flags
-    Blackbox* blackbox = createBlackBox(ahrs, flightController, cockpit, receiver, imuFilters, debug);
+    Blackbox* blackbox = createBlackBox(flightController, cockpit, receiver, imuFilters, debug);
+#if defined(USE_BLACKBOX_TEST)
+    testBlackbox(blackbox, ahrs, receiver, debug);
+#endif
     DisplayPortBase& displayPort = createDisplayPort(debug);
     OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
     VTX* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).

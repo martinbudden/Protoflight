@@ -1,13 +1,9 @@
 #pragma once
 
 #include "OSD_Elements.h"
-#include <TimeMicroseconds.h>
-#include <array>
-#include <cstdint>
 
 class AHRS_MessageQueue;
-class Cockpit;
-class Debug;
+
 
 /*!
 On Screen Display.
@@ -283,6 +279,57 @@ private:
     bool _statsVisible {false};
     bool _statsEnabled {false};
 #if defined(USE_OSD_STATS)
-    static const std::array<stats_e, STATS_COUNT> StatsDisplayOrder;
+    /*! 
+    Controls the display order of the OSD post-flight statistics.
+    Adjust the ordering here to control how the post-flight stats are presented.
+    Every entry in osd_stats_e should be represented. Any that are missing will not
+    be shown on the the post-flight statistics page.
+    If you reorder the stats it's likely that you'll need to make likewise updates
+    to the unit tests.
+
+    If adding new stats, please add to the osdStatsNeedAccelerometer() function
+    if the statistic utilizes the accelerometer.
+    */
+    static constexpr std::array<stats_e, STATS_COUNT> StatsDisplayOrder = {
+        OSD::STATS_RTC_DATE_TIME,
+        OSD::STATS_TIMER_1,
+        OSD::STATS_TIMER_2,
+#if defined(USE_BAROMETER)
+        OSD::STATS_MAX_ALTITUDE,
 #endif
+        OSD::STATS_MAX_SPEED,
+#if defined(USE_GPS)
+        OSD::STATS_MAX_DISTANCE,
+        OSD::STATS_FLIGHT_DISTANCE,
+#endif
+        OSD::STATS_MIN_BATTERY,
+        OSD::STATS_END_BATTERY,
+        OSD::STATS_BATTERY,
+        OSD::STATS_MIN_RSSI,
+        OSD::STATS_MAX_CURRENT,
+        OSD::STATS_USED_MAH,
+        OSD::STATS_BLACKBOX,
+        OSD::STATS_BLACKBOX_NUMBER,
+        OSD::STATS_MAX_G_FORCE,
+#if defined(USE_DSHOT)
+        OSD::STATS_MAX_ESC_TEMPERATURE,
+        OSD::STATS_MAX_ESC_RPM,
+#endif
+        OSD::STATS_MIN_LINK_QUALITY,
+        OSD::STATS_MAX_FFT,
+        OSD::STATS_MIN_RSSI_DBM,
+        OSD::STATS_MIN_RSNR,
+        OSD::STATS_TOTAL_FLIGHTS,
+        OSD::STATS_TOTAL_TIME,
+#if defined(USE_GPS)
+        OSD::STATS_TOTAL_DISTANCE,
+#endif
+        OSD::STATS_WATT_HOURS_DRAWN,
+        OSD::STATS_BEST_3_CONSEC_LAPS,
+        OSD::STATS_BEST_LAP,
+        OSD::STATS_FULL_THROTTLE_TIME,
+        OSD::STATS_FULL_THROTTLE_COUNTER,
+        OSD::STATS_AVG_THROTTLE,
+    };
+#endif // USE_OSD_STATS
 };

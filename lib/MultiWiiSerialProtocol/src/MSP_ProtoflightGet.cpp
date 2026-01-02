@@ -8,6 +8,7 @@
 #include "version.h"
 
 #include <AHRS.h>
+#include <AHRS_MessageQueue.h>
 #include <Debug.h>
 #include <MSP_Protocol.h>
 #include <RPM_Filters.h>
@@ -51,7 +52,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         static constexpr uint16_t SENSOR_GYROSCOPE = 0x01U << 5U;
         dst.writeU16(SENSOR_ACCELEROMETER | SENSOR_GYROSCOPE);
         MSP_Box::bitset_t flightModeFlags;
-        const size_t flagBitCount = _mspBox.packFlightModeFlags(flightModeFlags, _cockpit);
+        const size_t flagBitCount = _cockpit.packFlightModeFlags(flightModeFlags);
         dst.writeData(&flightModeFlags, 4); // unconditional part of flags, first 32 bits
         dst.writeU8(_nonVolatileStorage.getCurrentPidProfileIndex());
         dst.writeU16(10); //constrain(getAverageSystemLoadPercent(), 0, LOAD_PERCENTAGE_ONE))
@@ -144,11 +145,11 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_ATTITUDE: {
-        const Quaternion quaternion {}; //!!TODO:= _ahrs.getOrientationForInstrumentationUsingLock();
-
-        dst.writeU16(static_cast<uint16_t>(quaternion.calculateRollDegrees()*10.0F));
-        dst.writeU16(static_cast<uint16_t>(quaternion.calculatePitchDegrees()*10.0F));
-        dst.writeU16(static_cast<uint16_t>(quaternion.calculateYawDegrees()));
+        AHRS::ahrs_data_t ahrsData;
+        _flightController.getAHRS_MessageQueue().PEEK_AHRS_DATA(ahrsData);
+        dst.writeU16(static_cast<uint16_t>(ahrsData.orientation.calculateRollDegrees()*10.0F));
+        dst.writeU16(static_cast<uint16_t>(ahrsData.orientation.calculatePitchDegrees()*10.0F));
+        dst.writeU16(static_cast<uint16_t>(ahrsData.orientation.calculateYawDegrees()));
         break;
     }
     case MSP_ALTITUDE:

@@ -3,14 +3,11 @@
 #include "FlightController.h"
 
 #include <CockpitBase.h>
-#include <Filters.h>
 #if defined(USE_GPS)
 #include <GeographicCoordinate.h>
 #endif
-#include <PIDF.h>
 
 
-class AHRS_MessageQueue;
 class AltitudeMessageQueue;
 
 #if !defined(MAX_WAYPOINT_COUNT)
@@ -31,43 +28,9 @@ private:
     Autopilot& operator=(Autopilot&&) = delete;
 public:
     enum earth_frame_axis_e { LONGITUDE, LATITUDE, EARTH_FRAME_AXIS_COUNT };
-    // flight mode flags
-    enum log2_flight_mode_flag_e {
-        LOG2_ANGLE_MODE         = 0,
-        LOG2_HORIZON_MODE       = 1,
-        LOG2_MAG_MODE           = 2,
-        LOG2_ALTITUDE_HOLD_MODE = 3,
-        LOG2_GPS_HOME_MODE      = 4,
-        LOG2_POSITION_HOLD_MODE = 5,
-        LOG2_HEADFREE_MODE      = 6,
-        LOG2_CHIRP_MODE         = 7,
-        LOG2_PASSTHRU_MODE      = 8,
-        LOG2_RANGEFINDER_MODE   = 9,
-        LOG2_FAILSAFE_MODE      = 10,
-        LOG2_GPS_RESCUE_MODE    = 11
-    };
-    static constexpr uint32_t ANGLE_MODE      = 1U << LOG2_ANGLE_MODE;
-    static constexpr uint32_t HORIZON_MODE    = 1U << LOG2_HORIZON_MODE;
-    static constexpr uint32_t MAG_MODE        = 1U << LOG2_MAG_MODE;
-    static constexpr uint32_t ALTITUDE_HOLD_MODE = 1U << LOG2_ALTITUDE_HOLD_MODE;
-    static constexpr uint32_t GPS_HOME_MODE   = 1U << LOG2_GPS_HOME_MODE;
-    static constexpr uint32_t POSITION_HOLD_MODE = 1U << LOG2_POSITION_HOLD_MODE;
-    static constexpr uint32_t HEADFREE_MODE   = 1U << LOG2_HEADFREE_MODE;
-    static constexpr uint32_t CHIRP_MODE      = 1U << LOG2_CHIRP_MODE;
-    static constexpr uint32_t PASSTHRU_MODE   = 1U << LOG2_PASSTHRU_MODE;
-    static constexpr uint32_t RANGEFINDER_MODE= 1U << LOG2_RANGEFINDER_MODE;
-    static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
-    static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
-    struct PIDF_uint16_t {
-        uint16_t kp;
-        uint16_t ki;
-        uint16_t kd;
-        uint16_t ks;
-        uint16_t kk;
-    };
     struct autopilot_config_t {
-        PIDF_uint16_t altitudePID;
-        PIDF_uint16_t positionPID;
+        VehicleControllerBase::PIDF_uint16_t altitudePID;
+        VehicleControllerBase::PIDF_uint16_t positionPID;
         uint16_t landingAltitudeMeters;
         uint16_t throttle_hover_pwm;
         uint16_t throttle_min_pwm;

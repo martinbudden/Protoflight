@@ -74,7 +74,7 @@ void RC_Adjustments::blackboxLogInflightAdjustmentEvent(adjustment_e adjustment,
             .inflightAdjustment = {
                 .newValue = newValue,
                 .newFloatValue =  0.0F,
-                .adjustmentFunction = adjustment,
+                .adjustment = adjustment,
                 .floatFlag = false
             }
         };
@@ -610,7 +610,7 @@ void RC_Adjustments::processContinuosAdjustments(const ReceiverBase& receiver, F
 #if defined(USE_OSD) && defined(USE_OSD_ADJUSTMENTS)
                 updateOsdAdjustmentData(newValue, adjustmentConfig->adjustment);
 #endif
-                adjustmentState.lastRcData = auxChannelPWM;
+                adjustmentState.lastRcData = static_cast<int16_t>(auxChannelPWM);
             }
         } else {
             adjustmentState.lastRcData = 0;

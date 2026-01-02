@@ -8,6 +8,7 @@
 #include "Targets.h"
 
 #include <CockpitBase.h>
+#include <MSP_Box.h>
 
 #include <cstddef>
 
@@ -161,7 +162,13 @@ public:
 
     void setRebootRequired();
     bool getRebootRequired() const;
+
+    bool getBoxIdState(MSP_Box::id_e boxId) const;
+    size_t packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags) const;
+    void serializeBoxReplyBoxName(StreamBuf& dst, size_t page) const { _mspBox.serializeBoxReplyBoxName(dst, page); }
+    void serializeBoxReplyPermanentId(StreamBuf& dst, size_t page) const { _mspBox.serializeBoxReplyPermanentId(dst, page); }
 private:
+    MSP_Box _mspBox;
     RC_Modes _rcModes;
     Features _features {};
     FlightController& _flightController;
@@ -183,7 +190,7 @@ private:
     OSD* _osd {nullptr};
     uint32_t _armingFlags {};
     uint32_t _armingDisabledFlags {};
-    uint32_t _flightModeFlags {};
+    std::bitset<MSP_Box::BOX_ID_FLIGHTMODE_COUNT> _flightModeFlags {};
     failsafe_config_t _failsafeConfig {};
     RX::config_t _rxConfig {};
     RX::failsafe_channel_configs_t _rxFailsafeChannelConfigs {};
@@ -203,4 +210,45 @@ private:
 #if defined(USE_RC_ADJUSTMENTS)
     RC_Adjustments _rcAdjustments;
 #endif
+public:
+    // flight mode flags
+    enum log2_flight_mode_flag_e {
+        LOG2_ANGLE_MODE         = 0,
+        LOG2_HORIZON_MODE       = 1,
+        LOG2_MAG_MODE           = 2,
+        LOG2_ALTITUDE_HOLD_MODE = 3,
+//        LOG2_GPS_HOME_MODE      = 4,
+        LOG2_POSITION_HOLD_MODE = 5,
+        LOG2_HEADFREE_MODE      = 6,
+        LOG2_CHIRP_MODE         = 7,
+        LOG2_PASSTHRU_MODE      = 8,
+//        LOG2_RANGEFINDER_MODE   = 9,
+        LOG2_FAILSAFE_MODE      = 10,
+        LOG2_GPS_RESCUE_MODE    = 11
+    };
+    static constexpr uint32_t ANGLE_MODE      = 1U << LOG2_ANGLE_MODE;
+    static constexpr uint32_t HORIZON_MODE    = 1U << LOG2_HORIZON_MODE;
+    static constexpr uint32_t MAG_MODE        = 1U << LOG2_MAG_MODE;
+    static constexpr uint32_t ALTITUDE_HOLD_MODE = 1U << LOG2_ALTITUDE_HOLD_MODE;
+//    static constexpr uint32_t GPS_HOME_MODE   = 1U << LOG2_GPS_HOME_MODE;
+    static constexpr uint32_t POSITION_HOLD_MODE = 1U << LOG2_POSITION_HOLD_MODE;
+    static constexpr uint32_t HEADFREE_MODE   = 1U << LOG2_HEADFREE_MODE;
+    static constexpr uint32_t CHIRP_MODE      = 1U << LOG2_CHIRP_MODE;
+    static constexpr uint32_t PASSTHRU_MODE   = 1U << LOG2_PASSTHRU_MODE;
+//    static constexpr uint32_t RANGEFINDER_MODE= 1U << LOG2_RANGEFINDER_MODE;
+    static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
+    static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
+    static constexpr std::array<uint8_t, MSP_Box::BOX_ID_FLIGHTMODE_COUNT> BoxIdToFlightModeMap = {{
+        /*[BOX_ARM]*/           0, // not used
+        /*[BOX_ANGLE]*/         LOG2_ANGLE_MODE,
+        /*[BOX_HORIZON]*/       LOG2_HORIZON_MODE,
+        /*[BOX_MAG]*/           LOG2_MAG_MODE,
+        /*[BOX_ALTITUDE_HOLD]*/ LOG2_ALTITUDE_HOLD_MODE,
+        /*[BOX_POSITION_HOLD]*/ LOG2_POSITION_HOLD_MODE,
+        /*[BOX_HEADFREE]*/      LOG2_HEADFREE_MODE,
+        /*[BOX_CHIRP]*/         LOG2_CHIRP_MODE,
+        /*[BOX_PASSTHRU]*/      LOG2_PASSTHRU_MODE,
+        /*[BOX_FAILSAFE]*/      LOG2_FAILSAFE_MODE,
+        /*[BOX_GPS_RESCUE]*/    LOG2_GPS_RESCUE_MODE
+    }};
 };

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MSP_ProtoflightBox.h"
 #include <MSP_Base.h>
 
 
@@ -37,7 +36,6 @@ public:
 private:
     void serializeVTX(StreamBuf& dst);
 private:
-    MSP_ProtoflightBox _mspBox;
     AHRS& _ahrs;
     FlightController& _flightController;
     Cockpit& _cockpit;

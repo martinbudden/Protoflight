@@ -14,10 +14,10 @@
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox* Main::createBlackBox(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) // cppcheck-suppress constParameterReference
+Blackbox* Main::createBlackBox(FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_BLACKBOX)
-    static BlackboxCallbacks            blackboxCallbacks(flightController.getAHRS_MessageQueue(), ahrs, flightController, cockpit, receiver, debug);
+    static BlackboxCallbacks            blackboxCallbacks(flightController.getAHRS_MessageQueue(), flightController, cockpit, receiver, debug);
     static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
     static BlackboxProtoflight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, blackboxSerialDevice, flightController, cockpit, imuFilters);
@@ -30,12 +30,8 @@ Blackbox* Main::createBlackBox(AHRS& ahrs, FlightController& flightController, C
         .mode = Blackbox::MODE_NORMAL // logging starts on arming, file is saved when disarmed
         //.mode = Blackbox::MODE_ALWAYS_ON
     });
-#if defined(USE_BLACKBOX_TEST)
-    testBlackbox(blackbox, ahrs, receiver, debug);
-#endif
     return &blackbox;
 #else
-    (void)ahrs;
     (void)flightController;
     (void)cockpit;
     (void)receiver;

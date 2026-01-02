@@ -4,14 +4,11 @@
 #include "Targets.h"
 
 #include <Filters.h>
-#include <PIDF.h>
 #include <VehicleControllerBase.h>
 
-#include <array>
 #include <string>
 #include <xyz_type.h>
 
-class AHRS;
 class AHRS_MessageQueue;
 class Debug;
 class DynamicNotchFilter;

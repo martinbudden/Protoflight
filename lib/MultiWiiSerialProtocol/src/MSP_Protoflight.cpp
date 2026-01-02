@@ -18,16 +18,6 @@ MSP_Protoflight::MSP_Protoflight(AHRS& ahrs, FlightController& flightController,
     _vtx(vtx),
     _osd(osd)
 {
-    //_mspBox.init(features, ahrs, flightController);
-    enum { MSP_OVERRIDE_OFF = false, AIRMODE_OFF = false, ANTI_GRAVITY_OFF = false };
-    enum { ACCELEROMETER_AVAILABLE = true };
-    _mspBox.init(
-        ACCELEROMETER_AVAILABLE,
-        _cockpit.featureIsEnabled(Features::FEATURE_INFLIGHT_ACC_CAL),
-        MSP_OVERRIDE_OFF,
-        AIRMODE_OFF,
-        ANTI_GRAVITY_OFF
-    );
 }
 
 void MSP_Protoflight::rebootFn(serialPort_t* serialPort)
@@ -63,12 +53,12 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     switch (cmdMSP) {
     case MSP_BOXNAMES: {
         const size_t page = src.bytesRemaining() ? src.readU8() : 0;
-        _mspBox.serializeBoxReplyBoxName(dst, page);
+        _cockpit.serializeBoxReplyBoxName(dst, page);
         break;
     }
     case MSP_BOXIDS: {
         const size_t page = src.bytesRemaining() ? src.readU8() : 0;
-        _mspBox.serializeBoxReplyPermanentId(dst, page);
+        _cockpit.serializeBoxReplyPermanentId(dst, page);
         break;
     }
     case MSP_REBOOT:
@@ -84,7 +74,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(_rebootMode);
 
         if (postProcessFn) {
-                *postProcessFn = static_cast<MSP_Base::postProcessFnPtr>(&MSP_Protoflight::rebootFn);
+            *postProcessFn = static_cast<MSP_Base::postProcessFnPtr>(&MSP_Protoflight::rebootFn);
         }
 
         break;
