@@ -133,7 +133,7 @@ void FlightController::updateRateSetpointsForAngleMode(const Quaternion& orienta
 
     //!!TODO: look at using vector product here
     if (_ahM.amcs.state == STATE_CALCULATE_ROLL) {
-        if (!_flightModeConfig.level_race_mode) {
+        if (!_rxC.useLevelRaceMode) {
             // in level race mode we use angle mode on roll, acro mode on pitch
             // so we only advance calculation to pitch if not in level race mode
             _ahM.amcs.state = STATE_CALCULATE_PITCH;

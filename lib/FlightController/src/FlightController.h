@@ -50,7 +50,7 @@ public:
     enum control_mode_e {
         CONTROL_MODE_RATE = 0,
         CONTROL_MODE_ANGLE = 1,
-        CONTROL_MODE_HORIZON = 2,
+        CONTROL_MODE_LEVEL_RACE = 2,
     };
     enum failsafe_e { FAILSAFE_OFF, FAILSAFE_ON };
     static constexpr int TIME_CHECKS_COUNT = 4;
@@ -417,6 +417,7 @@ private:
         float throttlePrevious {0.0F};
         float yawRateSetpointDPS {0.0F};
         uint32_t useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
+        uint32_t useLevelRaceMode {false};
         float TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
 #if defined(USE_ITERM_RELAX)
         std::array<float, RP_AXIS_COUNT> setpointLPs {};

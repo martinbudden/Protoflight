@@ -158,7 +158,7 @@ public:
     void clearArmingDisabledFlag(arming_disabled_flags_e flag);
     uint32_t getArmingDisableFlags() const { return _armingDisabledFlags; }
     uint32_t getFlightModeFlags() const;
-    void setFlightModeFlag(uint8_t flag) { assert(flag < FLIGHT_MODE_FLAG_COUNT && "Flightmode flag too big"); _flightModeFlags.set(flag); } // for testing
+    void setFlightModeFlag(uint8_t flag) { if (flag < FLIGHT_MODE_FLAG_COUNT) { _flightModeFlags.set(flag); } } // for testing
 
     virtual void checkFailsafe(uint32_t tickCount) override;
     failsafe_phase_e getFailsafePhase() const { return _failsafe.phase; }

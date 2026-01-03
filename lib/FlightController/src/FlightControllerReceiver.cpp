@@ -263,6 +263,7 @@ void FlightController::updateSetpoints(const controls_t& controls, failsafe_e fa
     // Angle Mode is prevented when in Ground Mode, so the aircraft doesn't try and self-level while it is still on the ground.
     // This value is cached here, to avoid evaluating a reasonably complex condition in updateOutputsUsingPIDs()
     _rxM.useAngleMode = (_fcC.controlMode >= CONTROL_MODE_ANGLE) && !_sh.groundMode;
+    _rxM.useLevelRaceMode = (_fcC.controlMode == CONTROL_MODE_LEVEL_RACE) || _flightModeConfig.level_race_mode;
 }
 
 /*!

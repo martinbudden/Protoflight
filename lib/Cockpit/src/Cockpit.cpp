@@ -220,11 +220,15 @@ void Cockpit::updateControls(const controls_t& controls)
 #endif
 
     _flightModeFlags.reset();
-    // if either angle mode or altitude mode is selected then use CONTROL_MODE_ANGLE
     FlightController::control_mode_e controlMode = FlightController::CONTROL_MODE_RATE;
     if (_rcModes.isModeActive(MSP_Box::BOX_ANGLE)) {
-        controlMode = FlightController::CONTROL_MODE_ANGLE;
         _flightModeFlags.set(ANGLE_MODE);
+        controlMode = FlightController::CONTROL_MODE_ANGLE;
+    }
+    if (_rcModes.isModeActive(MSP_Box::BOX_HORIZON)) {
+        _flightModeFlags.set(HORIZON_MODE);
+        // we don't support horizon mode, instead we use the horizon mode setting to invoke level race mode
+        controlMode = FlightController::CONTROL_MODE_LEVEL_RACE;
     }
     if (_rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD)) {
         _flightModeFlags.set(ALTITUDE_HOLD_MODE);
@@ -236,9 +240,7 @@ void Cockpit::updateControls(const controls_t& controls)
     }
     if (_rcModes.isModeActive(MSP_Box::BOX_POSITION_HOLD)) {
         _flightModeFlags.set(POSITION_HOLD_MODE);
-    }
-    if (_rcModes.isModeActive(MSP_Box::BOX_HORIZON)) {
-        _flightModeFlags.set(HORIZON_MODE);
+        controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
     if (_rcModes.isModeActive(MSP_Box::BOX_MAG)) {
         _flightModeFlags.set(MAG_MODE);
@@ -254,11 +256,13 @@ void Cockpit::updateControls(const controls_t& controls)
     }
     if (_rcModes.isModeActive(MSP_Box::BOX_FAILSAFE)) {
         _flightModeFlags.set(FAILSAFE_MODE);
+        controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
     if (_rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE)) {
         _flightModeFlags.set(GPS_RESCUE_MODE);
+        controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
-    if (_flightModeFlags.test(POSITION_HOLD_MODE) || _flightModeFlags.test(GPS_RESCUE_MODE)) {
+    if (_rcModes.isModeActive(MSP_Box::BOX_POSITION_HOLD) || _rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE)) {
         const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightModeFlags.to_ulong());
         _flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
         return;
