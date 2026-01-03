@@ -95,7 +95,7 @@ void Main::setup()
 #if defined(FRAMEWORK_ARDUINO_ESP32)
     Serial.printf("\r\n\r\n%s %d.%d.%d\r\n", FC_FIRMWARE_NAME, FC_VERSION_MAJOR, FC_VERSION_MINOR, FC_VERSION_PATCH_LEVEL);
     //Serial.printf("Build Time:%d\r\n", buildTimeUnix);
-    
+
     //const std::time_t timestamp = buildTimeUnix;
     //const std::tm* tm = gmtime(&timestamp);
     //Serial.printf("Build Time:%4d-%02d-%02dT%02d:%02d\r\n", tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);

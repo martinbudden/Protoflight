@@ -253,8 +253,8 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
         const size_t len = packTelemetryData_PID_Outputs(
             _transmitDataBufferPtr,
             _telemetryID,
-            _sequenceNumber, 
-            _flightController, 
+            _sequenceNumber,
+            _flightController,
             _nonVolatileStorage.getCurrentPidProfileIndex(),
             _flightController.getControlMode()
         );

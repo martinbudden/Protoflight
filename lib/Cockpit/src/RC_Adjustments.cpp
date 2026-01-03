@@ -15,7 +15,7 @@
 #include <cstring>
 
 
-RC_Adjustments::RC_Adjustments(const adjustment_configs_t* defaultAdjustmentConfigs) : 
+RC_Adjustments::RC_Adjustments(const adjustment_configs_t* defaultAdjustmentConfigs) :
     _defaultAdjustmentConfigs(defaultAdjustmentConfigs)
 {
 #if !defined(FRAMEWORK_TEST)
