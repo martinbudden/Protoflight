@@ -23,15 +23,35 @@ Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Aut
 #endif
 {
     _flightController.setYawSpinThresholdDPS(1.25F*applyRates(rates_t::YAW, 1.0F));
-    enum { MSP_OVERRIDE_OFF = false, AIRMODE_OFF = false, ANTI_GRAVITY_OFF = false };
-    enum { ACCELEROMETER_AVAILABLE = true };
-    _mspBox.init(
-        ACCELEROMETER_AVAILABLE,
-        featureIsEnabled(Features::FEATURE_INFLIGHT_ACC_CALIBRATE),
-        MSP_OVERRIDE_OFF,
-        AIRMODE_OFF,
-        ANTI_GRAVITY_OFF
-    );
+
+    _mspBox.setActiveBoxId(MSP_Box::BOX_ARM);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_PREARM);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_AIRMODE);
+
+    _mspBox.setActiveBoxId(MSP_Box::BOX_ANTIGRAVITY);
+
+    _mspBox.setActiveBoxId(MSP_Box::BOX_ANGLE);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_HORIZON);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_ALTITUDE_HOLD);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_HEADFREE);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_HEADADJ);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_FPV_ANGLE_MIX);
+    if (featureIsEnabled(Features::FEATURE_INFLIGHT_ACC_CALIBRATE)) {
+        _mspBox.setActiveBoxId(MSP_Box::BOX_CALIBRATE);
+    }
+    _mspBox.setActiveBoxId(MSP_Box::BOX_ACRO_TRAINER);
+
+    _mspBox.setActiveBoxId(MSP_Box::BOX_FAILSAFE);
+
+    _mspBox.setActiveBoxId(MSP_Box::BOX_BEEPER_ON);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_BEEPER_MUTE);
+
+    _mspBox.setActiveBoxId(MSP_Box::BOX_PARALYZE);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_MSP_OVERRIDE);
+
+    _mspBox.setActiveBoxId(MSP_Box::BOX_STICK_COMMAND_DISABLE);
+    _mspBox.setActiveBoxId(MSP_Box::BOX_READY);
+
     static_assert(BoxIdToFlightModeMap[MSP_Box::BOX_ARM]           == 0); // not used
     static_assert(BoxIdToFlightModeMap[MSP_Box::BOX_ANGLE]         == LOG2_ANGLE_MODE);
     static_assert(BoxIdToFlightModeMap[MSP_Box::BOX_HORIZON]       == LOG2_HORIZON_MODE);
