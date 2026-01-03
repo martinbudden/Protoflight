@@ -258,11 +258,11 @@ void OSD_Elements::addActiveElements()
     }
 #endif
 #if defined(USE_GPS_LAP_TIMER)
-    if (sensors(SENSOR_GPS)) {
+    //if (sensors(SENSOR_GPS)) {
         addActiveElement(OSD_GPS_LAP_TIME_CURRENT);
         addActiveElement(OSD_GPS_LAP_TIME_PREVIOUS);
         addActiveElement(OSD_GPS_LAP_TIME_BEST3);
-    }
+    //}
 #endif // USE_GPS_LAP_TIMER
     addActiveElement(OSD_TOTAL_FLIGHTS);
 }

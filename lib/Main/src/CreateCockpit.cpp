@@ -1,7 +1,9 @@
 #include "AltitudeMessageQueue.h"
 #include "Autopilot.h"
 #include "Cockpit.h"
+#if defined(USE_RC_ADJUSTMENTS)
 #include "Defaults.h"
+#endif
 #include "Main.h"
 #include "NonVolatileStorage.h"
 

@@ -7,7 +7,6 @@
 #endif
 #include "FlightController.h"
 #include "IMU_Filters.h"
-#include "Rates.h"
 #include <MotorMixerBase.h>
 #include <ReceiverBase.h>
 
