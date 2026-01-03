@@ -377,7 +377,7 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
     // Iterate using ranges
     for (auto&& entry : view) {
         if (entry.text) {
-            std::cout << "Text: " << entry.text 
+            std::cout << "Text: " << entry.text
                       << " | Flags: " << entry.flags << "\n";
         }
         if (entry.fnPtr) {
