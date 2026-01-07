@@ -234,7 +234,7 @@ It is typically called at frequency of between 1000Hz and 8000Hz, so it has to b
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyroRPS, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
 */
-void FlightController::updateOutputsUsingPIDs(const AHRS::ahrs_data_t& ahrsData)
+void FlightController::updateOutputsUsingPIDs(const ahrs_data_t& ahrsData)
 {
 #if defined(USE_BLACKBOX) || defined(USE_BACKCHANNEL) || defined(USE_DASHBOARD)
     // signalling/sending to the message queue is not free, so, in this time-critical function, we only do it if necessary

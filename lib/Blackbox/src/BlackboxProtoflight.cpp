@@ -1,10 +1,10 @@
 #include "BlackboxProtoflight.h"
 #include "Cockpit.h"
 #include "IMU_Filters.h"
-#include "MotorMixerBase.h"
 
 #include <BlackboxCallbacksBase.h>
-#include <DynamicIdleController.h>
+#include <MotorMixerBase.h>
+
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage)
 #ifndef BLACKBOX_PRINT_HEADER_LINE

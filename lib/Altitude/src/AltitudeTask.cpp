@@ -43,10 +43,10 @@ Task function for the AHRS. Sets up and runs the task loop() function.
         _tickCountPrevious = tickCount;
         const float deltaT = static_cast<float>(_tickCountDelta) * 0.001F;
         if (_tickCountDelta > 0) { // guard against the case of this while loop executing twice on the same tick interval
-            _barometer.readPressurePascals();
-            const float altitudeMeasurement = _barometer.calculateAltitudeMeters(_barometer.getPressurePascals());
+            _barometer.readTemperatureAndPressure();
+            const float altitudeMeasurement = _barometer.calculateAltitudeMeters(_barometer.getPressurePascals(), _barometer.getPressurePascals());
 
-            AHRS::ahrs_data_t ahrsData {};
+            ahrs_data_t ahrsData {};
             _ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
             //!!TODO: calculate vertical component of acceleration corrected for orientation
             const float accelerationMeasurement = ahrsData.accGyroRPS.acc.z;

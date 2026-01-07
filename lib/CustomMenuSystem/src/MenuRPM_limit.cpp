@@ -1,13 +1,14 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
 #include "Cockpit.h"
-#include "DynamicIdleController.h"
 #include "FlightController.h"
+
 #include <MotorMixerBase.h>
 
 static bool dummy0 {};
 static uint16_t dummy1 {};
 static uint16_t dummy2 {};
+
 
 DynamicIdleController::config_t dynamicIdleControllerConfig {};
 

@@ -1,11 +1,9 @@
 #pragma once
 
 #include "DynamicNotchFilter.h"
-#include "RPM_Filters.h"
-#include <FilterTemplates.h>
+
 #include <IMU_FiltersBase.h>
-#include <cstdint>
-#include <xyz_type.h>
+#include <RPM_Filters.h>
 
 class Debug;
 class MotorMixerBase;

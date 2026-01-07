@@ -98,7 +98,7 @@ IMU_Base& Main::createIMU(NonVolatileStorage& nvs)
 #if defined(M5_UNIFIED)
     // Holding BtnA down while switching on enters calibration mode.
     if (M5.BtnA.isPressed()) {
-        calibrateIMUandSave(nvs, imuSensor, IMU_Base::CALIBRATE_ACC_AND_GYRO);
+        calibrateIMUandSave(nvs, imuSensor, CALIBRATE_ACC_AND_GYRO);
     }
 #endif
     checkIMU_Calibration(nvs, imuSensor);

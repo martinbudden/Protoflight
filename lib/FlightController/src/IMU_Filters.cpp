@@ -1,5 +1,4 @@
 #include "IMU_Filters.h"
-#include "RPM_Filters.h"
 #include <MotorMixerBase.h>
 
 #if (__cplusplus >= 202002L)

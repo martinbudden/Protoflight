@@ -7,14 +7,13 @@
 #include "VTX.h"
 #include "version.h"
 
-#include <AHRS.h>
 #include <AHRS_MessageQueue.h>
 #include <Debug.h>
+#include <IMU_Base.h>
 #include <MSP_Protocol.h>
 #include <RPM_Filters.h>
 #include <ReceiverBase.h>
 
-#include <cassert>
 #if (__cplusplus >= 202002L)
 #include <ranges>
 #endif
@@ -145,7 +144,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_ATTITUDE: {
-        AHRS::ahrs_data_t ahrsData;
+        ahrs_data_t ahrsData;
         _flightController.getAHRS_MessageQueue().PEEK_AHRS_DATA(ahrsData);
         dst.writeU16(static_cast<uint16_t>(ahrsData.orientation.calculateRollDegrees()*10.0F));
         dst.writeU16(static_cast<uint16_t>(ahrsData.orientation.calculatePitchDegrees()*10.0F));

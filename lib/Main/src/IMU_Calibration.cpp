@@ -1,6 +1,7 @@
 #include "Main.h"
 
 #include <AHRS.h>
+#include <IMU_Base.h>
 #if defined(M5_UNIFIED)
 #include <M5Unified.h>
 #endif
@@ -8,7 +9,7 @@
 #include "NonVolatileStorage.h"
 
 
-void Main::calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, IMU_Base::calibration_type_e calibrationType)
+void Main::calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, calibration_type_e calibrationType)
 {
 #if defined(M5_UNIFIED)
     if (M5.Lcd.width() > 300) {
@@ -27,7 +28,7 @@ void Main::calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, IMU_Base:
 #endif
 
     enum { CALIBRATION_COUNT = 5000 };
-    imu.calibrate(calibrationType, CALIBRATION_COUNT);
+    imu.calibrate(calibrationType == CALIBRATE_ACC_AND_GYRO ? IMU_Base::CALIBRATE_ACC_AND_GYRO : IMU_Base::CALIBRATE_GYRO_ONLY, CALIBRATION_COUNT);
     const xyz_t gyroOffset = imu.getGyroOffset();
     const xyz_t accOffset = imu.getAccOffset();
 #if defined(M5_UNIFIED)
@@ -41,7 +42,7 @@ void Main::calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, IMU_Base:
 #endif
     nvs.storeGyroOffset(gyroOffset);
     nvs.storeGyroCalibrationState(NonVolatileStorage::CALIBRATED);
-    if (calibrationType == IMU_Base::CALIBRATE_ACC_AND_GYRO) {
+    if (calibrationType == CALIBRATE_ACC_AND_GYRO) {
         nvs.storeAccOffset(accOffset);
         nvs.storeAccCalibrationState(NonVolatileStorage::CALIBRATED);
     }

@@ -22,11 +22,15 @@
 #if defined(M5_UNIFIED)
 #include <M5Unified.h>
 #endif
+#include <IMU_Base.h>
 #include <MSP_Task.h>
 #include <ReceiverBase.h>
 #include <ReceiverTask.h>
 #include <VehicleControllerTask.h>
 #include <ctime>
+
+
+static void printTaskInfo(TaskBase::task_info_t& taskInfo);
 
 
 /*!
@@ -177,7 +181,7 @@ void Main::setup()
 }
 
 
-void Main::printTaskInfo(TaskBase::task_info_t& taskInfo)
+void printTaskInfo(TaskBase::task_info_t& taskInfo)
 {
 #if defined(FRAMEWORK_ARDUINO_ESP32)
     Serial.printf("**** %s, %.*s core:%d, priority:%d, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", static_cast<int>(taskInfo.core), static_cast<int>(taskInfo.priority));

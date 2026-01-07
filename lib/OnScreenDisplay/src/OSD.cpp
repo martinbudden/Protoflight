@@ -450,7 +450,7 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
             _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
         }
         syncBlink(timeMicroseconds);
-        AHRS::ahrs_data_t ahrsData {};
+        ahrs_data_t ahrsData {};
         _ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
         _elements.updateAttitude(ahrsData.orientation.calculateRollDegrees(), ahrsData.orientation.calculatePitchDegrees(), ahrsData.orientation.calculateYawDegrees()); // update the AHRS data, so it is only needed to be done once for all elements that require it
         _state = STATE_DRAW_ELEMENT;

@@ -347,7 +347,7 @@ void ScreenM5::updateReceivedData()
 
 void ScreenM5::updateAHRS_Data() const
 {
-    AHRS::ahrs_data_t ahrsData;
+    ahrs_data_t ahrsData;
     _flightController.getAHRS_MessageQueue().PEEK_AHRS_DATA(ahrsData);
     const Quaternion orientation = ahrsData.orientation;
 

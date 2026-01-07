@@ -1,6 +1,5 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
-#include "Targets.h"
 #include "VTX.h" // previously had problem with test code not building if VTX included here
 
 struct data_t {
@@ -100,8 +99,6 @@ static std::array<char, 31> statusString = { "- -- ---- ----" };
 
 static const void* menuVTX_OnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
-    (void)cmsx;
-#if defined(USE_VTX)
     VTX* vtx = cmsx.getVTX();
     if (vtx) {
         vtx->getBandAndChannel(data.band, data.channel);
@@ -120,9 +117,8 @@ static const void* menuVTX_OnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
     //entryPower.max = vtxTablePowerLevels;
     //entryPower.names = vtxTablePowerLabels;
 #endif
-#endif
 
-    return nullptr;
+    return vtx;
 }
 
 

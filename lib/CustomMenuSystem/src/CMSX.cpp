@@ -5,6 +5,8 @@
 #include "DisplayPortBase.h"
 #include "FormatInteger.h"
 #include "OSD_Elements.h"
+#include "Targets.h"
+
 #include <algorithm>
 #include <cstring>
 #if (__cplusplus >= 202002L)

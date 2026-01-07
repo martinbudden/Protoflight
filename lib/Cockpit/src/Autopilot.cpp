@@ -77,7 +77,7 @@ float Autopilot::calculateThrottleForAltitudeHold(const CockpitBase::controls_t&
     altitude_data_t altitudeData {};
     _altitudeMessageQueue->PEEK_ALTITUDE_DATA(altitudeData);
 
-    //const AHRS::ahrs_data_t queueItem = _ahrsMessageQueue.getQueueItem();
+    //const ahrs_data_t queueItem = _ahrsMessageQueue.getQueueItem();
     //const Quaternion orientation = queueItem.orientation;
     const float cosTiltAngle = 1.0F; //!!TODO:get from AHRS
     const float deltaT = 0.001F; //!!TODO:set in startup

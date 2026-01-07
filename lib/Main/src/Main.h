@@ -1,20 +1,11 @@
 #pragma once
 
 #include "Targets.h"
-
-#include <IMU_Base.h>
-#include <TaskBase.h>
-
-#if defined(FRAMEWORK_USE_FREERTOS)
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
-#include <freertos/FreeRTOS.h>
-#else
-#if defined(FRAMEWORK_ARDUINO_STM32)
-#include <STM32FreeRTOS.h>
+#include <soc/soc.h>
 #endif
-#include <FreeRTOS.h>
-#endif
-#endif
+
+#include <cstdint>
 
 
 class AHRS;
@@ -38,6 +29,7 @@ class DisplayPortBase;
 class FlightController;
 class GPS;
 class GPS_Task;
+class IMU_Base;
 class IMU_Filters;
 class IMU_FiltersBase;
 class MSP_Task;
@@ -51,6 +43,7 @@ class RPM_Filters;
 class ReceiverBase;
 class ReceiverTask;
 class ScreenBase;
+class TaskBase;
 class VTX;
 class VehicleControllerBase;
 class VehicleControllerTask;
@@ -149,6 +142,7 @@ class Main {
 public:
     enum {PA=0, PB=1, PC=2, PD=3, PE=4, PF=5, PG=6, PH=7}; // Note: defining PI=8 will cause conflict with Arduino's #define of PI (3.14..)
     enum {P0=0, P1=1, P2=2, P3=3, P4=4, P5=5, P6=6, P7=7};
+    enum calibration_type_e { CALIBRATE_ACC_AND_GYRO, CALIBRATE_GYRO_ONLY };
 public:
     void setup();
 private:
@@ -173,11 +167,10 @@ private:
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
 
     static void checkIMU_Calibration(NonVolatileStorage& nvs, IMU_Base& imu);
-    static void calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, IMU_Base::calibration_type_e calibrationType);
+    static void calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, calibration_type_e calibrationType);
 
     static void loadPID_ProfileFromNonVolatileStorage(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t pidProfile);
     static void print(const char* buf);
-    static void printTaskInfo(TaskBase::task_info_t& taskInfo);
     struct tasks_t {
         DashboardTask* dashboardTask;
         AHRS_Task* ahrsTask;
