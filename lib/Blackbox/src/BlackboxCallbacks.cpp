@@ -52,6 +52,10 @@ uint32_t BlackboxCallbacks::getArmingBeepTimeMicroseconds() const
     return 0;
 }
 
+void BlackboxCallbacks::beep() const
+{
+}
+
 uint32_t BlackboxCallbacks::rcModeActivationMask() const
 {
     return _cockpit.getFlightModeFlags();
@@ -170,4 +174,13 @@ void BlackboxCallbacks::loadMainState(blackbox_main_state_t& mainState, uint32_t
     //}
 #endif
 // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
+}
+
+void BlackboxCallbacks::loadGPS_State(blackbox_gps_state_t& gpsState)
+{
+#if defined(USE_GPS)
+    gpsState.satelliteCount = 0;
+#else
+    (void)gpsState;
+#endif
 }

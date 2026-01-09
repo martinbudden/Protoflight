@@ -27,8 +27,9 @@ Blackbox* Main::createBlackBox(FlightController& flightController, Cockpit& cock
         .sample_rate = Blackbox::RATE_ONE,
         .device = Blackbox::DEVICE_SDCARD,
         //.device = Blackbox::DEVICE_NONE,
-        .mode = Blackbox::MODE_NORMAL // logging starts on arming, file is saved when disarmed
-        //.mode = Blackbox::MODE_ALWAYS_ON
+        .mode = Blackbox::MODE_NORMAL, // logging starts on arming, file is saved when disarmed
+        //.mode = Blackbox::MODE_ALWAYS_ON,
+        .gps_use_3d_speed = false,
     });
     return &blackbox;
 #else

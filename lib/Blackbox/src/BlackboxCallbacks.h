@@ -16,6 +16,7 @@ public:
 public:
     virtual void loadSlowState(blackbox_slow_state_t& blackboxSlowState) override;
     virtual void loadMainState(blackbox_main_state_t& blackboxMainState, uint32_t currentTimeUs) override;
+    virtual void loadGPS_State(blackbox_gps_state_t& gpsState) override;
 
     virtual bool isArmed() const override;
     virtual bool isBlackboxModeActive() const override;
@@ -24,6 +25,7 @@ public:
     virtual uint32_t getArmingBeepTimeMicroseconds() const override;
     virtual bool areMotorsRunning() const override;
     virtual uint32_t rcModeActivationMask() const override;
+    virtual void beep() const override;
 private:
     const AHRS_MessageQueue& _messageQueue;
     const FlightController& _flightController;
