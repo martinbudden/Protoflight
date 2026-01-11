@@ -8,6 +8,7 @@
 #include <cstdint>
 
 class Debug;
+class GPS_MessageQueue;
 class UBLOX;
 
 
@@ -16,8 +17,9 @@ class UBLOX;
 class GPS {
 public:
     virtual ~GPS() = default;
-    explicit GPS(SerialPort& serialPort, Debug& debug) : _serialPort(serialPort), _debug(debug) {}
+    GPS(SerialPort& serialPort, GPS_MessageQueue& gpsMessageQueue, Debug& debug) : _serialPort(serialPort), _gpsMessageQueue(gpsMessageQueue), _debug(debug) {}
     void init();
+    GPS_MessageQueue& getGPS_MessageQueue() { return _gpsMessageQueue; }
 private:
     // GPS is not copyable or moveable
     GPS(const GPS&) = delete;
@@ -85,6 +87,7 @@ public:
     };
 private:
     SerialPort& _serialPort;
+    GPS_MessageQueue& _gpsMessageQueue;
     Debug& _debug;
     config_t _config {};
 };

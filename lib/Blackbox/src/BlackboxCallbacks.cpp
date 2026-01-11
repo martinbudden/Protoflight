@@ -5,6 +5,8 @@
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
 #include <Debug.h>
+#include <GPS.h>
+#include <GPS_MessageQueue.h>
 #include <MotorMixerBase.h>
 #include <ReceiverBase.h>
 #include <cmath>
@@ -13,13 +15,14 @@
 #endif
 
 
-BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const Debug& debug) :
+BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const Debug& debug, GPS* gps) :
     _messageQueue(messageQueue),
     _flightController(flightController),
     _cockpit(cockpit),
     _rcModes(cockpit.getRC_Modes()),
     _receiver(receiver),
-    _debug(debug)
+    _debug(debug),
+    _gps(gps)
     {}
 
 bool BlackboxCallbacks::isArmed() const
@@ -178,8 +181,28 @@ void BlackboxCallbacks::loadMainState(blackbox_main_state_t& mainState, uint32_t
 
 void BlackboxCallbacks::loadGPS_State(blackbox_gps_state_t& gpsState)
 {
+    if (!_gps) {
+        return;
+    }
 #if defined(USE_GPS)
-    gpsState.satelliteCount = 0;
+    gps_message_data_t gpsMessageData {};
+    _gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
+
+    gpsState.timeOfWeek_ms = gpsMessageData.timeOfWeek_ms;
+    //gpsState.interval_ms;
+    //gpsState.homeLongitude_degrees1E7;
+    //gpsState.homeLatitude_degrees1E7;
+    //gpsState.homeAltitude_cm;
+    gpsState.longitude_degrees1E7 = gpsMessageData.longitude_degrees1E7;
+    gpsState.latitude_degrees1E7 = gpsMessageData.latitude_degrees1E7;
+    gpsState.altitude_cm = gpsMessageData.altitude_cm;
+    gpsState.velocityNorth_cmps = gpsMessageData.velocityNorth_cmps;
+    gpsState.velocityEast_cmps = gpsMessageData.velocityEast_cmps;
+    gpsState.velocityDown_cmps = gpsMessageData.velocityDown_cmps;
+    gpsState.speed3d_cmps = gpsMessageData.speed3d_cmps;
+    gpsState.groundSpeed_cmps = gpsMessageData.groundSpeed_cmps;
+    gpsState.groundCourse_deciDegrees= gpsMessageData.heading_deciDegrees;
+    gpsState.satelliteCount = gpsMessageData.satelliteCount;
 #else
     (void)gpsState;
 #endif

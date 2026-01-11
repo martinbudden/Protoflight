@@ -155,7 +155,7 @@ private:
     static DisplayPortBase& createDisplayPort(Debug& debug);
     // optional components create function return nullptr if component not specified as part of the build
     static Dashboard* createDashboard(const DisplayPortBase& displayPort, const AHRS& ahrs, FlightController& flightController, ReceiverBase& receiver);
-    static Blackbox* createBlackBox(FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug);
+    static Blackbox* createBlackBox(FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug, GPS* gps);
     static VTX* createVTX(NonVolatileStorage& nvs);
     static OSD* createOSD(DisplayPortBase& displayPort, const FlightController& flightController, Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
     static MSP_Serial* createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd);

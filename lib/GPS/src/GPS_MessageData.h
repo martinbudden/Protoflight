@@ -9,7 +9,9 @@ struct gps_message_data_t {
     static constexpr uint8_t FIX = 0x02;
     static constexpr uint8_t FIX_EVER = 0x04;
 
-    geographic_coordinate_t lla;
+    int32_t longitude_degrees1E7;
+    int32_t latitude_degrees1E7;
+    int32_t altitude_cm;
     float distanceToHomeMeters;
     float bearingToHomeDegrees;
     float distanceFlownMeters;

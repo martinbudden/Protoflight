@@ -84,17 +84,17 @@ void Main::setup()
     Cockpit& cockpit = createCockpit(receiver, flightController, debug, imuFilters, nvs);
 
     // create the optional components according to build flags
-    Blackbox* blackbox = createBlackBox(flightController, cockpit, receiver, imuFilters, debug);
-#if defined(USE_BLACKBOX_TEST)
-    testBlackbox(blackbox, ahrs, receiver, debug);
-#endif
     DisplayPortBase& displayPort = createDisplayPort(debug);
     OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
     VTX* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
-    [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, blackbox, vtx, osd);
     [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, imuSensor, vtx);
+    GPS* gps = createGPS(debug);
+    Blackbox* blackbox = createBlackBox(flightController, cockpit, receiver, imuFilters, debug, gps);
+    [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, blackbox, vtx, osd);
     [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
-    [[maybe_unused]] GPS* gps = createGPS(debug);
+#if defined(USE_BLACKBOX_TEST)
+    testBlackbox(blackbox, ahrs, receiver, debug);
+#endif
 
 #if defined(FRAMEWORK_ARDUINO_ESP32)
     Serial.printf("\r\n\r\n%s %d.%d.%d\r\n", FC_FIRMWARE_NAME, FC_VERSION_MAJOR, FC_VERSION_MINOR, FC_VERSION_PATCH_LEVEL);

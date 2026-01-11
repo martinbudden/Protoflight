@@ -6,13 +6,14 @@ class AHRS_MessageQueue;
 class Cockpit;
 class Debug;
 class FlightController;
+class GPS;
 class RC_Modes;
 class ReceiverBase;
 
 
 class BlackboxCallbacks : public BlackboxCallbacksBase {
 public:
-    BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const Debug& debug);
+    BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const Debug& debug, GPS* gps);
 public:
     virtual void loadSlowState(blackbox_slow_state_t& blackboxSlowState) override;
     virtual void loadMainState(blackbox_main_state_t& blackboxMainState, uint32_t currentTimeUs) override;
@@ -33,4 +34,5 @@ private:
     const RC_Modes& _rcModes;
     const ReceiverBase& _receiver;
     const Debug& _debug;
+    GPS* _gps;
 };

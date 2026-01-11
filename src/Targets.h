@@ -157,6 +157,7 @@ Targets
     #define I2C_X_PINS          i2c_pins_t{.sda=0,.scl=0,.irq=BUS_I2C::IRQ_NOT_SET}
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
     #define UART_0_PINS         uart_pins_t{.rx=1,.tx=0}
+    #define UART_1_PINS         uart_pins_t{.rx=3,.tx=2}
     //#define UART_0_PINS         stm32_uart_pins_t{.rx={PA,1},.tx={PA,0}}
 
     #define GYRO_SAMPLE_RATE_HZ 200 // 5000us looptime
@@ -181,6 +182,9 @@ Targets
     #define USE_MSP
     #define MSP_UART_INDEX      0
     #define MSP_UART_PINS       UART_0_PINS
+    #define USE_GPS
+    #define GPS_UART_INDEX      1
+    #define GPS_UART_PINS       UART_1_PINS
     #define USE_CMS
     #define USE_OSD
     #define USE_VTX
