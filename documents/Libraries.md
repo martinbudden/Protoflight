@@ -1,22 +1,26 @@
 # Libraries used by Protoflight
 
-| Library                | On github | release | platformio | Arduino |
-| ---------------------- | --------- | ------- | ---------- | ------- |
-| Filters                | yes       | 0.9.4   | yes        | no      |
-| PIDF                   | yes       | 0.4.2   | yes        | no      |
-| VectorQuaternionMatrix | yes       | 0.4.7   | yes        | no      |
-| MotorMixers            | yes       | 0.0.6   | yes        | no      |
-| SensorFusion           | yes       | 0.2.11  | yes        | no      |
-| StreamBuf              | yes       | 0.0.4   | yes        | no      |
-| Sensors                | yes       | 0.0.5   | yes        | no      |
-| TaskBase               | yes       | 0.0.13  | yes        | no      |
-| StabilizedVehicle      | yes       | 0.5.24  | yes        | no      |
-| Receiver               | yes       | 0.5.14  | yes        | no      |
-| Backchannel            | yes       | 0.1.13  | yes        | no      |
-| MultiWiiSerialProtocol | yes       | 0.0.16  | yes        | no      |
-| Blackbox               | yes       | 0.0.24  | yes        | no      |
-| FlashKLV               | yes       | 0.0.3   | yes        | no      |
-| IMU                    | yes       | 0.9.8 - superseded   | yes        | no      |
+| Library                | On github | release | platformio | Arduino | Releases |
+| ---------------------- | --------- | ------- | ---------- | ------- | -------- |
+| Filters                | yes       | 0.9.4   | yes        | no      | 19       |
+| PID                    | yes       | 0.0.1   | yes        | no      |  1       |
+| VectorQuaternionMatrix | yes       | 0.4.10  | yes        | no      | 17       |
+| MotorMixers            | yes       | 0.0.6   | yes        | no      |  6       |
+| SensorFusion           | yes       | 0.2.14  | yes        | no      | 20       |
+| StreamBuf              | yes       | 0.0.4   | yes        | no      |  4       |
+| Sensors                | yes       | 0.0.6   | yes        | no      |  6       |
+| TaskUtilities          | yes       | 0.0.1   | yes        | no      |  1       |
+| StabilizedVehicle      | yes       | 0.5.25  | yes        | no      | 48       |
+| Receiver               | yes       | 0.0.1   | yes        | no      |  1       |
+| Backchannel            | yes       | 0.1.14  | yes        | no      | 25       |
+| MultiWiiSerialProtocol | yes       | 0.0.16  | yes        | no      | 16       |
+| Blackbox               | yes       | 0.0.24  | yes        | no      | 24       |
+| FlashKLV               | yes       | 0.0.3   | yes        | no      |  3       |
+|                        |           |         |            |         |          |
+| IMU                    | yes       | 0.9.8  - superseded | yes        | no      |          |
+| TaskBase               | yes       | 0.0.13 - superseded | yes        | no      | 13       |
+| Receiver               | yes       | 0.5.14 - superseded | yes        | no      | 33       |
+| PIDF                   | yes       | 0.4.2  - superseded | yes        | no      | 15       |
 
 ## Dependencies
 
@@ -24,36 +28,36 @@
 Libraries
 ├── Filters @ 0.9.4
 ├── PIDF @ 0.4.2
-├── TaskBase @ 0.0.13
-├── VectorQuaternionMatrix @ 0.4.7
+├── TaskUtilities @ 0.0.1
+├── VectorQuaternionMatrix @ 0.4.10
 ├── FlashKLV @ 0.0.3
 │
-├── SensorFusion @ 0.2.11
-│   └── VectorQuaternionMatrix @ 0.4.7
+├── SensorFusion @ 0.2.14
+│   └── VectorQuaternionMatrix @ 0.4.10
 │
-├── Sensors @ 0.0.5
-│   └── VectorQuaternionMatrix @ 0.4.7
+├── Sensors @ 0.0.6
+│   └── VectorQuaternionMatrix @ 0.4.10
 │
 ├── MotorMixers @ 0.0.6
 │   ├── VectorQuaternionMatrix @ 0.4.7
 │   ├── Filters @ 0.9.4
 │   └── PIDF @ 0.4.2
 │
-├── StabilizedVehicle @ 0.5.24
-│   ├── TaskBase @ 0.0.13
-│   ├── VectorQuaternionMatrix @ 0.4.7
-│   ├── Sensors @ 0.0.5
-│   │   └── VectorQuaternionMatrix @ 0.4.7
-│   └── SensorFusion @ 0.2.11
-│       └── VectorQuaternionMatrix @ 0.4.7
+├── StabilizedVehicle @ 0.5.25
+│   ├── TasUtilities @ 0.0.1
+│   ├── VectorQuaternionMatrix @ 0.4.10
+│   ├── Sensors @ 0.0.6
+│   │   └── VectorQuaternionMatrix @ 0.4.10
+│   └── SensorFusion @ 0.2.14
+│       └── VectorQuaternionMatrix @ 0.4.10
 │
-├── Receiver @ 0.5.14
-│   └── TaskBase @ 0.0.13
+├── Receiver @ 0.0.1
+│   └── TaskUtilities @ 0.0.1
 │
-└── Backchannel @ 0.1.13
-    ├── TaskBase @ 0.0.13
-    ├── Receiver @ 0.5.14
-    └── StabilizedVehicle @ 0.5.24
+└── Backchannel @ 0.1.14
+    ├── TaskUtilities @ 0.0.1
+    ├── Receivers @ 0.0.1
+    └── StabilizedVehicle @ 0.5.25
 
 └── MultiWiiSerialProtocol @ 0.0.16
     ├── TaskBase @ 0.0.13
@@ -64,19 +68,24 @@ Libraries
     └── StreamBuf @ 0.0.4
 
 └── Protoflight @ 0.0.1
-    ├── Sensors @ 0.0.5
+    ├── Sensors @ 0.0.6
     ├── Filters @ 0.9.4
     ├── PIDF @ 0.4.2
     ├── MotorMixers @ 0.0.6
-    ├── StabilizedVehicle @ 0.5.24
-    ├── Receiver @ 0.5.14
+    ├── StabilizedVehicle @ 0.5.25
+    ├── Receivers @ 0.0.1
     ├── MultiWiiSerialProtocol @ 0.0.16
     ├── Blackbox @ 0.0.24
-    └── Backchannel @ 0.1.13
+    └── Backchannel @ 0.1.14
 
 
 └── IMU @ 0.9.8 - superseded
     └── VectorQuaternionMatrix @ 0.4.5
+
+└── TaskBase @ 0.0.13 - superseded
+
+└── Receiver @ 0.5.14 - superseded
+    └── TaskBase @ 0.0.13
 
 ```
 
