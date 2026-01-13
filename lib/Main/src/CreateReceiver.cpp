@@ -49,7 +49,7 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
 #elif defined(USE_RECEIVER_SBUS)
 
     static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE, ReceiverSBUS::DATA_BITS, ReceiverSBUS::STOP_BITS, ReceiverSBUS::PARITY);
-    static ReceiverIBUS receiver(serialPort);
+    static ReceiverSBUS receiver(serialPort);
     return receiver;
 
 #elif defined(USE_RECEIVER_IBUS)
@@ -61,7 +61,7 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
 #elif defined(USE_RECEIVER_CRSF)
 
     static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE, ReceiverCRSF::DATA_BITS, ReceiverCRSF::STOP_BITS, ReceiverCRSF::PARITY);
-    static ReceiverIBUS receiver(serialPort);
+    static ReceiverCRSF receiver(serialPort);
     return receiver;
 
 #else
