@@ -481,7 +481,8 @@ private:
     };
 public:
     //!Default PIDs. For compatibility these are the same values as used by Betaflight.
-    static constexpr std::array<PIDF_uint16_t, PID_COUNT> DefaultPIDs = {{
+    typedef const std::array<PIDF_uint16_t, PID_COUNT> default_pids_t;
+    static constexpr default_pids_t DefaultPIDs = {{
 #if true
         { 45, 0, 0, 0, 0 }, // roll rate
         { 47, 0, 0, 0, 0 }, // pitch rate
