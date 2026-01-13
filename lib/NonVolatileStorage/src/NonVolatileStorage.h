@@ -193,7 +193,7 @@ public:
     GPS::config_t loadGPS_Config() const;
     int32_t storeGPS_Config(const GPS::config_t& config);
 #endif
-#if defined USE_ALTITUDE_HOLD
+#if defined(USE_ALTITUDE_HOLD)
     Autopilot::autopilot_config_t loadAutopilotConfig() const;
     int32_t storeAutopilotConfig(const Autopilot::autopilot_config_t& config);
     Autopilot::position_config_t loadAutopilotPositionConfig() const;

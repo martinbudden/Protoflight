@@ -883,7 +883,7 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
 #if defined(USE_CRASH_RECOVERY)
     storeFlightControllerCrashRecoveryConfig(flightController.getCrashRecoveryConfig(), pidProfile);
 #endif
-#if defined USE_ALTITUDE_HOLD
+#if defined(USE_ALTITUDE_HOLD)
     storeAltitudeHoldConfig(autopilot.getAltitudeHoldConfig());
 #else
     (void)autopilot;
