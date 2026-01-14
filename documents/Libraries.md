@@ -2,10 +2,10 @@
 
 | Library                | On github | release | platformio | Arduino | Releases |
 | ---------------------- | --------- | ------- | ---------- | ------- | -------- |
-| Filters                | yes       | 0.9.4   | yes        | no      | 19       |
+| Filter                 | yes       | 0.0.1   | yes        | no      |  1       |
 | PID                    | yes       | 0.0.1   | yes        | no      |  1       |
 | VectorQuaternionMatrix | yes       | 0.4.10  | yes        | no      | 17       |
-| MotorMixers            | yes       | 0.0.6   | yes        | no      |  6       |
+| MotorMixers            | yes       | 0.0.7   | yes        | no      |  6       |
 | SensorFusion           | yes       | 0.2.14  | yes        | no      | 20       |
 | StreamBuf              | yes       | 0.0.4   | yes        | no      |  4       |
 | Sensors                | yes       | 0.0.6   | yes        | no      |  6       |
@@ -21,12 +21,13 @@
 | TaskBase               | yes       | 0.0.13 - superseded | yes        | no      | 13       |
 | Receiver               | yes       | 0.5.14 - superseded | yes        | no      | 33       |
 | PIDF                   | yes       | 0.4.2  - superseded | yes        | no      | 15       |
+| Filters                | yes       | 0.9.4  - superseded | yes        | no      | 19       |
 
 ## Dependencies
 
 ```text
 Libraries
-├── Filters @ 0.9.4
+├── Filter @ 0.0.1
 ├── PIDF @ 0.4.2
 ├── TaskUtilities @ 0.0.1
 ├── VectorQuaternionMatrix @ 0.4.10
@@ -69,9 +70,9 @@ Libraries
 
 └── Protoflight @ 0.0.1
     ├── Sensors @ 0.0.6
-    ├── Filters @ 0.9.4
+    ├── Filter @ 0.0.1
     ├── PIDF @ 0.4.2
-    ├── MotorMixers @ 0.0.6
+    ├── MotorMixers @ 0.0.7
     ├── StabilizedVehicle @ 0.5.25
     ├── Receivers @ 0.0.1
     ├── MultiWiiSerialProtocol @ 0.0.16
