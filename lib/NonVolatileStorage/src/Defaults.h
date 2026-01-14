@@ -266,132 +266,132 @@ static constexpr RC_Adjustments::adjustment_ranges_t RC_AdjustmentRanges = {};
 
 static constexpr RC_Adjustments::adjustment_configs_t RC_AdjustmentConfigs = {{
     {
-        .adjustment =ADJUSTMENT_RC_RATE,
+        .adjustment = ADJUSTMENT_RC_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_RC_EXPO,
+        .adjustment = ADJUSTMENT_RC_EXPO,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_THROTTLE_EXPO,
+        .adjustment = ADJUSTMENT_THROTTLE_EXPO,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_ROLL_RATE,
+        .adjustment = ADJUSTMENT_PITCH_ROLL_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_YAW_RATE,
+        .adjustment = ADJUSTMENT_YAW_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_ROLL_P,
+        .adjustment = ADJUSTMENT_PITCH_ROLL_P,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_ROLL_I,
+        .adjustment = ADJUSTMENT_PITCH_ROLL_I,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_ROLL_D,
+        .adjustment = ADJUSTMENT_PITCH_ROLL_D,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_YAW_P,
+        .adjustment = ADJUSTMENT_YAW_P,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_YAW_I,
+        .adjustment = ADJUSTMENT_YAW_I,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_YAW_D,
+        .adjustment = ADJUSTMENT_YAW_D,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_RATE_PROFILE,
+        .adjustment = ADJUSTMENT_RATE_PROFILE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 3 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_RATE,
+        .adjustment = ADJUSTMENT_PITCH_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_ROLL_RATE,
+        .adjustment = ADJUSTMENT_ROLL_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_P,
+        .adjustment = ADJUSTMENT_PITCH_P,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_I,
+        .adjustment = ADJUSTMENT_PITCH_I,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_D,
+        .adjustment = ADJUSTMENT_PITCH_D,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_ROLL_P,
+        .adjustment = ADJUSTMENT_ROLL_P,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_ROLL_I,
+        .adjustment = ADJUSTMENT_ROLL_I,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_ROLL_D,
+        .adjustment = ADJUSTMENT_ROLL_D,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_YAW_RC_RATE,
+        .adjustment = ADJUSTMENT_YAW_RC_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_PITCH_ROLL_K,
+        .adjustment = ADJUSTMENT_PITCH_ROLL_K,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_FEEDFORWARD_TRANSITION,
+        .adjustment = ADJUSTMENT_FEEDFORWARD_TRANSITION,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_HORIZON_STRENGTH,
+        .adjustment = ADJUSTMENT_HORIZON_STRENGTH,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 255 }
     }, {
-        .adjustment =ADJUSTMENT_PID_AUDIO,
+        .adjustment = ADJUSTMENT_PID_AUDIO,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 7 } // ARRAYLEN(pidAudioPositionToModeMap)
     }, {
-        .adjustment =ADJUSTMENT_PITCH_K,
+        .adjustment = ADJUSTMENT_PITCH_K,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_ROLL_K,
+        .adjustment = ADJUSTMENT_ROLL_K,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_YAW_K,
+        .adjustment = ADJUSTMENT_YAW_K,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
         .data = { .step = 1 }
     }, {
-        .adjustment =ADJUSTMENT_OSD_PROFILE,
+        .adjustment = ADJUSTMENT_OSD_PROFILE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 3 }
     }, {
-        .adjustment =ADJUSTMENT_LED_PROFILE,
+        .adjustment = ADJUSTMENT_LED_PROFILE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 3 }
     }, {
-        .adjustment =ADJUSTMENT_LED_DIMMER,
+        .adjustment = ADJUSTMENT_LED_DIMMER,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_SELECT,
         .data = { .switchPositions = 100 }
     },
     {
-        .adjustment =ADJUSTMENT_NONE,
+        .adjustment = ADJUSTMENT_NONE,
         .mode = {},
         .data = {}
     },

@@ -109,15 +109,16 @@ public:
     const adjustment_configs_t& getAdjustmentConfigs() const;
 
     void processAdjustments(const ReceiverBase& receiver, FlightController& flightController, Cockpit& cockpit, OSD* osd, bool isReceiverSignal);
-private:
-    enum { ADJUSTMENT_FUNCTION_CONFIG_INDEX_OFFSET = 1};
-    void blackboxLogInflightAdjustmentEvent(adjustment_e adjustment, int32_t newValue);
+// public for test code
     int32_t applyStepAdjustment(FlightController& flightController, rates_t& rates, adjustment_e adjustment, int32_t delta);
     int32_t applyAbsoluteAdjustment(FlightController& flightController, rates_t& rates, adjustment_e adjustment, int32_t value);
     uint8_t applySelectAdjustment(FlightController& flightController, Cockpit& cockpit, OSD* osd, adjustment_e adjustment, uint8_t position);
+private:
+    enum { ADJUSTMENT_FUNCTION_CONFIG_INDEX_OFFSET = 1};
+    void blackboxLogInflightAdjustmentEvent(adjustment_e adjustment, int32_t newValue);
     void processStepwiseAdjustments(const ReceiverBase& receiver, FlightController& flightController, rates_t& rates, bool canUseRxData);
     void processContinuosAdjustments(const ReceiverBase& receiver, FlightController& flightController, Cockpit& cockpit, OSD* osd);
-    void calcActiveAdjustmentRanges();
+    void calculateActiveAdjustmentRanges();
     void beeperConfirmationBeeps(uint8_t beepCount);
 
     const char *getRangeName();

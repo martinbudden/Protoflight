@@ -505,7 +505,7 @@ uint8_t RC_Adjustments::applySelectAdjustment(FlightController& flightController
     return position;
 }
 
-void RC_Adjustments::calcActiveAdjustmentRanges()
+void RC_Adjustments::calculateActiveAdjustmentRanges()
 {
     adjustment_range_t defaultAdjustmentRange {};
 
@@ -622,9 +622,8 @@ void RC_Adjustments::processAdjustments(const ReceiverBase& receiver, FlightCont
 {
     // Recalculate the new active adjustments if required
     if (_stepwiseAdjustmentCount == ADJUSTMENT_RANGE_COUNT_INVALID) {
-        // This can take up to 30us and is only call when not armed so ignore this timing as it doesn't impact flight
-        //schedulerIgnoreTaskExecTime();
-        calcActiveAdjustmentRanges();
+        // This can take up to 30us and is only called when not armed so it doesn't impact flight
+        calculateActiveAdjustmentRanges();
     }
     processStepwiseAdjustments(receiver, flightController, cockpit.getRates(), isReceiverSignal);
 

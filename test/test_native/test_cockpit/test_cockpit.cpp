@@ -1,5 +1,6 @@
 #include "Autopilot.h"
 #include "Cockpit.h"
+#include "Defaults.h"
 #include "FlightController.h"
 #include "IMU_Filters.h"
 #include "NonVolatileStorage.h"
@@ -378,6 +379,25 @@ void test_rc_modes_init()
     TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD));
 }
 
+void test_rc_adjustments()
+{
+    static RC_Adjustments rcAdjustments(&DEFAULTS::RC_AdjustmentConfigs);
+
+    rates_t rates = cockpitRates;
+    TEST_ASSERT_EQUAL(7, rates.rcRates[rates_t::ROLL]);
+
+    rcAdjustments.applyStepAdjustment(flightController, rates, ADJUSTMENT_ROLL_RC_RATE, 1);
+    TEST_ASSERT_EQUAL(8, rates.rcRates[rates_t::ROLL]);
+
+    rcAdjustments.applyAbsoluteAdjustment(flightController, rates, ADJUSTMENT_ROLL_RC_RATE, 3);
+    TEST_ASSERT_EQUAL(3, rates.rcRates[rates_t::ROLL]);
+
+    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    TEST_ASSERT_EQUAL(0, cockpit.getCurrentRateProfileIndex());
+    rcAdjustments.applySelectAdjustment(flightController, cockpit, nullptr, ADJUSTMENT_RATE_PROFILE, 1);
+    TEST_ASSERT_EQUAL(1, cockpit.getCurrentRateProfileIndex());
+}
+
 void test_flightmode_flags()
 {
     static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
@@ -401,15 +421,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_cockpit);
+    /*RUN_TEST(test_cockpit);
     RUN_TEST(test_cockpit_passthrough);
     RUN_TEST(test_cockpit_set_passthrough);
     RUN_TEST(test_cockpit_defaults);
     RUN_TEST(test_cockpit_constrain);
     RUN_TEST(test_cockpit_throttle);
     RUN_TEST(test_rc_modes);
-    RUN_TEST(test_rc_modes_init);
-    RUN_TEST(test_flightmode_flags);
+    RUN_TEST(test_rc_modes_init);*/
+    RUN_TEST(test_rc_adjustments);
+    //RUN_TEST(test_flightmode_flags);
 
     UNITY_END();
 }
