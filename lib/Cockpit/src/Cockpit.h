@@ -8,10 +8,8 @@
 #include "Targets.h"
 
 #include <CockpitBase.h>
-#include <MSP_Box.h>
 
 #include <cassert>
-#include <cstddef>
 
 class Autopilot;
 class Debug;
@@ -178,7 +176,6 @@ public:
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
 
-    bool isRcModeActive(MSP_Box::id_e rcMode) const;
     const RC_Modes& getRC_Modes() const { return _rcModes; }
     RC_Modes& getRC_Modes() { return _rcModes; }
 #if defined(USE_RC_ADJUSTMENTS)

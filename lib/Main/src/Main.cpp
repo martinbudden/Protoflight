@@ -47,7 +47,7 @@ void Main::setup()
     M5.Power.begin();
 #endif
 
-#if !defined(FRAMEWORK_RPI_PICO) && !defined(FRAMEWORK_ESPIDF) && !defined(FRAMEWORK_STM32_CUBE) && !defined(FRAMEWORK_TEST)
+#if !defined(FRAMEWORK_RPI_PICO) && !defined(FRAMEWORK_ESPIDF) && !defined(FRAMEWORK_STM32_CUBE) && !defined(FRAMEWORK_ARDUINO_STM32) && !defined(FRAMEWORK_TEST)
     Serial.begin(115200);
     delay(500); // Allow serial port to initialize
 #endif
@@ -233,6 +233,10 @@ void Main::print(const char* buf)
 #elif defined(FRAMEWORK_TEST)
     printf(&buf[0]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 #else
+#if defined(FRAMEWORK_ARDUINO_ESP32)
     Serial.print(&buf[0]);
+#else
+    (void)buf;
+#endif
 #endif
 }

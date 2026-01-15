@@ -1,7 +1,7 @@
 #include "DynamicNotchFilter.h"
 
 #include <Debug.h>
-#include <cmath>
+#include <TimeMicroseconds.h>
 #if (__cplusplus >= 202002L)
 #include <ranges>
 #endif

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Targets.h"
+
 #include <array>
 #include <cstdint>
 
@@ -136,10 +138,14 @@ public:
     static const void* menuExit(CMSX& cmsx, DisplayPortBase& displayPort, const  menu_t* menu) { return cmsx.menuExit(displayPort, menu); }
     static const void* menuCalibrateGyro(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
     static const void* menuCalibrateAcc(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
+    static const void* menuCalibrateBaro(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
     static const void* inhibitSaveMenu(CMSX& cmsx, DisplayPortBase& displayPort) { (void)displayPort; cmsx.inhibitSaveMenu(); return nullptr; }
     enum { CALIBRATION_STATUS_MAX_LENGTH = 6 };
     static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> GyroCalibrationStatus;
     static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> AccCalibrationStatus;
+#if defined(USE_BAROMETER)
+    static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> BaroCalibrationStatus;
+#endif
 
 private:
     CMS& _cms;
@@ -198,7 +204,9 @@ public:
             static menu_t menuVTX;
             static menu_t menuPower;
             static menu_t menuFailsafe;
-        //static menu_t menuOsd;
+#if defined(USE_CMS_OSD)
+        static menu_t menuOsd;
+#endif
         static menu_t menuFirmware;
             // display info
             static menu_t menuCalibrate;

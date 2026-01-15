@@ -23,9 +23,7 @@ void Main::calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, calibrati
     M5.Lcd.printf("Please keep the robot\r\n");
     M5.Lcd.printf("still for 10 seconds\r\n\r\n");
 #endif
-#if defined(FRAMEWORK_ARDUINO)
-    delay(4000); // delay 4 seconds to allow robot to stabilize after user lets go
-#endif
+    IMU_Base::delayMs(4000); // delay 4 seconds to allow robot to stabilize after user lets go
 
     enum { CALIBRATION_COUNT = 5000 };
     imu.calibrate(calibrationType == CALIBRATE_ACC_AND_GYRO ? IMU_Base::CALIBRATE_ACC_AND_GYRO : IMU_Base::CALIBRATE_GYRO_ONLY, CALIBRATION_COUNT);
@@ -51,9 +49,7 @@ void Main::calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, calibrati
     M5.Lcd.printf("Finished calibration\r\n");
 #endif
 
-#if defined(FRAMEWORK_ARDUINO)
-    delay(4000); // delay 4 seconds to allow user to read screen
-#endif
+    IMU_Base::delayMs(4000); // delay 4 seconds to allow user to read screen
 
 #if defined(M5_UNIFIED)
     //M5.Power.powerOff();

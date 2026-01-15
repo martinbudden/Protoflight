@@ -282,7 +282,7 @@ void OSD::processStats2(timeUs32_t currentTimeUs)
             // in timeout period, check sticks for activity or CRASH_FLIP switch to resume display.
             if (!_cockpit.isArmed()) {
                 const ReceiverBase::controls_pwm_t controls = _cockpit.getReceiver().getControlsPWM();
-                if (RC_Modes::pwmIsHigh(controls.throttle) || RC_Modes::pwmIsHigh(controls.pitch) || _cockpit.isRcModeActive(MSP_Box::BOX_CRASH_FLIP)) {
+                if (RC_Modes::pwmIsHigh(controls.throttle) || RC_Modes::pwmIsHigh(controls.pitch) || _cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_CRASH_FLIP)) {
                     _resumeRefreshAtUs = currentTimeUs;
                 }
             }
@@ -434,7 +434,7 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
         break;
     case STATE_UPDATE_CANVAS: {
         //Serial.printf("STATE_UPDATE_CANVAS\r\n");
-        if (_cockpit.isRcModeActive(MSP_Box::BOX_OSD)) {
+        if (_cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_OSD)) {
             // Hide OSD when OSD SW mode is active
             _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
             _state = STATE_COMMIT;

@@ -4,9 +4,6 @@
 #include <ReceiverBase.h>
 
 #include <algorithm>
-#include <array>
-#include <bitset>
-#include <cstdint>
 
 
 class RC_Modes {

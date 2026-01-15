@@ -82,18 +82,19 @@ static const void* mainMenuOnEnter(CMSX& cmsx, DisplayPortBase& displayPort)
     return nullptr;
 }
 
-#if defined(USE_OSD)
-static const std::array<CMS::OSD_Entry, 8> menuMainEntries
+#if defined(USE_CMS_OSD)
+enum { MENU_MAIN_ENTRY_COUNT = 8 };
 #else
-static const std::array<CMSX::OSD_Entry, 7> menuMainEntries
+enum { MENU_MAIN_ENTRY_COUNT = 7 };
 #endif
+static const std::array<CMSX::OSD_Entry, MENU_MAIN_ENTRY_COUNT> menuMainEntries
 {{
     {"-- MAIN --",  OME_LABEL, nullptr, nullptr},
 
     {"PROFILE",     OME_SUBMENU, &CMSX::menuChange, &CMSX::menuProfile},
     {"FEATURES",    OME_SUBMENU, &CMSX::menuChange, &CMSX::menuFeatures},
-#if defined(USE_OSD)
-    {"OSD",         OME_SUBMENU, &CMS::menuChange, &CMSX::menuOsd},
+#if defined(USE_CMS_OSD)
+    {"OSD",         OME_SUBMENU, &CMSX::menuChange, &CMSX::menuOsd},
 #endif
     {"FC&FIRMWARE", OME_SUBMENU, &CMSX::menuChange, &CMSX::menuFirmware},
     {"MISC",        OME_SUBMENU, &CMSX::menuChange, &CMSX::menuMisc},

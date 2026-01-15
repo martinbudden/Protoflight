@@ -46,7 +46,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
 {
     (void)timeMicrosecondsDelta;
 
-    if (_cockpit.isRcModeActive(MSP_Box::BOX_PARALYZE)) {
+    if (_cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_PARALYZE)) {
         return;
     }
 
@@ -64,7 +64,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         }
     } else {
         // Detect menu invocation
-        if (!_cockpit.isArmed() && !_cockpit.isRcModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
+        if (!_cockpit.isArmed() && !_cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
             const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW )
             if (RC_Modes::pwmIsLow(controls.yaw) && RC_Modes::pwmIsHigh(controls.pitch)) {

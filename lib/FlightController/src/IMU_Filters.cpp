@@ -125,7 +125,11 @@ void IMU_Filters::filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT)
             _rpmFilters->filter(gyroRPS, 2);
             _rpmFilters->filter(gyroRPS, 3);
         } else {
+#if (__cplusplus >= 202002L)
             for (auto ii : std::views::iota(size_t{0}, _motorCount)) {
+#else
+            for (size_t ii = 0; ii < _motorCount; ++ii) {
+#endif
                _rpmFilters->filter(gyroRPS, ii);
             }
         }

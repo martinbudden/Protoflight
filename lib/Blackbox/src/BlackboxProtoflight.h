@@ -1,9 +1,9 @@
 #pragma once
 
-#include "FlightController.h"
 #include <Blackbox.h>
 
 class Cockpit;
+class FlightController;
 class IMU_Filters;
 
 /*!

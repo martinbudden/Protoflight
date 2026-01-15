@@ -1,8 +1,8 @@
 #include "Cockpit.h"
+#include "FlightController.h"
 #include "Main.h"
 
 #include <AHRS.h>
-#include <AHRS_MessageQueue.h>
 #include <BlackboxCallbacks.h>
 #include <BlackboxProtoflight.h>
 #include <BlackboxSerialDeviceSDCard.h>

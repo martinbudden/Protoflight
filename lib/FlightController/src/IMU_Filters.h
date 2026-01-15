@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DynamicNotchFilter.h"
+#include "Targets.h"
 
 #include <IMU_FiltersBase.h>
 #include <RPM_Filters.h>

@@ -1,5 +1,6 @@
 #include "BlackboxProtoflight.h"
 #include "Cockpit.h"
+#include "FlightController.h"
 #include "IMU_Filters.h"
 
 #include <BlackboxCallbacksBase.h>

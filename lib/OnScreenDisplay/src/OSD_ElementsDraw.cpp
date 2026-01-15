@@ -189,12 +189,12 @@ void OSD_Elements::formatDistanceString(char* buf, float distance, char leadingS
 void OSD_Elements::formatPID(char* buf, const char* label, uint8_t axis) // NOLINT(readability-non-const-parameter)
 {
     const FlightController::PIDF_uint16_t pid = _flightController.getPID_MSP(axis);
-    sprintf(buf, "%s %3d %3d %3d %3d %3d", label,
+    sprintf(buf, "%s %3d %3d %3d %3d", label,
         pid.kp,
         pid.ki,
         pid.kd,
-        pid.ks,
-        pid.kk
+        pid.ks
+        //pid.kk
     );
 }
 
@@ -410,7 +410,7 @@ void OSD_Elements::draw_GPS_SATS(DisplayPortBase& displayPort)
     }
 
     if (_gpsData.isHealthy) {
-        size_t pos = printf(&_activeElement.buf[0], "%c%c%2d", SYM_SAT_L, SYM_SAT_R, _gpsData.satelliteCount);
+        size_t pos = printf(&_activeElement.buf[0], "%c%c%2u", SYM_SAT_L, SYM_SAT_R, _gpsData.satelliteCount);
         if (_osd.getConfig().gps_sats_show_pdop) { // add on the GPS module PDOP estimate
             _activeElement.buf[pos++] = ' ';
             printFloat(&_activeElement.buf[pos], SYM_NONE, _gpsData.dilutionOfPrecisionPositional / 100.0F, 1, true, SYM_NONE);

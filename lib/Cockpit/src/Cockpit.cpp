@@ -113,11 +113,6 @@ uint32_t Cockpit::getFlightModeFlags() const
     return _flightModeFlags.to_ulong();
 }
 
-bool Cockpit::isRcModeActive(MSP_Box::id_e rcMode) const
-{
-    return _rcModes.isModeActive(rcMode);
-}
-
 void Cockpit::setRatesToPassThrough()
 {
     _rates.rcRates = { 100, 100, 100 }; // center sensitivity

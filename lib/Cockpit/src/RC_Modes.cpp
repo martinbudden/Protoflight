@@ -1,7 +1,6 @@
 #include "RC_Modes.h"
 #include "RX.h"
 
-#include <ReceiverBase.h>
 #include <TimeMicroseconds.h>
 
 #include <algorithm>

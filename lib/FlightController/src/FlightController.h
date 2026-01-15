@@ -462,12 +462,13 @@ private:
         std::array<uint32_t, TIME_CHECKS_COUNT + 1> timeChecksMicroseconds {};
     }; // shared_t
 
-    fc_t _fcM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the Flight Controller Task
+    enum { HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE = 64 };
+    alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) fc_t _fcM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the Flight Controller Task
+    alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) rx_t _rxM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the Receiver Task
+    alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) ah_t _ahM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the AHRS Task
+    alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) shared_t _sh;       //!< member data that is set in the context of more than one task
     const fc_t& _fcC;   //!< CONSTANT   partition of member data that MUST be used outside the context of the Flight Controller Task
-    rx_t _rxM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the Receiver Task
     const rx_t& _rxC;   //!< CONSTANT   partition of member data that MUST be used outside the context of the Receiver Task
-    ah_t _ahM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the AHRS Task
-    shared_t _sh;       //!< member data that is set in the context of more than one task
 
     // Betaflight compatible mixer output scale factor: scales roll, pitch, and yaw from DPS range to [-1.0F, 1.0F]
     static constexpr float MIXER_OUTPUT_SCALE_FACTOR = 0.001F;

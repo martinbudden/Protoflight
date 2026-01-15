@@ -5,7 +5,9 @@
 
 std::array<char, CMSX::CALIBRATION_STATUS_MAX_LENGTH> CMSX::GyroCalibrationStatus {};
 std::array<char, CMSX::CALIBRATION_STATUS_MAX_LENGTH> CMSX::AccCalibrationStatus {};
-
+#if defined(USE_BAROMETER)
+std::array<char, CMSX::CALIBRATION_STATUS_MAX_LENGTH> CMSX::BaroCalibrationStatus {};
+#endif
 
 const void* CMSX::menuCalibrateGyro(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
 {
@@ -42,13 +44,19 @@ const void* CMSX::menuCalibrateAcc(CMSX& cmsx, DisplayPortBase& displayPort, [[m
     return nullptr;
 }
 
+const void* CMSX::menuCalibrateBaro(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+{
+    CMSX::menuChange(cmsx, displayPort, nullptr);//&menuCalibrateBaro);
+    return nullptr;
+}
+
 static const std::array<CMSX::OSD_Entry, 7> menuCalibrateEntries
 {{
     { "-- CALIBRATE --", OME_LABEL, nullptr, nullptr },
     { "GYRO",   OME_FUNCTION_CALL | OME_DYNAMIC, CMSX::menuCalibrateGyro, &CMSX::GyroCalibrationStatus[0] },
     { "ACC",    OME_FUNCTION_CALL | OME_DYNAMIC, CMSX::menuCalibrateAcc, &CMSX::AccCalibrationStatus[0] },
 #if defined(USE_BAROMETER)
-    { "BARO",   OME_FUNCTION_CALL | OME_DYNAMIC, menuCalibrateBaro, &CMSX::baroCalibrationStatus },
+    { "BARO",   OME_FUNCTION_CALL | OME_DYNAMIC, CMSX::menuCalibrateBaro, &CMSX::BaroCalibrationStatus[0] },
 #endif
     { "BACK", OME_BACK, nullptr, nullptr },
     { nullptr, OME_END, nullptr, nullptr}
