@@ -279,7 +279,7 @@ private:
     bool _statsVisible {false};
     bool _statsEnabled {false};
 #if defined(USE_OSD_STATS)
-    /*! 
+    /*!
     Controls the display order of the OSD post-flight statistics.
     Adjust the ordering here to control how the post-flight stats are presented.
     Every entry in osd_stats_e should be represented. Any that are missing will not

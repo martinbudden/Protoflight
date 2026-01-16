@@ -12,7 +12,7 @@ struct rates_t {
     enum { THROTTLE_MAX = 100 };
     enum type_e { TYPE_BETAFLIGHT = 0, TYPE_RACEFLIGHT, TYPE_KISS, TYPE_ACTUAL, TYPE_QUICK, TYPE_COUNT } ;
     enum throttle_limit_type_e { THROTTLE_LIMIT_TYPE_OFF = 0, THROTTLE_LIMIT_TYPE_SCALE, THROTTLE_LIMIT_TYPE_CLIP, THROTTLE_LIMIT_TYPE_COUNT };
-    
+
     std::array<uint16_t, AXIS_COUNT> rateLimits;
     std::array<uint8_t, AXIS_COUNT> rcRates; // center sensitivity
     std::array<uint8_t, AXIS_COUNT> rcExpos; // movement sensitivity, nonlinear

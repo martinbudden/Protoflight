@@ -146,7 +146,7 @@ public:
     bool featureIsEnabled(uint32_t mask) const { return _features.isEnabled(mask); }
     uint32_t enabledFeatures() const { return _features.enabledFeatures(); }
     void setFeatures(uint32_t features) { _features.set(features); }
-    Features::config_t getFeaturesConfig() const { return Features::config_t { .enabledFeatures = enabledFeatures() }; } 
+    Features::config_t getFeaturesConfig() const { return Features::config_t { .enabledFeatures = enabledFeatures() }; }
 
     bool isArmed() const;
     bool wasEverArmed() const;

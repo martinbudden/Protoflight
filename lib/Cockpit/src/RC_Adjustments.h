@@ -131,5 +131,5 @@ private:
     std::array<continuos_adjustment_state_t, MAX_ADJUSTMENT_RANGE_COUNT> _continuosAdjustments {};
     std::array<adjustment_range_t, MAX_ADJUSTMENT_RANGE_COUNT> _adjustmentRanges {};
     std::array<adjustment_config_t, ADJUSTMENT_FUNCTION_COUNT> _adjustmentConfigs {};
-    const adjustment_configs_t* _defaultAdjustmentConfigs; 
+    const adjustment_configs_t* _defaultAdjustmentConfigs;
 };

@@ -39,7 +39,7 @@ Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightCon
     const RC_Modes::mode_activation_condition_t macAngle = {
         .modeId = MSP_Box::BOX_ANGLE,
         .auxChannelIndex = ReceiverBase::AUX2,
-        .range { 
+        .range {
             .startStep = RC_Modes::RANGE_STEP_MID,
             .endStep = RC_Modes::RANGE_STEP_MAX
         },
@@ -51,7 +51,7 @@ Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightCon
     const RC_Modes::mode_activation_condition_t macAltitudeHold = {
         .modeId = MSP_Box::BOX_ALTHOLD,
         .auxChannelIndex = ReceiverBase::AUX3,
-        .range { 
+        .range {
             .startStep = RC_Modes::RANGE_STEP_MID,
             .endStep = RC_Modes::RANGE_STEP_MAX
         },
