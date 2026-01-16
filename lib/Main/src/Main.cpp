@@ -3,17 +3,13 @@
 #include "AltitudeKalmanFilter.h"
 #include "AltitudeTask.h"
 #include "CMS_Task.h"
-#include "Cockpit.h"
 #include "DashboardTask.h"
 #include "FlightController.h"
-#include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
-#include "MSP_Serial.h"
 #include "NonVolatileStorage.h"
 #include "OSD_Task.h"
 #include "version.h"
 
-#include <AHRS.h>
 #include <AHRS_MessageQueue.h>
 #include <AHRS_Task.h>
 #include <BackchannelTask.h>
@@ -24,7 +20,6 @@
 #endif
 #include <IMU_Base.h>
 #include <MSP_Task.h>
-#include <ReceiverBase.h>
 #include <ReceiverTask.h>
 #include <VehicleControllerTask.h>
 #include <ctime>

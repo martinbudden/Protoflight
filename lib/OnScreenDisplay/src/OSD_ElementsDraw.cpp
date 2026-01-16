@@ -410,10 +410,10 @@ void OSD_Elements::draw_GPS_SATS(DisplayPortBase& displayPort)
     }
 
     if (_gpsData.isHealthy) {
-        size_t pos = printf(&_activeElement.buf[0], "%c%c%2u", SYM_SAT_L, SYM_SAT_R, _gpsData.satelliteCount);
+        const size_t pos = static_cast<size_t>(printf(&_activeElement.buf[0], "%c%c%2u", SYM_SAT_L, SYM_SAT_R, _gpsData.satelliteCount));
         if (_osd.getConfig().gps_sats_show_pdop) { // add on the GPS module PDOP estimate
-            _activeElement.buf[pos++] = ' ';
-            printFloat(&_activeElement.buf[pos], SYM_NONE, _gpsData.dilutionOfPrecisionPositional / 100.0F, 1, true, SYM_NONE);
+            _activeElement.buf[pos] = ' ';
+            printFloat(&_activeElement.buf[pos + 1], SYM_NONE, _gpsData.dilutionOfPrecisionPositional / 100.0F, 1, true, SYM_NONE);
         }
     } else {
         sprintf(&_activeElement.buf[0], "%c%cNC", SYM_SAT_L, SYM_SAT_R);

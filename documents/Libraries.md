@@ -13,8 +13,8 @@
 | StabilizedVehicle      | yes       | 0.5.25  | yes        | no      | 48       |
 | Receiver               | yes       | 0.0.1   | yes        | no      |  1       |
 | Backchannel            | yes       | 0.1.14  | yes        | no      | 25       |
-| MultiWiiSerialProtocol | yes       | 0.0.16  | yes        | no      | 16       |
-| Blackbox               | yes       | 0.0.24  | yes        | no      | 24       |
+| MultiWiiSerialProtocol | yes       | 0.0.17  | yes        | no      | 17       |
+| Blackbox               | yes       | 0.0.25  | yes        | no      | 25       |
 | FlashKLV               | yes       | 0.0.3   | yes        | no      |  3       |
 |                        |           |         |            |         |          |
 | IMU                    | yes       | 0.9.8  - superseded | yes        | no      |          |
@@ -60,12 +60,12 @@ Libraries
     ├── Receivers @ 0.0.1
     └── StabilizedVehicle @ 0.5.25
 
-└── MultiWiiSerialProtocol @ 0.0.16
-    ├── TaskBase @ 0.0.13
+└── MultiWiiSerialProtocol @ 0.0.17
+    ├── TaskUtilities @ 0.0.1
     └── StreamBuf @ 0.0.4
 
-└── Blackbox @ 0.0.24
-    ├── TaskBase @ 0.0.13
+└── Blackbox @ 0.0.25
+    ├── TaskUtilities @ 0.0.1
     └── StreamBuf @ 0.0.4
 
 └── Protoflight @ 0.0.1
@@ -76,7 +76,7 @@ Libraries
     ├── StabilizedVehicle @ 0.5.25
     ├── Receivers @ 0.0.1
     ├── MultiWiiSerialProtocol @ 0.0.16
-    ├── Blackbox @ 0.0.24
+    ├── Blackbox @ 0.0.25
     └── Backchannel @ 0.1.14
 
 

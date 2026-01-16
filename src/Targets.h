@@ -5,7 +5,7 @@
 /*!
 Targets
 */
-#if !defined(TARGET_AFROFLIGHT_F301CB)
+#if !defined(TARGET_AFROFLIGHT_F301CB) && !defined(TARGET_M5STACK_STAMPS3_FLY)
 
 #define USE_OSD_PROFILES
 #define USE_OSD_STATS
@@ -99,7 +99,7 @@ Targets
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
     #define SDCARD_SPI_PINS     SPI_X_PINS
-    //#define USE_BLACKBOX
+    #define USE_BLACKBOX
     //#define USE_BLACKBOX_TEST
     //#define USE_MSP
     #define MSP_UART_INDEX      0

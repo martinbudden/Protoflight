@@ -1,7 +1,6 @@
 #include "Autopilot.h"
 #include "Cockpit.h"
 #include "FlightController.h"
-#include "IMU_Filters.h"
 
 #include <Blackbox.h>
 #include <Debug.h>
