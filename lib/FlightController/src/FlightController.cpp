@@ -35,9 +35,7 @@ FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t o
     _motorMixer(motorMixer),
     _ahrsMessageQueue(ahrsMessageQueue),
     _debug(debug),
-    _outputToMotorsDenominator(outputToMotorsDenominator),
-    _fcC(_fcM),
-    _rxC(_rxM)
+    _outputToMotorsDenominator(outputToMotorsDenominator)
 {
     _sh.antiGravityThrottleFilter.setToPassthrough();
 

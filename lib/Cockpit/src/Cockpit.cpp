@@ -332,6 +332,13 @@ void Cockpit::setFailsafeConfig(const failsafe_config_t& failsafeConfig)
     _failsafeConfig = failsafeConfig;
 }
 
+bool Cockpit::gpsRescueIsConfigured() const
+{
+    return _failsafeConfig.procedure == FAILSAFE_PROCEDURE_GPS_RESCUE || _rcModes.isModeActivationConditionPresent(MSP_Box::BOX_GPS_RESCUE);
+    return false;
+}
+
+
 void Cockpit::setRX_Config(const RX::config_t& rxConfig)
 {
     _rxConfig = rxConfig;

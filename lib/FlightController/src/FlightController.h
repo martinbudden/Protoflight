@@ -104,8 +104,8 @@ public:
     struct tpa_runtime_t {
         float breakpoint;
         float multiplier;
-        float lowBreakpoint;
-        float lowMultiplier;
+        float lowBreakpoint; //!!TODO: not used
+        float lowMultiplier; //!!TODO: not used
     };
     struct anti_gravity_config_t {
         uint8_t cutoff_hz;
@@ -145,7 +145,6 @@ public:
         uint8_t yaw_spin_recovery;
     };
     struct yaw_spin_recovery_runtime_t {
-        // yaw spin recovery
         float recoveredRPS;
         float partiallyRecoveredRPS;
     };
@@ -177,6 +176,7 @@ public:
 #if defined(USE_ITERM_RELAX)
     enum iterm_relax_e { ITERM_RELAX_OFF, ITERM_RELAX_ON };
     struct iterm_relax_config_t {
+        uint8_t iterm_relax_type; // not used
         uint8_t iterm_relax;        // Enable iterm suppression during stick input
         uint8_t iterm_relax_setpoint_threshold; // Full iterm suppression once setpoint has exceeded this value (degrees per second)
         uint8_t iterm_relax_cutoff; // Cutoff frequency used by low pass filter which predicts average response of the quad to setpoint
@@ -381,7 +381,7 @@ private:
     d_max_runtime_t _dMax {};
 #endif
 #if defined(USE_ITERM_RELAX)
-    iterm_relax_config_t _iTermRelaxConfig = {.iterm_relax=ITERM_RELAX_ON, .iterm_relax_setpoint_threshold = 40, .iterm_relax_cutoff=15};
+    iterm_relax_config_t _iTermRelaxConfig = {.iterm_relax_type = 0, .iterm_relax=ITERM_RELAX_ON, .iterm_relax_setpoint_threshold = 40, .iterm_relax_cutoff=15};
     iterm_relax_runtime_t _iTermRelax = { .setpointThresholdDPS = 40.0F };
 #endif
 #if defined(USE_YAW_SPIN_RECOVERY)
@@ -462,13 +462,14 @@ private:
         std::array<uint32_t, TIME_CHECKS_COUNT + 1> timeChecksMicroseconds {};
     }; // shared_t
 
+    // Align data structures used in different tasks to avoid false sharing (https://en.wikipedia.org/wiki/False_sharing)
     enum { HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE = 64 };
     alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) fc_t _fcM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the Flight Controller Task
     alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) rx_t _rxM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the Receiver Task
     alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) ah_t _ahM;          //!< MODIFIABLE partition of member data that CAN  be used in the context of the AHRS Task
     alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) shared_t _sh;       //!< member data that is set in the context of more than one task
-    const fc_t& _fcC;   //!< CONSTANT   partition of member data that MUST be used outside the context of the Flight Controller Task
-    const rx_t& _rxC;   //!< CONSTANT   partition of member data that MUST be used outside the context of the Receiver Task
+    alignas(HARDWARE_DESTRUCTIVE_INTERFERENCE_SIZE) const fc_t& _fcC = _fcM;   //!< CONSTANT   partition of member data that MUST be used outside the context of the Flight Controller Task
+    const rx_t& _rxC = _rxM;   //!< CONSTANT   partition of member data that MUST be used outside the context of the Receiver Task
 
     // Betaflight compatible mixer output scale factor: scales roll, pitch, and yaw from DPS range to [-1.0F, 1.0F]
     static constexpr float MIXER_OUTPUT_SCALE_FACTOR = 0.001F;

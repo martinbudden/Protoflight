@@ -1,8 +1,8 @@
 #pragma once
 
 #include "OSD_Elements.h"
-
 class AHRS_MessageQueue;
+class VTX;
 
 
 /*!
@@ -10,7 +10,7 @@ On Screen Display.
 */
 class OSD {
 public:
-    OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug);
+    OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, const VTX* vtx, const GPS* gps);
 private:
     // OSD is not copyable or moveable
     OSD(const OSD&) = delete;

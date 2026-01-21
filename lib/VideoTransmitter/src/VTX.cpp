@@ -10,7 +10,7 @@ void VTX::setConfig(const config_t& config)
 Converts frequencyMHz to band and channel values.
 If frequency not found then band and channel are set to 0.
 */
-void VTX::lookupBandChannel(uint8_t& band, uint8_t& channel, uint16_t frequencyMHz)
+void VTX::lookupBandChannel(uint8_t& band, uint8_t& channel, uint16_t frequencyMHz) const
 {
     if (frequencyMHz == 5880) {
         // 5880Mhz returns Raceband 7 rather than Fatshark 8.
@@ -85,6 +85,27 @@ void VTX::setPowerByIndex(uint8_t index)
     }
 }
 
+const char* VTX::lookupBandName(uint8_t band)
+{
+    return (band < BAND_COUNT) ? BandNames[band] : "?";
+}
+
+char VTX::lookupBandLetter(uint8_t band)
+{
+    return (band < BAND_COUNT) ? BandLetters[band] : '?';
+}
+
+const char* VTX::lookupChannelName(uint8_t channel)
+{
+    return (channel < CHANNEL_COUNT) ? ChannelNames[channel] : "?";
+}
+
+const char* VTX::lookupPowerName(uint8_t powerIndex) const
+{
+    (void)powerIndex;
+
+    return "?";
+}
 
 // Tramp "---", 25, 200, 400. 600 mW
 const std::array <uint8_t, VTX::POWER_LEVEL_COUNT> VTX::PowerIndexTramp {

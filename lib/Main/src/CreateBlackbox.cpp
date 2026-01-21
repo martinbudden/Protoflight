@@ -30,6 +30,7 @@ Blackbox* Main::createBlackBox(FlightController& flightController, Cockpit& cock
         .mode = Blackbox::MODE_NORMAL, // logging starts on arming, file is saved when disarmed
         //.mode = Blackbox::MODE_ALWAYS_ON,
         .gps_use_3d_speed = false,
+        .fieldsDisabledMask = 0,
     });
     return &blackbox;
 #else

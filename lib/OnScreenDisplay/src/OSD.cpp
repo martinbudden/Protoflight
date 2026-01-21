@@ -27,8 +27,8 @@
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
-OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug) : // cppcheck-suppress constParameterReference
-    _elements(*this, flightController, cockpit, debug),
+OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, const VTX* vtx, const GPS* gps) : // cppcheck-suppress constParameterReference
+    _elements(*this, flightController, cockpit, debug, vtx, gps),
     _cockpit(cockpit),
     _ahrsMessageQueue(ahrsMessageQueue)
 {
@@ -180,7 +180,7 @@ bool OSD::renderStatsContinue()
             uint8_t displayRows = std::min(_statsRenderingState.rowCount, availableRows);
             if (_statsRenderingState.rowCount < availableRows) {
                 displayLabel = true;
-                displayRows++;
+                ++displayRows;
             }
             _statsRenderingState.row = static_cast<uint8_t>((availableRows - displayRows) / 2);  // center the stats vertically
         }

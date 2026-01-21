@@ -157,11 +157,11 @@ private:
     static Dashboard* createDashboard(const DisplayPortBase& displayPort, const AHRS& ahrs, FlightController& flightController, ReceiverBase& receiver);
     static Blackbox* createBlackBox(FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug, GPS* gps);
     static VTX* createVTX(NonVolatileStorage& nvs);
-    static OSD* createOSD(DisplayPortBase& displayPort, const FlightController& flightController, Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs);
-    static MSP_Serial* createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd);
+    static GPS* createGPS(Debug& debug);
+    static OSD* createOSD(DisplayPortBase& displayPort, const FlightController& flightController, Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs, const VTX* vtx, const GPS* gps);
+    static MSP_Serial* createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd, GPS* gps);
     static CMS* createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx);
     static BarometerBase* createBarometer();
-    static GPS* createGPS(Debug& debug);
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, NonVolatileStorage& nvs, const TaskBase* dashboardTask);
 
     static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);

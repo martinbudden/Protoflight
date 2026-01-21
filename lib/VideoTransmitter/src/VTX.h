@@ -28,12 +28,17 @@ public:
     enum { MIN_FREQUENCY_MHZ = 5000, MAX_FREQUENCY_MHZ = 5999 };
 
     enum { PIT_MODE_NA, PIT_MODE_OFF, PIT_MODE_ON, PIT_MODE_COUNT };
+    static constexpr uint32_t STATUS_PIT_MODE = 0x01;
+    static constexpr uint32_t STATUS_LOCKED = 0x02;
 
     // VTX band numbers used for spektrum vtx control
     enum { BAND_COUNT = 5 };
     enum { CHANNEL_COUNT = 8 };
     enum { POWER_LEVEL_COUNT = 8 };
     enum { BAND_USER = 0, BAND_A = 1, BAND_B = 2, BAND_E = 3, BAND_FATSHARK = 4, BAND_RACEBAND = 5, };
+    // check value for MSP_SET_VTX_CONFIG to determine if value is encoded
+    // band/channel or frequency in MHz (3 bits for band and 3 bits for channel)
+    static constexpr uint16_t MSP_BAND_CHANNEL_CHECK_VALUE =  (0x07 << 3) + 0x07;
 
     // RTC6705 RF Power index 25 or 200 mW
     enum {
@@ -57,7 +62,6 @@ public:
         TRAMP_POWER_400 = 4,
         TRAMP_POWER_600 = 5,
     };
-public:
     enum low_power_disarm_e {
         LOW_POWER_DISARM_OFF = 0,
         LOW_POWER_DISARM_ALWAYS,
@@ -73,7 +77,7 @@ public:
         uint8_t softserialAlt;  // prepend 0xff before sending frame even with SOFTSERIAL
     };
 public:
-    const config_t& getConfig() { return _config; }
+    const config_t& getConfig() const { return _config; }
     void setConfig(const config_t& config);
 
     virtual void process(timeUs32_t currentTimeUs) { (void)currentTimeUs; }
@@ -92,11 +96,15 @@ public:
     virtual bool getFrequency(uint16_t& frequencyMHz) const { frequencyMHz = 0; return true; }
 
     virtual void setPitMode(uint8_t pitMode) { _pitMode = pitMode; }
-    virtual bool getStatus(unsigned* status) const { (void)status; return false; }
+    virtual bool getStatus(uint32_t& status) const { status = 0; return false; }
 
-    void lookupBandChannel(uint8_t& band, uint8_t& channel, uint16_t frequencyMHz);
+    void lookupBandChannel(uint8_t& band, uint8_t& channel, uint16_t frequencyMHz) const;
     static uint16_t lookupFrequency(uint8_t band, uint8_t channel);
     bool lookupPowerValue(size_t index, uint16_t& powerValue) const;
+    static const char* lookupBandName(uint8_t band);
+    static char lookupBandLetter(uint8_t band);
+    static const char* lookupChannelName(uint8_t channel);
+    const char* lookupPowerName(uint8_t power) const;
 protected:
     type_e _type;
     config_t _config;
@@ -118,5 +126,16 @@ public:
         { 5705, 5685, 5665, 5645, 5885, 5905, 5925, 5945 }, // Boscam E
         { 5740, 5760, 5780, 5800, 5820, 5840, 5860, 5880 }, // FatShark
         { 5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917 }, // RaceBand
+    };
+   static constexpr std::array<const char*, BAND_COUNT> BandNames = {
+        "BOSCAM A",
+        "BOSCAM B",
+        "BOSCAM E",
+        "FATSHARK",
+        "RACEBAND",
+    };
+    static constexpr std::array<char, BAND_COUNT> BandLetters { 'A', 'B', 'E', 'F', 'R' };
+    static constexpr std::array<const char*, CHANNEL_COUNT> ChannelNames = {
+        "1", "2", "3", "4", "5", "6", "7", "8",
     };
 };

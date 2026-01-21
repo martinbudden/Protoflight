@@ -7,6 +7,7 @@
 #include "ProtoflightSerialPort.h"
 
 #include <AHRS.h>
+#include <Blackbox.h>
 #include <MSP_Protocol.h>
 #include <ReceiverBase.h>
 
@@ -164,8 +165,25 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
     }
     case MSP_SET_MOTOR_CONFIG:
         return RESULT_ERROR;
-    case MSP_SET_GPS_CONFIG:
-        return RESULT_ERROR;
+#if defined(USE_GPS)
+    case MSP_SET_GPS_CONFIG: {
+        if (_gps == nullptr) {
+            return RESULT_ERROR;
+        }
+        GPS::config_t gpsConfig = _gps->getConfig();
+        gpsConfig.provider = src.readU8();
+        gpsConfig.sbasMode = src.readU8();
+        gpsConfig.autoConfig = src.readU8();
+        gpsConfig.autoBaud = src.readU8();
+        if (src.bytesRemaining() >= 2) {
+            // Added in API version 1.43
+            gpsConfig.gps_set_home_point_once = src.readU8();
+            gpsConfig.gps_ublox_use_galileo = src.readU8();
+        }
+        _gps->setConfig(gpsConfig);
+        break;
+    }
+#endif // USE_GPS
     case MSP_SET_COMPASS_CONFIG:
         return RESULT_ERROR;
     case MSP_SET_GPS_RESCUE:
@@ -341,8 +359,15 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
             // Added in MSP API 1.40
             src.readU8(); // !!TODO: iterm_rotation
             src.readU8(); // was currentPidProfile->smart_feedforward
-            src.readU8(); // !!TODO: iterm_relax
-            src.readU8(); // !!TODO: iterm_relax_type
+#if defined(USE_ITERM_RELAX)
+            FlightController::iterm_relax_config_t itermRelaxConfig = _flightController.getITermRelaxConfig();
+            itermRelaxConfig.iterm_relax = src.readU8();
+            itermRelaxConfig.iterm_relax_type = src.readU8();
+            _flightController.setITermRelaxConfig(itermRelaxConfig);
+#else
+            src.readU8();
+            src.readU8();
+#endif
             src.readU8(); // !!TODO: abs_control_gain
             src.readU8(); // !!TODO: throttle_boost
             src.readU8(); // !!TODO: acro_trainer_angle_limit
@@ -481,10 +506,114 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         }
         _nonVolatileStorage.storeAll(_imuFilters, _flightController, _cockpit, _autopilot, _pidProfileIndex, _ratesProfileIndex);
         break;
+#ifdef USE_BLACKBOX
+    case MSP_SET_BLACKBOX_CONFIG:
+        // Don't allow config to be updated while Blackbox is logging
+        if (_blackbox != nullptr && _blackbox->mayEditConfig()) {
+            Blackbox::config_t blackboxConfig = _blackbox->getConfig();
+            blackboxConfig.device = static_cast<Blackbox::device_e>(src.readU8());
+            const int rateNumerator = src.readU8();
+            const int rateDenominator = src.readU8();
+            uint16_t pRatio = 0;
+            if (src.bytesRemaining() >= 2) {
+                // p_ratio specified, so use it directly
+                pRatio = src.readU16();
+            } else {
+                // p_ratio not specified in MSP, so calculate it from old rateNum and rateDenom
+                pRatio = static_cast<uint16_t>(_blackbox->calculateP_Denominator(rateNumerator, rateDenominator));
+            }
+
+            if (src.bytesRemaining() >= 1) {
+                // sample_rate specified, so use it directly
+                blackboxConfig.sample_rate = static_cast<Blackbox::sample_rate_e>(src.readU8());
+            } else {
+                // sample_rate not specified in MSP, so calculate it from old p_ratio
+                blackboxConfig.sample_rate = static_cast<Blackbox::sample_rate_e>(_blackbox->calculateSampleRate(pRatio));
+            }
+
+            // Added in MSP API 1.45
+            if (src.bytesRemaining() >= 4) {
+                blackboxConfig.fieldsDisabledMask = src.readU32();
+            }
+            _blackbox->init(blackboxConfig);
+        }
+        break;
+#endif
+
+#if defined(USE_VTX)
+    case MSP_SET_VTX_CONFIG: {
+        VTX::type_e vtxType = _vtx->getDeviceType();
+        VTX::config_t vtxConfig = _vtx->getConfig();
+        const uint16_t newFrequency = src.readU16();
+        if (newFrequency <= VTX::MSP_BAND_CHANNEL_CHECK_VALUE) {  // Value is band and channel
+            const auto newBand = static_cast<uint8_t>((newFrequency / 8) + 1);
+            const auto newChannel = static_cast<uint8_t>((newFrequency % 8) + 1);
+            vtxConfig.band = newBand;
+            vtxConfig.channel = newChannel;
+            vtxConfig.frequencyMHz = VTX::lookupFrequency(newBand, newChannel);
+        } else if (newFrequency <= VTX::MAX_FREQUENCY_MHZ) { // Value is frequency in MHz
+            vtxConfig.band = 0;
+            vtxConfig.frequencyMHz = newFrequency;
+        }
+        if (src.bytesRemaining() >= 2) {
+            vtxConfig.power = src.readU8();
+            const uint8_t newPitmode = src.readU8();
+            if (vtxType != VTX::UNKNOWN) {
+                // Delegate pitmode to vtx directly
+                uint32_t vtxCurrentStatus {};
+                _vtx->getStatus(vtxCurrentStatus);
+                if ((vtxCurrentStatus & VTX::STATUS_PIT_MODE) != newPitmode) {
+                    _vtx->setPitMode(newPitmode);
+                }
+            }
+        }
+        if (src.bytesRemaining()) {
+            vtxConfig.lowPowerDisarm = src.readU8();
+        }
+        // API version 1.42 - this parameter kept separate since clients may already be supplying
+        if (src.bytesRemaining() >= 2) {
+            vtxConfig.pitModeFrequencyMHz = src.readU16();
+        }
+        // API version 1.42 - extensions for non-encoded versions of the band, channel or frequency
+        if (src.bytesRemaining() >= 4) {
+            // Added standalone values for band, channel and frequency to move
+            // away from the flawed encoded combined method originally implemented.
+            uint8_t newBand = src.readU8();
+            const uint8_t newChannel = src.readU8();
+            uint16_t newFreq = src.readU16();
+            if (newBand) {
+                newFreq = VTX::lookupFrequency(newBand, newChannel);
+            }
+            vtxConfig.band = newBand;
+            vtxConfig.channel = newChannel;
+            vtxConfig.frequencyMHz = newFreq;
+        }
+        _vtx->setConfig(vtxConfig);
+        // API version 1.42 - extensions for vtxtable support
+        if (src.bytesRemaining() >= 4) {
+#if defined(USE_VTX_TABLE)
+#else
+            src.readU8();
+            src.readU8();
+            src.readU8();
+            src.readU8();
+#endif // USE_VTX_TABLE
+        }
+#if defined(USE_VTX_MSP)
+        setMspVtxDeviceStatusReady(srcDesc);
+#endif
+        break;
+    }
+#endif // USE_VTX
 
     default:
         // we do not know how to handle the (valid) message, indicate error MSP $M!
         return RESULT_ERROR;
     }
     return RESULT_ACK;
+}
+
+void MSP_Protoflight::setMSP_VTX_DeviceStatusReady(descriptor_t srcDesc)
+{
+    (void)srcDesc;
 }

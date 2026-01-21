@@ -47,7 +47,7 @@ void PositionController::navigate_waypoints(const xy_t& A, const xy_t& B, const 
     // extension from [2], fly directly to A
     const float distance_AP = AP.magnitude();
     const float alongTrackDistance = AP.dot(B);
-    if (distance_AP > _L1_distance && alongTrackDistance / std::max(distance_AP, 1.0F) < -0.7071F) {
+    if ((distance_AP > _L1_distance) && (alongTrackDistance / std::max(distance_AP, 1.0F) < -0.7071F)) {
         // calculate eta to fly to waypoint A
 
         // unit vector from waypoint A to current position

@@ -35,9 +35,9 @@ private:
     std::array<uint8_t, QUEUE_LENGTH * sizeof(gps_message_data_t)> _queueStorageArea {};
 #else
     GPS_MessageQueue() = default;
-    inline void SEND_GPS_DATA(const gps_message_data_t& gpsData) { _gpsData = gpsData; }
-    inline int32_t PEEK_GPS_DATA(gps_message_data_t& gpsData) const { gpsData = _gpsData; return 0; }
+    inline void SEND_GPS_DATA(const gps_message_data_t& gpsMessageData) { _gpsMessageData = gpsMessageData; }
+    inline int32_t PEEK_GPS_DATA(gps_message_data_t& gpsMessageData) const { gpsMessageData = _gpsMessageData; return 0; }
 private:
-    gps_message_data_t _gpsData {};
+    gps_message_data_t _gpsMessageData {};
 #endif // USE_FREERTOS
 };

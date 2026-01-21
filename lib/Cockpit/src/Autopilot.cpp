@@ -40,6 +40,13 @@ void Autopilot::setAutopilotConfig(const autopilot_config_t& autopilotConfig)
     _altitude.pid.setPID(positionPID);
 }
 
+#if defined(USE_GPS_RESCUE)
+void Autopilot::setGPS_RescueConfig(const gps_rescue_config_t& gpsRescueConfig)
+{
+    _gpsRescueConfig = gpsRescueConfig;
+}
+#endif
+
 void Autopilot::setPositionConfig(const position_config_t& positionConfig)
 {
     _positionConfig = positionConfig;

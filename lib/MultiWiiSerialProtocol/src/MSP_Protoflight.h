@@ -9,6 +9,7 @@ class Blackbox;
 class Cockpit;
 class Debug;
 class FlightController;
+class GPS;
 class IMU_Filters;
 class NonVolatileStorage;
 class OSD;
@@ -19,7 +20,7 @@ class VTX;
 class MSP_Protoflight : public MSP_Base {
 public:
     virtual ~MSP_Protoflight() = default;
-    MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd);
+    MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd, GPS* gps);
 public:
     enum { RATEPROFILE_MASK = (1 << 7) };
     enum { RTC_NOT_SUPPORTED = 0xFF };
@@ -35,6 +36,9 @@ public:
     result_e processSetCommand(int16_t cmdMSP, StreamBufReader& src) { return processSetCommand(cmdMSP, src, 0, nullptr); }
 private:
     void serializeVTX(StreamBuf& dst);
+    void serializeDataflashSummaryReply(StreamBuf& dst);
+    void serializeSDCardSummaryReply(StreamBuf& dst);
+    void setMSP_VTX_DeviceStatusReady(descriptor_t srcDesc);
 private:
     AHRS& _ahrs;
     FlightController& _flightController;
@@ -47,6 +51,7 @@ private:
     Blackbox* _blackbox;
     VTX* _vtx;
     OSD* _osd;
+    GPS* _gps;
     uint8_t _pidProfileIndex {0};
     uint8_t _ratesProfileIndex {0};
 };

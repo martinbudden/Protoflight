@@ -183,6 +183,7 @@ Targets
     #define MSP_UART_INDEX      0
     #define MSP_UART_PINS       UART_0_PINS
     #define USE_GPS
+    #define USE_GPS_RESCUE
     #define GPS_UART_INDEX      1
     #define GPS_UART_PINS       UART_1_PINS
     #define USE_CMS
@@ -198,6 +199,7 @@ Targets
     #define USE_DYNAMIC_NOTCH_FILTER
     #define USE_RPM_FILTERS
     #define USE_ALTITUDE_HOLD
+    #define USE_DTERM_FILTERS_EXTENDED
 
 #elif defined(TARGET_PICO)
 

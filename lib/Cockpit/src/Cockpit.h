@@ -163,6 +163,7 @@ public:
 
     const failsafe_config_t& getFailsafeConfig() const { return _failsafeConfig; }
     void setFailsafeConfig(const failsafe_config_t& failsafeConfig);
+    bool gpsRescueIsConfigured() const;
 
     const RX::config_t& getRX_Config() const { return _rxConfig; }
     void setRX_Config(const RX::config_t& rxConfig);

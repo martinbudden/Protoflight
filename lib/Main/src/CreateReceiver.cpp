@@ -93,23 +93,27 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
 
     static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, baudrate, dataBits, stopBits, parity);
 
+    // statically allocate the memory for the receiver
+    // Note: difference between size of smallest receiver and largest receiver is only 80 bytes, so using the max size is not that wasteful.
+    static constexpr size_t RECEIVER_SIZE = std::max({sizeof(ReceiverSBUS), sizeof(ReceiverIBUS), sizeof(ReceiverCRSF)});
+    static std::array<uint8_t, RECEIVER_SIZE> receiverMemory;
+
     // The receiver will exist for the duration of the program and so never needs to be deleted, so it is OK to leave its pointer dangling.
     ReceiverBase* receiverPtr = nullptr;
     switch (rxType) {
     case RX::SERIAL_SBUS:
-        receiverPtr = new ReceiverSBUS(serialPort);
+        receiverPtr = new(&receiverMemory[0]) ReceiverSBUS(serialPort);
         break;
     case RX::SERIAL_IBUS:
-        receiverPtr = new ReceiverIBUS(serialPort);
+        receiverPtr = new(&receiverMemory[0]) ReceiverIBUS(serialPort);
         break;
     case RX::SERIAL_CRSF:
-        receiverPtr = new ReceiverCRSF(serialPort);
+        receiverPtr = new(&receiverMemory[0]) ReceiverCRSF(serialPort);
         break;
     default:
         assert(false && "Receiver type not supported");
         break;
     }
-    assert((receiverPtr != nullptr) && "Receiver could not be created");
     return *receiverPtr;
 
 #endif

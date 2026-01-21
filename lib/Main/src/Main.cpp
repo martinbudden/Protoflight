@@ -80,12 +80,12 @@ void Main::setup()
 
     // create the optional components according to build flags
     DisplayPortBase& displayPort = createDisplayPort(debug);
-    OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs);
     VTX* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
-    [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, imuSensor, vtx);
     GPS* gps = createGPS(debug);
+    OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs, vtx, gps);
+    [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, imuSensor, vtx);
     Blackbox* blackbox = createBlackBox(flightController, cockpit, receiver, imuFilters, debug, gps);
-    [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, blackbox, vtx, osd);
+    [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, blackbox, vtx, osd, gps);
     [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
 #if defined(USE_BLACKBOX_TEST)
     testBlackbox(blackbox, ahrs, receiver, debug);

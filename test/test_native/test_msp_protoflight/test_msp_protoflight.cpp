@@ -47,7 +47,7 @@ static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DEN
 static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
 static Autopilot autopilot(ahrsMessageQueue);
 static Cockpit cockpit(receiver, fc, autopilot, imuFilters, debug, nvs, nullptr);
-static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr);
+static MSP_Protoflight msp(ahrs, fc, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr, nullptr);
 static MSP_Stream mspStream(msp);
 
 

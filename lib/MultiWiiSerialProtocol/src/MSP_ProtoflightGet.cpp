@@ -8,7 +8,10 @@
 #include "version.h"
 
 #include <AHRS_MessageQueue.h>
+#include <Blackbox.h>
 #include <Debug.h>
+#include <GPS.h>
+#include <GPS_MessageQueue.h>
 #include <IMU_Base.h>
 #include <MSP_Protocol.h>
 #include <RPM_Filters.h>
@@ -99,13 +102,11 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU16(static_cast<uint16_t>(gyro.y));
         dst.writeU16(static_cast<uint16_t>(gyro.z));
         // write zeros for magnetometer
-        int32_t magX = 0;
-        int32_t magY = 0;
-        int32_t magZ = 0;
-        //_ahrs.readMagRaw(magX, magY, magZ);
-        dst.writeU16(static_cast<uint16_t>(magX));
-        dst.writeU16(static_cast<uint16_t>(magY));
-        dst.writeU16(static_cast<uint16_t>(magZ));
+        IMU_Base::xyz_int32_t mag {};
+        //_ahrs.readMagRaw(mag.x, mag.y, mag.z);
+        dst.writeU16(static_cast<uint16_t>(mag.x));
+        dst.writeU16(static_cast<uint16_t>(mag.y));
+        dst.writeU16(static_cast<uint16_t>(mag.z));
         break;
     }
     case MSP_NAME:
@@ -127,7 +128,8 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     case MSP2_MOTOR_OUTPUT_REORDERING:
         return RESULT_CMD_UNKNOWN;
     case MSP2_GET_VTX_DEVICE_STATUS:
-        return RESULT_CMD_UNKNOWN;
+        serializeVTX(dst);
+        break;
     case MSP_RC: {
         const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
         dst.writeU16(controls.throttle);
@@ -234,6 +236,9 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     case MSP_MODE_RANGES:
         for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
             const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
+            if (box == nullptr) {
+                return RESULT_CMD_UNKNOWN;
+            }
             dst.writeU8(box->permanentId);
             dst.writeU8(mac.auxiliaryChannelIndex);
             dst.writeU8(mac.range.startStep);
@@ -271,18 +276,94 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         return RESULT_CMD_UNKNOWN;
     case MSP_COMPASS_CONFIG:
         return RESULT_CMD_UNKNOWN;
-    case MSP_GPS_CONFIG:
-        return RESULT_CMD_UNKNOWN;
-    case MSP_RAW_GPS:
-        return RESULT_CMD_UNKNOWN;
-    case MSP_COMP_GPS:
-        return RESULT_CMD_UNKNOWN;
+#if defined(USE_GPS)
+    case MSP_GPS_CONFIG: {
+        if (_gps == nullptr) {
+            return RESULT_CMD_UNKNOWN;
+        }
+        const GPS::config_t& gpsConfig = _gps->getConfig();
+        dst.writeU8(gpsConfig.provider);
+        dst.writeU8(gpsConfig.sbasMode);
+        dst.writeU8(gpsConfig.autoConfig);
+        dst.writeU8(gpsConfig.autoBaud);
+        // Added in API version 1.43
+        dst.writeU8(gpsConfig.gps_set_home_point_once);
+        dst.writeU8(gpsConfig.gps_ublox_use_galileo);
+        break;
+    }
+    case MSP_RAW_GPS: {
+        if (_gps == nullptr) {
+            return RESULT_CMD_UNKNOWN;
+        }
+        gps_message_data_t gpsMessageData {};
+        _gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
+
+        dst.writeU8(gpsMessageData.fix);
+        dst.writeU8(gpsMessageData.satelliteCount);
+        dst.writeU32(static_cast<uint32_t>(gpsMessageData.latitude_degrees1E7));
+        dst.writeU32(static_cast<uint32_t>(gpsMessageData.longitude_degrees1E7));
+        // altitude changed from 1m to 0.01m per lsb since MSP API 1.39 by RTH. To maintain backwards compatibility compensate to 1m per lsb in MSP again.
+        dst.writeU16( std::clamp(static_cast<uint16_t>(gpsMessageData.altitude_cm / 100), uint16_t{0}, uint16_t{UINT16_MAX}) ); 
+        dst.writeU16(static_cast<uint16_t>(gpsMessageData.groundSpeed_cmps));
+        dst.writeU16(static_cast<uint16_t>(gpsMessageData.heading_deciDegrees));
+        // Added in API version 1.44
+        dst.writeU16(gpsMessageData.dilutionOfPrecisionPositional);
+        break;
+    }
+    case MSP_COMP_GPS: {
+        if (_gps == nullptr) {
+            return RESULT_CMD_UNKNOWN;
+        }
+        gps_message_data_t gpsMessageData {};
+        _gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
+
+        dst.writeU16(static_cast<uint16_t>(gpsMessageData.distanceToHomeMeters));
+        dst.writeU16(static_cast<uint16_t>(gpsMessageData.distanceToHomeMeters / 10.0F)); // resolution increased in Betaflight 4.4 by factor of 10, this maintains backwards compatibility for DJI OSD
+        dst.writeU8(gpsMessageData.update & 0x01U);
+        break;
+    }
     case MSP_GPSSVINFO:
         return RESULT_CMD_UNKNOWN;
-    case MSP_GPS_RESCUE:
-        return RESULT_CMD_UNKNOWN;
-    case MSP_GPS_RESCUE_PIDS:
-        return RESULT_CMD_UNKNOWN;
+#if defined(USE_GPS_RESCUE)
+    case MSP_GPS_RESCUE: {
+        const Autopilot::gps_rescue_config_t& gpsRescueConfig = _autopilot.getGPS_RescueConfig();
+        dst.writeU16(gpsRescueConfig.maxRescueAngle_degrees);
+        dst.writeU16(gpsRescueConfig.returnAltitude_meters);
+        dst.writeU16(gpsRescueConfig.descentDistance_meters);
+        dst.writeU16(gpsRescueConfig.groundSpeed_cmps);
+        const Autopilot::autopilot_config_t& autopilotConfig = _autopilot.getAutopilotConfig();
+        dst.writeU16(autopilotConfig.throttle_min_pwm);
+        dst.writeU16(autopilotConfig.throttle_max_pwm);
+        dst.writeU16(autopilotConfig.throttle_hover_pwm);
+        dst.writeU8( gpsRescueConfig.sanityChecks);
+        dst.writeU8( gpsRescueConfig.minSats);
+
+        // Added in API version 1.43
+        dst.writeU16(gpsRescueConfig.ascendRate);
+        dst.writeU16(gpsRescueConfig.descendRate);
+        dst.writeU8(gpsRescueConfig.allowArmingWithoutFix);
+        dst.writeU8(gpsRescueConfig.altitudeMode);
+        // Added in API version 1.44
+        dst.writeU16(gpsRescueConfig.minStartDist_meters);
+        // Added in API version 1.46
+        dst.writeU16(gpsRescueConfig.initialClimb_meters);
+        break;
+    }
+    case MSP_GPS_RESCUE_PIDS: {
+        const Autopilot::autopilot_config_t& autopilotConfig = _autopilot.getAutopilotConfig();
+        dst.writeU16(autopilotConfig.altitudePID.kp);
+        dst.writeU16(autopilotConfig.altitudePID.ki);
+        dst.writeU16(autopilotConfig.altitudePID.kd);
+        // altitude_F not implemented yet
+        const Autopilot::gps_rescue_config_t& gpsRescueConfig = _autopilot.getGPS_RescueConfig();
+        dst.writeU16(gpsRescueConfig.velP);
+        dst.writeU16(gpsRescueConfig.velI);
+        dst.writeU16(gpsRescueConfig.velD);
+        dst.writeU16(gpsRescueConfig.yawP);
+        break;
+    }
+#endif // USE_GPS_RESCUE
+#endif // USE_GPS
     case MSP_ACC_TRIM:
         return RESULT_CMD_UNKNOWN;
     case MSP_MIXER_CONFIG: {
@@ -349,11 +430,37 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     case MSP2_COMMON_SERIAL_CONFIG:
         return RESULT_CMD_UNKNOWN;
     case MSP_DATAFLASH_SUMMARY:
-        return RESULT_CMD_UNKNOWN;
-    case MSP_BLACKBOX_CONFIG:
-        return RESULT_CMD_UNKNOWN;
+        serializeDataflashSummaryReply(dst);
+        break;
+    case MSP_BLACKBOX_CONFIG: {
+#if defined(USE_BLACKBOX)
+        if (_blackbox == nullptr) {
+            return RESULT_CMD_UNKNOWN;
+        }
+        const Blackbox::config_t& blackboxConfig = _blackbox->getConfig();
+        dst.writeU8(1); //Blackbox supported
+        dst.writeU8(blackboxConfig.device);
+        dst.writeU8(1); // Rate numerator, not used anymore
+        dst.writeU8(static_cast<uint8_t>(_blackbox->getPInterval()));
+        dst.writeU16(static_cast<uint16_t>(_blackbox->getIInterval() / _blackbox->getPInterval()));
+        dst.writeU8(blackboxConfig.sample_rate);
+        // Added in MSP API 1.45
+        dst.writeU32(blackboxConfig.fieldsDisabledMask);
+#else
+        dst.writeU8(0); // Blackbox not supported
+        dst.writeU8(0);
+        dst.writeU8(0);
+        dst.writeU8(0);
+        dst.writeU16(0);
+        dst.writeU8(0);
+        // Added in MSP API 1.45
+        dst.writeU32(0);
+#endif
+        break;
+    }
     case MSP_SDCARD_SUMMARY:
-        return RESULT_CMD_UNKNOWN;
+        serializeSDCardSummaryReply(dst);
+        break;
     case MSP_MOTOR_3D_CONFIG:
         return RESULT_CMD_UNKNOWN;
     case MSP_RC_DEADBAND:
@@ -376,7 +483,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     case MSP_ADVANCED_CONFIG: {
         const MotorMixerBase::motor_config_t& motorConfig = _flightController.getMotorMixer().getMotorConfig();
 
-        dst.writeU8(1);  // was gyro_sync_denom - removed in API 1.43
+        dst.writeU8(1); // was gyro_sync_denom - removed in API 1.43
         dst.writeU8(1); // pid_process_denom
         dst.writeU8(motorConfig.device.useContinuousUpdate);
         dst.writeU8(motorConfig.device.motorProtocol);
@@ -385,8 +492,8 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(0); // was gyro_use_32kHz
         dst.writeU8(motorConfig.device.motorInversion);
         dst.writeU8(0); // deprecated gyro_to_use
-        dst.writeU8(0); //gyro_high_fsr
-        dst.writeU8(0); //gyroMovementCalibrationThreshold
+        dst.writeU8(0); // gyro_high_fsr
+        dst.writeU8(0); // gyroMovementCalibrationThreshold
         dst.writeU16(0); // gyroCalibrationDuration
         dst.writeU16(0); // gyro_offset_yaw
         dst.writeU8(0); // checkOverflow
@@ -472,13 +579,51 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         enum barometer_e { BAROMETER_DEFAULT = 0, BAROMETER_NONE = 1, BAROMETER_VIRTUAL = 11 };
         enum magnetometer_e { MAGNETOMETER_DEFAULT = 0, MAGNETOMETER_NONE = 1 };
         enum rangefinder_e { RANGEFINDER_NONE = 0 };
+        enum optical_flow_e { OPTICAL_FLOW_NONE = 0 };
         dst.writeU8(BAROMETER_NONE);
         dst.writeU8(MAGNETOMETER_NONE);
         dst.writeU8(RANGEFINDER_NONE);
+        dst.writeU8(OPTICAL_FLOW_NONE);
         break;
     }
-    case MSP_VTX_CONFIG:
-        return RESULT_CMD_UNKNOWN;
+#if defined(USE_VTX)
+    case MSP_VTX_CONFIG: {
+        if (_vtx == nullptr) {
+            return RESULT_CMD_UNKNOWN;
+        }
+        const VTX::type_e vtxType = _vtx->getDeviceType();
+        uint32_t vtxStatus = 0;
+        _vtx->getStatus(vtxStatus);
+        const uint8_t deviceIsReady = _vtx->isReady() ? 1 : 0;
+        const VTX::config_t vtxConfig = _vtx->getConfig();
+        dst.writeU8(vtxType);
+        dst.writeU8(vtxConfig.band);
+        dst.writeU8(vtxConfig.channel);
+        dst.writeU8(vtxConfig.power);
+        dst.writeU8((vtxStatus & VTX::STATUS_PIT_MODE) ? 1 : 0);
+        dst.writeU16(vtxConfig.frequencyMHz);
+        dst.writeU8(deviceIsReady);
+        dst.writeU8(vtxConfig.lowPowerDisarm);
+
+        // API version 1.42
+        dst.writeU16(vtxConfig.pitModeFrequencyMHz);
+#ifdef USE_VTX_TABLE
+        dst.writeU8(1); // vtxtable is available
+        dst.writeU8(vtxTableConfig.bands);
+        dst.writeU8(vtxTableConfig.channels);
+        dst.writeU8(vtxTableConfig.powerLevels);
+#else
+        dst.writeU8(0);
+        dst.writeU8(0);
+        dst.writeU8(0);
+        dst.writeU8(0);
+#endif
+#if defined(USE_VTX_MSP)
+        setMSP_VTX_DeviceStatusReady(srcDesc);
+#endif
+        break;
+    }
+#endif // USE_VTX
     case MSP_TX_INFO:
         return RESULT_CMD_UNKNOWN;
     case MSP_RTC:
@@ -490,9 +635,10 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         dst.writeU8(static_cast<uint8_t>(imu.getAccIdMSP()));
         //dst.writeU8(GYRO_BMI270);
         //dst.writeU8(ACC_BMI270);
-        dst.writeU8(SENSOR_NOT_AVAILABLE); // baro
-        dst.writeU8(SENSOR_NOT_AVAILABLE); // mag
-        dst.writeU8(SENSOR_NOT_AVAILABLE); // Rangefinder
+        dst.writeU8(SENSOR_NOT_AVAILABLE); // barometer
+        dst.writeU8(SENSOR_NOT_AVAILABLE); // magnetometer
+        dst.writeU8(SENSOR_NOT_AVAILABLE); // rangefinder
+        dst.writeU8(SENSOR_NOT_AVAILABLE); // optical flow
         break;
     }
     case MSP_FC_VARIANT:
@@ -594,8 +740,8 @@ void MSP_Protoflight::serializeVTX(StreamBuf& dst)
     uint16_t frequency = 0;
     const bool frequencyAvailable = _vtx->getFrequency(frequency);
 
-    //uint8_t vtxStatus = 0; // pit mode and/or locked
-    //!!const bool vtxStatusAvailable = _vtx->getStatus();
+    uint32_t vtxStatus = 0; // pit mode and/or locked
+    const bool vtxStatusAvailable = _vtx->getStatus(vtxStatus);
 
     dst.writeU8(MSP_PROTOCOL_VERSION);
 
@@ -603,8 +749,8 @@ void MSP_Protoflight::serializeVTX(StreamBuf& dst)
     dst.writeU8(deviceReady);
 
     dst.writeU8(bandAndChannelAvailable);
-    dst.writeU8(band);
-    dst.writeU8(channel);
+    dst.writeU8(band + 1);
+    dst.writeU8(channel + 1);
 
     dst.writeU8(powerIndexAvailable);
     dst.writeU8(powerIndex);
@@ -612,25 +758,21 @@ void MSP_Protoflight::serializeVTX(StreamBuf& dst)
     dst.writeU8(frequencyAvailable);
     dst.writeU16(frequency);
 
-    //dst.writeU8(vtxStatusAvailable);
-    //dst.writeU32(vtxStatus);
+    dst.writeU8(vtxStatusAvailable);
+    dst.writeU32(vtxStatus);
 
     // serialize power levels
-    //vtxCommonSerializePowerLevels(vtxDevice, dst);
-
     const uint8_t powerLevelCount = _vtx->getPowerLevelCount();
     dst.writeU8(powerLevelCount);
 
-#if false
-    uint16_t levels[VTX_TABLE_MAX_POWER_LEVELS];
-    uint16_t powers[VTX_TABLE_MAX_POWER_LEVELS];
-    vtxCommonGetVTXPowerLevels(vtxDevice, levels, powers);
+    std::array<uint16_t, VTX::POWER_LEVEL_COUNT> levels;
+    std::array<uint16_t, VTX::POWER_LEVEL_COUNT> powers;
+    _vtx->getPowerLevels(&levels[0], &powers[0]);
 
-    for (int i = 0; i < powerLevelCount; i++) {
-        dst.writeU16(levels[i]);
-        dst.writeU16(powers[i]);
+    for (size_t ii = 0; ii < powerLevelCount; ++ii) {
+        dst.writeU16(levels[ii]);
+        dst.writeU16(powers[ii]);
     }
-#endif
 
     // serialize custom device status
     if (vtxType == VTX::SMART_AUDIO) {
@@ -650,4 +792,14 @@ void MSP_Protoflight::serializeVTX(StreamBuf& dst)
 #else
     (void)dst;
 #endif
+}
+
+void MSP_Protoflight::serializeDataflashSummaryReply(StreamBuf& dst)
+{
+    (void)dst;
+}
+
+void MSP_Protoflight::serializeSDCardSummaryReply(StreamBuf& dst)
+{
+    (void)dst;
 }

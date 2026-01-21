@@ -197,7 +197,7 @@ uint32_t CMSX::drawMenuTableEntry(DisplayPortBase& displayPort, const OSD_Entry*
             if (ticker.loopCounter >= loopLimit) {
                 ticker.loopCounter = 0;
                 drawText = true;
-                ticker.state++;
+                ++ticker.state;
                 if (ticker.state > (displayLength - availableSpace)) {
                     ticker.state = 0;
                 }

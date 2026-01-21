@@ -1,13 +1,19 @@
+#include "Autopilot.h"
 #include "Cockpit.h"
 #include "DisplayPortBase.h"
 #include "FlightController.h"
 #include "OSD.h"
-#include "OSD_Elements.h"
 #include "OSD_Symbols.h"
+#include "VTX.h"
 
 #include <AHRS_MessageQueue.h>
 #include <Debug.h>
+#include <GPS.h>
+#include <GPS_MessageQueue.h>
 #include <ReceiverBase.h>
+
+#include <cstdio>
+
 
 //
 // Drawing functions
@@ -357,6 +363,49 @@ void OSD_Elements::draw_THROTTLE_POS(DisplayPortBase& displayPort)
 void OSD_Elements::draw_VTX_CHANNEL(DisplayPortBase& displayPort)
 {
     (void)displayPort;
+
+    if (_vtx == nullptr) {
+        return;
+    }
+    const VTX::config_t vtxConfig = _vtx->getConfig();
+    uint8_t band = vtxConfig.band;
+    uint8_t channel = vtxConfig.channel;
+    if (band == 0) {
+        // Direct frequency set is used
+        _vtx->lookupBandChannel(band, channel, vtxConfig.frequencyMHz);
+    }
+    const char vtxBandLetter = VTX::lookupBandLetter(band);
+    const char* vtxChannelName = VTX::lookupChannelName(channel);
+    uint32_t vtxStatus = 0;
+    _vtx->getStatus(vtxStatus);
+
+    uint8_t vtxPower = vtxConfig.power;
+    if (vtxConfig.lowPowerDisarm) {
+        _vtx->getPowerIndex(vtxPower);
+    }
+    const char* vtxPowerLabel = _vtx->lookupPowerName(vtxPower);
+    char vtxStatusIndicator = '\0';
+    if (_cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_VTX_CONTROL_DISABLE)) {
+        vtxStatusIndicator = 'D';
+    } else if (vtxStatus & VTX::STATUS_PIT_MODE) {
+        vtxStatusIndicator = 'P';
+    }
+
+    switch (_activeElement.type) {
+    case OSD_ELEMENT_TYPE_2:
+        sprintf(&_activeElement.buf[0], "%s", vtxPowerLabel);
+        break;
+
+    default:
+        if (vtxStatus & VTX::STATUS_LOCKED) {
+            sprintf(&_activeElement.buf[0], "-:-:-:L");
+        } else if (vtxStatusIndicator) {
+            sprintf(&_activeElement.buf[0], "%c:%s:%s:%c", vtxBandLetter, vtxChannelName, vtxPowerLabel, vtxStatusIndicator);
+        } else {
+            sprintf(&_activeElement.buf[0], "%c:%s:%s", vtxBandLetter, vtxChannelName, vtxPowerLabel);
+        }
+        break;
+    }
 }
 
 void OSD_Elements::draw_CURRENT_DRAW(DisplayPortBase& displayPort)
@@ -382,9 +431,11 @@ void OSD_Elements::draw_GPS_SPEED(DisplayPortBase& displayPort)
         speedSymbol = SYM_MPH;
         speedConversionFactor = CMPS_TO_MPH;
     }
-    if (_gpsData.fix & gps_message_data_t::FIX) {
+    gps_message_data_t gpsMessageData {};
+    _gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
+    if (gpsMessageData.fix & gps_message_data_t::FIX) {
         //speed = gpsConfig()->gps_use_3d_speed ? gpsSol.speed3d : gpsSol.groundSpeed)
-        const int speed = static_cast<int>(static_cast<float>(_gpsData.groundSpeed_cmps) * speedConversionFactor);
+        const int speed = static_cast<int>(static_cast<float>(gpsMessageData.groundSpeed_cmps) * speedConversionFactor);
         sprintf(&_activeElement.buf[0], "%c%3d%c", SYM_SPEED, speed, speedSymbol);
     } else {
         sprintf(&_activeElement.buf[0], "%c%c%c", SYM_SPEED, SYM_HYPHEN, speedSymbol);
@@ -396,24 +447,30 @@ void OSD_Elements::draw_GPS_SATS(DisplayPortBase& displayPort)
 {
     (void)displayPort;
 #if defined(USE_GPS)
+    if (_gps == nullptr) {
+        return;
+    }
+    gps_message_data_t gpsMessageData {};
+    _gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
+    [[maybe_unused]] const Autopilot::gps_rescue_config_t& gpsRescueConfig = _cockpit.getAutopilot().getGPS_RescueConfig();
     enum { GPS_SATELLITE_COUNT_CRITICAL =  4 };
-    if ((_gpsData.fix == 0) || (_gpsData.satelliteCount < GPS_SATELLITE_COUNT_CRITICAL) ) {
+    if ((gpsMessageData.fix == 0) || (gpsMessageData.satelliteCount < GPS_SATELLITE_COUNT_CRITICAL) ) {
         _activeElement.attr = DisplayPortBase::SEVERITY_CRITICAL;
     }
 #if defined(USE_GPS_RESCUE)
-    else if ((gpsSol.numSat < gpsRescueConfig()->minSats) && gpsRescueIsConfigured()) {
-        element->attr = DISPLAYPORT_SEVERITY_WARNING;
+    else if ((gpsMessageData.satelliteCount < gpsRescueConfig.minSats) && _cockpit.gpsRescueIsConfigured()) {
+        _activeElement.attr = DisplayPortBase::SEVERITY_WARNING;
     }
 #endif
     else {
         _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
     }
 
-    if (_gpsData.isHealthy) {
-        const size_t pos = static_cast<size_t>(printf(&_activeElement.buf[0], "%c%c%2u", SYM_SAT_L, SYM_SAT_R, _gpsData.satelliteCount));
+    if (gpsMessageData.isHealthy) {
+        const size_t pos = static_cast<size_t>(printf(&_activeElement.buf[0], "%c%c%2u", SYM_SAT_L, SYM_SAT_R, gpsMessageData.satelliteCount));
         if (_osd.getConfig().gps_sats_show_pdop) { // add on the GPS module PDOP estimate
             _activeElement.buf[pos] = ' ';
-            printFloat(&_activeElement.buf[pos + 1], SYM_NONE, _gpsData.dilutionOfPrecisionPositional / 100.0F, 1, true, SYM_NONE);
+            printFloat(&_activeElement.buf[pos + 1], SYM_NONE, gpsMessageData.dilutionOfPrecisionPositional / 100.0F, 1, true, SYM_NONE);
         }
     } else {
         sprintf(&_activeElement.buf[0], "%c%cNC", SYM_SAT_L, SYM_SAT_R);
@@ -607,8 +664,13 @@ void OSD_Elements::draw_FLIGHT_DISTANCE(DisplayPortBase& displayPort) // NOLINT(
 {
     (void)displayPort;
 #if defined(USE_GPS)
-    if ((_gpsData.fix & gps_message_data_t::FIX) && (_gpsData.fix & gps_message_data_t::FIX_HOME)) {
-        formatDistanceString(&_activeElement.buf[0], _gpsData.distanceFlownMeters, SYM_TOTAL_DISTANCE);
+    if (_gps == nullptr) {
+        return;
+    }
+    gps_message_data_t gpsMessageData {};
+    _gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
+    if ((gpsMessageData.fix & gps_message_data_t::FIX) && (gpsMessageData.fix & gps_message_data_t::FIX_HOME)) {
+        formatDistanceString(&_activeElement.buf[0], gpsMessageData.distanceFlownMeters, SYM_TOTAL_DISTANCE);
     } else {
         // We use this symbol when we don't have a FIX
         sprintf(&_activeElement.buf[0], "%c%c", SYM_TOTAL_DISTANCE, SYM_HYPHEN);

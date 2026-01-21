@@ -20,6 +20,7 @@ public:
     GPS(SerialPort& serialPort, GPS_MessageQueue& gpsMessageQueue, Debug& debug) : _serialPort(serialPort), _gpsMessageQueue(gpsMessageQueue), _debug(debug) {}
     void init();
     GPS_MessageQueue& getGPS_MessageQueue() { return _gpsMessageQueue; }
+    const GPS_MessageQueue& getGPS_MessageQueue() const { return _gpsMessageQueue; }
 private:
     // GPS is not copyable or moveable
     GPS(const GPS&) = delete;
@@ -85,6 +86,9 @@ public:
         bool sbas_integrity;
         uint8_t gps_ublox_utc_standard;
     };
+public:
+    void setConfig(const config_t& config) { _config = config; }
+    const config_t& getConfig() const { return _config; }
 private:
     SerialPort& _serialPort;
     GPS_MessageQueue& _gpsMessageQueue;

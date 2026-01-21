@@ -38,6 +38,29 @@ public:
         uint8_t position_lpf_hz100; // cutoff frequency*100 for longitude and latitude position filters
         uint8_t maxAngle;
     };
+    struct gps_rescue_config_t {
+        uint16_t maxRescueAngle_degrees;
+        uint16_t returnAltitude_meters;
+        uint16_t descentDistance_meters;
+        uint16_t groundSpeed_cmps; // centimeters per second
+        uint8_t  yawP;
+        uint8_t  minSats;
+        uint8_t  velP;
+        uint8_t  velI;
+        uint8_t  velD;
+        uint16_t minStartDist_meters;
+        uint8_t  sanityChecks;
+        uint8_t  allowArmingWithoutFix;
+        uint8_t  useMag;
+        uint8_t  altitudeMode;
+        uint16_t ascendRate;
+        uint16_t descendRate;
+        uint16_t initialClimb_meters;
+        uint8_t  rollMix;
+        uint8_t  disarmThreshold;
+        uint8_t  pitchCutoffHz;
+        uint8_t  imuYawGain;
+    };
     enum altitude_source_e { DEFAULT_SOURCE = 0, BAROMETER_ONLY, GPS_ONLY };
     struct position_config_t {
         uint16_t altitude_lpf_hz100;   // lowpass cutoff Hz*100 for altitude smoothing
@@ -63,11 +86,14 @@ public:
 public:
     void setAutopilotConfig(const autopilot_config_t& autopilotConfig);
     const autopilot_config_t& getAutopilotConfig() const { return _autopilotConfig; }
+#if defined(USE_GPS)
+    void setGPS_RescueConfig(const gps_rescue_config_t& gpsRescueConfig);
+    const gps_rescue_config_t& getGPS_RescueConfig() const { return _gpsRescueConfig; }
+#endif
     void setPositionConfig(const position_config_t& positionConfig);
     const position_config_t& getPositionConfig() const { return _positionConfig; }
     void setAltitudeHoldConfig(const altitude_hold_config_t& altitudeHoldConfig);
     const altitude_hold_config_t& getAltitudeHoldConfig() const { return _altitudeHoldConfig; }
-
     bool isAltitudeHoldSetpointSet() const; //!< returns true if setpoint has been set
     bool setAltitudeHoldSetpoint(); //!< use the current altitude to set the setpoint for altitude hold
     float calculateThrottleForAltitudeHold(const CockpitBase::controls_t& controls);
@@ -87,6 +113,7 @@ private:
     xyz_t _currentPositionMeters {};
     xyz_t _targetPositionMeters {};
 #if defined(USE_GPS)
+    gps_rescue_config_t _gpsRescueConfig {};
     // waypoints are specified as latitude/longitude/altitude coordinates
     std::array<geographic_coordinate_t, MAX_WAYPOINT_COUNT> _waypoints;
 #endif

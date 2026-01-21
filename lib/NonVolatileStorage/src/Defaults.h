@@ -121,6 +121,7 @@ static constexpr FlightController::d_max_config_t flightControllerDMaxConfig = {
 
 #if defined(USE_ITERM_RELAX)
 static constexpr FlightController::iterm_relax_config_t flightControllerITermRelaxConfig = {
+    .iterm_relax_type = 0,
     .iterm_relax = FlightController::ITERM_RELAX_ON,
     .iterm_relax_setpoint_threshold = 40, // degrees per second
     .iterm_relax_cutoff = 15,

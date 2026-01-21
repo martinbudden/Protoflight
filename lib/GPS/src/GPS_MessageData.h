@@ -26,4 +26,5 @@ struct gps_message_data_t {
     uint8_t satelliteCount;
     uint8_t fix;
     uint8_t isHealthy;
+    uint8_t update;
 };

@@ -2,7 +2,6 @@
 
 #include "Targets.h"
 
-#include <GPS_MessageData.h>
 #include <TimeMicroseconds.h>
 #include <array>
 #include <bitset>
@@ -12,7 +11,9 @@ class Cockpit;
 class Debug;
 class DisplayPortBase;
 class FlightController;
+class GPS;
 class OSD;
+class VTX;
 
 
 enum  osd_elements_e {
@@ -153,7 +154,7 @@ How to add a new OSD element:
 */
 class OSD_Elements {
 public:
-    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug);
+    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug, const VTX* vtx, const GPS* gps);
     void init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t columnCount);
     void initDrawFunctions();
 public:
@@ -320,6 +321,7 @@ private:
     const FlightController& _flightController;
     const Cockpit& _cockpit;
     const Debug& _debug;
+    const VTX* _vtx;
     float _rollAngleDegrees {};
     float _pitchAngleDegrees {};
     float _yawAngleDegrees {};
@@ -344,9 +346,7 @@ private:
     config_t _config {};
     std::array<uint8_t, OSD_ELEMENT_COUNT> _activeElements;
     std::bitset<OSD_ELEMENT_COUNT> _blinkBits {};
-#if defined (USE_GPS)
-    gps_message_data_t _gpsData {};
-#endif
+    const GPS* _gps {};
 private:
     // drawing functions
     static std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> DrawFunctions;
