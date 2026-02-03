@@ -151,16 +151,16 @@ private:
     static IMU_Filters& createIMU_Filters(float taskIntervalSeconds, MotorMixerBase& motorMixer, Debug& debug, const NonVolatileStorage& nvs);
     static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
     static ReceiverBase& createReceiver(NonVolatileStorage& nvs);
-    static Cockpit& createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs);
+    static Cockpit& createCockpit(FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs);
     static DisplayPortBase& createDisplayPort(Debug& debug);
     // optional components create function return nullptr if component not specified as part of the build
     static Dashboard* createDashboard(const DisplayPortBase& displayPort, const AHRS& ahrs, FlightController& flightController, ReceiverBase& receiver);
     static Blackbox* createBlackBox(FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug, GPS* gps);
     static VTX* createVTX(NonVolatileStorage& nvs);
     static GPS* createGPS(Debug& debug);
-    static OSD* createOSD(DisplayPortBase& displayPort, const FlightController& flightController, Cockpit& cockpit, Debug& debug, NonVolatileStorage& nvs, const VTX* vtx, const GPS* gps);
+    static OSD* createOSD(DisplayPortBase& displayPort, const FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, Debug& debug, NonVolatileStorage& nvs, const VTX* vtx, const GPS* gps);
     static MSP_Serial* createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd, GPS* gps);
-    static CMS* createCMS(DisplayPortBase& displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx);
+    static CMS* createCMS(DisplayPortBase& displayPort, Cockpit& cockpit, const ReceiverBase& receiver, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx);
     static BarometerBase* createBarometer();
     static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, NonVolatileStorage& nvs, const TaskBase* dashboardTask);
 

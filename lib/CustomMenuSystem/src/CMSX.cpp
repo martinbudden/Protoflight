@@ -38,24 +38,24 @@ CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx) :
 {
 }
 
-Cockpit& CMSX::getCockpit()
-{
-    return _cms.getCockpit();
-}
-
 const Cockpit& CMSX::getCockpit() const
 {
     return _cms.getCockpit();
 }
 
+Cockpit& CMSX::getCockpitMutable()
+{
+    return _cms.getCockpitMutable();
+}
+
 void CMSX::setRebootRequired()
 {
-    getCockpit().setRebootRequired();
+    _cms.getCockpitMutable().setRebootRequired();
 }
 
 bool CMSX::getRebootRequired() const
 {
-    return getCockpit().getRebootRequired();
+    return _cms.getCockpit().getRebootRequired();
 }
 
 CMSX::menu_t* CMSX::getSaveExitMenu()
@@ -66,7 +66,7 @@ CMSX::menu_t* CMSX::getSaveExitMenu()
     return &CMSX::menuSaveExit;
 }
 
-bool CMSX::setupPopupMenuBuild()
+bool CMSX::setupPopupMenuBuild() // NOLINT(readability-make-member-function-const)
 {
     uint8_t menuIndex = 0;
 
@@ -362,7 +362,7 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
 
     if (displayWasCleared) {
         //Serial.printf("drawMenu setting entryFlags\r\n"); // called
-#if (__cplusplus >= 202002L)
+#if (__cplusplus >= 202002L) && false
         // Iterate over indices [0, _pageMaxRow)
         for (auto ii : std::views::iota(size_t{0}, std::span(_pageTop, _pageMaxRow).size())) {
             _entryFlags[ii] |= OME_PRINT_LABEL | OME_PRINT_VALUE;
@@ -390,7 +390,7 @@ void CMSX::drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs) // NOL
 #endif
     } else if (drawDynamicValues) {
         //Serial.printf("drawMenu drawDynamicValues\r\n");
-#if (__cplusplus >= 202002L)
+#if (__cplusplus >= 202002L) && false
         auto entries = std::span(_pageTop, _pageMaxRow);
         // Iterate over indices [0, _pageMaxRow)
         for (auto ii : std::views::iota(size_t{0}, entries.size())) {

@@ -6,6 +6,7 @@
 
 static Cockpit::failsafe_config_t failsafeConfig {};
 
+// cppcheck-suppress constParameterCallback
 static const void* menuFailsafeOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
     failsafeConfig = cmsx.getCMS().getCockpit().getFailsafeConfig();
@@ -14,7 +15,7 @@ static const void* menuFailsafeOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortB
 
 static const void* menuFailsafeOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    cmsx.getCMS().getCockpit().setFailsafeConfig(failsafeConfig);
+    cmsx.getCMS_Mutable().getCockpitMutable().setFailsafeConfig(failsafeConfig);
     return nullptr;
 }
 

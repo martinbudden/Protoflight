@@ -39,7 +39,7 @@ public:
     void setModeActivationConditions(const mode_activation_conditions_t& modeActivationConditions);
     const mode_activation_conditions_t& getModeActivationConditions() const { return _modeActivationConditions; }
 
-    void updateActivatedModes(const ReceiverBase& _receiver);
+    void updateActivatedModes(const ReceiverBase& receiver);
     bool isModeActive(MSP_Box::id_e rcMode) const;
     const mode_activation_condition_t& getModeActivationCondition(size_t index) const;
     void setModeActivationCondition(size_t index, const mode_activation_condition_t& modeActivationCondition);

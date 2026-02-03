@@ -280,10 +280,10 @@ public:
 
     flight_controller_quadcopter_telemetry_t getTelemetryData() const;
     const MotorMixerBase& getMotorMixer() const { return _motorMixer; }
-    MotorMixerBase& getMotorMixer() { return _motorMixer; }
+    MotorMixerBase& getMotorMixerMutable() { return _motorMixer; }
 
     const Debug& getDebug() const { return _debug; }
-    Debug& getDebug() { return _debug; }
+    Debug& getDebugMutable() { return _debug; }
     inline uint32_t getTimeChecksMicroseconds(size_t index) const { return _sh.timeChecksMicroseconds[index]; } //!< Instrumentation time checks
 
     void setMaxAngleRates(float maxRollRateDPS, float maxPitchRateDPS, float maxYawRateDPS);

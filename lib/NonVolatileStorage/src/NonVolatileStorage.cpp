@@ -918,9 +918,9 @@ void Cockpit::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex)
 #if defined(USE_CMS)
 void CMSX::saveConfigAndNotify()
 {
-    Cockpit& cockpit = _cms.getCockpit();
+    Cockpit& cockpit = _cms.getCockpitMutable();
     NonVolatileStorage& nvs = cockpit.getNonVolatileStorage();
 
-    nvs.storeAll(_imuFilters, cockpit.getFlightController(), cockpit, cockpit.getAutopilot(), cockpit.getCurrentPidProfileIndex(), cockpit.getCurrentRateProfileIndex());
+    nvs.storeAll(_imuFilters, cockpit.getFlightController(), cockpit, cockpit.getCurrentPidProfileIndex(), cockpit.getCurrentRateProfileIndex());
 }
 #endif

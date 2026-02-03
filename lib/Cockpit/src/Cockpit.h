@@ -54,7 +54,7 @@ enum { ARMING_DISABLE_FLAGS_COUNT = 27 };
 
 class Cockpit : public CockpitBase {
 public:
-    Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs);
+    Cockpit(FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs);
 public:
     enum failsafe_phase_e {
         FAILSAFE_DISARMED = 0,

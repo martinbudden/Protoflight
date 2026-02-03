@@ -70,20 +70,20 @@ void Main::setup()
 
     FlightController& flightController = createFlightController(AHRS_taskIntervalSeconds, debug, nvs);
 
-    IMU_Filters& imuFilters = createIMU_Filters(AHRS_taskIntervalSeconds, flightController.getMotorMixer(), debug, nvs);
+    IMU_Filters& imuFilters = createIMU_Filters(AHRS_taskIntervalSeconds, flightController.getMotorMixerMutable(), debug, nvs);
 
     AHRS& ahrs = createAHRS(flightController, imuSensor, imuFilters);
 
     ReceiverBase& receiver = createReceiver(nvs);
 
-    Cockpit& cockpit = createCockpit(receiver, flightController, debug, imuFilters, nvs);
+    Cockpit& cockpit = createCockpit(flightController, debug, imuFilters, nvs);
 
     // create the optional components according to build flags
     DisplayPortBase& displayPort = createDisplayPort(debug);
     VTX* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
     GPS* gps = createGPS(debug);
-    OSD* osd = createOSD(displayPort, flightController, cockpit, debug, nvs, vtx, gps);
-    [[maybe_unused]] CMS* cms = createCMS(displayPort, receiver, cockpit, imuFilters, imuSensor, vtx);
+    OSD* osd = createOSD(displayPort, flightController, cockpit, receiver, debug, nvs, vtx, gps);
+    [[maybe_unused]] CMS* cms = createCMS(displayPort, cockpit, receiver, imuFilters, imuSensor, vtx);
     Blackbox* blackbox = createBlackBox(flightController, cockpit, receiver, imuFilters, debug, gps);
     [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, blackbox, vtx, osd, gps);
     [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
@@ -157,11 +157,11 @@ void Main::setup()
     static AltitudeKalmanFilter altitudeKalmanFilter;
     BarometerBase* barometer = createBarometer();
     if (barometer) {
-        assert(cockpit.getAutopilot().getAltitudeMessageQueue() != nullptr && "AltitudeMessageQueue not created");
+        assert(cockpit.getAutopilotMutable().getAltitudeMessageQueue() != nullptr && "AltitudeMessageQueue not created");
         const AltitudeTask::parameters_t parameters {
             .altitudeKalmanFilter = altitudeKalmanFilter,
             .ahrsMessageQueue = flightController.getAHRS_MessageQueue(),
-            .altitudeMessageQueue = *cockpit.getAutopilot().getAltitudeMessageQueue(),
+            .altitudeMessageQueue = *cockpit.getAutopilotMutable().getAltitudeMessageQueue(),
             .barometer = *barometer
         };
         _tasks.altitudeTask = AltitudeTask::createTask(taskInfo, parameters, ALTITUDE_TASK_PRIORITY, ALTITUDE_TASK_CORE, ALTITUDE_TASK_INTERVAL_MICROSECONDS);

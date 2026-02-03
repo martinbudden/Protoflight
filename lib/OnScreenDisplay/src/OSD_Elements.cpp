@@ -9,10 +9,11 @@
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
 
 
-OSD_Elements::OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug, const VTX* vtx, const GPS* gps) :
+OSD_Elements::OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const Debug& debug, const VTX* vtx, const GPS* gps) :
     _osd(osd),
     _flightController(flightController),
     _cockpit(cockpit),
+    _receiver(receiver),
     _debug(debug),
     _vtx(vtx),
     _gps(gps)

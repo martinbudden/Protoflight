@@ -10,7 +10,7 @@
 #include <ReceiverBase.h>
 
 
-Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
+Cockpit& Main::createCockpit(FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_ALTITUDE_HOLD)
     static AltitudeMessageQueue altitudeMessageQueue;
@@ -23,10 +23,10 @@ Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightCon
 #endif
 
 #if defined(USE_RC_ADJUSTMENTS)
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, &DEFAULTS::RC_AdjustmentConfigs);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, &DEFAULTS::RC_AdjustmentConfigs);
     cockpit.getRC_Adjustments().setAdjustmentRanges(nvs.loadRC_AdjustmentRanges());
 #else
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
 #endif
     cockpit.setCurrentPidProfileIndex(nvs.getCurrentPidProfileIndex());
     cockpit.setCurrentRateProfileIndex(nvs.getCurrentRateProfileIndex());

@@ -10,6 +10,7 @@ class Cockpit;
 class DisplayPortBase;
 class IMU_Base;
 class IMU_Filters;
+class ReceiverBase;
 class VTX;
 
 
@@ -91,8 +92,9 @@ public:
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entry* entry, uint16_t& entryFlags);
     void saveConfigAndNotify();
 
-    CMS& getCMS() { return _cms; }
-    Cockpit& getCockpit();
+    const CMS& getCMS() const { return _cms; }
+    CMS& getCMS_Mutable() { return _cms; }
+    Cockpit& getCockpitMutable();
     const Cockpit& getCockpit() const;
     IMU_Filters& getIMU_Filters() { return _imuFilters; };
     const IMU_Base& getIMU() const { return _imu; }

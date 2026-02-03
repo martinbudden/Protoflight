@@ -56,8 +56,8 @@ void tearDown() {
 
 void test_cockpit()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
-    cockpit.setRates(cockpitRates);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    cockpit.setRates(cockpitRates, flightController);
 
     rates_t rates = cockpit.getRates();
 
@@ -66,7 +66,7 @@ void test_cockpit()
     rates.rcExpos = {0, 0, 0};
     rates.rates = {0, 0, 0};
     //rates.ratesType = rates_t::RATES_TYPE_ACTUAL;
-    cockpit.setRates(rates);
+    cockpit.setRates(rates, flightController);
 
     float roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
@@ -82,7 +82,7 @@ void test_cockpit()
     // rates.rates apply a nonlinear scale factor
     rates.rcRates = {0, 0, 0};
     rates.rates = {60, 60, 60};
-    cockpit.setRates(rates);
+    cockpit.setRates(rates, flightController);
 
     roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
@@ -98,7 +98,7 @@ void test_cockpit()
 
 void test_cockpit_passthrough()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
 
     float roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
@@ -114,7 +114,7 @@ void test_cockpit_passthrough()
 
 void test_cockpit_set_passthrough()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
 
     cockpit.setRatesToPassThrough();
 
@@ -132,8 +132,8 @@ void test_cockpit_set_passthrough()
 
 void test_cockpit_defaults()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
-    cockpit.setRates(cockpitRates);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    cockpit.setRates(cockpitRates, flightController);
 
     const rates_t rates = cockpit.getRates();
 
@@ -169,12 +169,12 @@ void test_cockpit_defaults()
 
 void test_cockpit_constrain()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
-    cockpit.setRates(cockpitRates);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    cockpit.setRates(cockpitRates, flightController);
 
     rates_t rates = cockpit.getRates(); // NOLINT(misc-const-correctness)
     rates.rcRates = {200, 200, 200};
-    cockpit.setRates(rates);
+    cockpit.setRates(rates, flightController);
 
     float roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
@@ -190,8 +190,8 @@ void test_cockpit_constrain()
 
 void test_cockpit_throttle()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
-    cockpit.setRates(cockpitRates);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    cockpit.setRates(cockpitRates, flightController);
 
     float throttle = cockpit.mapThrottle(0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, throttle);
@@ -206,7 +206,7 @@ void test_cockpit_throttle()
 
     rates_t rates = cockpit.getRates();
     rates.throttleLimitPercent = 80;
-    cockpit.setRates(rates);
+    cockpit.setRates(rates, flightController);
 
     throttle = cockpit.mapThrottle(0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, throttle);
@@ -222,7 +222,7 @@ void test_cockpit_throttle()
     rates = cockpit.getRates();
     rates.throttleExpo = 255;
     rates.throttleLimitPercent = 100;
-    cockpit.setRates(rates);
+    cockpit.setRates(rates, flightController);
 
     throttle = cockpit.mapThrottle(0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, throttle);
@@ -392,7 +392,7 @@ void test_rc_adjustments()
     rcAdjustments.applyAbsoluteAdjustment(flightController, rates, ADJUSTMENT_ROLL_RC_RATE, 3);
     TEST_ASSERT_EQUAL(3, rates.rcRates[rates_t::ROLL]);
 
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
     TEST_ASSERT_EQUAL(0, cockpit.getCurrentRateProfileIndex());
     rcAdjustments.applySelectAdjustment(flightController, cockpit, nullptr, ADJUSTMENT_RATE_PROFILE, 1);
     TEST_ASSERT_EQUAL(1, cockpit.getCurrentRateProfileIndex());
@@ -400,7 +400,7 @@ void test_rc_adjustments()
 
 void test_flightmode_flags()
 {
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
 
     TEST_ASSERT_EQUAL(0, cockpit.getFlightModeFlags());
     cockpit.setFlightModeFlag(Cockpit::LOG2_HORIZON_MODE);

@@ -62,7 +62,7 @@ void test_telemetry_msp()
     static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    static Cockpit cockpit(receiver, flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
 
     // statically allocate an MSP object
     static MSP_Protoflight msp(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr, nullptr);

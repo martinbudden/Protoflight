@@ -22,9 +22,10 @@ static const void* menuRcConfirmBack(CMSX& cmsx, [[maybe_unused]] DisplayPortBas
 }
 #endif
 
+// cppcheck-suppress constParameterCallback
 static const void* menuRcOnDisplayUpdate(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    const ReceiverBase& receiver = cmsx.getCockpit().getReceiver();
+    const ReceiverBase& receiver = cmsx.getCMS().getReceiver();
     size_t ii = 0;
     for (auto& rc : rcData) {
         rc = receiver.getChannelPWM(ii);
@@ -69,6 +70,7 @@ CMSX::menu_t CMSX::menuRcPreview {
     .entries = &menuRcEntries[0]
 };
 
+// cppcheck-suppress constParameterCallback
 static const void* menuMiscOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
     const MotorMixerBase& motorMixer = cmsx.getCockpit().getFlightController().getMotorMixer();
@@ -81,7 +83,7 @@ static const void* menuMiscOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 
 static const void* menuMiscOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    MotorMixerBase& motorMixer = cmsx.getCockpit().getFlightControllerMutable().getMotorMixer();
+    MotorMixerBase& motorMixer = cmsx.getCockpitMutable().getFlightControllerMutable().getMotorMixerMutable();
     MotorMixerBase::motor_config_t motorConfig =  motorMixer.getMotorConfig();
     motorConfig.motorIdle = motorIdle;
     motorMixer.setMotorConfig(motorConfig);

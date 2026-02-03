@@ -96,7 +96,7 @@ bool BackchannelFlightController::packetControl(const CommandPacketControl& pack
     case CommandPacketControl::SET_RATES_PROFILE:
         return false; // not implemented
     case CommandPacketControl::SET_DEBUG_MODE:
-        _flightController.getDebug().setMode(static_cast<debug_mode_e>(packet.value));
+        _flightController.getDebugMutable().setMode(static_cast<debug_mode_e>(packet.value));
         return true;
     default:
         // do nothing

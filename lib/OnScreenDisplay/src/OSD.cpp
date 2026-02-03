@@ -27,9 +27,10 @@
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
-OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, const VTX* vtx, const GPS* gps) : // cppcheck-suppress constParameterReference
-    _elements(*this, flightController, cockpit, debug, vtx, gps),
+OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, const VTX* vtx, const GPS* gps) : // cppcheck-suppress constParameterReference
+    _elements(*this, flightController, cockpit, receiver, debug, vtx, gps),
     _cockpit(cockpit),
+    _receiver(receiver),
     _ahrsMessageQueue(ahrsMessageQueue)
 {
 }
@@ -281,7 +282,7 @@ void OSD::processStats2(timeUs32_t currentTimeUs)
         if (currentTimeUs < _resumeRefreshAtUs) {
             // in timeout period, check sticks for activity or CRASH_FLIP switch to resume display.
             if (!_cockpit.isArmed()) {
-                const ReceiverBase::controls_pwm_t controls = _cockpit.getReceiver().getControlsPWM();
+                const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
                 if (RC_Modes::pwmIsHigh(controls.throttle) || RC_Modes::pwmIsHigh(controls.pitch) || _cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_CRASH_FLIP)) {
                     _resumeRefreshAtUs = currentTimeUs;
                 }

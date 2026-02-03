@@ -326,12 +326,12 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         return RESULT_CMD_UNKNOWN;
 #if defined(USE_GPS_RESCUE)
     case MSP_GPS_RESCUE: {
-        const Autopilot::gps_rescue_config_t& gpsRescueConfig = _autopilot.getGPS_RescueConfig();
+        const Autopilot::gps_rescue_config_t& gpsRescueConfig = _cockpit.getAutopilot().getGPS_RescueConfig();
         dst.writeU16(gpsRescueConfig.maxRescueAngle_degrees);
         dst.writeU16(gpsRescueConfig.returnAltitude_meters);
         dst.writeU16(gpsRescueConfig.descentDistance_meters);
         dst.writeU16(gpsRescueConfig.groundSpeed_cmps);
-        const Autopilot::autopilot_config_t& autopilotConfig = _autopilot.getAutopilotConfig();
+        const Autopilot::autopilot_config_t& autopilotConfig = _cockpit.getAutopilot().getAutopilotConfig();
         dst.writeU16(autopilotConfig.throttle_min_pwm);
         dst.writeU16(autopilotConfig.throttle_max_pwm);
         dst.writeU16(autopilotConfig.throttle_hover_pwm);
@@ -350,12 +350,12 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_GPS_RESCUE_PIDS: {
-        const Autopilot::autopilot_config_t& autopilotConfig = _autopilot.getAutopilotConfig();
+        const Autopilot::autopilot_config_t& autopilotConfig = _cockpit.getAutopilot().getAutopilotConfig();
         dst.writeU16(autopilotConfig.altitudePID.kp);
         dst.writeU16(autopilotConfig.altitudePID.ki);
         dst.writeU16(autopilotConfig.altitudePID.kd);
         // altitude_F not implemented yet
-        const Autopilot::gps_rescue_config_t& gpsRescueConfig = _autopilot.getGPS_RescueConfig();
+        const Autopilot::gps_rescue_config_t& gpsRescueConfig = _cockpit.getAutopilot().getGPS_RescueConfig();
         dst.writeU16(gpsRescueConfig.velP);
         dst.writeU16(gpsRescueConfig.velI);
         dst.writeU16(gpsRescueConfig.velD);

@@ -2,6 +2,7 @@
 
 #include "OSD_Elements.h"
 class AHRS_MessageQueue;
+class ReceiverBase;
 class VTX;
 
 
@@ -10,7 +11,7 @@ On Screen Display.
 */
 class OSD {
 public:
-    OSD(const FlightController& flightController, const Cockpit& cockpit, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, const VTX* vtx, const GPS* gps);
+    OSD(const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, const VTX* vtx, const GPS* gps);
 private:
     // OSD is not copyable or moveable
     OSD(const OSD&) = delete;
@@ -260,6 +261,7 @@ private:
     DisplayPortBase* _displayPort {};
     OSD_Elements _elements;
     const Cockpit& _cockpit;
+    const ReceiverBase& _receiver;
     const AHRS_MessageQueue& _ahrsMessageQueue;
     uint32_t _resumeRefreshAtUs {};
     state_e _state { STATE_INIT };

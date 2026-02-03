@@ -13,6 +13,7 @@ class DisplayPortBase;
 class FlightController;
 class GPS;
 class OSD;
+class ReceiverBase;
 class VTX;
 
 
@@ -154,7 +155,7 @@ How to add a new OSD element:
 */
 class OSD_Elements {
 public:
-    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const Debug& debug, const VTX* vtx, const GPS* gps);
+    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& _receiver, const Debug& debug, const VTX* vtx, const GPS* gps);
     void init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t columnCount);
     void initDrawFunctions();
 public:
@@ -320,6 +321,7 @@ private:
     const OSD& _osd;
     const FlightController& _flightController;
     const Cockpit& _cockpit;
+    const ReceiverBase& _receiver;
     const Debug& _debug;
     const VTX* _vtx;
     float _rollAngleDegrees {};

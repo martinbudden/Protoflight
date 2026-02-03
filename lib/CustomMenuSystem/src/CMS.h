@@ -19,7 +19,7 @@ Custom Menu System.
 */
 class CMS {
 public:
-    CMS(DisplayPortBase* displayPort, const ReceiverBase& receiver, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx);
+    CMS(DisplayPortBase* displayPort, Cockpit& cockpit, const ReceiverBase& receiver, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx);
     void init();
 private:
     // CMS is not copyable or moveable
@@ -50,12 +50,14 @@ public:
     void setArmingDisabled();
     void clearArmingDisabled();
 
-    Cockpit& getCockpit() { return _cockpit; }
+    const Cockpit& getCockpit() const { return _cockpit; }
+    Cockpit& getCockpitMutable() { return _cockpit; }
+    const ReceiverBase& getReceiver() const { return _receiver; }
 private:
     DisplayPortBase* _displayPort;
     CMSX _cmsx;
-    const ReceiverBase& _receiver;
     Cockpit& _cockpit;
+    const ReceiverBase& _receiver;
     config_t _config {};
     int32_t _keyDelayMs {CMSX::BUTTON_TIME_MS};
     uint32_t _lastCalledMs {};

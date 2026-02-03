@@ -239,7 +239,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
             //Added in MSP API 1.42
             _debug.setMode(static_cast<debug_mode_e>(src.readU8()));
         }
-        _flightController.getMotorMixer().setMotorConfig(motorConfig);
+        _flightController.getMotorMixerMutable().setMotorConfig(motorConfig);
         break;
     }
     case MSP_SET_FILTER_CONFIG: {
@@ -398,7 +398,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         MotorMixerBase::mixer_config_t mixerConfig = _flightController.getMotorMixer().getMixerConfig();
         mixerConfig.type = static_cast<MotorMixerBase::type_e>(src.readU8());
         mixerConfig.yaw_motors_reversed = src.readU8();
-        _flightController.getMotorMixer().setMixerConfig(mixerConfig);
+        _flightController.getMotorMixerMutable().setMixerConfig(mixerConfig);
         break;
     }
     case MSP_SET_RX_CONFIG: {

@@ -10,8 +10,7 @@
 
 #include <cmath>
 
-Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, [[maybe_unused]] const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs) :
-    CockpitBase(receiver),
+Cockpit::Cockpit(FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, [[maybe_unused]] const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs) :
     _flightController(flightController),
     _autopilot(autopilot),
     _imuFilters(imuFilters),
@@ -196,6 +195,7 @@ void Cockpit::handleArmingSwitch(FlightController& flightController, const Recei
         }
     }
 #else
+    (void)receiver;
     if (_rcModes.isModeActive(MSP_Box::BOX_ARM)) {
         if (!isArmed()) {
             if (_recordToBlackboxWhenArmed) {

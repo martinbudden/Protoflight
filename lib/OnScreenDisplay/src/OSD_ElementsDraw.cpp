@@ -717,7 +717,7 @@ void OSD_Elements::draw_RC_CHANNELS(DisplayPortBase& displayPort) // cppcheck-su
 {
     (void)displayPort;
 
-    const ReceiverBase::controls_pwm_t controlsPWM = _cockpit.getReceiver().getControlsPWM();
+    const ReceiverBase::controls_pwm_t controlsPWM = _receiver.getControlsPWM();
     switch (_RC_CHANNELS_channel) {
     case 0:
         sprintf(&_activeElement.buf[0], "T:%5d", controlsPWM.throttle);
