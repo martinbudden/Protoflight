@@ -218,9 +218,7 @@ Called from Receiver Task.
 void Cockpit::updateControls(uint32_t tickCount, ReceiverBase& receiver)
 {
     FlightController& flightController = _flightController;
-    CockpitBase::controls_t controls; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
-    controls.tickCount = tickCount;
-    receiver.getStickValues(controls.throttleStick, controls.rollStick, controls.pitchStick, controls.yawStick);
+    const ReceiverBase::controls_t controls = receiver.getControls();
     // failsafe handling
     _failsafe.phase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
     _failsafe.tickCount = tickCount;
@@ -286,17 +284,17 @@ void Cockpit::updateControls(uint32_t tickCount, ReceiverBase& receiver)
         return;
     }
 
-    const float throttleStick = _rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD) ? _autopilot.calculateThrottleForAltitudeHold(controls) : mapThrottle(controls.throttleStick);
+    const float throttleStick = _rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD) ? _autopilot.calculateThrottleForAltitudeHold(controls) : mapThrottle(controls.throttle);
 
     // map the radio controls to FlightController units
     const FlightController::controls_t flightControls = {
-        .tickCount = controls.tickCount,
+        .tickCount = tickCount,
         .throttleStick = throttleStick,
-        .rollStickDPS = applyRates(rates_t::ROLL, controls.rollStick),
-        .pitchStickDPS = applyRates(rates_t::PITCH, controls.pitchStick),
-        .yawStickDPS = applyRates(rates_t::YAW, controls.yawStick),
-        .rollStickDegrees = controls.rollStick * flightController.getMaxRollAngleDegrees(),
-        .pitchStickDegrees = controls.pitchStick * flightController.getMaxPitchAngleDegrees(),
+        .rollStickDPS = applyRates(rates_t::ROLL, controls.roll),
+        .pitchStickDPS = applyRates(rates_t::PITCH, controls.pitch),
+        .yawStickDPS = applyRates(rates_t::YAW, controls.yaw),
+        .rollStickDegrees = controls.roll * flightController.getMaxRollAngleDegrees(),
+        .pitchStickDegrees = controls.pitch * flightController.getMaxPitchAngleDegrees(),
         .controlMode = controlMode
     };
 

@@ -75,10 +75,10 @@ bool Autopilot::setAltitudeHoldSetpoint()
     return true;
 }
 
-float Autopilot::calculateThrottleForAltitudeHold(const CockpitBase::controls_t& controls)
+float Autopilot::calculateThrottleForAltitudeHold(const ReceiverBase::controls_t& controls)
 {
     if (_altitudeMessageQueue == nullptr) {
-        return controls.throttleStick;
+        return controls.throttle;
     }
 
     altitude_data_t altitudeData {};
@@ -103,14 +103,14 @@ float Autopilot::calculateThrottleForAltitudeHold(const CockpitBase::controls_t&
     return throttle;
 }
 
-FlightController::controls_t Autopilot::calculateFlightControls(const CockpitBase::controls_t& controls, uint32_t flightModeModeFlags)
+FlightController::controls_t Autopilot::calculateFlightControls(const ReceiverBase::controls_t& controls, uint32_t flightModeModeFlags)
 {
     (void)flightModeModeFlags;
 
     const float throttle = calculateThrottleForAltitudeHold(controls);
 
     const FlightController::controls_t flightControls = {
-        .tickCount = controls.tickCount,
+        .tickCount = 0, //tickCount,
         .throttleStick = throttle,
         .rollStickDPS = 0,
         .pitchStickDPS = 0,
