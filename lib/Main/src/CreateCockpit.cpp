@@ -30,7 +30,7 @@ Cockpit& Main::createCockpit(ReceiverBase& receiver, FlightController& flightCon
 #endif
     cockpit.setCurrentPidProfileIndex(nvs.getCurrentPidProfileIndex());
     cockpit.setCurrentRateProfileIndex(nvs.getCurrentRateProfileIndex());
-    cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()));
+    cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()), flightController);
     cockpit.setFeatures(nvs.loadFeaturesConfig().enabledFeatures);
     RC_Modes& rcModes = cockpit.getRC_Modes();
     rcModes.setModeActivationConditions(nvs.loadRC_ModeActivationConditions());

@@ -43,7 +43,7 @@ static const void* menuRatesOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase
 
 static const void* menuRatesOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    cmsx.getCMS().getCockpit().setRates(data.rates);
+    cmsx.getCMS().getCockpit().setRates(data.rates, cmsx.getCockpit().getFlightControllerMutable());
     return nullptr;
 }
 
@@ -169,7 +169,7 @@ static const void* menuPID_FiltersOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPo
 
 static const void* menuPID_FiltersOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    FlightController& flightController = cmsx.getCockpit().getFlightController();
+    FlightController& flightController = cmsx.getCockpit().getFlightControllerMutable();
     flightController.setFiltersConfig(data.pidFiltersConfig); // NOLINT(cppcoreguidelines-pro-type-union-access)
     return nullptr;
 }
@@ -205,7 +205,7 @@ static const void* menuSimplifiedTuningOnEnter(CMSX& cmsx, [[maybe_unused]] Disp
 
 static const void* menuSimplifiedTuningOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
+    FlightController& flightController = cmsx.getCMS().getCockpit().getFlightControllerMutable();
     flightController.setPID_TuningMode(static_cast<FlightController::pid_tuning_mode_e>(pidTuningMode));
     flightController.setSimplifiedPID_Settings(data.pidSettings); // NOLINT(cppcoreguidelines-pro-type-union-access)
 
@@ -283,7 +283,7 @@ static const void* menuPID_TuningOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPor
 
 static const void* menuPID_TuningOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    FlightController& flightController = cmsx.getCMS().getCockpit().getFlightController();
+    FlightController& flightController = cmsx.getCMS().getCockpit().getFlightControllerMutable();
     flightController.setPID_Constants(FlightController::ROLL_RATE_DPS, data.pids[FlightController::ROLL_RATE_DPS]);
     flightController.setPID_Constants(FlightController::PITCH_RATE_DPS, data.pids[FlightController::PITCH_RATE_DPS]);
     flightController.setPID_Constants(FlightController::YAW_RATE_DPS, data.pids[FlightController::YAW_RATE_DPS]);

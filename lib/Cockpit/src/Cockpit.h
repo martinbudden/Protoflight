@@ -131,8 +131,9 @@ public:
     void setOSD(OSD& osd) { _osd = &osd; }
 
     const Autopilot& getAutopilot() const { return _autopilot; }
-    Autopilot& getAutopilot() { return _autopilot; }
-    FlightController& getFlightController() { return _flightController; }
+    Autopilot& getAutopilotMutable() { return _autopilot; }
+    const FlightController& getFlightController() const { return _flightController; }
+    FlightController& getFlightControllerMutable() { return _flightController; }
     NonVolatileStorage& getNonVolatileStorage() { return _nvs; }
 
     uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
@@ -140,7 +141,7 @@ public:
 
     uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
     void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex);
-    void handleArmingSwitch();
+    void handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver);
     virtual void updateControls(const controls_t& controls) override;
 
     bool featureIsEnabled(uint32_t mask) const { return _features.isEnabled(mask); }
@@ -150,8 +151,8 @@ public:
 
     bool isArmed() const;
     bool wasEverArmed() const;
-    void setArmed();
-    void setDisarmed();
+    void setArmed(FlightController& flightController);
+    void setDisarmed(FlightController& flightController);
     void setArmingDisabledFlag(arming_disabled_flags_e flag);
     void clearArmingDisabledFlag(arming_disabled_flags_e flag);
     uint32_t getArmingDisableFlags() const { return _armingDisabledFlags; }
@@ -172,7 +173,7 @@ public:
 
     const rates_t& getRates() const { return _rates; }
     rates_t& getRates() { return _rates; }
-    void setRates(const rates_t& rates);
+    void setRates(const rates_t& rates, FlightController& flightController);
     void setRatesToPassThrough();
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
@@ -185,8 +186,8 @@ public:
 #endif
 
     void setRecordToBlackboxWhenArmed(bool recordToBlackboxWhenArmed) { _recordToBlackboxWhenArmed = recordToBlackboxWhenArmed; }
-    void startBlackboxRecording();
-    void stopBlackboxRecording();
+    void startBlackboxRecording(FlightController& flightController);
+    void stopBlackboxRecording(FlightController& flightController);
 
     void setRebootRequired();
     bool getRebootRequired() const;

@@ -846,7 +846,7 @@ int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
 #endif
 }
 
-int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, const Autopilot& autopilot, uint8_t pidProfile, uint8_t ratesProfile)
+int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, uint8_t pidProfile, uint8_t ratesProfile)
 {
 #if defined(USE_DYNAMIC_IDLE)
     const DynamicIdleController* dynamicIdleController = flightController.getMotorMixer().getDynamicIdleController();
@@ -884,9 +884,7 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
     storeFlightControllerCrashRecoveryConfig(flightController.getCrashRecoveryConfig(), pidProfile);
 #endif
 #if defined(USE_ALTITUDE_HOLD)
-    storeAltitudeHoldConfig(autopilot.getAltitudeHoldConfig());
-#else
-    (void)autopilot;
+    storeAltitudeHoldConfig(cockpit.getAutopilot().getAltitudeHoldConfig());
 #endif
 
     const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();

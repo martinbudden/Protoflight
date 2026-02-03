@@ -160,7 +160,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         if (src.bytesRemaining() >= 1) {
             src.readU8(); // hardcoded to RATES_TYPE_ACTUAL
         }
-        _cockpit.setRates(rates);
+        _cockpit.setRates(rates, _flightController);
         break;
     }
     case MSP_SET_MOTOR_CONFIG:
@@ -504,7 +504,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
             // can't save to non volatile storage if the motors are on
             return RESULT_ERROR;
         }
-        _nonVolatileStorage.storeAll(_imuFilters, _flightController, _cockpit, _autopilot, _pidProfileIndex, _ratesProfileIndex);
+        _nonVolatileStorage.storeAll(_imuFilters, _flightController, _cockpit, _pidProfileIndex, _ratesProfileIndex);
         break;
 #ifdef USE_BLACKBOX
     case MSP_SET_BLACKBOX_CONFIG:

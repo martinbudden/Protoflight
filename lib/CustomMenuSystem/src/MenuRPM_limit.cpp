@@ -20,7 +20,7 @@ static const void* menuRPM_limitOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPort
 
 static const void* menuRPM_limitOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    cmsx.getCockpit().getFlightController().getMotorMixer().setDynamicIdlerControllerConfig(dynamicIdleControllerConfig);
+    cmsx.getCockpit().getFlightControllerMutable().getMotorMixer().setDynamicIdlerControllerConfig(dynamicIdleControllerConfig);
     return nullptr;
 }
 

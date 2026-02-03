@@ -21,7 +21,7 @@ Cockpit::Cockpit(ReceiverBase& receiver, FlightController& flightController, Aut
     ,_rcAdjustments(defaultAdjustmentConfigs)
 #endif
 {
-    _flightController.setYawSpinThresholdDPS(1.25F*applyRates(rates_t::YAW, 1.0F));
+    flightController.setYawSpinThresholdDPS(1.25F*applyRates(rates_t::YAW, 1.0F));
 
     _mspBox.setActiveBoxId(MSP_Box::BOX_ARM);
     _mspBox.setActiveBoxId(MSP_Box::BOX_PREARM);
@@ -84,16 +84,16 @@ bool Cockpit::wasEverArmed() const
     return _armingFlags & WAS_EVER_ARMED;
 }
 
-void Cockpit::setArmed()
+void Cockpit::setArmed(FlightController& flightController)
 {
     _armingFlags |= (ARMED | WAS_EVER_ARMED);
-    _flightController.motorsSwitchOn();
+    flightController.motorsSwitchOn();
 }
 
-void Cockpit::setDisarmed()
+void Cockpit::setDisarmed(FlightController& flightController)
 {
+    flightController.motorsSwitchOff();
     _armingFlags &= ~ARMED;
-    _flightController.motorsSwitchOff();
     _failsafe.phase = FAILSAFE_DISARMED;
 }
 
@@ -154,30 +154,30 @@ float Cockpit::mapThrottle(float throttle) const
     return throttle * static_cast<float>(_rates.throttleLimitPercent) / 100.0F;
 }
 
-void Cockpit::startBlackboxRecording()
+void Cockpit::startBlackboxRecording(FlightController& flightController)
 {
     if (_blackbox) {
         _blackbox->start(Blackbox::start_t{
             .debugMode = static_cast<uint16_t>(_debug.getMode()),
-            .motorCount = static_cast<uint8_t>(_flightController.getMotorMixer().getMotorCount()),
-            .servoCount = static_cast<uint8_t>(_flightController.getMotorMixer().getServoCount())
+            .motorCount = static_cast<uint8_t>(flightController.getMotorMixer().getMotorCount()),
+            .servoCount = static_cast<uint8_t>(flightController.getMotorMixer().getServoCount())
         });
-        _flightController.setBlackboxActive(true);
+        flightController.setBlackboxActive(true);
     }
 }
 
-void Cockpit::stopBlackboxRecording()
+void Cockpit::stopBlackboxRecording(FlightController& flightController)
 {
     if (_blackbox) {
         _blackbox->finish();
-        _flightController.setBlackboxActive(false);
+        flightController.setBlackboxActive(false);
     }
 }
 
-void Cockpit::handleArmingSwitch()
+void Cockpit::handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver)
 {
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    if (_receiver.getSwitch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
+    if (receiver.getSwitch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
         _onOffSwitchPressed = true;
     } else {
         if (_onOffSwitchPressed) {
@@ -185,13 +185,13 @@ void Cockpit::handleArmingSwitch()
             _onOffSwitchPressed = false;
             // toggle arming when the onOff switch is released
             if (isArmed()) {
-                setDisarmed();
-                stopBlackboxRecording();
+                setDisarmed(flightController);
+                stopBlackboxRecording(flightController);
             } else {
                 if (_recordToBlackboxWhenArmed) {
-                    startBlackboxRecording();
+                    startBlackboxRecording(flightController);
                 }
-                setArmed();
+                setArmed(flightController);
             }
         }
     }
@@ -199,14 +199,14 @@ void Cockpit::handleArmingSwitch()
     if (_rcModes.isModeActive(MSP_Box::BOX_ARM)) {
         if (!isArmed()) {
             if (_recordToBlackboxWhenArmed) {
-                startBlackboxRecording();
+                startBlackboxRecording(flightController);
             }
-            setArmed();
+            setArmed(flightController);
         }
     } else {
         if (isArmed()) {
-            setDisarmed();
-            stopBlackboxRecording();
+            setDisarmed(flightController);
+            stopBlackboxRecording(flightController);
         }
     }
 #endif
@@ -217,19 +217,21 @@ Called from Receiver Task.
 */
 void Cockpit::updateControls(const controls_t& controls)
 {
+    FlightController& flightController = _flightController;
+    const ReceiverBase& receiver = _receiver;
     // failsafe handling
     _failsafe.phase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
     _failsafe.tickCount = controls.tickCount;
 
     // set the RC modes according to the receiver channel values
-    _rcModes.updateActivatedModes(_receiver);
+    _rcModes.updateActivatedModes(receiver);
 
-    handleArmingSwitch();
+    handleArmingSwitch(flightController, receiver);
 
 #if defined(USE_RC_ADJUSTMENTS)
     // process any in-flight adjustments
     if (!_cliMode && !(_rcModes.isModeActive(MSP_Box::BOX_PARALYZE) && !isArmed())) {
-        _rcAdjustments.processAdjustments(_receiver, _flightController, *this, _osd, true); //!!TODO: check true parameter
+        _rcAdjustments.processAdjustments(receiver, flightController, *this, _osd, true); //!!TODO: check true parameter
     }
 #endif
 
@@ -278,7 +280,7 @@ void Cockpit::updateControls(const controls_t& controls)
     }
     if (_rcModes.isModeActive(MSP_Box::BOX_POSITION_HOLD) || _rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE)) {
         const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightModeFlags.to_ulong());
-        _flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
+        flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
         return;
     }
 
@@ -291,17 +293,19 @@ void Cockpit::updateControls(const controls_t& controls)
         .rollStickDPS = applyRates(rates_t::ROLL, controls.rollStick),
         .pitchStickDPS = applyRates(rates_t::PITCH, controls.pitchStick),
         .yawStickDPS = applyRates(rates_t::YAW, controls.yawStick),
-        .rollStickDegrees = controls.rollStick * _flightController.getMaxRollAngleDegrees(),
-        .pitchStickDegrees = controls.pitchStick * _flightController.getMaxPitchAngleDegrees(),
+        .rollStickDegrees = controls.rollStick * flightController.getMaxRollAngleDegrees(),
+        .pitchStickDegrees = controls.pitchStick * flightController.getMaxPitchAngleDegrees(),
         .controlMode = controlMode
     };
 
-    _flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
+    flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
 }
 
 void Cockpit::checkFailsafe(uint32_t tickCount)
 {
-    _flightController.detectCrashOrSpin();
+    FlightController& flightController = _flightController;
+
+    flightController.detectCrashOrSpin();
 
     if ((tickCount - _failsafe.tickCount > _failsafe.tickCountThreshold) && (_failsafe.phase != FAILSAFE_DISARMED)) {
         // We've had tickCountThreshold ticks without a packet, so we seem to have lost contact with the transmitter,
@@ -318,11 +322,11 @@ void Cockpit::checkFailsafe(uint32_t tickCount)
                 .pitchStickDegrees = 0.0F,
                 .controlMode = FlightController::CONTROL_MODE_ANGLE
             };
-            _flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_ON);
+            flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_ON);
         } else {
             // we've lost contact for an extended period, so disarm.
             _failsafe.phase = FAILSAFE_DISARMED;
-            setDisarmed();
+            setDisarmed(flightController);
         }
     }
 }
@@ -349,14 +353,14 @@ void Cockpit::setRX_FailsafeChannelConfigs(const RX::failsafe_channel_configs_t&
     _rxFailsafeChannelConfigs = rxFailsafeChannelConfigs;
 }
 
-void Cockpit::setRates(const rates_t& rates)
+void Cockpit::setRates(const rates_t& rates, FlightController& flightController) // NOLINT(readability-make-member-function-const)
 {
     _rates = rates;
     const float maxAngleRateRollDPS = applyRates(rates_t::ROLL, 1.0F);
     const float maxAngleRatePitchDPS = applyRates(rates_t::PITCH, 1.0F);
     const float maxAngleRateYawDPS = applyRates(rates_t::YAW, 1.0F);
 
-    _flightController.setMaxAngleRates(maxAngleRateRollDPS, maxAngleRatePitchDPS, maxAngleRateYawDPS);
+    flightController.setMaxAngleRates(maxAngleRateRollDPS, maxAngleRatePitchDPS, maxAngleRateYawDPS);
 }
 
 /*!

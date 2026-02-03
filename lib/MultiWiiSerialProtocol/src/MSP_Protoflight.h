@@ -44,7 +44,6 @@ private:
     FlightController& _flightController;
     Cockpit& _cockpit;
     const ReceiverBase& _receiver;
-    const Autopilot& _autopilot;
     const IMU_Filters& _imuFilters;
     Debug& _debug;
     NonVolatileStorage& _nonVolatileStorage;
