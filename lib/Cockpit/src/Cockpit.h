@@ -142,7 +142,7 @@ public:
     uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
     void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex);
     void handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver);
-    virtual void updateControls(const controls_t& controls) override;
+    virtual void updateControls(uint32_t tickCount, ReceiverBase& receiver) override;
 
     bool featureIsEnabled(uint32_t mask) const { return _features.isEnabled(mask); }
     uint32_t enabledFeatures() const { return _features.enabledFeatures(); }

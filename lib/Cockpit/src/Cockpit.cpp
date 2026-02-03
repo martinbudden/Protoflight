@@ -215,13 +215,15 @@ void Cockpit::handleArmingSwitch(FlightController& flightController, const Recei
 /*!
 Called from Receiver Task.
 */
-void Cockpit::updateControls(const controls_t& controls)
+void Cockpit::updateControls(uint32_t tickCount, ReceiverBase& receiver)
 {
     FlightController& flightController = _flightController;
-    const ReceiverBase& receiver = _receiver;
+    CockpitBase::controls_t controls; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    controls.tickCount = tickCount;
+    receiver.getStickValues(controls.throttleStick, controls.rollStick, controls.pitchStick, controls.yawStick);
     // failsafe handling
     _failsafe.phase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
-    _failsafe.tickCount = controls.tickCount;
+    _failsafe.tickCount = tickCount;
 
     // set the RC modes according to the receiver channel values
     _rcModes.updateActivatedModes(receiver);
