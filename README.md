@@ -631,7 +631,6 @@ classDiagram
     }
     link CockpitBase "https://github.com/martinbudden/Library-Receiver/blob/main/src/CockpitBase.h"
     CockpitBase <|-- Cockpit : overrides updateControls
-    CockpitBase o--ReceiverBase : calls getAuxiliaryChannel
 
     class Cockpit {
         updateControls() override

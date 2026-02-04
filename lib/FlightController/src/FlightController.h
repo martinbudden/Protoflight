@@ -225,11 +225,11 @@ public:
     void motorsSwitchOn();
     bool motorsIsDisabled() const;
     //! Sets blackboxActive flag so that ahrsData messages are sent to the blackbox task
-    void setBlackboxActive(bool isActive) { _sh.blackboxActive = isActive; }
+    void setBlackboxActive(bool isActive);
 
     virtual uint32_t getOutputPowerTimeMicroseconds() const override; //!!TODO: is this still needed?
 
-    inline control_mode_e getControlMode() const { return _fcC.controlMode; }
+    control_mode_e getControlMode() const { return _rxC.controlMode; }
     void setControlMode(control_mode_e controlMode);
 
     pid_tuning_mode_e getPID_TuningMode() const { return _pidTuningMode; }
@@ -401,13 +401,13 @@ private:
     //
     struct fc_t {
         uint32_t outputToMixerCount {0};
-        control_mode_e controlMode {CONTROL_MODE_RATE};
         std::array<PIDF::PIDF_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning
         simplified_pid_settings_t simplifiedPID_Settings {};
         std::array<float, RPY_AXIS_COUNT> outputs;
         std::array<PowerTransferFilter1, RPY_AXIS_COUNT> outputFilters;
     };
     struct rx_t {
+        control_mode_e controlMode {CONTROL_MODE_RATE};
         // setpoint timing
         uint32_t setpointTickCountPrevious {0};
         uint32_t setpointTickCountSum {0};

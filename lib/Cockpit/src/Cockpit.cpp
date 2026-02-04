@@ -219,34 +219,35 @@ void Cockpit::updateControls(uint32_t tickCount, ReceiverBase& receiver)
 {
     FlightController& flightController = _flightController;
     const ReceiverBase::controls_t controls = receiver.getControls();
+    RC_Modes& rcModes = _rcModes;
     // failsafe handling
     _failsafe.phase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
     _failsafe.tickCount = tickCount;
 
     // set the RC modes according to the receiver channel values
-    _rcModes.updateActivatedModes(receiver);
+    rcModes.updateActivatedModes(receiver);
 
     handleArmingSwitch(flightController, receiver);
 
 #if defined(USE_RC_ADJUSTMENTS)
     // process any in-flight adjustments
-    if (!_cliMode && !(_rcModes.isModeActive(MSP_Box::BOX_PARALYZE) && !isArmed())) {
+    if (!_cliMode && !(rcModes.isModeActive(MSP_Box::BOX_PARALYZE) && !isArmed())) {
         _rcAdjustments.processAdjustments(receiver, flightController, *this, _osd, true); //!!TODO: check true parameter
     }
 #endif
 
     _flightModeFlags.reset();
     FlightController::control_mode_e controlMode = FlightController::CONTROL_MODE_RATE;
-    if (_rcModes.isModeActive(MSP_Box::BOX_ANGLE)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_ANGLE)) {
         _flightModeFlags.set(ANGLE_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_HORIZON)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_HORIZON)) {
         _flightModeFlags.set(HORIZON_MODE);
         // we don't support horizon mode, instead we use the horizon mode setting to invoke level race mode
         controlMode = FlightController::CONTROL_MODE_LEVEL_RACE;
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD)) {
         _flightModeFlags.set(ALTITUDE_HOLD_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
         // not currently in altitude hold mode, so set the altitude hold setpoint
@@ -254,37 +255,39 @@ void Cockpit::updateControls(uint32_t tickCount, ReceiverBase& receiver)
             _autopilot.setAltitudeHoldSetpoint();
         }
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_POSITION_HOLD)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_POSITION_HOLD)) {
         _flightModeFlags.set(POSITION_HOLD_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_MAG)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_MAG)) {
         _flightModeFlags.set(MAG_MODE);
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_HEADFREE)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_HEADFREE)) {
         _flightModeFlags.set(HEADFREE_MODE);
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_CHIRP)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_CHIRP)) {
         _flightModeFlags.set(CHIRP_MODE);
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_PASSTHRU)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_PASSTHRU)) {
         _flightModeFlags.set(PASSTHRU_MODE);
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_FAILSAFE)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_FAILSAFE)) {
         _flightModeFlags.set(FAILSAFE_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE)) {
+    if (rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE)) {
         _flightModeFlags.set(GPS_RESCUE_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
-    if (_rcModes.isModeActive(MSP_Box::BOX_POSITION_HOLD) || _rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE)) {
+    _gpsRescueConfigured =  _failsafeConfig.procedure == FAILSAFE_PROCEDURE_GPS_RESCUE || rcModes.isModeActivationConditionPresent(MSP_Box::BOX_GPS_RESCUE);
+
+    if (rcModes.isModeActive(MSP_Box::BOX_POSITION_HOLD) || rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE)) {
         const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightModeFlags.to_ulong());
         flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
         return;
     }
 
-    const float throttleStick = _rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD) ? _autopilot.calculateThrottleForAltitudeHold(controls) : mapThrottle(controls.throttle);
+    const float throttleStick = rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD) ? _autopilot.calculateThrottleForAltitudeHold(controls) : mapThrottle(controls.throttle);
 
     // map the radio controls to FlightController units
     const FlightController::controls_t flightControls = {
@@ -338,8 +341,7 @@ void Cockpit::setFailsafeConfig(const failsafe_config_t& failsafeConfig)
 
 bool Cockpit::gpsRescueIsConfigured() const
 {
-    return _failsafeConfig.procedure == FAILSAFE_PROCEDURE_GPS_RESCUE || _rcModes.isModeActivationConditionPresent(MSP_Box::BOX_GPS_RESCUE);
-    return false;
+    return _gpsRescueConfigured;
 }
 
 
@@ -366,7 +368,7 @@ void Cockpit::setRates(const rates_t& rates, FlightController& flightController)
 /*!
 return state of given boxId box, handling ARM and FLIGHT_MODE
 */
-bool Cockpit::getBoxIdState(MSP_Box::id_e boxId) const
+bool Cockpit::getBoxIdState(MSP_Box::id_e boxId, const RC_Modes& rcModes) const
 {
     // we assume that all boxId below BOXID_FLIGHTMODE_LAST except BOXARM are mapped to flightmode
 
@@ -376,14 +378,14 @@ bool Cockpit::getBoxIdState(MSP_Box::id_e boxId) const
     if (boxId < MSP_Box::BOX_ID_FLIGHTMODE_COUNT) {
         return _flightModeFlags.test(BoxIdToFlightModeMap[boxId]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     }
-    return _rcModes.isModeActive(boxId);
+    return rcModes.isModeActive(boxId);
 }
 
 /*!
 Pack used flightModeFlags into supplied bitset.
 returns number of bits used
 */
-size_t Cockpit::packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags) const
+size_t Cockpit::packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags, const RC_Modes& rcModes) const
 {
     // Serialize the flags in the order we delivered them, ignoring BOX NAMES and BOX INDEXES
     flightModeFlags.reset();
@@ -392,7 +394,7 @@ size_t Cockpit::packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags) const
     size_t boxIndex = 0;    // index of active boxId (matches sent permanentId and boxNames)
     for (int boxId = 0; boxId < MSP_Box::BOX_COUNT; ++boxId) {
         if (_mspBox.getActiveBoxId(static_cast<MSP_Box::id_e>(boxId))) {
-            if (getBoxIdState(static_cast<MSP_Box::id_e>(boxId))) {
+            if (getBoxIdState(static_cast<MSP_Box::id_e>(boxId), rcModes)) {
                 flightModeFlags.set(boxIndex); // box is enabled
             }
             ++boxIndex; // box is active, count it

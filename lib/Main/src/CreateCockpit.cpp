@@ -32,8 +32,7 @@ Cockpit& Main::createCockpit(FlightController& flightController, Debug& debug, I
     cockpit.setCurrentRateProfileIndex(nvs.getCurrentRateProfileIndex());
     cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()), flightController);
     cockpit.setFeatures(nvs.loadFeaturesConfig().enabledFeatures);
-    RC_Modes& rcModes = cockpit.getRC_Modes();
-    rcModes.setModeActivationConditions(nvs.loadRC_ModeActivationConditions());
+    cockpit.getRC_ModesMutable().setModeActivationConditions(nvs.loadRC_ModeActivationConditions());
 
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW) && false
     const RC_Modes::mode_activation_condition_t macAngle = {

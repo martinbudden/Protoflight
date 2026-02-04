@@ -83,8 +83,8 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
                 mac.linkedTo = static_cast<MSP_Box::id_e>(linkBox->id);
             }
         }
-        _cockpit.getRC_Modes().setModeActivationCondition(macIndex, mac);
-        _cockpit.getRC_Modes().analyzeModeActivationConditions();
+        _cockpit.getRC_ModesMutable().setModeActivationCondition(macIndex, mac);
+        _cockpit.getRC_ModesMutable().analyzeModeActivationConditions();
         break;
     }
     case MSP_SET_ADJUSTMENT_RANGE: {

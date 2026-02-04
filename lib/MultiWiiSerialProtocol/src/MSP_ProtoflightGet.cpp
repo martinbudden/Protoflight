@@ -54,7 +54,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         static constexpr uint16_t SENSOR_GYROSCOPE = 0x01U << 5U;
         dst.writeU16(SENSOR_ACCELEROMETER | SENSOR_GYROSCOPE);
         MSP_Box::bitset_t flightModeFlags;
-        const size_t flagBitCount = _cockpit.packFlightModeFlags(flightModeFlags);
+        const size_t flagBitCount = _cockpit.packFlightModeFlags(flightModeFlags, _cockpit.getRC_Modes());
         dst.writeData(&flightModeFlags, 4); // unconditional part of flags, first 32 bits
         dst.writeU8(_nonVolatileStorage.getCurrentPidProfileIndex());
         dst.writeU16(10); //constrain(getAverageSystemLoadPercent(), 0, LOAD_PERCENTAGE_ONE))

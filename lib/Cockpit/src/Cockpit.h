@@ -179,7 +179,7 @@ public:
     float mapThrottle(float throttle) const;
 
     const RC_Modes& getRC_Modes() const { return _rcModes; }
-    RC_Modes& getRC_Modes() { return _rcModes; }
+    RC_Modes& getRC_ModesMutable() { return _rcModes; }
 #if defined(USE_RC_ADJUSTMENTS)
     const RC_Adjustments& getRC_Adjustments() const { return _rcAdjustments; }
     RC_Adjustments& getRC_Adjustments() { return _rcAdjustments; }
@@ -192,8 +192,8 @@ public:
     void setRebootRequired();
     bool getRebootRequired() const;
 
-    bool getBoxIdState(MSP_Box::id_e boxId) const;
-    size_t packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags) const;
+    bool getBoxIdState(MSP_Box::id_e boxId, const RC_Modes& rcModes) const;
+    size_t packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags, const RC_Modes& rcModes) const;
     void serializeBoxReplyBoxName(StreamBuf& dst, size_t page) const { _mspBox.serializeBoxReplyBoxName(dst, page); }
     void serializeBoxReplyPermanentId(StreamBuf& dst, size_t page) const { _mspBox.serializeBoxReplyPermanentId(dst, page); }
 private:
@@ -236,6 +236,7 @@ private:
     bool _rebootRequired {false};
     bool _onOffSwitchPressed {false}; // on/off switch debouncing
     bool _cliMode {false};
+    boll _gpsRescueConfigured {false};
 #if defined(USE_RC_ADJUSTMENTS)
     RC_Adjustments _rcAdjustments;
 #endif

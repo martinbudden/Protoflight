@@ -137,12 +137,30 @@ void FlightController::applyDynamicPID_AdjustmentsOnThrottleChange(float throttl
 
 void FlightController::clearDynamicPID_Adjustments()
 {
+    _rxM.TPA = 1.0F;
     _sh.PIDS[ROLL_RATE_DPS].setI(_fcC.pidConstants[ROLL_RATE_DPS].ki);
     _sh.PIDS[PITCH_RATE_DPS].setI(_fcC.pidConstants[PITCH_RATE_DPS].ki);
-    _rxM.TPA = 1.0F;
     _sh.PIDS[ROLL_RATE_DPS].setP(_fcC.pidConstants[ROLL_RATE_DPS].kp);
     _sh.PIDS[PITCH_RATE_DPS].setP(_fcC.pidConstants[PITCH_RATE_DPS].kp);
 }
+
+/*!
+NOTE: CALLED FROM WITHIN THE RECEIVER TASK
+
+Sets the control mode.
+*/
+void FlightController::setControlMode(control_mode_e controlMode)
+{
+    if (controlMode == _rxM.controlMode) {
+        return;
+    }
+    _rxM.controlMode = controlMode;
+    // reset the PID integral values when we change control mode
+    for (auto& pid : _sh.PIDS) {
+        pid.resetIntegral();
+    }
+}
+
 
 /*!
 NOTE: CALLED FROM WITHIN THE RECEIVER TASK
@@ -262,8 +280,8 @@ void FlightController::updateSetpoints(const controls_t& controls, failsafe_e fa
     // Angle Mode is used if the controlMode is set to angle mode, or failsafe is on.
     // Angle Mode is prevented when in Ground Mode, so the aircraft doesn't try and self-level while it is still on the ground.
     // This value is cached here, to avoid evaluating a reasonably complex condition in updateOutputsUsingPIDs()
-    _rxM.useAngleMode = (_fcC.controlMode >= CONTROL_MODE_ANGLE) && !_sh.groundMode;
-    _rxM.useLevelRaceMode = (_fcC.controlMode == CONTROL_MODE_LEVEL_RACE) || _flightModeConfig.level_race_mode;
+    _rxM.useAngleMode = (_rxM.controlMode >= CONTROL_MODE_ANGLE) && !_sh.groundMode;
+    _rxM.useLevelRaceMode = (_rxM.controlMode == CONTROL_MODE_LEVEL_RACE) || _flightModeConfig.level_race_mode;
 }
 
 /*!

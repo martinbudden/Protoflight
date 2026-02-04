@@ -260,19 +260,9 @@ bool FlightController::motorsIsOn() const
     return _motorMixer.motorsIsOn();
 }
 
-/*!
-Sets the control mode.
-*/
-void FlightController::setControlMode(control_mode_e controlMode)
+void FlightController::setBlackboxActive(bool isActive) 
 {
-    if (controlMode == _fcM.controlMode) {
-        return;
-    }
-    _fcM.controlMode = controlMode;
-    // reset the PID integral values when we change control mode
-    for (auto& pid : _sh.PIDS) {
-        pid.resetIntegral();
-    }
+    _sh.blackboxActive = isActive;
 }
 
 void FlightController::setPID_TuningMode(pid_tuning_mode_e pidTuningMode)
