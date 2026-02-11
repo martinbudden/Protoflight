@@ -282,7 +282,7 @@ void OSD::processStats2(timeUs32_t currentTimeUs)
         if (currentTimeUs < _resumeRefreshAtUs) {
             // in timeout period, check sticks for activity or CRASH_FLIP switch to resume display.
             if (!_cockpit.isArmed()) {
-                const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+                const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
                 if (RC_Modes::pwmIsHigh(controls.throttle) || RC_Modes::pwmIsHigh(controls.pitch) || _cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_CRASH_FLIP)) {
                     _resumeRefreshAtUs = currentTimeUs;
                 }

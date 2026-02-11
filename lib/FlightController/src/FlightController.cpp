@@ -230,7 +230,7 @@ uint32_t FlightController::getOutputPowerTimeMicroseconds() const
 
 void FlightController::motorsSwitchOff()
 {
-    _motorMixer.motorsSwitchOff();
+    _motorMixer.motors_switch_off();
     _sh.takeOffCountStart = 0;
     _sh.groundMode = true;
     switchPID_integrationOff();
@@ -244,7 +244,7 @@ void FlightController::motorsSwitchOn()
 #else
     {
 #endif
-        _motorMixer.motorsSwitchOn();
+        _motorMixer.motors_switch_on();
         // reset the PID integral values when we switch the motors on
         switchPID_integrationOn();
     }
@@ -252,12 +252,12 @@ void FlightController::motorsSwitchOn()
 
 bool FlightController::motorsIsDisabled() const
 {
-    return _motorMixer.motorsIsDisabled();
+    return _motorMixer.motors_is_disabled();
 }
 
 bool FlightController::motorsIsOn() const
 {
-    return _motorMixer.motorsIsOn();
+    return _motorMixer.motors_is_on();
 }
 
 void FlightController::setBlackboxActive(bool isActive) 
@@ -437,12 +437,12 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
     flight_controller_quadcopter_telemetry_t telemetry;
 
 #if (__cplusplus >= 202002L)
-    for (auto ii : std::views::iota(size_t{0}, size_t{_motorMixer.getMotorCount()})) {
+    for (auto ii : std::views::iota(size_t{0}, size_t{_motorMixer.get_motor_count()})) {
 #else
-    for (size_t ii = 0; ii < _motorMixer.getMotorCount(); ++ ii) {
+    for (size_t ii = 0; ii < _motorMixer.get_motor_count(); ++ ii) {
 #endif
-        telemetry.motors[ii].power = _motorMixer.getMotorOutput(ii);
-        telemetry.motors[ii].rpm = _motorMixer.getMotorRPM(ii);
+        telemetry.motors[ii].power = _motorMixer.get_motor_output(ii);
+        telemetry.motors[ii].rpm = _motorMixer.get_motor_rpm(ii);
     }
     if (motorsIsOn()) {
         const PIDF::error_t rollRateError = _sh.PIDS[ROLL_RATE_DPS].getError();
@@ -489,18 +489,18 @@ void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const Veh
     if (_fcM.outputToMixerCount >= _outputToMotorsDenominator) {
         _fcM.outputToMixerCount = 0;
 
-        MotorMixerBase::commands_t commands {
+        motor_mixer_commands_t commands {
             .throttle  = queueItem.throttle,
             // scale roll, pitch, and yaw from DPS range to [-1.0F, 1.0F]
             .roll   = _fcM.outputs[FD_ROLL] * MIXER_OUTPUT_SCALE_FACTOR,
             .pitch  = _fcM.outputs[FD_PITCH] * MIXER_OUTPUT_SCALE_FACTOR,
             .yaw    = _fcM.outputs[FD_YAW] * MIXER_OUTPUT_SCALE_FACTOR
         };
-        _motorMixer.outputToMotors(commands, deltaT, tickCount);
+        _motorMixer.output_to_motors(commands, deltaT, tickCount);
     }
 
 #if defined(USE_RPM_FILTERS)
     // perform an RPM filter iteration step, even if we have not output to the motors
-    _motorMixer.rpmFilterSetFrequencyHzIterationStep();
+    _motorMixer.rpm_filter_set_frequency_hz_iteration_step();
 #endif
 }

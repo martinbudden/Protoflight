@@ -211,7 +211,7 @@ bool BackchannelFlightController::sendPacket(uint8_t subCommand)
             _vehicleController,
             _mainTask ? _mainTask->getTickCountDelta() : 0,
             _backchannelTransceiver.getTickCountDeltaAndReset(),
-            static_cast<uint32_t>(_receiver.getDroppedPacketCountDelta())
+            static_cast<uint32_t>(_receiver.get_dropped_packet_count_delta())
         );
         // use empty slots to add additional time checks
         // timings [0-3] are set in AHRS readIMUandUpdateOrientation(), timings [4-7] are free to use

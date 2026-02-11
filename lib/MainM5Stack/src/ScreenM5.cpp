@@ -31,8 +31,8 @@ enum {
 
 static constexpr float RADIANS_TO_DEGREES {180.0 / M_PI};
 
-ScreenM5::ScreenM5(const DisplayPortBase& displayPort, const AHRS& ahrs, const FlightController& flightController, ReceiverBase& receiver) :
-    ScreenBase(displayPort, ahrs, flightController, receiver),
+ScreenM5::ScreenM5(const DisplayPortBase& displayPort) :
+    ScreenBase(displayPort),
     _screenSize(screenSize()),
     _screenRotationOffset(
         (_screenSize == SIZE_80x160 || _screenSize == SIZE_135x240) ? 1 :
@@ -133,12 +133,12 @@ void ScreenM5::displayEUI_Compact(const char* prompt, const ReceiverBase::EUI_48
     M5.Lcd.printf("%s%02x%02x%02x:%02x%02x%02x", prompt, eui.octets[0], eui.octets[1], eui.octets[2], eui.octets[3], eui.octets[4], eui.octets[5]); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
-void ScreenM5::updateTemplate128x128() const
+void ScreenM5::updateTemplate128x128(const ReceiverBase& receiver) const
 {
     M5.Lcd.setCursor(0, 10);
-    displayEUI("M:", _receiver.getMyEUI());
+    displayEUI("M:", receiver.get_my_eui());
     M5.Lcd.setCursor(0, 20);
-    displayEUI("J:", _receiver.getPrimaryPeerEUI());
+    displayEUI("J:", receiver.get_primary_peer_eui());
 
     int yPos = 50;
     M5.Lcd.setCursor(0, yPos);
@@ -168,21 +168,21 @@ void ScreenM5::updateTemplate128x128() const
     M5.Lcd.printf("D:");
 }
 
-void ScreenM5::updateReceivedData128x128() const
+void ScreenM5::updateReceivedData128x128(const ReceiverBase& receiver) const
 {
     if (!_remoteEUI_updated) {
         M5.Lcd.setCursor(0, 20);
-        displayEUI("J:", _receiver.getPrimaryPeerEUI());
+        displayEUI("J:", receiver.get_primary_peer_eui());
     }
 
     // M5StickC
     int32_t yPos = 95;
 #if defined(USE_PWM)
     const char* format = "%5d";
-    const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+    const receiver_controls_pwm_t controls = receiver.get_controls_pwm();
 #else
     const char* format = "%7.3f";
-    const ReceiverBase::controls_t controls = _receiver.getControls();
+    const receiver_controls_t controls = receiver.get_controls();
 #endif
     M5.Lcd.setCursor(12, yPos);
     M5.Lcd.printf(format, controls.throttle);
@@ -196,7 +196,7 @@ void ScreenM5::updateReceivedData128x128() const
     M5.Lcd.printf(format, controls.pitch);
 }
 
-void ScreenM5::update128x128(const TD_AHRS::data_t& ahrsData) const
+void ScreenM5::update128x128(const TD_AHRS::data_t& ahrsData, bool motorsIsOn) const
 {
     int32_t yPos = 35;
     M5.Lcd.setCursor(0, yPos);
@@ -211,16 +211,16 @@ void ScreenM5::update128x128(const TD_AHRS::data_t& ahrsData) const
     M5.Lcd.printf("x:%4.1f y:%4.1f z:%4.1f", ahrsData.acc.x, ahrsData.acc.y, ahrsData.acc.z);
 
     M5.Lcd.setCursor(12, 118);
-    M5.Lcd.print(_flightController.motorsIsOn() ? "ON " : "OFF");
+    M5.Lcd.print(motorsIsOn ? "ON " : "OFF");
 
-    M5.Lcd.setCursor(72, 118);
-    M5.Lcd.printf("%2d  ", static_cast<int>(_receiver.getTickCountDelta()));
+    //M5.Lcd.setCursor(72, 118);
+    //M5.Lcd.printf("%2d  ", static_cast<int>(receiver.get_tick_count_delta()));
 }
 
-void ScreenM5::updateTemplate320x240() const
+void ScreenM5::updateTemplate320x240(const ReceiverBase& receiver) const
 {
     M5.Lcd.setCursor(0, 0);
-    displayEUI("MAC:", _receiver.getMyEUI());
+    displayEUI("MAC:", receiver.get_my_eui());
 
     int32_t yPos = 115;
     M5.Lcd.setCursor(0, yPos);
@@ -242,11 +242,11 @@ void ScreenM5::updateTemplate320x240() const
     M5.Lcd.printf("Motors:");
 }
 
-void ScreenM5::updateReceivedData320x240() const
+void ScreenM5::updateReceivedData320x240(const ReceiverBase& receiver) const
 {
     if (!_remoteEUI_updated) {
         M5.Lcd.setCursor(0, 20);
-        displayEUI("REM:", _receiver.getPrimaryPeerEUI());
+        displayEUI("REM:", receiver.get_primary_peer_eui());
     }
 
     int32_t yPos = 115;
@@ -255,10 +255,10 @@ void ScreenM5::updateReceivedData320x240() const
 #define USE_PWM
 #if defined(USE_PWM)
     const char* format = "%5d";
-    const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+    const receiver_controls_pwm_t controls = receiver.get_controls_pwm();
 #else
     const char* format = "%8.4f";
-    const ReceiverBase::controls_t controls = _receiver.getControls();
+    const receiver_controls_t controls = receiver.getControls();
 #endif
     M5.Lcd.printf(format, controls.throttle);
     M5.Lcd.setCursor(180, yPos);
@@ -271,16 +271,16 @@ void ScreenM5::updateReceivedData320x240() const
     M5.Lcd.printf(format, controls.pitch);
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);
-    const uint32_t flipButton = _receiver.getSwitch(ReceiverAtomJoyStick::MOTOR_ON_OFF_SWITCH);
-    const uint32_t mode = _receiver.getSwitch(ReceiverAtomJoyStick::MODE_SWITCH);
-    const uint32_t altMode = _receiver.getSwitch(ReceiverAtomJoyStick::ALT_MODE_SWITCH);
+    const uint32_t flipButton = receiver.get_switch(ReceiverAtomJoyStick::MOTOR_ON_OFF_SWITCH);
+    const uint32_t mode = receiver.get_switch(ReceiverAtomJoyStick::MODE_SWITCH);
+    const uint32_t altMode = receiver.get_switch(ReceiverAtomJoyStick::ALT_MODE_SWITCH);
     M5.Lcd.printf("M%1d %s A%1d F%1d ", static_cast<int>(mode), mode == ReceiverAtomJoyStick::MODE_STABLE ? "ST" : "SP", static_cast<int>(altMode), static_cast<int>(flipButton));
 
     M5.Lcd.setCursor(255, yPos);
-    M5.Lcd.printf("%4d", static_cast<int>(_receiver.getTickCountDelta()));
+    M5.Lcd.printf("%4d", static_cast<int>(receiver.get_tick_count_delta()));
 }
 
-void ScreenM5::update320x240(const TD_AHRS::data_t& ahrsData) const
+void ScreenM5::update320x240(const TD_AHRS::data_t& ahrsData, bool motorsIsOn) const
 {
     int32_t yPos = 45;
     M5.Lcd.setCursor(0, yPos);
@@ -298,11 +298,11 @@ void ScreenM5::update320x240(const TD_AHRS::data_t& ahrsData) const
 
     yPos = 220;
     M5.Lcd.setCursor(85, yPos);
-    M5.Lcd.printf("%s", _flightController.motorsIsOn() ? "ON " : "OFF");
+    M5.Lcd.printf("%s", motorsIsOn ? "ON " : "OFF");
 }
 #pragma GCC diagnostic pop
 
-void ScreenM5::updateTemplate()
+void ScreenM5::updateTemplate(const ReceiverBase& receiver)
 {
     if (_displayPort.isGrabbed()) {
         return;
@@ -311,7 +311,7 @@ void ScreenM5::updateTemplate()
 
     switch (_screenSize) {
     case SIZE_128x128:
-        updateTemplate128x128();
+        updateTemplate128x128(receiver);
         break;
     case SIZE_135x240:
         [[fallthrough]];
@@ -321,34 +321,32 @@ void ScreenM5::updateTemplate()
     case SIZE_320x240:
         [[fallthrough]];
     default:
-        updateTemplate320x240();
+        updateTemplate320x240(receiver);
     }
     _templateIsUpdated = true;
 }
 
-void ScreenM5::updateReceivedData()
+void ScreenM5::updateReceivedData(const ReceiverBase& receiver)
 {
     switch (_screenSize) {
     case SIZE_128x128:
-        updateReceivedData128x128();
+        updateReceivedData128x128(receiver);
         break;
     case SIZE_135x240:
         [[fallthrough]];
     case SIZE_80x160:
-        //updateReceivedData80x160();
+        //updateReceivedData80x160(receiver);
         break;
     case SIZE_320x240:
         [[fallthrough]];
     default:
-        updateReceivedData320x240();
+        updateReceivedData320x240(receiver);
     }
     _remoteEUI_updated = true;
 }
 
-void ScreenM5::updateAHRS_Data() const
+void ScreenM5::updateAHRS_Data(const ahrs_data_t& ahrsData, bool motorsIsOn) const
 {
-    ahrs_data_t ahrsData;
-    _flightController.getAHRS_MessageQueue().PEEK_AHRS_DATA(ahrsData);
     const Quaternion orientation = ahrsData.orientation;
 
     const TD_AHRS::data_t tdAhrsData {
@@ -362,18 +360,18 @@ void ScreenM5::updateAHRS_Data() const
     };
     switch (_screenSize) {
     case SIZE_128x128:
-        update128x128(tdAhrsData);
+        update128x128(tdAhrsData, motorsIsOn);
         break;
     case SIZE_135x240:
-        //update135x240(tdAhrsData);
+        //update135x240(tdAhrsData, motorsIsOn);
         break;
     case SIZE_80x160:
-        //update80x160(tdAhrsData);
+        //update80x160(tdAhrsData, motorsIsOn);
         break;
     case SIZE_320x240:
         [[fallthrough]];
     default:
-        update320x240(tdAhrsData);
+        update320x240(tdAhrsData, motorsIsOn);
         break;
     }
 }
@@ -381,7 +379,7 @@ void ScreenM5::updateAHRS_Data() const
 /*!
 Update the screen with data from the AHRS and the receiver.
 */
-void ScreenM5::update()
+void ScreenM5::update(const FlightController& flightController, const ReceiverBase& receiver)
 {
     if (_displayPort.isGrabbed()) {
         return;
@@ -390,13 +388,16 @@ void ScreenM5::update()
     if (_screenMode != ScreenM5::MODE_QRCODE) {
         // update the screen template if it hasn't been updated
         if (_templateIsUpdated == false) {
-            updateTemplate();
+            updateTemplate(receiver);
         }
-        updateAHRS_Data();
-        if (isNewReceiverPacketAvailable()) {
-            clearNewReceiverPacketAvailable();
+        ahrs_data_t ahrsData;
+        flightController.getAHRS_MessageQueue().PEEK_AHRS_DATA(ahrsData);
+        const bool motorsIsOn = flightController.motorsIsOn();
+        updateAHRS_Data(ahrsData, motorsIsOn);
+        if (is_new_receiver_packet_available()) {
+            clearnew_receiver_packet_available();
             // update the screen with data received from the receiver
-            updateReceivedData();
+            updateReceivedData(receiver);
         }
     }
 }

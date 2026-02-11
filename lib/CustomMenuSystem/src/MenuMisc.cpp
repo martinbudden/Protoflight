@@ -28,7 +28,7 @@ static const void* menuRcOnDisplayUpdate(CMSX& cmsx, [[maybe_unused]] DisplayPor
     const ReceiverBase& receiver = cmsx.getCMS().getReceiver();
     size_t ii = 0;
     for (auto& rc : rcData) {
-        rc = receiver.getChannelPWM(ii);
+        rc = receiver.get_channel_pwm(ii);
         ++ii;
     }
     return nullptr;
@@ -74,7 +74,7 @@ CMSX::menu_t CMSX::menuRcPreview {
 static const void* menuMiscOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
     const MotorMixerBase& motorMixer = cmsx.getCockpit().getFlightController().getMotorMixer();
-    motorIdle = motorMixer.getMotorConfig().motorIdle;
+    motorIdle = motorMixer.get_motor_config().motor_idle;
     fpvCamAngleDegrees = 0;
     crashFlipRate = 0;
 
@@ -84,9 +84,9 @@ static const void* menuMiscOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
 static const void* menuMiscOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     MotorMixerBase& motorMixer = cmsx.getCockpitMutable().getFlightControllerMutable().getMotorMixerMutable();
-    MotorMixerBase::motor_config_t motorConfig =  motorMixer.getMotorConfig();
-    motorConfig.motorIdle = motorIdle;
-    motorMixer.setMotorConfig(motorConfig);
+    MotorMixerBase::motor_config_t motorConfig =  motorMixer.get_motor_config();
+    motorConfig.motor_idle = motorIdle;
+    motorMixer.set_motor_config(motorConfig);
 
     return nullptr;
 }

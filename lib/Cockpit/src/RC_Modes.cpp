@@ -177,10 +177,10 @@ void RC_Modes::updateActivatedModes(const ReceiverBase& receiver)
     size_t ii = 0;
     for (const auto& modeActivationCondition : _modeActivationConditions) {
         if (stickyModes.test(modeActivationCondition.modeId)) {
-            const bool rangeActive = receiver.isRangeActive(modeActivationCondition.auxiliaryChannelIndex, modeActivationCondition.range);
+            const bool rangeActive = receiver.is_range_active(modeActivationCondition.auxiliaryChannelIndex, modeActivationCondition.range);
             updateMasksForStickyModes(modeActivationCondition, andBitset, newBitset, rangeActive);
         } else if (modeActivationCondition.modeId < MSP_Box::BOX_COUNT) {
-            const bool rangeActive = receiver.isRangeActive(modeActivationCondition.auxiliaryChannelIndex, modeActivationCondition.range);
+            const bool rangeActive = receiver.is_range_active(modeActivationCondition.auxiliaryChannelIndex, modeActivationCondition.range);
             updateMasksForMac(modeActivationCondition, andBitset, newBitset, rangeActive);
         }
         ++ii;
@@ -203,10 +203,10 @@ void RC_Modes::updateActivatedModes(const ReceiverBase& receiver)
     _rcModeActivationBitset = newBitset ^ andBitset;
 #if false
     enum { ANGLE_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_HOLD_MODE_CHANNEL = ReceiverBase::AUX3 };
-    if (receiver.getChannelPWM(ANGLE_MODE_CHANNEL)) {
+    if (receiver.get_channel_pwm(ANGLE_MODE_CHANNEL)) {
         _rcModeActivationBitset.set(MSP_Box::BOX_ANGLE);
     }
-    if (receiver.getChannelPWM(ALTITUDE_HOLD_MODE_CHANNEL)) {
+    if (receiver.get_channel_pwm(ALTITUDE_HOLD_MODE_CHANNEL)) {
         _rcModeActivationBitset.set(MSP_Box::BOX_ALTHOLD);
     }
 #endif

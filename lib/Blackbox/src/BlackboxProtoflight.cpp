@@ -43,8 +43,8 @@ Blackbox::write_e BlackboxProtoflight::writeSystemInformation()
 
     const MotorMixerBase& motorMixer = _flightController.getMotorMixer();
 #if defined(USE_DYNAMIC_IDLE)
-    const DynamicIdleController* dynamicIdleController = motorMixer.getDynamicIdleController();
-    const DynamicIdleController::config_t* dynamicIdleControllerConfig = dynamicIdleController ? &dynamicIdleController->getConfig() : nullptr;
+    const DynamicIdleController* dynamicIdleController = motorMixer.get_dynamic_idle_controller();
+    const DynamicIdleController::config_t* dynamicIdleControllerConfig = dynamicIdleController ? &dynamicIdleController->get_config() : nullptr;
 #endif
 
     struct firmware_t {
@@ -81,14 +81,14 @@ Blackbox::write_e BlackboxProtoflight::writeSystemInformation()
 // "P denom" ignored by blackbox-log-view
 //        BLACKBOX_PRINT_HEADER_LINE("P denom", "%d",                         static_cast<uint16_t>(blackboxIInterval / blackboxPInterval));
 
-        BLACKBOX_PRINT_HEADER_LINE("maxthrottle", "%d",                     motorMixer.getMotorConfig().maxthrottle);
+        BLACKBOX_PRINT_HEADER_LINE("maxthrottle", "%d",                     motorMixer.get_motor_config().max_throttle);
 // Baseflight uses a gyroScale that gives radians per microsecond as output, whereas Cleanflight produces degrees
 // per second and leaves the conversion to radians per microsecond to the IMU. Let's just convert Cleanflight's scale to
 // match Baseflight so we can use Baseflight's IMU for both:
 // sysConfig.gyroScale * (Math.PI / 180.0) * 0.000001
         BLACKBOX_PRINT_HEADER_LINE("gyro_scale","0x%x",                     BlackboxEncoder::castFloatBytesToInt(0.000001F / gyroScale));
         BLACKBOX_PRINT_HEADER_LINE("motorOutput", "%d,%d",                  158,2047);
-        BLACKBOX_PRINT_HEADER_LINE("motor_kv", "%d",                        motorMixer.getMotorConfig().kv);
+        BLACKBOX_PRINT_HEADER_LINE("motor_kv", "%d",                        motorMixer.get_motor_config().kv);
         BLACKBOX_PRINT_HEADER_LINE("acc_1G", "%u",                          4096);
 
 /*
@@ -245,7 +245,7 @@ H features:541130760
         BLACKBOX_PRINT_HEADER_LINE("use_unsynced_pwm", "%d",                0);
         BLACKBOX_PRINT_HEADER_LINE("motor_pwm_protocol", "%d",              PWM_TYPE_BRUSHED);
         BLACKBOX_PRINT_HEADER_LINE("motor_pwm_rate", "%d",                  480);
-        BLACKBOX_PRINT_HEADER_LINE("motor_idle", "%d",                      motorMixer.getMotorConfig().motorIdle);
+        BLACKBOX_PRINT_HEADER_LINE("motor_idle", "%d",                      motorMixer.get_motor_config().motor_idle);
         BLACKBOX_PRINT_HEADER_LINE("debug_mode", "%d",                      getDebugMode());
         BLACKBOX_PRINT_HEADER_LINE("features", "%d",                        541130760); //0x2041'0008
 

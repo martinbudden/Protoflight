@@ -4,11 +4,11 @@
 #include "Targets.h"
 
 #include <IMU_FiltersBase.h>
-#include <RPM_Filters.h>
+#include <RpmFilters.h>
 
 class Debug;
 class MotorMixerBase;
-class RPM_Filters;
+class RpmFilters;
 
 
 class IMU_Filters : public IMU_FiltersBase {
@@ -36,9 +36,9 @@ public:
 
     virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
 
-    void setRPM_Filters(RPM_Filters* rpmFilters) { _rpmFilters = rpmFilters; }
-    const RPM_Filters* getRPM_Filters() const { return _rpmFilters; }
-    RPM_Filters* getRPM_Filters() { return _rpmFilters; }
+    void setRPM_Filters(RpmFilters* rpmFilters) { _rpmFilters = rpmFilters; }
+    const RpmFilters* getRPM_Filters() const { return _rpmFilters; }
+    RpmFilters* getRPM_FiltersMutable() { return _rpmFilters; }
 
     void setConfig(const config_t& config);
     const config_t& getConfig() const { return _config; }
@@ -68,5 +68,5 @@ protected:
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
     DynamicNotchFilter _dynamicNotchFilter;
 #endif
-    RPM_Filters* _rpmFilters {nullptr};
+    RpmFilters* _rpmFilters {nullptr};
 };

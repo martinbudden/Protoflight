@@ -96,8 +96,8 @@ public:
     const altitude_hold_config_t& getAltitudeHoldConfig() const { return _altitudeHoldConfig; }
     bool isAltitudeHoldSetpointSet() const; //!< returns true if setpoint has been set
     bool setAltitudeHoldSetpoint(); //!< use the current altitude to set the setpoint for altitude hold
-    float calculateThrottleForAltitudeHold(const ReceiverBase::controls_t& controls);
-    FlightController::controls_t calculateFlightControls(const ReceiverBase::controls_t& controls, uint32_t flightModeModeFlags);
+    float calculateThrottleForAltitudeHold(const receiver_controls_t& controls);
+    FlightController::controls_t calculateFlightControls(const receiver_controls_t& controls, uint32_t flightModeModeFlags);
 
     AltitudeMessageQueue* getAltitudeMessageQueue() { return _altitudeMessageQueue; }
     //const AltitudeMessageQueue* getAltitudeMessageQueue() const { return _altitudeMessageQueue; }

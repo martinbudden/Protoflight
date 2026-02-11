@@ -65,7 +65,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
     } else {
         // Detect menu invocation
         if (!_cockpit.isArmed() && !_cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
-            const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+            const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW )
             if (RC_Modes::pwmIsLow(controls.yaw) && RC_Modes::pwmIsHigh(controls.pitch)) {
 #else
@@ -112,7 +112,7 @@ bool CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(read
         return true;
     }
 
-    const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+    const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
 
     CMSX::key_e key = CMSX::KEY_NONE;
     if (_cockpit.isArmed() == false && RC_Modes::pwmIsMid(controls.throttle) && RC_Modes::pwmIsLow(controls.yaw) && RC_Modes::pwmIsHigh(controls.pitch)) {

@@ -6,9 +6,9 @@
 #include <M5Unified.h>
 #endif
 #include <ReceiverAtomJoyStick.h>
-#include <ReceiverCRSF.h>
-#include <ReceiverIBUS.h>
-#include <ReceiverSBUS.h>
+#include <ReceiverCrsf.h>
+#include <ReceiverIbus.h>
+#include <ReceiverSbus.h>
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
 #include <WiFi.h>
 #endif
@@ -30,7 +30,7 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
     enum { RECEIVER_CHANNEL = 3 };
 #endif
     static ReceiverAtomJoyStick receiver(&myMacAddress[0], RECEIVER_CHANNEL);
-    receiver.setPositiveHalfThrottle(true);
+    receiver.set_positive_half_throttle(true);
     const esp_err_t espErr = receiver.init();
     Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
     assert(espErr == ESP_OK && "Unable to setup receiver.");
@@ -38,30 +38,30 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
     // Holding BtnB down while switching on initiates binding.
     // The Atom has no BtnB, so it always broadcasts address for binding on startup.
     if (M5.getBoard() ==lgfx::board_M5AtomS3 || M5.BtnB.wasPressed()) {
-        receiver.broadcastMyEUI();
+        receiver.broadcast_my_eui();
     }
 #else
     // no buttons defined, so always broadcast address for binding on startup
-    receiver.broadcastMyEUI();
+    receiver.broadcast_my_eui();
 #endif // M5_UNIFIED
     return receiver;
 
 #elif defined(USE_RECEIVER_SBUS)
 
-    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSBUS::BAUD_RATE, ReceiverSBUS::DATA_BITS, ReceiverSBUS::STOP_BITS, ReceiverSBUS::PARITY);
-    static ReceiverSBUS receiver(serialPort);
+    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverSbus::BAUD_RATE, ReceiverSbus::DATA_BITS, ReceiverSbus::STOP_BITS, ReceiverSbus::PARITY);
+    static ReceiverSbus receiver(serialPort);
     return receiver;
 
 #elif defined(USE_RECEIVER_IBUS)
 
-    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIBUS::BAUD_RATE, ReceiverIBUS::DATA_BITS, ReceiverIBUS::STOP_BITS, ReceiverIBUS::PARITY);
-    static ReceiverIBUS receiver(serialPort);
+    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverIbus::BAUD_RATE, ReceiverIbus::DATA_BITS, ReceiverIbus::STOP_BITS, ReceiverIbus::PARITY);
+    static ReceiverIbus receiver(serialPort);
     return receiver;
 
 #elif defined(USE_RECEIVER_CRSF)
 
-    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCRSF::BAUD_RATE, ReceiverCRSF::DATA_BITS, ReceiverCRSF::STOP_BITS, ReceiverCRSF::PARITY);
-    static ReceiverCRSF receiver(serialPort);
+    static SerialPort serialPort(SerialPort::RECEIVER_PINS, RECEIVER_UART_INDEX, ReceiverCrsf::BAUD_RATE, ReceiverCrsf::DATA_BITS, ReceiverCrsf::STOP_BITS, ReceiverCrsf::PARITY);
+    static ReceiverCrsf receiver(serialPort);
     return receiver;
 
 #else
@@ -69,23 +69,23 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
     const RX::config_t& rxConfig = nvs.loadRX_Config();
     auto rxType = static_cast<RX::serial_type_e>(rxConfig.serial_rx_provider);
 
-    uint32_t baudrate = ReceiverCRSF::BAUD_RATE;
-    uint8_t dataBits = ReceiverCRSF::DATA_BITS;
-    uint8_t stopBits = ReceiverCRSF::STOP_BITS;
-    uint8_t parity = ReceiverCRSF::PARITY;
+    uint32_t baudrate = ReceiverCrsf::BAUD_RATE;
+    uint8_t dataBits = ReceiverCrsf::DATA_BITS;
+    uint8_t stopBits = ReceiverCrsf::STOP_BITS;
+    uint8_t parity = ReceiverCrsf::PARITY;
 
     switch (rxType) {
     case RX::SERIAL_SBUS:
-        baudrate = ReceiverSBUS::BAUD_RATE;
-        dataBits = ReceiverSBUS::DATA_BITS;
-        stopBits = ReceiverSBUS::STOP_BITS;
-        parity   = ReceiverSBUS::PARITY;
+        baudrate = ReceiverSbus::BAUD_RATE;
+        dataBits = ReceiverSbus::DATA_BITS;
+        stopBits = ReceiverSbus::STOP_BITS;
+        parity   = ReceiverSbus::PARITY;
         break;
     case RX::SERIAL_IBUS:
-        baudrate = ReceiverIBUS::BAUD_RATE;
-        dataBits = ReceiverIBUS::DATA_BITS;
-        stopBits = ReceiverIBUS::STOP_BITS;
-        parity   = ReceiverIBUS::PARITY;
+        baudrate = ReceiverIbus::BAUD_RATE;
+        dataBits = ReceiverIbus::DATA_BITS;
+        stopBits = ReceiverIbus::STOP_BITS;
+        parity   = ReceiverIbus::PARITY;
         break;
     default:
         break;
@@ -95,20 +95,20 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
 
     // statically allocate the memory for the receiver
     // Note: difference between size of smallest receiver and largest receiver is only 80 bytes, so using the max size is not that wasteful.
-    static constexpr size_t RECEIVER_SIZE = std::max({sizeof(ReceiverSBUS), sizeof(ReceiverIBUS), sizeof(ReceiverCRSF)});
+    static constexpr size_t RECEIVER_SIZE = std::max({sizeof(ReceiverSbus), sizeof(ReceiverIbus), sizeof(ReceiverCrsf)});
     static std::array<uint8_t, RECEIVER_SIZE> receiverMemory;
 
     // The receiver will exist for the duration of the program and so never needs to be deleted, so it is OK to leave its pointer dangling.
     ReceiverBase* receiverPtr = nullptr;
     switch (rxType) {
     case RX::SERIAL_SBUS:
-        receiverPtr = new(&receiverMemory[0]) ReceiverSBUS(serialPort);
+        receiverPtr = new(&receiverMemory[0]) ReceiverSbus(serialPort);
         break;
     case RX::SERIAL_IBUS:
-        receiverPtr = new(&receiverMemory[0]) ReceiverIBUS(serialPort);
+        receiverPtr = new(&receiverMemory[0]) ReceiverIbus(serialPort);
         break;
     case RX::SERIAL_CRSF:
-        receiverPtr = new(&receiverMemory[0]) ReceiverCRSF(serialPort);
+        receiverPtr = new(&receiverMemory[0]) ReceiverCrsf(serialPort);
         break;
     default:
         assert(false && "Receiver type not supported");

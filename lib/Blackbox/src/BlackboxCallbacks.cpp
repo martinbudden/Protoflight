@@ -130,10 +130,10 @@ void BlackboxCallbacks::loadMainState(blackbox_main_state_t& mainState, uint32_t
 #endif
     }
     // log the final throttle value used in the mixer
-    mainState.setpoint[3] = static_cast<int16_t>(std::lroundf(_flightController.getMotorMixer().getThrottleCommand() * 1000.0F));
+    mainState.setpoint[3] = static_cast<int16_t>(std::lroundf(_flightController.getMotorMixer().get_throttle_command() * 1000.0F));
 
     // interval [1000,2000] for THROTTLE and [-500,+500] for ROLL/PITCH/YAW
-    const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM(); // returns controls in range [1000, 2000]
+    const receiver_controls_pwm_t controls = _receiver.get_controls_pwm(); // returns controls in range [1000, 2000]
     mainState.rcCommand[0] = static_cast<int16_t>(controls.roll - ReceiverBase::CHANNEL_MIDDLE);
     mainState.rcCommand[1] = static_cast<int16_t>(controls.pitch - ReceiverBase::CHANNEL_MIDDLE);
     mainState.rcCommand[2] = static_cast<int16_t>(controls.yaw - ReceiverBase::CHANNEL_MIDDLE);
@@ -144,11 +144,11 @@ void BlackboxCallbacks::loadMainState(blackbox_main_state_t& mainState, uint32_t
 
     const MotorMixerBase& motorMixer = _flightController.getMotorMixer();
 #if (__cplusplus >= 202002L)
-    for (auto ii : std::views::iota(size_t{0}, size_t{motorMixer.getMotorCount()})) {
+    for (auto ii : std::views::iota(size_t{0}, size_t{motorMixer.get_motor_count()})) {
 #else
-    for (size_t ii = 0; ii < motorMixer.getMotorCount(); ++ ii) {
+    for (size_t ii = 0; ii < motorMixer.get_motor_count(); ++ ii) {
 #endif
-        mainState.motor[ii] = static_cast<int16_t>(std::lroundf(motorMixer.getMotorOutput(ii)));
+        mainState.motor[ii] = static_cast<int16_t>(std::lroundf(motorMixer.get_motor_output(ii)));
 #if defined(USE_DSHOT_TELEMETRY)
         mainState.erpm[ii] = static_cast<int16_t>(mixer.getMotorRPM(ii));
 #endif

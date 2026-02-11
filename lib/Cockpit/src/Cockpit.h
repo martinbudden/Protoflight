@@ -142,7 +142,7 @@ public:
     uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
     void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex);
     void handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver);
-    virtual void updateControls(uint32_t tickCount, ReceiverBase& receiver) override;
+    virtual void update_controls(uint32_t tickCount, ReceiverBase& receiver) override;
 
     bool featureIsEnabled(uint32_t mask) const { return _features.isEnabled(mask); }
     uint32_t enabledFeatures() const { return _features.enabledFeatures(); }
@@ -159,7 +159,7 @@ public:
     uint32_t getFlightModeFlags() const;
     void setFlightModeFlag(uint8_t flag) { if (flag < FLIGHT_MODE_FLAG_COUNT) { _flightModeFlags.set(flag); } } // for testing
 
-    virtual void checkFailsafe(uint32_t tickCount) override;
+    virtual void check_failsafe(uint32_t tickCount) override;
     failsafe_phase_e getFailsafePhase() const { return _failsafe.phase; }
 
     const failsafe_config_t& getFailsafeConfig() const { return _failsafeConfig; }
@@ -236,7 +236,7 @@ private:
     bool _rebootRequired {false};
     bool _onOffSwitchPressed {false}; // on/off switch debouncing
     bool _cliMode {false};
-    boll _gpsRescueConfigured {false};
+    bool _gpsRescueConfigured {false};
 #if defined(USE_RC_ADJUSTMENTS)
     RC_Adjustments _rcAdjustments;
 #endif

@@ -42,19 +42,19 @@ static constexpr DynamicIdleController::config_t dynamicIdleControllerConfig = {
 
 static constexpr MotorMixerBase::motor_config_t motorConfig = {
     .device = {
-        .motorPWM_Rate = 480, // 16000 for brushed
-        .motorProtocol = MotorMixerBase::MOTOR_PROTOCOL_DSHOT300,
-        .motorInversion = false,
-        .useContinuousUpdate = true,
-        .useBurstDshot = 0,
-        .useDshotTelemetry = 0,
-        .useDshotEDT = 0,
+        .motor_pwm_rate = 480, // 16000 for brushed
+        .motor_protocol = MotorMixerBase::MOTOR_PROTOCOL_DSHOT300,
+        .motor_inversion = false,
+        .use_continuous_update = true,
+        .use_burst_dshot = 0,
+        .use_dshot_telemetry = 0,
+        .use_dshot_edt = 0,
     },
-    .motorIdle = 550, // 700 for brushed
-    .maxthrottle = 2000,
-    .mincommand = 1000,
+    .motor_idle = 550, // 700 for brushed
+    .max_throttle = 2000,
+    .min_command = 1000,
     .kv = 1960,
-    .motorPoleCount = 14,
+    .motor_pole_count = 14,
 };
 
 static constexpr FlightController::default_pids_t& flightControllerPIDs = FlightController::DefaultPIDs;
@@ -174,7 +174,7 @@ static constexpr IMU_Filters::config_t imuFiltersConfig = {
 };
 
 #if defined(USE_RPM_FILTERS)
-static constexpr RPM_Filters::config_t rpmFiltersConfig = {
+static constexpr RpmFilters::config_t rpmFiltersConfig = {
     .rpm_filter_fade_range_hz = 50,
     .rpm_filter_q = 500,
     .rpm_filter_lpf_hz = 150,
@@ -236,8 +236,8 @@ static constexpr RC_Modes::mode_activation_conditions_t RC_ModeActivationConditi
         .modeId = MSP_Box::BOX_ARM,
         .auxiliaryChannelIndex = ReceiverBase::AUX1 - ReceiverBase::AUX1, // NOLINT(misc-redundant-expression)
         .range = {
-            .startStep = ReceiverBase::RANGE_STEP_MID,
-            .endStep = ReceiverBase::RANGE_STEP_MAX
+            .start_step = ReceiverBase::RANGE_STEP_MID,
+            .end_step = ReceiverBase::RANGE_STEP_MAX
         },
         .modeLogic = {},
         .linkedTo = {}
@@ -245,8 +245,8 @@ static constexpr RC_Modes::mode_activation_conditions_t RC_ModeActivationConditi
         .modeId = MSP_Box::BOX_ANGLE,
         .auxiliaryChannelIndex = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .range = {
-            .startStep = ReceiverBase::RANGE_STEP_MID,
-            .endStep = ReceiverBase::RANGE_STEP_MAX
+            .start_step = ReceiverBase::RANGE_STEP_MID,
+            .end_step = ReceiverBase::RANGE_STEP_MAX
         },
         .modeLogic = {},
         .linkedTo = {}
@@ -254,8 +254,8 @@ static constexpr RC_Modes::mode_activation_conditions_t RC_ModeActivationConditi
         .modeId = MSP_Box::BOX_ALTITUDE_HOLD,
         .auxiliaryChannelIndex = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .range = {
-            .startStep = ReceiverBase::RANGE_STEP_MID,
-            .endStep = ReceiverBase::RANGE_STEP_MAX
+            .start_step = ReceiverBase::RANGE_STEP_MID,
+            .end_step = ReceiverBase::RANGE_STEP_MAX
         },
         .modeLogic = {},
         .linkedTo = {}

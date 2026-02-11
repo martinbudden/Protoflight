@@ -540,7 +540,7 @@ void RC_Adjustments::processStepwiseAdjustments(const ReceiverBase& receiver, Fl
         const adjustment_config_t& adjustmentConfig = (*_defaultAdjustmentConfigs)[adjustmentRange.adjustmentConfig - ADJUSTMENT_FUNCTION_CONFIG_INDEX_OFFSET];
         const adjustment_e adjustment = adjustmentConfig.adjustment;
 
-        if (!receiver.isRangeActive(adjustmentRange.auxChannelIndex, adjustmentRange.range) || adjustment == ADJUSTMENT_NONE) {
+        if (!receiver.is_range_active(adjustmentRange.auxChannelIndex, adjustmentRange.range) || adjustment == ADJUSTMENT_NONE) {
             adjustmentState.timeoutAtMilliseconds = 0;
             continue;
         }
@@ -554,7 +554,7 @@ void RC_Adjustments::processStepwiseAdjustments(const ReceiverBase& receiver, Fl
         }
         if (adjustmentConfig.mode == ADJUSTMENT_MODE_STEP) {
             int32_t delta {};
-            const uint16_t auxChannelPWM = receiver.getAuxiliaryChannel(adjustmentRange.auxSwitchChannelIndex);
+            const uint16_t auxChannelPWM = receiver.get_auxiliary_channel(adjustmentRange.auxSwitchChannelIndex);
             if (auxChannelPWM > ReceiverBase::CHANNEL_MIDDLE + 200) {
                 delta = adjustmentConfig.data.step;
             } else if (auxChannelPWM < ReceiverBase::CHANNEL_MIDDLE - 200) {
@@ -586,9 +586,9 @@ void RC_Adjustments::processContinuosAdjustments(const ReceiverBase& receiver, F
         const adjustment_config_t& adjustmentConfig = (*_defaultAdjustmentConfigs)[adjustmentRange.adjustmentConfig - ADJUSTMENT_FUNCTION_CONFIG_INDEX_OFFSET];
         const adjustment_e adjustment = adjustmentConfig.adjustment;
 
-        if (receiver.isRangeActive(adjustmentRange.auxChannelIndex, adjustmentRange.range) && adjustment != ADJUSTMENT_NONE) {
+        if (receiver.is_range_active(adjustmentRange.auxChannelIndex, adjustmentRange.range) && adjustment != ADJUSTMENT_NONE) {
 
-            const uint16_t auxChannelPWM = receiver.getAuxiliaryChannel(adjustmentRange.auxSwitchChannelIndex);
+            const uint16_t auxChannelPWM = receiver.get_auxiliary_channel(adjustmentRange.auxSwitchChannelIndex);
             if (auxChannelPWM != adjustmentState.lastRcData) {
                 [[maybe_unused]] int newValue = -1;
 

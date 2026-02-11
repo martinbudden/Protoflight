@@ -14,8 +14,8 @@
 #include <GPS_MessageQueue.h>
 #include <IMU_Base.h>
 #include <MSP_Protocol.h>
-#include <RPM_Filters.h>
 #include <ReceiverBase.h>
+#include <RpmFilters.h>
 
 #if (__cplusplus >= 202002L)
 #include <ranges>
@@ -131,17 +131,17 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         serializeVTX(dst);
         break;
     case MSP_RC: {
-        const ReceiverBase::controls_pwm_t controls = _receiver.getControlsPWM();
+        const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
         dst.writeU16(controls.throttle);
         dst.writeU16(controls.roll);
         dst.writeU16(controls.pitch);
         dst.writeU16(controls.yaw);
 #if (__cplusplus >= 202002L)
-        for (auto ii : std::views::iota(size_t{0}, size_t{_receiver.getAuxiliaryChannelCount()})) {
+        for (auto ii : std::views::iota(size_t{0}, size_t{_receiver.get_auxiliary_channel_count()})) {
 #else
-        for (size_t ii = 0; ii < _receiver.getAuxiliaryChannelCount(); ++ii) {
+        for (size_t ii = 0; ii < _receiver.get_auxiliary_channel_count(); ++ii) {
 #endif
-            dst.writeU16(_receiver.getAuxiliaryChannel(ii));
+            dst.writeU16(_receiver.get_auxiliary_channel(ii));
         }
         break;
     }
@@ -241,8 +241,8 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
             }
             dst.writeU8(box->permanentId);
             dst.writeU8(mac.auxiliaryChannelIndex);
-            dst.writeU8(mac.range.startStep);
-            dst.writeU8(mac.range.endStep);
+            dst.writeU8(mac.range.start_step);
+            dst.writeU8(mac.range.end_step);
         }
         break;
     case MSP_MODE_RANGES_EXTRA:
@@ -263,8 +263,8 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         for (const auto& adjustmentRange : _cockpit.getRC_Adjustments().getAdjustmentRanges()) {
             dst.writeU8(0); // was adjustmentRange.adjustmentIndex
             dst.writeU8(adjustmentRange.auxChannelIndex);
-            dst.writeU8(adjustmentRange.range.startStep);
-            dst.writeU8(adjustmentRange.range.endStep);
+            dst.writeU8(adjustmentRange.range.start_step);
+            dst.writeU8(adjustmentRange.range.end_step);
             dst.writeU8(adjustmentRange.adjustmentConfig);
             dst.writeU8(adjustmentRange.auxSwitchChannelIndex);
         }
@@ -367,7 +367,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     case MSP_ACC_TRIM:
         return RESULT_CMD_UNKNOWN;
     case MSP_MIXER_CONFIG: {
-        const MotorMixerBase::mixer_config_t& mixerConfig = _flightController.getMotorMixer().getMixerConfig();
+        const MotorMixerBase::mixer_config_t& mixerConfig = _flightController.getMotorMixer().get_mixer_config();
         dst.writeU8(static_cast<uint8_t>(mixerConfig.type));
         dst.writeU8(mixerConfig.yaw_motors_reversed);
         break;
@@ -481,16 +481,16 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_ADVANCED_CONFIG: {
-        const MotorMixerBase::motor_config_t& motorConfig = _flightController.getMotorMixer().getMotorConfig();
+        const MotorMixerBase::motor_config_t& motorConfig = _flightController.getMotorMixer().get_motor_config();
 
         dst.writeU8(1); // was gyro_sync_denom - removed in API 1.43
         dst.writeU8(1); // pid_process_denom
-        dst.writeU8(motorConfig.device.useContinuousUpdate);
-        dst.writeU8(motorConfig.device.motorProtocol);
-        dst.writeU16(motorConfig.device.motorPWM_Rate);
-        dst.writeU16(motorConfig.motorIdle);
+        dst.writeU8(motorConfig.device.use_continuous_update);
+        dst.writeU8(motorConfig.device.motor_protocol);
+        dst.writeU16(motorConfig.device.motor_pwm_rate);
+        dst.writeU16(motorConfig.motor_idle);
         dst.writeU8(0); // was gyro_use_32kHz
-        dst.writeU8(motorConfig.device.motorInversion);
+        dst.writeU8(motorConfig.device.motor_inversion);
         dst.writeU8(0); // deprecated gyro_to_use
         dst.writeU8(0); // gyro_high_fsr
         dst.writeU8(0); // gyroMovementCalibrationThreshold
@@ -506,8 +506,8 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         auto& imuFilters = static_cast<IMU_Filters&>(_ahrs.getIMU_Filters()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
         const FlightController::filters_config_t fcFilters = _flightController.getFiltersConfig();
-        const RPM_Filters* rpmFilters = imuFilters.getRPM_Filters();
-        const RPM_Filters::config_t rpmFiltersConfig = rpmFilters ? rpmFilters->getConfig() : RPM_Filters::config_t {}; // cppcheck-suppress knownConditionTrueFalse
+        const RpmFilters* rpmFilters = imuFilters.getRPM_Filters();
+        const RpmFilters::config_t rpmFiltersConfig = rpmFilters ? rpmFilters->get_config() : RpmFilters::config_t {}; // cppcheck-suppress knownConditionTrueFalse
 
         dst.writeU8(static_cast<uint8_t>(imuFiltersConfig.gyro_lpf1_hz));
         dst.writeU16(fcFilters.dterm_lpf1_hz);

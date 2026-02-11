@@ -39,8 +39,8 @@ Cockpit& Main::createCockpit(FlightController& flightController, Debug& debug, I
         .modeId = MSP_Box::BOX_ANGLE,
         .auxChannelIndex = ReceiverBase::AUX2,
         .range {
-            .startStep = RC_Modes::RANGE_STEP_MID,
-            .endStep = RC_Modes::RANGE_STEP_MAX
+            .start_step = RC_Modes::RANGE_STEP_MID,
+            .end_step = RC_Modes::RANGE_STEP_MAX
         },
         .modeLogic {},
         .linkedTo {}
@@ -51,8 +51,8 @@ Cockpit& Main::createCockpit(FlightController& flightController, Debug& debug, I
         .modeId = MSP_Box::BOX_ALTHOLD,
         .auxChannelIndex = ReceiverBase::AUX3,
         .range {
-            .startStep = RC_Modes::RANGE_STEP_MID,
-            .endStep = RC_Modes::RANGE_STEP_MAX
+            .start_step = RC_Modes::RANGE_STEP_MID,
+            .end_step = RC_Modes::RANGE_STEP_MAX
         },
         .modeLogic {},
         .linkedTo {}

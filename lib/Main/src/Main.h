@@ -154,7 +154,7 @@ private:
     static Cockpit& createCockpit(FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs);
     static DisplayPortBase& createDisplayPort(Debug& debug);
     // optional components create function return nullptr if component not specified as part of the build
-    static Dashboard* createDashboard(const DisplayPortBase& displayPort, const AHRS& ahrs, FlightController& flightController, ReceiverBase& receiver);
+    static Dashboard* createDashboard(const DisplayPortBase& displayPort, FlightController& flightController, const ReceiverBase& receiver);
     static Blackbox* createBlackBox(FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, const Debug& debug, GPS* gps);
     static VTX* createVTX(NonVolatileStorage& nvs);
     static GPS* createGPS(Debug& debug);

@@ -176,8 +176,8 @@ public:
     int32_t storeDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config);
 #endif
 #if defined(USE_RPM_FILTERS)
-    RPM_Filters::config_t loadRPM_FiltersConfig() const;
-    int32_t storeRPM_FiltersConfig(const RPM_Filters::config_t& config);
+    RpmFilters::config_t loadRPM_FiltersConfig() const;
+    int32_t storeRPM_FiltersConfig(const RpmFilters::config_t& config);
 #endif
 #if defined(USE_VTX)
     VTX::config_t loadVTX_Config() const;

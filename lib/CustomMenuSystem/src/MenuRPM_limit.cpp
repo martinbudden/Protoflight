@@ -15,13 +15,13 @@ DynamicIdleController::config_t dynamicIdleControllerConfig {};
 // cppcheck-suppress constParameterCallback
 static const void* menuRPM_limitOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
-    dynamicIdleControllerConfig = cmsx.getCockpit().getFlightController().getMotorMixer().getDynamicIdleController()->getConfig();
+    dynamicIdleControllerConfig = cmsx.getCockpit().getFlightController().getMotorMixer().get_dynamic_idle_controller()->get_config();
     return nullptr;
 }
 
 static const void* menuRPM_limitOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    cmsx.getCockpitMutable().getFlightControllerMutable().getMotorMixerMutable().setDynamicIdlerControllerConfig(dynamicIdleControllerConfig);
+    cmsx.getCockpitMutable().getFlightControllerMutable().getMotorMixerMutable().set_dynamic_idler_controller_config(dynamicIdleControllerConfig);
     return nullptr;
 }
 

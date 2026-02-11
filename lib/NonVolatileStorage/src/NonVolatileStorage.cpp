@@ -483,16 +483,16 @@ int32_t NonVolatileStorage::storeDynamicNotchFilterConfig(const DynamicNotchFilt
 #endif
 
 #if defined(USE_RPM_FILTERS)
-RPM_Filters::config_t NonVolatileStorage::loadRPM_FiltersConfig() const
+RpmFilters::config_t NonVolatileStorage::loadRPM_FiltersConfig() const
 {
-    {RPM_Filters::config_t config {};
+    {RpmFilters::config_t config {};
     if (loadItem(RPM_FiltersConfigKey, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
     return DEFAULTS::rpmFiltersConfig;
 }
 
-int32_t NonVolatileStorage::storeRPM_FiltersConfig(const RPM_Filters::config_t& config)
+int32_t NonVolatileStorage::storeRPM_FiltersConfig(const RpmFilters::config_t& config)
 {
     return storeItem(RPM_FiltersConfigKey, &config, sizeof(config), &DEFAULTS::rpmFiltersConfig);
 }
@@ -849,15 +849,15 @@ int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
 int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, uint8_t pidProfile, uint8_t ratesProfile)
 {
 #if defined(USE_DYNAMIC_IDLE)
-    const DynamicIdleController* dynamicIdleController = flightController.getMotorMixer().getDynamicIdleController();
+    const DynamicIdleController* dynamicIdleController = flightController.getMotorMixer().get_dynamic_idle_controller();
     if (dynamicIdleController) {
-        storeDynamicIdleControllerConfig(dynamicIdleController->getConfig(), pidProfile);
+        storeDynamicIdleControllerConfig(dynamicIdleController->get_config(), pidProfile);
     }
 #endif
 #if defined(USE_RPM_FILTERS)
-    const RPM_Filters* rpmFilters = flightController.getMotorMixer().getRPM_Filters();
+    const RpmFilters* rpmFilters = flightController.getMotorMixer().get_rpm_filters();
     if (rpmFilters) {
-        storeRPM_FiltersConfig(rpmFilters->getConfig());
+        storeRPM_FiltersConfig(rpmFilters->get_config());
     }
 #endif
 

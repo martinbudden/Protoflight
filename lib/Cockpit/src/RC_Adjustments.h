@@ -67,7 +67,7 @@ public:
     enum adjustment_mode_e { ADJUSTMENT_MODE_STEP, ADJUSTMENT_MODE_SELECT };
     struct adjustment_range_t {
         // when aux channel is in range...
-        ReceiverBase::channel_range_t range;
+        receiver_channel_range_t range;
         uint8_t auxChannelIndex;
         // ..then apply the adjustment function to the auxSwitchChannel ...
         uint8_t adjustmentConfig;

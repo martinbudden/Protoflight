@@ -86,7 +86,7 @@ void Main::setup()
     [[maybe_unused]] CMS* cms = createCMS(displayPort, cockpit, receiver, imuFilters, imuSensor, vtx);
     Blackbox* blackbox = createBlackBox(flightController, cockpit, receiver, imuFilters, debug, gps);
     [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, blackbox, vtx, osd, gps);
-    [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, ahrs, flightController, receiver);
+    [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, flightController, receiver);
 #if defined(USE_BLACKBOX_TEST)
     testBlackbox(blackbox, ahrs, receiver, debug);
 #endif

@@ -75,7 +75,7 @@ bool Autopilot::setAltitudeHoldSetpoint()
     return true;
 }
 
-float Autopilot::calculateThrottleForAltitudeHold(const ReceiverBase::controls_t& controls)
+float Autopilot::calculateThrottleForAltitudeHold(const receiver_controls_t& controls)
 {
     if (_altitudeMessageQueue == nullptr) {
         return controls.throttle;
@@ -103,7 +103,7 @@ float Autopilot::calculateThrottleForAltitudeHold(const ReceiverBase::controls_t
     return throttle;
 }
 
-FlightController::controls_t Autopilot::calculateFlightControls(const ReceiverBase::controls_t& controls, uint32_t flightModeModeFlags)
+FlightController::controls_t Autopilot::calculateFlightControls(const receiver_controls_t& controls, uint32_t flightModeModeFlags)
 {
     (void)flightModeModeFlags;
 

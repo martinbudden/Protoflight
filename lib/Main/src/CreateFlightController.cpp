@@ -4,9 +4,9 @@
 
 #include <AHRS.h>
 #include <AHRS_MessageQueue.h>
-#include <MotorMixerQuadX_DShot.h>
-#include <MotorMixerQuadX_DShotBitbang.h>
-#include <MotorMixerQuadX_PWM.h>
+#include <MotorMixerQuadXDshot.h>
+#include <MotorMixerQuadXDshotBitbang.h>
+#include <MotorMixerQuadXPwm.h>
 
 
 FlightController& Main::createFlightController(float taskIntervalSeconds, [[maybe_unused]] Debug& debug, const NonVolatileStorage& nvs)
@@ -24,19 +24,19 @@ FlightController& Main::createFlightController(float taskIntervalSeconds, [[mayb
     // Statically allocate the MotorMixer object as defined by the build flags.
 #if defined(USE_MOTOR_MIXER_QUAD_X_PWM)
 
-    static MotorMixerQuadX_PWM motorMixer(MotorMixerQuadBase::MOTOR_PINS, &debug);
+    static MotorMixerQuadXPwm motorMixer(MotorMixerQuadBase::MOTOR_PINS, &debug);
     motorMixerPtr = &motorMixer;
 
 #elif defined(USE_MOTOR_MIXER_QUAD_X_DSHOT)
 
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-    static MotorMixerQuadX_DShotBitbang motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
+    static MotorMixerQuadXDshotBitbang motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
 #else
-    static MotorMixerQuadX_DShot motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
+    static MotorMixerQuadXDshot motorMixer(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
 #endif
 #if defined(USE_DYNAMIC_IDLE)
-    motorMixer.setMotorOutputMin(0.0F);
-    motorMixer.setDynamicIdlerControllerConfig(nvs.loadDynamicIdleControllerConfig(nvs.getCurrentPidProfileIndex()));
+    motorMixer.set_motor_output_min(0.0F);
+    motorMixer.set_dynamic_idler_controller_config(nvs.loadDynamicIdleControllerConfig(nvs.getCurrentPidProfileIndex()));
 #else
     motorMixer.setMotorOutputMin(0.055F); // 5.5%
 #endif
@@ -51,19 +51,19 @@ FlightController& Main::createFlightController(float taskIntervalSeconds, [[mayb
 
 #else
     const MotorMixerBase::mixer_config_t& motorMixerConfig = nvs.loadMotorMixerConfig();
-    const auto motorMixerType = static_cast<MotorMixerBase::type_e>(motorMixerConfig.type);
+    const uint8_t motorMixerType = motorMixerConfig.type;
     const MotorMixerBase::motor_config_t& motorConfig = nvs.loadMotorConfig();
-    const auto motorProtocol = static_cast<MotorMixerBase::motor_protocol_e>(motorConfig.device.motorProtocol);
+    const uint8_t motorProtocol = motorConfig.device.motor_protocol;
 
     switch (motorMixerType) { // NOLINT(hicpp-multiway-paths-covered) switch could be better written as an if/else statement
     case MotorMixerBase::QUAD_X:
         if (motorProtocol == MotorMixerBase::MOTOR_PROTOCOL_PWM || motorProtocol == MotorMixerBase::MOTOR_PROTOCOL_BRUSHED) {
-            motorMixerPtr = new MotorMixerQuadX_PWM(MotorMixerQuadBase::MOTOR_PINS, &debug);
+            motorMixerPtr = new MotorMixerQuadXPwm(MotorMixerQuadBase::MOTOR_PINS, &debug);
         } else {
 #if defined(FRAMEWORK_STM32_CUBE) || defined(FRAMEWORK_ARDUINO_STM32)
-            motorMixerPtr = new MotorMixerQuadX_DShotBitbang(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
+            motorMixerPtr = new MotorMixerQuadXDshotBitbang(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
 #else
-            motorMixerPtr = new MotorMixerQuadX_DShot(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
+            motorMixerPtr = new MotorMixerQuadXDshot(taskIntervalMicroseconds, outputToMotorsDenominator, MotorMixerQuadBase::MOTOR_PINS, debug);
 #endif
         }
         break;
@@ -75,7 +75,7 @@ FlightController& Main::createFlightController(float taskIntervalSeconds, [[mayb
 
 #endif // USE_MOTOR_MIXER_*
 
-    motorMixerPtr->setMotorConfig(nvs.loadMotorConfig());
+    motorMixerPtr->set_motor_config(nvs.loadMotorConfig());
 
     // Statically allocate the flightController.
     static FlightController flightController(taskIntervalMicroseconds, outputToMotorsDenominator, *motorMixerPtr, ahrsMessageQueue, debug);

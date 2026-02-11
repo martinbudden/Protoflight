@@ -158,8 +158,8 @@ void Cockpit::startBlackboxRecording(FlightController& flightController)
     if (_blackbox) {
         _blackbox->start(Blackbox::start_t{
             .debugMode = static_cast<uint16_t>(_debug.getMode()),
-            .motorCount = static_cast<uint8_t>(flightController.getMotorMixer().getMotorCount()),
-            .servoCount = static_cast<uint8_t>(flightController.getMotorMixer().getServoCount())
+            .motorCount = static_cast<uint8_t>(flightController.getMotorMixer().get_motor_count()),
+            .servoCount = static_cast<uint8_t>(flightController.getMotorMixer().get_servo_count())
         });
         flightController.setBlackboxActive(true);
     }
@@ -176,7 +176,7 @@ void Cockpit::stopBlackboxRecording(FlightController& flightController)
 void Cockpit::handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver)
 {
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    if (receiver.getSwitch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
+    if (receiver.get_switch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
         _onOffSwitchPressed = true;
     } else {
         if (_onOffSwitchPressed) {
@@ -215,10 +215,10 @@ void Cockpit::handleArmingSwitch(FlightController& flightController, const Recei
 /*!
 Called from Receiver Task.
 */
-void Cockpit::updateControls(uint32_t tickCount, ReceiverBase& receiver)
+void Cockpit::update_controls(uint32_t tickCount, ReceiverBase& receiver)
 {
     FlightController& flightController = _flightController;
-    const ReceiverBase::controls_t controls = receiver.getControls();
+    const receiver_controls_t controls = receiver.get_controls();
     RC_Modes& rcModes = _rcModes;
     // failsafe handling
     _failsafe.phase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
@@ -304,7 +304,7 @@ void Cockpit::updateControls(uint32_t tickCount, ReceiverBase& receiver)
     flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
 }
 
-void Cockpit::checkFailsafe(uint32_t tickCount)
+void Cockpit::check_failsafe(uint32_t tickCount)
 {
     FlightController& flightController = _flightController;
 

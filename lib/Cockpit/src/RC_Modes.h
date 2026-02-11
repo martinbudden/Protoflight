@@ -30,7 +30,7 @@ public:
     struct mode_activation_condition_t {
         MSP_Box::id_e modeId;
         uint8_t auxiliaryChannelIndex;
-        ReceiverBase::channel_range_t range;
+        receiver_channel_range_t range;
         mode_logic_e modeLogic;
         MSP_Box::id_e linkedTo;
     };
@@ -49,7 +49,7 @@ private:
     bool isModeActivationConditionLinked(MSP_Box::id_e modeId) const;
     //void removeModeActivationCondition(MSP_Box::id_e modeId);
     bool isModeActivationConditionConfigured(const mode_activation_condition_t& mac, const mode_activation_condition_t& emptyMac) const;
-    static bool isRangeUsable(const ReceiverBase::channel_range_t& range) { return range.startStep < range.endStep; }
+    static bool isRangeUsable(const receiver_channel_range_t& range) { return range.start_step < range.end_step; }
     void updateMasksForMac(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitsets, bool rangeActive);
     void updateMasksForStickyModes(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitset, bool rangeActive);
 private:

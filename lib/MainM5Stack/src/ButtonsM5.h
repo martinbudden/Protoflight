@@ -2,11 +2,14 @@
 
 #include <ButtonsBase.h>
 
+class FlightController;
+class ReceiverBase;
+
 
 class ButtonsM5 : public ButtonsBase {
 public:
-    ButtonsM5(FlightController& flightController, const ReceiverBase& receiver, ScreenBase* screen);
-    virtual void update() override;
+    ButtonsM5(ScreenBase* screen);
+    virtual void update(FlightController& flightController, const ReceiverBase& receiver) override;
 private:
     // ButtonsM5 is not copyable or moveable
     ButtonsM5(const ButtonsM5&) = delete;

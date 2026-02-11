@@ -717,25 +717,25 @@ void OSD_Elements::draw_RC_CHANNELS(DisplayPortBase& displayPort) // cppcheck-su
 {
     (void)displayPort;
 
-    const ReceiverBase::controls_pwm_t controlsPWM = _receiver.getControlsPWM();
+    const receiver_controls_pwm_t controls_pwm = _receiver.get_controls_pwm();
     switch (_RC_CHANNELS_channel) {
     case 0:
-        sprintf(&_activeElement.buf[0], "T:%5d", controlsPWM.throttle);
+        sprintf(&_activeElement.buf[0], "T:%5d", controls_pwm.throttle);
         _activeElement.offsetX = 0;
         _activeElement.offsetY = 0;
         break;
     case 1:
-        sprintf(&_activeElement.buf[0], "R:%5d", controlsPWM.roll);
+        sprintf(&_activeElement.buf[0], "R:%5d", controls_pwm.roll);
         _activeElement.offsetX = displayPort.getColumnCount()/2;
         _activeElement.offsetY = 0;
         break;
     case 2:
-        sprintf(&_activeElement.buf[0], "P:%5d", controlsPWM.pitch);
+        sprintf(&_activeElement.buf[0], "P:%5d", controls_pwm.pitch);
         _activeElement.offsetX = displayPort.getColumnCount()/2;
         _activeElement.offsetY = 1;
         break;
     default:
-        sprintf(&_activeElement.buf[0], "Y:%5d", controlsPWM.yaw);
+        sprintf(&_activeElement.buf[0], "Y:%5d", controls_pwm.yaw);
         _activeElement.offsetX = 0;
         _activeElement.offsetY = 1;
         break;
