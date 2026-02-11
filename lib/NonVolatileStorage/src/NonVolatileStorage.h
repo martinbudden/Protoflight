@@ -121,8 +121,8 @@ public:
     RX::config_t loadRX_Config() const;
     int32_t storeRX_Config(const RX::config_t& config);
 
-    RC_Modes::mode_activation_conditions_t loadRC_ModeActivationConditions() const;
-    int32_t storeRC_ModeActivationConditions(const RC_Modes::mode_activation_conditions_t& modeActivationConditions);
+    rc_modes_activation_condition_array_t loadRC_ModeActivationConditions() const;
+    int32_t storeRC_ModeActivationConditions(const rc_modes_activation_condition_array_t& modeActivationConditions);
 
 #if defined(USE_RC_ADJUSTMENTS)
     RC_Adjustments::adjustment_ranges_t loadRC_AdjustmentRanges() const;

@@ -656,16 +656,16 @@ int32_t NonVolatileStorage::storeRX_Config(const RX::config_t& config)
 }
 
 
-RC_Modes::mode_activation_conditions_t NonVolatileStorage::loadRC_ModeActivationConditions() const
+rc_modes_activation_condition_array_t NonVolatileStorage::loadRC_ModeActivationConditions() const
 {
-    {RC_Modes::mode_activation_conditions_t modeActivationConditions {};
+    {rc_modes_activation_condition_array_t modeActivationConditions {};
     if (loadItem(RC_ModeActivationConditionsKey, &modeActivationConditions, sizeof(modeActivationConditions))) {
         return modeActivationConditions;
     }}
     return DEFAULTS::RC_ModeActivationConditions;
 }
 
-int32_t NonVolatileStorage::storeRC_ModeActivationConditions(const RC_Modes::mode_activation_conditions_t& modeActivationConditions)
+int32_t NonVolatileStorage::storeRC_ModeActivationConditions(const rc_modes_activation_condition_array_t& modeActivationConditions)
 {
     return storeItem(RC_ModeActivationConditionsKey, &modeActivationConditions, sizeof(modeActivationConditions), &DEFAULTS::RC_ModeActivationConditions);
 }

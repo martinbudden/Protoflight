@@ -8,25 +8,25 @@
 #include <cstring>
 
 
-void RC_Modes::setModeActivationConditions(const mode_activation_conditions_t& modeActivationConditions)
+void RC_Modes::setModeActivationConditions(const rc_modes_activation_condition_array_t& modeActivationConditions)
 {
     _modeActivationConditions = modeActivationConditions;
 }
 
-const RC_Modes::mode_activation_condition_t& RC_Modes::getModeActivationCondition(size_t index) const
+const rc_modes_activation_condition_t& RC_Modes::getModeActivationCondition(size_t index) const
 {
-    assert(index < MAX_MODE_ACTIVATION_CONDITION_COUNT);
+    assert(index < RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT);
     return _modeActivationConditions[index];
 }
 
-void RC_Modes::setModeActivationCondition(size_t index, const mode_activation_condition_t& modeActivationCondition)
+void RC_Modes::setModeActivationCondition(size_t index, const rc_modes_activation_condition_t& modeActivationCondition)
 {
-    if (index < MAX_MODE_ACTIVATION_CONDITION_COUNT) {
+    if (index < RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT) {
         _modeActivationConditions[index] = modeActivationCondition;
     }
 }
 
-bool RC_Modes::isModeActive(MSP_Box::id_e rcMode) const
+bool RC_Modes::isModeActive(uint8_t rcMode) const
 {
     return _rcModeActivationBitset.test(rcMode);
 /*!!
@@ -41,7 +41,7 @@ bool RC_Modes::isModeActive(MSP_Box::id_e rcMode) const
 }
 
 
-bool RC_Modes::isModeActivationConditionPresent(MSP_Box::id_e modeId) const
+bool RC_Modes::isModeActivationConditionPresent(uint8_t modeId) const
 {
 #if false
     for (const auto& mac : _modeActivationConditions) {
@@ -57,7 +57,7 @@ bool RC_Modes::isModeActivationConditionPresent(MSP_Box::id_e modeId) const
 #endif
 }
 
-bool RC_Modes::isModeActivationConditionLinked(MSP_Box::id_e modeId) const
+bool RC_Modes::isModeActivationConditionLinked(uint8_t modeId) const
 {
 #if false
     for (const auto& modeActivationCondition : _modeActivationConditions) {
@@ -74,7 +74,7 @@ bool RC_Modes::isModeActivationConditionLinked(MSP_Box::id_e modeId) const
 }
 
 #if false
-void RC_Modes::removeModeActivationCondition(const MSP_Box::id_e modeId)
+void RC_Modes::removeModeActivationCondition(const uint8_t modeId)
 {
     (void)modeId;
 
@@ -90,7 +90,7 @@ void RC_Modes::removeModeActivationCondition(const MSP_Box::id_e modeId)
 }
 #endif
 
-bool RC_Modes::isModeActivationConditionConfigured(const mode_activation_condition_t& mac, const mode_activation_condition_t& emptyMac) const
+bool RC_Modes::isModeActivationConditionConfigured(const rc_modes_activation_condition_t& mac, const rc_modes_activation_condition_t& emptyMac) const
 {
     if (memcmp(&mac, &emptyMac, sizeof(emptyMac))) {
         return true;
@@ -104,7 +104,7 @@ We can then use this to speed up processing by only evaluating used conditions
 */
 void RC_Modes::analyzeModeActivationConditions()
 {
-    mode_activation_condition_t emptyMac {};
+    rc_modes_activation_condition_t emptyMac {};
 
     _activeMacCount = 0;
     _activeLinkedMacCount = 0;
@@ -131,7 +131,7 @@ void RC_Modes::analyzeModeActivationConditions()
  *       T       F      - all previous AND macs active, no previous active OR macs
  *       T       T      - at least 1 previous inactive AND mac, no previous active OR macs
  */
-void RC_Modes::updateMasksForMac(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitset, bool rangeActive)
+void RC_Modes::updateMasksForMac(const rc_modes_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitset, bool rangeActive)
 {
     if (andBitset.test(mac.modeId) || !newBitset.test(mac.modeId)) {
         const bool bAnd = mac.modeLogic == MODE_LOGIC_AND;
@@ -149,7 +149,7 @@ void RC_Modes::updateMasksForMac(const mode_activation_condition_t& mac, MSP_Box
     }
 }
 
-void RC_Modes::updateMasksForStickyModes(const mode_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitset, bool rangeActive)
+void RC_Modes::updateMasksForStickyModes(const rc_modes_activation_condition_t& mac, MSP_Box::bitset_t& andBitset, MSP_Box::bitset_t& newBitset, bool rangeActive)
 {
     enum { STICKY_MODE_BOOT_DELAY_US = 5000000 }; // 5 seconds
     if (isModeActive(mac.modeId)) {

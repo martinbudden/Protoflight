@@ -235,7 +235,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
     }
     case MSP_MODE_RANGES:
         for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
-            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
+            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(static_cast<MSP_Box::id_e>(mac.modeId));
             if (box == nullptr) {
                 return RESULT_CMD_UNKNOWN;
             }
@@ -246,10 +246,10 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         }
         break;
     case MSP_MODE_RANGES_EXTRA:
-        dst.writeU8(RC_Modes::MAX_MODE_ACTIVATION_CONDITION_COUNT);
+        dst.writeU8(RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT);
         for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
-            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(mac.modeId);
-            const MSP_Box::box_t* linkedBox = MSP_Box::findBoxByBoxId(mac.linkedTo);
+            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(static_cast<MSP_Box::id_e>(mac.modeId));
+            const MSP_Box::box_t* linkedBox = MSP_Box::findBoxByBoxId(static_cast<MSP_Box::id_e>(mac.linkedTo));
             if (box == nullptr || linkedBox == nullptr) {
                 return RESULT_CMD_UNKNOWN;
             }

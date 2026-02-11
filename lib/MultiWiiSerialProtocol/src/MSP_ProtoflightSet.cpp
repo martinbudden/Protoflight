@@ -62,7 +62,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
     }
     case MSP_SET_MODE_RANGE: {
         const uint8_t macIndex = src.readU8();
-        if (macIndex >= RC_Modes::MAX_MODE_ACTIVATION_CONDITION_COUNT) {
+        if (macIndex >= RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT) {
             return RESULT_ERROR;
         }
         const uint8_t boxId = src.readU8();
@@ -70,8 +70,8 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         if (box == nullptr) {
             return RESULT_ERROR;
         }
-        RC_Modes::mode_activation_condition_t mac = _cockpit.getRC_Modes().getModeActivationCondition(macIndex);
-        mac.modeId = static_cast<MSP_Box::id_e>(box->id);
+        rc_modes_activation_condition_t mac = _cockpit.getRC_Modes().getModeActivationCondition(macIndex);
+        mac.modeId = box->id;
         mac.auxiliaryChannelIndex = src.readU8();
         mac.range.start_step = src.readU8();
         mac.range.end_step = src.readU8();

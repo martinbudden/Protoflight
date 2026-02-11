@@ -231,32 +231,32 @@ Mode activation conditions.
 
 By default AUX1 is for arming, AUX2 for angle mode, and AUX3 for altitude hold.
 */
-static constexpr RC_Modes::mode_activation_conditions_t RC_ModeActivationConditions = {{
+static constexpr rc_modes_activation_condition_array_t RC_ModeActivationConditions = {{
     {
+        .range = {
+            .start_step = ReceiverBase::RANGE_STEP_MID,
+            .end_step = ReceiverBase::RANGE_STEP_MAX
+        },
         .modeId = MSP_Box::BOX_ARM,
         .auxiliaryChannelIndex = ReceiverBase::AUX1 - ReceiverBase::AUX1, // NOLINT(misc-redundant-expression)
+        .modeLogic = {},
+        .linkedTo = {}
+    }, {
         .range = {
             .start_step = ReceiverBase::RANGE_STEP_MID,
             .end_step = ReceiverBase::RANGE_STEP_MAX
         },
-        .modeLogic = {},
-        .linkedTo = {}
-    }, {
         .modeId = MSP_Box::BOX_ANGLE,
         .auxiliaryChannelIndex = ReceiverBase::AUX2 - ReceiverBase::AUX1,
-        .range = {
-            .start_step = ReceiverBase::RANGE_STEP_MID,
-            .end_step = ReceiverBase::RANGE_STEP_MAX
-        },
         .modeLogic = {},
         .linkedTo = {}
     }, {
-        .modeId = MSP_Box::BOX_ALTITUDE_HOLD,
-        .auxiliaryChannelIndex = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .range = {
             .start_step = ReceiverBase::RANGE_STEP_MID,
             .end_step = ReceiverBase::RANGE_STEP_MAX
         },
+        .modeId = MSP_Box::BOX_ALTITUDE_HOLD,
+        .auxiliaryChannelIndex = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .modeLogic = {},
         .linkedTo = {}
     },
