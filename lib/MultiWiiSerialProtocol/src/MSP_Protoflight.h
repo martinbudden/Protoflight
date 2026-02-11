@@ -28,16 +28,16 @@ public:
 public:
     virtual void rebootFn(serialPort_t* serialPort) override;
 
-    virtual result_e processGetCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
-    virtual result_e processGetCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBufReader& src) override;
-    result_e processGetCommand(int16_t cmdMSP, StreamBuf& dst) { return processGetCommand(cmdMSP, dst, 0, nullptr); };
+    virtual result_e processGetCommand(int16_t cmdMSP, StreamBufWriter& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
+    virtual result_e processGetCommand(int16_t cmdMSP, StreamBufWriter& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBufReader& src) override;
+    result_e processGetCommand(int16_t cmdMSP, StreamBufWriter& dst) { return processGetCommand(cmdMSP, dst, 0, nullptr); };
 
     virtual result_e processSetCommand(int16_t cmdMSP, StreamBufReader& src, descriptor_t srcDesc, postProcessFnPtr* postProcessFn) override;
     result_e processSetCommand(int16_t cmdMSP, StreamBufReader& src) { return processSetCommand(cmdMSP, src, 0, nullptr); }
 private:
-    void serializeVTX(StreamBuf& dst);
-    void serializeDataflashSummaryReply(StreamBuf& dst);
-    void serializeSDCardSummaryReply(StreamBuf& dst);
+    void serializeVTX(StreamBufWriter& dst);
+    void serializeDataflashSummaryReply(StreamBufWriter& dst);
+    void serializeSDCardSummaryReply(StreamBufWriter& dst);
     void setMSP_VTX_DeviceStatusReady(descriptor_t srcDesc);
 private:
     AHRS& _ahrs;

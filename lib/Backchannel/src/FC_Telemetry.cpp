@@ -5,7 +5,7 @@
 #include <Debug.h>
 #include <MSP_Base.h>
 #include <SV_TelemetryData.h>
-#include <StreamBuf.h>
+#include <StreamBufWriter.h>
 
 #include <cstring>
 #if (__cplusplus >= 202002L)
@@ -87,10 +87,10 @@ size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t se
     td->data.msp.payloadSize = 0;
     td->data.msp.messageType = static_cast<uint8_t>(cmdMSP);
 
-    StreamBuf sbuf(&td->data.msp.payload[0], sizeof(TD_MSP));
+    StreamBufWriter sbuf(&td->data.msp.payload[0], sizeof(TD_MSP));
 
     msp.processGetCommand(cmdMSP, sbuf, 0, nullptr);
-    const auto payloadSize = static_cast<uint8_t>(sbuf.bytesWritten());
+    const auto payloadSize = static_cast<uint8_t>(sbuf.bytes_written());
     uint8_t checksum = 0;
     for (size_t ii = 0; ii < payloadSize; ++ii) {
         checksum ^= td->data.msp.payload[ii];

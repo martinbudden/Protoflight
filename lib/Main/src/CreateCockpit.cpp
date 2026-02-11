@@ -36,7 +36,7 @@ Cockpit& Main::createCockpit(FlightController& flightController, Debug& debug, I
 
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW) && false
     const rc_modes_activation_condition_t macAngle = {
-        .mode_id = MSP_Box::BOX_ANGLE,
+        .mode_id = MspBox::BOX_ANGLE,
         .aux_channel_index = ReceiverBase::AUX2,
         .range {
             .start_step = RcModes::RANGE_STEP_MID,
@@ -48,7 +48,7 @@ Cockpit& Main::createCockpit(FlightController& flightController, Debug& debug, I
     rcModes.set_mode_activation_condition(0, macAngle);
 
     const rc_modes_activation_condition_t macAltitudeHold = {
-        .mode_id = MSP_Box::BOX_ALTHOLD,
+        .mode_id = MspBox::BOX_ALTHOLD,
         .aux_channel_index = ReceiverBase::AUX3,
         .range {
             .start_step = RcModes::RANGE_STEP_MID,

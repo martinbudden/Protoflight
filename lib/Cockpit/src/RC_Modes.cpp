@@ -133,7 +133,7 @@ void RcModes::analyze_mode_activation_conditions()
  *       T       F      - all previous AND macs active, no previous active OR macs
  *       T       T      - at least 1 previous inactive AND mac, no previous active OR macs
  */
-void RcModes::update_masks_for_mac(const rc_modes_activation_condition_t& mac, MSP_Box::bitset_t& and_bitset, MSP_Box::bitset_t& new_bitset, bool range_active)
+void RcModes::update_masks_for_mac(const rc_modes_activation_condition_t& mac, MspBox::bitset_t& and_bitset, MspBox::bitset_t& new_bitset, bool range_active)
 {
     if (and_bitset.test(mac.mode_id) || !new_bitset.test(mac.mode_id)) {
         const bool bAnd = mac.mode_logic == MODE_LOGIC_AND;
@@ -151,7 +151,7 @@ void RcModes::update_masks_for_mac(const rc_modes_activation_condition_t& mac, M
     }
 }
 
-void RcModes::update_masks_for_sticky_modes(const rc_modes_activation_condition_t& mac, MSP_Box::bitset_t& and_bitset, MSP_Box::bitset_t& new_bitset, bool range_active)
+void RcModes::update_masks_for_sticky_modes(const rc_modes_activation_condition_t& mac, MspBox::bitset_t& and_bitset, MspBox::bitset_t& new_bitset, bool range_active)
 {
     enum { STICKY_MODE_BOOT_DELAY_US = 5000000 }; // 5 seconds
     if (is_mode_active(mac.mode_id)) {
@@ -170,10 +170,10 @@ void RcModes::update_masks_for_sticky_modes(const rc_modes_activation_condition_
 
 void RcModes::update_activated_modes(const ReceiverBase& receiver)
 {
-    MSP_Box::bitset_t new_bitset {};
-    MSP_Box::bitset_t and_bitset {};
-    MSP_Box::bitset_t stickyModes {};
-    stickyModes.set(MSP_Box::BOX_PARALYZE);
+    MspBox::bitset_t new_bitset {};
+    MspBox::bitset_t and_bitset {};
+    MspBox::bitset_t stickyModes {};
+    stickyModes.set(MspBox::BOX_PARALYZE);
 
     // determine which conditions set/clear the mode
     size_t ii = 0;
@@ -181,7 +181,7 @@ void RcModes::update_activated_modes(const ReceiverBase& receiver)
         if (stickyModes.test(mode_activation_condition.mode_id)) {
             const bool range_active = receiver.is_range_active(mode_activation_condition.auxiliary_channel_index, mode_activation_condition.range);
             update_masks_for_sticky_modes(mode_activation_condition, and_bitset, new_bitset, range_active);
-        } else if (mode_activation_condition.mode_id < MSP_Box::BOX_COUNT) {
+        } else if (mode_activation_condition.mode_id < MspBox::BOX_COUNT) {
             const bool range_active = receiver.is_range_active(mode_activation_condition.auxiliary_channel_index, mode_activation_condition.range);
             update_masks_for_mac(mode_activation_condition, and_bitset, new_bitset, range_active);
         }
@@ -206,10 +206,10 @@ void RcModes::update_activated_modes(const ReceiverBase& receiver)
 #if false
     enum { ANGLE_MODE_CHANNEL = ReceiverBase::AUX2, ALTITUDE_HOLD_MODE_CHANNEL = ReceiverBase::AUX3 };
     if (receiver.get_channel_pwm(ANGLE_MODE_CHANNEL)) {
-        _rc_mode_activation_bitset.set(MSP_Box::BOX_ANGLE);
+        _rc_mode_activation_bitset.set(MspBox::BOX_ANGLE);
     }
     if (receiver.get_channel_pwm(ALTITUDE_HOLD_MODE_CHANNEL)) {
-        _rc_mode_activation_bitset.set(MSP_Box::BOX_ALTHOLD);
+        _rc_mode_activation_bitset.set(MspBox::BOX_ALTHOLD);
     }
 #endif
 

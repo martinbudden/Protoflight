@@ -237,7 +237,7 @@ static constexpr rc_modes_activation_condition_array_t RC_MODE_ACTIVATION_CONDIT
             .start_step = ReceiverBase::RANGE_STEP_MID,
             .end_step = ReceiverBase::RANGE_STEP_MAX
         },
-        .mode_id = MSP_Box::BOX_ARM,
+        .mode_id = MspBox::BOX_ARM,
         .auxiliary_channel_index = ReceiverBase::AUX1 - ReceiverBase::AUX1, // NOLINT(misc-redundant-expression)
         .mode_logic = {},
         .linked_to = {}
@@ -246,7 +246,7 @@ static constexpr rc_modes_activation_condition_array_t RC_MODE_ACTIVATION_CONDIT
             .start_step = ReceiverBase::RANGE_STEP_MID,
             .end_step = ReceiverBase::RANGE_STEP_MAX
         },
-        .mode_id = MSP_Box::BOX_ANGLE,
+        .mode_id = MspBox::BOX_ANGLE,
         .auxiliary_channel_index = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .mode_logic = {},
         .linked_to = {}
@@ -255,7 +255,7 @@ static constexpr rc_modes_activation_condition_array_t RC_MODE_ACTIVATION_CONDIT
             .start_step = ReceiverBase::RANGE_STEP_MID,
             .end_step = ReceiverBase::RANGE_STEP_MAX
         },
-        .mode_id = MSP_Box::BOX_ALTITUDE_HOLD,
+        .mode_id = MspBox::BOX_ALTITUDE_HOLD,
         .auxiliary_channel_index = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .mode_logic = {},
         .linked_to = {}

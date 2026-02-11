@@ -192,12 +192,12 @@ public:
     void setRebootRequired();
     bool getRebootRequired() const;
 
-    bool getBoxIdState(MSP_Box::id_e boxId, const RcModes& rcModes) const;
-    size_t packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags, const RcModes& rcModes) const;
-    void serializeBoxReplyBoxName(StreamBuf& dst, size_t page) const { _mspBox.serializeBoxReplyBoxName(dst, page); }
-    void serializeBoxReplyPermanentId(StreamBuf& dst, size_t page) const { _mspBox.serializeBoxReplyPermanentId(dst, page); }
+    bool getBoxIdState(uint8_t boxId, const RcModes& rcModes) const;
+    size_t packFlightModeFlags(MspBox::bitset_t& flightModeFlags, const RcModes& rcModes) const;
+    void serialize_box_reply_box_name(StreamBufWriter& dst, size_t page) const { _mspBox.serialize_box_reply_box_name(dst, page); }
+    void serialize_box_reply_permanent_id(StreamBufWriter& dst, size_t page) const { _mspBox.serialize_box_reply_permanent_id(dst, page); }
 private:
-    MSP_Box _mspBox;
+    MspBox _mspBox;
     RcModes _rc_modes;
     Features _features {};
     FlightController& _flightController;
@@ -241,7 +241,7 @@ private:
     RC_Adjustments _rcAdjustments;
 #endif
 public:
-    static constexpr std::array<uint8_t, MSP_Box::BOX_ID_FLIGHTMODE_COUNT> BoxIdToFlightModeMap = {{
+    static constexpr std::array<uint8_t, MspBox::BOX_ID_FLIGHTMODE_COUNT> BoxIdToFlightModeMap = {{
         /*[BOX_ARM]*/           0, // not used
         /*[BOX_ANGLE]*/         LOG2_ANGLE_MODE,
         /*[BOX_HORIZON]*/       LOG2_HORIZON_MODE,

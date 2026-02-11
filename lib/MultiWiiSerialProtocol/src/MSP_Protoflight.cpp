@@ -48,22 +48,22 @@ void MSP_Protoflight::rebootFn(serialPort_t* serialPort)
     }
 }
 
-MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBufReader& src)
+MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBufWriter& dst, descriptor_t srcDesc, postProcessFnPtr* postProcessFn, StreamBufReader& src)
 {
     switch (cmdMSP) {
     case MSP_BOXNAMES: {
-        const size_t page = (src.bytesRemaining() > 0) ? src.readU8() : 0;
-        _cockpit.serializeBoxReplyBoxName(dst, page);
+        const size_t page = (src.bytes_remaining() > 0) ? src.read_u8() : 0;
+        _cockpit.serialize_box_reply_box_name(dst, page);
         break;
     }
     case MSP_BOXIDS: {
-        const size_t page = (src.bytesRemaining() > 0) ? src.readU8() : 0;
-        _cockpit.serializeBoxReplyPermanentId(dst, page);
+        const size_t page = (src.bytes_remaining() > 0) ? src.read_u8() : 0;
+        _cockpit.serialize_box_reply_permanent_id(dst, page);
         break;
     }
     case MSP_REBOOT:
-        if (src.bytesRemaining() > 0) {
-            _rebootMode = src.readU8();
+        if (src.bytes_remaining() > 0) {
+            _rebootMode = src.read_u8();
             if (_rebootMode >= REBOOT_COUNT || _rebootMode == REBOOT_MSC || _rebootMode == REBOOT_MSC_UTC) {
                 return RESULT_ERROR;
             }
@@ -71,7 +71,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
             _rebootMode = REBOOT_FIRMWARE;
         }
 
-        dst.writeU8(_rebootMode);
+        dst.write_u8(_rebootMode);
 
         if (postProcessFn) {
             *postProcessFn = static_cast<MSP_Base::postProcessFnPtr>(&MSP_Protoflight::rebootFn);
@@ -79,9 +79,9 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
 
         break;
     case MSP_RESET_CONF: {
-        if (src.bytesRemaining() >= 1) {
+        if (src.bytes_remaining() >= 1) {
             // Added in MSP API 1.42
-            src.readU8();
+            src.read_u8();
         }
 
         const bool success = false;
@@ -94,7 +94,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
             }
         }
         // Added in API version 1.42
-        dst.writeU8(success);
+        dst.write_u8(success);
         break;
     }
     default:

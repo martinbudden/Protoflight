@@ -17,14 +17,14 @@ void test_msp_out()
     static const MSP_Stream mspStream(msp);
 
     std::array<uint8_t, 128> buf;
-    StreamBuf sbuf(&buf[0], sizeof(buf));
+    StreamBufWriter sbuf(&buf[0], sizeof(buf));
 
     msp.processGetCommand(MSP_BASE_API_VERSION, sbuf, 0, nullptr);
-    TEST_ASSERT_EQUAL(sizeof(buf) - 3, sbuf.bytesRemaining());
-    sbuf.switchToReader();
-    TEST_ASSERT_EQUAL(MSP_BASE_PROTOCOL_VERSION, sbuf.readU8());
-    TEST_ASSERT_EQUAL(MSP_BASE_API_VERSION_MAJOR, sbuf.readU8());
-    TEST_ASSERT_EQUAL(MSP_BASE_API_VERSION_MINOR, sbuf.readU8());
+    TEST_ASSERT_EQUAL(sizeof(buf) - 3, sbuf.bytes_remaining());
+    sbuf.switch_to_reader();
+    TEST_ASSERT_EQUAL(MSP_BASE_PROTOCOL_VERSION, sbuf.read_u8());
+    TEST_ASSERT_EQUAL(MSP_BASE_API_VERSION_MAJOR, sbuf.read_u8());
+    TEST_ASSERT_EQUAL(MSP_BASE_API_VERSION_MINOR, sbuf.read_u8());
 }
 
 void test_msp_state()
@@ -111,14 +111,14 @@ void test_msp_api_version()
     MSP_Base::const_packet_t reply = mspStream.processInbuf();
 
     TEST_ASSERT_EQUAL(MSP_BASE_API_VERSION, reply.cmd);
-    const uint8_t b0 = reply.payload.readU8();
+    const uint8_t b0 = reply.payload.read_u8();
     TEST_ASSERT_EQUAL(MSP_BASE_PROTOCOL_VERSION, b0);
-    const uint8_t b1 = reply.payload.readU8();
+    const uint8_t b1 = reply.payload.read_u8();
     TEST_ASSERT_EQUAL(MSP_BASE_API_VERSION_MAJOR, b1);
-    const uint8_t b2 = reply.payload.readU8();
+    const uint8_t b2 = reply.payload.read_u8();
     TEST_ASSERT_EQUAL(MSP_BASE_API_VERSION_MINOR, b2);
 
-    reply.payload.switchToReader(); // change streambuf direction
+    reply.payload.switch_to_reader(); // change StreamBufWriter direction
     const MSP_Stream::packet_with_header_t pwh = mspStream.serialEncode(reply, MSP_Base::V1); // encode with MSP version 1
 
     TEST_ASSERT_EQUAL('$', pwh.hdrBuf[0]);
@@ -344,8 +344,8 @@ MSP_Base::result_e MSP_Test::processSetCommand(int16_t cmdMSP, StreamBufReader& 
     case MSP_SET_NAME: {
         _name.fill(0xFF);
         size_t ii = 0;
-        while (src.bytesRemaining()) {
-            _name[ii++] = src.readU8();
+        while (src.bytes_remaining()) {
+            _name[ii++] = src.read_u8();
         }
         _name[ii] = 0; // zero terminate
         break;

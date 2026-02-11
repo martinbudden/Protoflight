@@ -4,7 +4,7 @@
 #include "Cockpit.h"
 #include "DisplayPortBase.h"
 
-#include <MSP_Box.h>
+#include <MspBox.h>
 #include <ReceiverBase.h>
 
 #if (__cplusplus >= 202002L)
@@ -46,7 +46,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
 {
     (void)timeMicrosecondsDelta;
 
-    if (_cockpit.get_rc_modes().is_mode_active(MSP_Box::BOX_PARALYZE)) {
+    if (_cockpit.get_rc_modes().is_mode_active(MspBox::BOX_PARALYZE)) {
         return;
     }
 
@@ -64,7 +64,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         }
     } else {
         // Detect menu invocation
-        if (!_cockpit.isArmed() && !_cockpit.get_rc_modes().is_mode_active(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
+        if (!_cockpit.isArmed() && !_cockpit.get_rc_modes().is_mode_active(MspBox::BOX_STICK_COMMAND_DISABLE)) {
             const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW )
             if (RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch)) {

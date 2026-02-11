@@ -1,6 +1,6 @@
 #pragma once
 
-#include <MSP_Box.h>
+#include <MspBox.h>
 #include <ReceiverBase.h>
 
 #include <algorithm>
@@ -54,13 +54,13 @@ private:
     //void remove_mode_activation_condition(uint8_t mode_id);
     bool is_mode_activation_condition_configured(const rc_modes_activation_condition_t& mac, const rc_modes_activation_condition_t& empty_mac) const;
     static bool is_range_usable(const receiver_channel_range_t& range) { return range.start_step < range.end_step; }
-    void update_masks_for_mac(const rc_modes_activation_condition_t& mac, MSP_Box::bitset_t& and_bitset, MSP_Box::bitset_t& new_bitsets, bool range_active);
-    void update_masks_for_sticky_modes(const rc_modes_activation_condition_t& mac, MSP_Box::bitset_t& and_bitset, MSP_Box::bitset_t& new_bitset, bool range_active);
+    void update_masks_for_mac(const rc_modes_activation_condition_t& mac, MspBox::bitset_t& and_bitset, MspBox::bitset_t& new_bitsets, bool range_active);
+    void update_masks_for_sticky_modes(const rc_modes_activation_condition_t& mac, MspBox::bitset_t& and_bitset, MspBox::bitset_t& new_bitset, bool range_active);
 private:
     size_t _active_mac_count = 0;
     size_t __active_linked_mac_count = 0;
-    MSP_Box::bitset_t _rc_mode_activation_bitset {};
-    MSP_Box::bitset_t _sticky_modes_ever_disabled_bitset {};
+    MspBox::bitset_t _rc_mode_activation_bitset {};
+    MspBox::bitset_t _sticky_modes_ever_disabled_bitset {};
     std::array<uint8_t, RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT> _active_mac_array {};
     std::array<uint8_t, RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT> _active_linked_mac_array {};
     std::array<rc_modes_activation_condition_t, RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT> _mode_activation_conditions {};

@@ -37,17 +37,17 @@ bool BlackboxCallbacks::areMotorsRunning() const
 
 bool BlackboxCallbacks::isBlackboxModeActive() const
 {
-    return _cockpit.get_rc_modes().is_mode_active(MSP_Box::BOX_BLACKBOX);
+    return _cockpit.get_rc_modes().is_mode_active(MspBox::BOX_BLACKBOX);
 }
 
 bool BlackboxCallbacks::isBlackboxEraseModeActive() const
 {
-    return _rc_modes.is_mode_active(MSP_Box::BOX_BLACKBOX_ERASE);
+    return _rc_modes.is_mode_active(MspBox::BOX_BLACKBOX_ERASE);
 }
 
 bool BlackboxCallbacks::isBlackboxModeActivationConditionPresent() const
 {
-    return _rc_modes.is_mode_activation_condition_present(MSP_Box::BOX_BLACKBOX);
+    return _rc_modes.is_mode_activation_condition_present(MspBox::BOX_BLACKBOX);
 }
 
 uint32_t BlackboxCallbacks::getArmingBeepTimeMicroseconds() const

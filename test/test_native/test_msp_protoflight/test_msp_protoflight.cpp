@@ -111,9 +111,9 @@ void test_msp_set_failsafe_config()
 void test_msp_pid_in()
 {
     std::array<uint8_t, 128> buf;
-    StreamBuf sbuf(&buf[0], sizeof(buf));
+    StreamBufWriter sbuf(&buf[0], sizeof(buf));
     for (uint8_t ii = 0; ii < 3*FlightController::PID_COUNT; ++ii) {
-        sbuf.writeU8(ii);
+        sbuf.write_u8(ii);
     }
     sbuf.reset();
     StreamBufReader sbufReader(sbuf);
@@ -141,10 +141,10 @@ void test_msp_pid_in()
 void test_msp_features()
 {
     std::array<uint8_t, 128> buf;
-    StreamBuf sbuf(&buf[0], sizeof(buf));
+    StreamBufWriter sbuf(&buf[0], sizeof(buf));
     msp.processGetCommand(MSP_FEATURE_CONFIG, sbuf);
     sbuf.reset();
-    const uint32_t featuresRead = sbuf.readU32();
+    const uint32_t featuresRead = sbuf.read_u32();
 
     TEST_ASSERT_EQUAL(cockpit.enabledFeatures(), featuresRead);
 }
@@ -186,15 +186,15 @@ void test_msp_raw_imu()
     MSP_Base::const_packet_t reply = mspStream.processInbuf();
 
     TEST_ASSERT_EQUAL(MSP_RAW_IMU, reply.cmd);
-    const uint16_t accX = reply.payload.readU16();
-    const uint16_t accY = reply.payload.readU16();
-    const uint16_t accZ = reply.payload.readU16();
-    const uint16_t gyroX = reply.payload.readU16();
-    const uint16_t gyroY = reply.payload.readU16();
-    const uint16_t gyroZ = reply.payload.readU16();
-    const uint16_t magX = reply.payload.readU16();
-    const uint16_t magY = reply.payload.readU16();
-    const uint16_t magZ = reply.payload.readU16();
+    const uint16_t accX = reply.payload.read_u16();
+    const uint16_t accY = reply.payload.read_u16();
+    const uint16_t accZ = reply.payload.read_u16();
+    const uint16_t gyroX = reply.payload.read_u16();
+    const uint16_t gyroY = reply.payload.read_u16();
+    const uint16_t gyroZ = reply.payload.read_u16();
+    const uint16_t magX = reply.payload.read_u16();
+    const uint16_t magY = reply.payload.read_u16();
+    const uint16_t magZ = reply.payload.read_u16();
     TEST_ASSERT_EQUAL(3, accX);
     TEST_ASSERT_EQUAL(5, accY);
     TEST_ASSERT_EQUAL(7, accZ);
@@ -205,7 +205,7 @@ void test_msp_raw_imu()
     TEST_ASSERT_EQUAL(0, magY);
     TEST_ASSERT_EQUAL(0, magZ);
 
-    reply.payload.switchToReader(); // change streambuf direction
+    reply.payload.switch_to_reader(); // change StreamBufWriter direction
     const MSP_Stream::packet_with_header_t pwh = mspStream.serialEncode(reply, MSP_Base::V1); // encode with MSP version 1
 
     TEST_ASSERT_EQUAL('$', pwh.hdrBuf[0]);
