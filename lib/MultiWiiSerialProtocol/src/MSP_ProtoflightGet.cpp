@@ -54,7 +54,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         static constexpr uint16_t SENSOR_GYROSCOPE = 0x01U << 5U;
         dst.writeU16(SENSOR_ACCELEROMETER | SENSOR_GYROSCOPE);
         MSP_Box::bitset_t flightModeFlags;
-        const size_t flagBitCount = _cockpit.packFlightModeFlags(flightModeFlags, _cockpit.getRC_Modes());
+        const size_t flagBitCount = _cockpit.packFlightModeFlags(flightModeFlags, _cockpit.get_rc_modes());
         dst.writeData(&flightModeFlags, 4); // unconditional part of flags, first 32 bits
         dst.writeU8(_nonVolatileStorage.getCurrentPidProfileIndex());
         dst.writeU16(10); //constrain(getAverageSystemLoadPercent(), 0, LOAD_PERCENTAGE_ONE))
@@ -234,27 +234,27 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
         break;
     }
     case MSP_MODE_RANGES:
-        for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
-            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(static_cast<MSP_Box::id_e>(mac.modeId));
+        for (const auto& mac : _cockpit.get_rc_modes().get_mode_activation_conditions()) {
+            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(static_cast<MSP_Box::id_e>(mac.mode_id));
             if (box == nullptr) {
                 return RESULT_CMD_UNKNOWN;
             }
             dst.writeU8(box->permanentId);
-            dst.writeU8(mac.auxiliaryChannelIndex);
+            dst.writeU8(mac.auxiliary_channel_index);
             dst.writeU8(mac.range.start_step);
             dst.writeU8(mac.range.end_step);
         }
         break;
     case MSP_MODE_RANGES_EXTRA:
         dst.writeU8(RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT);
-        for (const auto& mac : _cockpit.getRC_Modes().getModeActivationConditions()) {
-            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(static_cast<MSP_Box::id_e>(mac.modeId));
-            const MSP_Box::box_t* linkedBox = MSP_Box::findBoxByBoxId(static_cast<MSP_Box::id_e>(mac.linkedTo));
+        for (const auto& mac : _cockpit.get_rc_modes().get_mode_activation_conditions()) {
+            const MSP_Box::box_t* box = MSP_Box::findBoxByBoxId(static_cast<MSP_Box::id_e>(mac.mode_id));
+            const MSP_Box::box_t* linkedBox = MSP_Box::findBoxByBoxId(static_cast<MSP_Box::id_e>(mac.linked_to));
             if (box == nullptr || linkedBox == nullptr) {
                 return RESULT_CMD_UNKNOWN;
             }
             dst.writeU8(box->permanentId); // each element is aligned with MODE_RANGES by the permanentId
-            dst.writeU8(mac.modeLogic);
+            dst.writeU8(mac.mode_logic);
             dst.writeU8(linkedBox->permanentId);
         }
         break;
@@ -262,7 +262,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
 #if defined(USE_RC_ADJUSTMENTS)
         for (const auto& adjustmentRange : _cockpit.getRC_Adjustments().getAdjustmentRanges()) {
             dst.writeU8(0); // was adjustmentRange.adjustmentIndex
-            dst.writeU8(adjustmentRange.auxChannelIndex);
+            dst.writeU8(adjustmentRange.aux_channel_index);
             dst.writeU8(adjustmentRange.range.start_step);
             dst.writeU8(adjustmentRange.range.end_step);
             dst.writeU8(adjustmentRange.adjustmentConfig);

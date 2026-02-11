@@ -32,32 +32,32 @@ Cockpit& Main::createCockpit(FlightController& flightController, Debug& debug, I
     cockpit.setCurrentRateProfileIndex(nvs.getCurrentRateProfileIndex());
     cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()), flightController);
     cockpit.setFeatures(nvs.loadFeaturesConfig().enabledFeatures);
-    cockpit.getRC_ModesMutable().setModeActivationConditions(nvs.loadRC_ModeActivationConditions());
+    cockpit.get_rc_modes_mutable().set_mode_activation_conditions(nvs.load_rc_mode_activation_conditions());
 
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW) && false
     const rc_modes_activation_condition_t macAngle = {
-        .modeId = MSP_Box::BOX_ANGLE,
-        .auxChannelIndex = ReceiverBase::AUX2,
+        .mode_id = MSP_Box::BOX_ANGLE,
+        .aux_channel_index = ReceiverBase::AUX2,
         .range {
-            .start_step = RC_Modes::RANGE_STEP_MID,
-            .end_step = RC_Modes::RANGE_STEP_MAX
+            .start_step = RcModes::RANGE_STEP_MID,
+            .end_step = RcModes::RANGE_STEP_MAX
         },
-        .modeLogic {},
-        .linkedTo {}
+        .mode_logic {},
+        .linked_to {}
     };
-    rcModes.setModeActivationCondition(0, macAngle);
+    rcModes.set_mode_activation_condition(0, macAngle);
 
     const rc_modes_activation_condition_t macAltitudeHold = {
-        .modeId = MSP_Box::BOX_ALTHOLD,
-        .auxChannelIndex = ReceiverBase::AUX3,
+        .mode_id = MSP_Box::BOX_ALTHOLD,
+        .aux_channel_index = ReceiverBase::AUX3,
         .range {
-            .start_step = RC_Modes::RANGE_STEP_MID,
-            .end_step = RC_Modes::RANGE_STEP_MAX
+            .start_step = RcModes::RANGE_STEP_MID,
+            .end_step = RcModes::RANGE_STEP_MAX
         },
-        .modeLogic {},
-        .linkedTo {}
+        .mode_logic {},
+        .linked_to {}
     };
-    rcModes.setModeActivationCondition(1, macAltitudeHold);
+    rcModes.set_mode_activation_condition(1, macAltitudeHold);
 #endif // LIBRARY_RECEIVER_USE_ESPNOW
 
     return cockpit;

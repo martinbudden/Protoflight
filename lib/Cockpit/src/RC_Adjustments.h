@@ -68,7 +68,7 @@ public:
     struct adjustment_range_t {
         // when aux channel is in range...
         receiver_channel_range_t range;
-        uint8_t auxChannelIndex;
+        uint8_t aux_channel_index;
         // ..then apply the adjustment function to the auxSwitchChannel ...
         uint8_t adjustmentConfig;
         uint8_t auxSwitchChannelIndex;

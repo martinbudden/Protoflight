@@ -52,17 +52,17 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBuf&
 {
     switch (cmdMSP) {
     case MSP_BOXNAMES: {
-        const size_t page = src.bytesRemaining() ? src.readU8() : 0;
+        const size_t page = (src.bytesRemaining() > 0) ? src.readU8() : 0;
         _cockpit.serializeBoxReplyBoxName(dst, page);
         break;
     }
     case MSP_BOXIDS: {
-        const size_t page = src.bytesRemaining() ? src.readU8() : 0;
+        const size_t page = (src.bytesRemaining() > 0) ? src.readU8() : 0;
         _cockpit.serializeBoxReplyPermanentId(dst, page);
         break;
     }
     case MSP_REBOOT:
-        if (src.bytesRemaining()) {
+        if (src.bytesRemaining() > 0) {
             _rebootMode = src.readU8();
             if (_rebootMode >= REBOOT_COUNT || _rebootMode == REBOOT_MSC || _rebootMode == REBOOT_MSC_UTC) {
                 return RESULT_ERROR;

@@ -46,7 +46,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
 {
     (void)timeMicrosecondsDelta;
 
-    if (_cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_PARALYZE)) {
+    if (_cockpit.get_rc_modes().is_mode_active(MSP_Box::BOX_PARALYZE)) {
         return;
     }
 
@@ -64,12 +64,12 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         }
     } else {
         // Detect menu invocation
-        if (!_cockpit.isArmed() && !_cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
+        if (!_cockpit.isArmed() && !_cockpit.get_rc_modes().is_mode_active(MSP_Box::BOX_STICK_COMMAND_DISABLE)) {
             const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW )
-            if (RC_Modes::pwmIsLow(controls.yaw) && RC_Modes::pwmIsHigh(controls.pitch)) {
+            if (RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch)) {
 #else
-            if (RC_Modes::pwmIsLow(controls.yaw) && RC_Modes::pwmIsHigh(controls.pitch) && RC_Modes::pwmIsMid(controls.throttle)) {
+            if (RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch) && RcModes::pwm_is_mid(controls.throttle)) {
 #endif
                 _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
                 _cmsx.menuOpen(*_displayPort);
@@ -115,19 +115,19 @@ bool CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(read
     const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
 
     CMSX::key_e key = CMSX::KEY_NONE;
-    if (_cockpit.isArmed() == false && RC_Modes::pwmIsMid(controls.throttle) && RC_Modes::pwmIsLow(controls.yaw) && RC_Modes::pwmIsHigh(controls.pitch)) {
+    if (_cockpit.isArmed() == false && RcModes::pwm_is_mid(controls.throttle) && RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch)) {
         key = CMSX::KEY_MENU;
-    } else if (RC_Modes::pwmIsHigh(controls.pitch)) {
+    } else if (RcModes::pwm_is_high(controls.pitch)) {
         key = CMSX::KEY_UP;
-    } else if (RC_Modes::pwmIsLow(controls.pitch)) {
+    } else if (RcModes::pwm_is_low(controls.pitch)) {
         key = CMSX::KEY_DOWN;
-    } else if (RC_Modes::pwmIsHigh(controls.roll)) {
+    } else if (RcModes::pwm_is_high(controls.roll)) {
         key = CMSX::KEY_RIGHT;
-    } else if (RC_Modes::pwmIsLow(controls.roll)) {
+    } else if (RcModes::pwm_is_low(controls.roll)) {
         key = CMSX::KEY_LEFT;
-    } else if (RC_Modes::pwmIsHigh(controls.yaw)) {
+    } else if (RcModes::pwm_is_high(controls.yaw)) {
         key = CMSX::KEY_ESC;
-    } else if (RC_Modes::pwmIsLow(controls.yaw)) {
+    } else if (RcModes::pwm_is_low(controls.yaw)) {
         key = CMSX::KEY_SAVE_MENU;
     }
     if (key == CMSX::KEY_NONE) {

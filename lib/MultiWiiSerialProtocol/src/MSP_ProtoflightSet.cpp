@@ -70,21 +70,21 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         if (box == nullptr) {
             return RESULT_ERROR;
         }
-        rc_modes_activation_condition_t mac = _cockpit.getRC_Modes().getModeActivationCondition(macIndex);
-        mac.modeId = box->id;
-        mac.auxiliaryChannelIndex = src.readU8();
+        rc_modes_activation_condition_t mac = _cockpit.get_rc_modes().get_mode_activation_condition(macIndex);
+        mac.mode_id = box->id;
+        mac.auxiliary_channel_index = src.readU8();
         mac.range.start_step = src.readU8();
         mac.range.end_step = src.readU8();
         if (src.bytesRemaining() >= 2) {
-            mac.modeLogic = static_cast<RC_Modes::mode_logic_e>(src.readU8());
-            const uint8_t linkedToIndex = src.readU8();
-            const MSP_Box::box_t* linkBox = MSP_Box::findBoxByPermanentId(linkedToIndex);
+            mac.mode_logic = static_cast<RcModes::mode_logic_e>(src.readU8());
+            const uint8_t linked_toIndex = src.readU8();
+            const MSP_Box::box_t* linkBox = MSP_Box::findBoxByPermanentId(linked_toIndex);
             if (linkBox) {
-                mac.linkedTo = static_cast<MSP_Box::id_e>(linkBox->id);
+                mac.linked_to = static_cast<MSP_Box::id_e>(linkBox->id);
             }
         }
-        _cockpit.getRC_ModesMutable().setModeActivationCondition(macIndex, mac);
-        _cockpit.getRC_ModesMutable().analyzeModeActivationConditions();
+        _cockpit.get_rc_modes_mutable().set_mode_activation_condition(macIndex, mac);
+        _cockpit.get_rc_modes_mutable().analyze_mode_activation_conditions();
         break;
     }
     case MSP_SET_ADJUSTMENT_RANGE: {
@@ -96,7 +96,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         RC_Adjustments& rcAdjustments = _cockpit.getRC_Adjustments();
         RC_Adjustments::adjustment_range_t adjustmentRange = rcAdjustments.getAdjustmentRange(adjustmentRangeIndex);
         src.readU8(); // was adjustmentRange.adjustmentIndex
-        adjustmentRange.auxChannelIndex = src.readU8();
+        adjustmentRange.aux_channel_index = src.readU8();
         adjustmentRange.range.start_step = src.readU8();
         adjustmentRange.range.end_step = src.readU8();
         adjustmentRange.adjustmentConfig = src.readU8();
@@ -452,7 +452,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         if (index < RX::MAX_SUPPORTED_RC_CHANNEL_COUNT) {
             RX::failsafe_channel_configs_t rxFailsafeChannelConfigs = _cockpit.getRX_FailsafeChannelConfigs();
             rxFailsafeChannelConfigs[index].mode = src.readU8();
-            rxFailsafeChannelConfigs[index].step = RX::channelValueToFailStep(src.readU16());
+            rxFailsafeChannelConfigs[index].step = RX::channel_valueToFailStep(src.readU16());
             _cockpit.setRX_FailsafeChannelConfigs(rxFailsafeChannelConfigs);
             break;
         }
@@ -567,7 +567,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
                 }
             }
         }
-        if (src.bytesRemaining()) {
+        if (src.bytesRemaining() > 0) {
             vtxConfig.lowPowerDisarm = src.readU8();
         }
         // API version 1.42 - this parameter kept separate since clients may already be supplying

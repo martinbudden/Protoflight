@@ -27,7 +27,7 @@ public:
     static constexpr uint16_t MAX_RXFAIL_RANGE_STEP = (PWM_PULSE_MAX - PWM_PULSE_MIN) / 25;
 
     static uint16_t failStepToChannelValue(uint8_t step) { return (PWM_PULSE_MIN + static_cast<uint16_t>(25 * step)); }
-    static uint8_t channelValueToFailStep(uint16_t channelValue) { return static_cast<uint8_t>((std::clamp(channelValue, PWM_PULSE_MIN, PWM_PULSE_MAX) - PWM_PULSE_MIN) / 25); }
+    static uint8_t channel_valueToFailStep(uint16_t channel_value) { return static_cast<uint8_t>((std::clamp(channel_value, PWM_PULSE_MIN, PWM_PULSE_MAX) - PWM_PULSE_MIN) / 25); }
 
     enum provider_e {
         PROVIDER_NONE = 0,

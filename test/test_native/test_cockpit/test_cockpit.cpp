@@ -238,7 +238,7 @@ void test_cockpit_throttle()
 
 void test_rc_modes()
 {
-    static RC_Modes rcModes;
+    static RcModes rcModes;
     enum { AUXILIARY_CHANNEL_HORIZON = 4 };
     enum { AUXILIARY_CHANNEL_GPS_RESCUE = 5 };
     enum { BOX_HORIZON_PERMANENT = 2 };
@@ -246,56 +246,56 @@ void test_rc_modes()
 
     {
     const uint8_t macIndex = 0;
-    RC_Modes::mode_activation_condition_t mac = rcModes.getModeActivationCondition(macIndex);
+    rc_modes_activation_condition_t mac = rcModes.get_mode_activation_condition(macIndex);
     const MSP_Box::box_t* box = MSP_Box::findBoxByPermanentId(BOX_HORIZON_PERMANENT);
     TEST_ASSERT_FALSE(box == nullptr);
 
-    mac.modeId = static_cast<MSP_Box::id_e>(box->id);
-    TEST_ASSERT_EQUAL(MSP_Box::BOX_HORIZON, mac.modeId);
-    mac.auxiliaryChannelIndex = AUXILIARY_CHANNEL_HORIZON;
-    mac.range.start_step = RC_Modes::channelValueToStep(1250);
-    mac.range.end_step = RC_Modes::channelValueToStep(1450);
+    mac.mode_id = static_cast<MSP_Box::id_e>(box->id);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_HORIZON, mac.mode_id);
+    mac.auxiliary_channel_index = AUXILIARY_CHANNEL_HORIZON;
+    mac.range.start_step = RcModes::channel_value_to_step(1250);
+    mac.range.end_step = RcModes::channel_value_to_step(1450);
 
-    rcModes.setModeActivationCondition(macIndex, mac);
-    rcModes.analyzeModeActivationConditions();
+    rcModes.set_mode_activation_condition(macIndex, mac);
+    rcModes.analyze_mode_activation_conditions();
     }
 
     {
     const uint8_t macIndex = 1;
-    RC_Modes::mode_activation_condition_t mac = rcModes.getModeActivationCondition(macIndex);
+    rc_modes_activation_condition_t mac = rcModes.get_mode_activation_condition(macIndex);
     const MSP_Box::box_t* box = MSP_Box::findBoxByPermanentId(BOX_GPS_RESCUE_PERMANENT);
     TEST_ASSERT_FALSE(box == nullptr);
 
-    mac.modeId = static_cast<MSP_Box::id_e>(box->id);
-    TEST_ASSERT_EQUAL(MSP_Box::BOX_GPS_RESCUE, mac.modeId);
-    mac.auxiliaryChannelIndex = AUXILIARY_CHANNEL_GPS_RESCUE;
-    mac.range.start_step = RC_Modes::channelValueToStep(1750);
-    mac.range.end_step = RC_Modes::channelValueToStep(1850);
+    mac.mode_id = static_cast<MSP_Box::id_e>(box->id);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_GPS_RESCUE, mac.mode_id);
+    mac.auxiliary_channel_index = AUXILIARY_CHANNEL_GPS_RESCUE;
+    mac.range.start_step = RcModes::channel_value_to_step(1750);
+    mac.range.end_step = RcModes::channel_value_to_step(1850);
 
-    rcModes.setModeActivationCondition(macIndex, mac);
-    rcModes.analyzeModeActivationConditions();
+    rcModes.set_mode_activation_condition(macIndex, mac);
+    rcModes.analyze_mode_activation_conditions();
     }
 
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_HORIZON, 1100);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_HORIZON));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.is_mode_active(MSP_Box::BOX_HORIZON));
 
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_HORIZON, 1300);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_HORIZON));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.is_mode_active(MSP_Box::BOX_HORIZON));
 
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_GPS_RESCUE, 1500);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.is_mode_active(MSP_Box::BOX_GPS_RESCUE));
 
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_GPS_RESCUE, 1800);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_GPS_RESCUE));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.is_mode_active(MSP_Box::BOX_GPS_RESCUE));
 }
 
 void test_rc_modes_init()
 {
-    static RC_Modes rcModes;
+    static RcModes rcModes;
     // cppcheck-suppress duplicateExpression
     enum { AUXILIARY_CHANNEL_ARM = ReceiverBase::AUX1 - ReceiverBase::AUX1 }; // NOLINT(misc-redundant-expression)
     enum { AUXILIARY_CHANNEL_ANGLE_MODE = ReceiverBase::AUX2  - ReceiverBase::AUX1 };
@@ -308,76 +308,76 @@ void test_rc_modes_init()
     static constexpr uint8_t MAC_INDEX_ANGLE = 1;
     static constexpr uint8_t MAC_INDEX_ALTHOLD = 2;
 
-    RC_Modes::mode_activation_condition_t macArm = rcModes.getModeActivationCondition(MAC_INDEX_ARM);
+    rc_modes_activation_condition_t macArm = rcModes.get_mode_activation_condition(MAC_INDEX_ARM);
     const MSP_Box::box_t* boxArm = MSP_Box::findBoxByPermanentId(BOX_ARM_PERMANENT);
     TEST_ASSERT_FALSE(boxArm == nullptr);
-    macArm.modeId = static_cast<MSP_Box::id_e>(boxArm->id);
-    TEST_ASSERT_EQUAL(MSP_Box::BOX_ARM, macArm.modeId);
-    macArm.auxiliaryChannelIndex = AUXILIARY_CHANNEL_ARM;
+    macArm.mode_id = static_cast<MSP_Box::id_e>(boxArm->id);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_ARM, macArm.mode_id);
+    macArm.auxiliary_channel_index = AUXILIARY_CHANNEL_ARM;
     macArm.range.start_step = ReceiverBase::RANGE_STEP_MID;
     macArm.range.end_step = ReceiverBase::RANGE_STEP_MAX;
-    rcModes.setModeActivationCondition(MAC_INDEX_ARM, macArm);
+    rcModes.set_mode_activation_condition(MAC_INDEX_ARM, macArm);
 
-    RC_Modes::mode_activation_condition_t macAngle = rcModes.getModeActivationCondition(MAC_INDEX_ANGLE);
+    rc_modes_activation_condition_t macAngle = rcModes.get_mode_activation_condition(MAC_INDEX_ANGLE);
     const MSP_Box::box_t* boxAngle = MSP_Box::findBoxByPermanentId(BOX_ANGLE_PERMANENT);
     TEST_ASSERT_FALSE(boxAngle == nullptr);
-    macAngle.modeId = static_cast<MSP_Box::id_e>(boxAngle->id);
-    TEST_ASSERT_EQUAL(MSP_Box::BOX_ANGLE, macAngle.modeId);
-    macAngle.auxiliaryChannelIndex = AUXILIARY_CHANNEL_ANGLE_MODE;
+    macAngle.mode_id = static_cast<MSP_Box::id_e>(boxAngle->id);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_ANGLE, macAngle.mode_id);
+    macAngle.auxiliary_channel_index = AUXILIARY_CHANNEL_ANGLE_MODE;
     macAngle.range.start_step = ReceiverBase::RANGE_STEP_MID;
     macAngle.range.end_step = ReceiverBase::RANGE_STEP_MAX;
-    rcModes.setModeActivationCondition(MAC_INDEX_ANGLE, macAngle);
+    rcModes.set_mode_activation_condition(MAC_INDEX_ANGLE, macAngle);
 
-    RC_Modes::mode_activation_condition_t macAltitudeHold = rcModes.getModeActivationCondition(MAC_INDEX_ALTHOLD);
+    rc_modes_activation_condition_t macAltitudeHold = rcModes.get_mode_activation_condition(MAC_INDEX_ALTHOLD);
     const MSP_Box::box_t* boxAltitudeHold = MSP_Box::findBoxByPermanentId(BOX_ALTHOLD_PERMANENT);
     TEST_ASSERT_FALSE(boxAltitudeHold == nullptr);
-    macAltitudeHold.modeId = static_cast<MSP_Box::id_e>(boxAltitudeHold->id);
-    TEST_ASSERT_EQUAL(MSP_Box::BOX_ALTITUDE_HOLD, macAltitudeHold.modeId);
-    macAltitudeHold.auxiliaryChannelIndex = AUXILIARY_CHANNEL_ALTITUDE_HOLD;
+    macAltitudeHold.mode_id = static_cast<MSP_Box::id_e>(boxAltitudeHold->id);
+    TEST_ASSERT_EQUAL(MSP_Box::BOX_ALTITUDE_HOLD, macAltitudeHold.mode_id);
+    macAltitudeHold.auxiliary_channel_index = AUXILIARY_CHANNEL_ALTITUDE_HOLD;
     macAltitudeHold.range.start_step = ReceiverBase::RANGE_STEP_MID;
     macAltitudeHold.range.end_step = ReceiverBase::RANGE_STEP_MAX;
-    rcModes.setModeActivationCondition(MAC_INDEX_ALTHOLD, macAltitudeHold);
+    rcModes.set_mode_activation_condition(MAC_INDEX_ALTHOLD, macAltitudeHold);
 
-    rcModes.analyzeModeActivationConditions();
+    rcModes.analyze_mode_activation_conditions();
 
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ARM, 899);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.is_mode_active(MSP_Box::BOX_ARM));
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ARM, 900);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.is_mode_active(MSP_Box::BOX_ARM));
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ARM, 1000);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.is_mode_active(MSP_Box::BOX_ARM));
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ARM, 1499);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.is_mode_active(MSP_Box::BOX_ARM));
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ARM, 1500);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.is_mode_active(MSP_Box::BOX_ARM));
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ARM, 2000);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.is_mode_active(MSP_Box::BOX_ARM));
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ARM, 2099);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.is_mode_active(MSP_Box::BOX_ARM));
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ARM, 2100);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ARM));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.is_mode_active(MSP_Box::BOX_ARM));
 
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ANGLE_MODE, 1100);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ANGLE));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.is_mode_active(MSP_Box::BOX_ANGLE));
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ANGLE_MODE, 1600);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ANGLE));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.is_mode_active(MSP_Box::BOX_ANGLE));
 
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ALTITUDE_HOLD, 1400);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(false, rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(false, rcModes.is_mode_active(MSP_Box::BOX_ALTITUDE_HOLD));
     receiver.set_auxiliary_channel_pwm(AUXILIARY_CHANNEL_ALTITUDE_HOLD, 1800);
-    rcModes.updateActivatedModes(receiver);
-    TEST_ASSERT_EQUAL(true, rcModes.isModeActive(MSP_Box::BOX_ALTITUDE_HOLD));
+    rcModes.update_activated_modes(receiver);
+    TEST_ASSERT_EQUAL(true, rcModes.is_mode_active(MSP_Box::BOX_ALTITUDE_HOLD));
 }
 
 void test_rc_adjustments()
@@ -422,16 +422,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
     UNITY_BEGIN();
 
-    /*RUN_TEST(test_cockpit);
+    RUN_TEST(test_cockpit);
     RUN_TEST(test_cockpit_passthrough);
     RUN_TEST(test_cockpit_set_passthrough);
     RUN_TEST(test_cockpit_defaults);
     RUN_TEST(test_cockpit_constrain);
     RUN_TEST(test_cockpit_throttle);
     RUN_TEST(test_rc_modes);
-    RUN_TEST(test_rc_modes_init);*/
+    RUN_TEST(test_rc_modes_init);
     RUN_TEST(test_rc_adjustments);
-    //RUN_TEST(test_flightmode_flags);
+    RUN_TEST(test_flightmode_flags);
 
     UNITY_END();
 }

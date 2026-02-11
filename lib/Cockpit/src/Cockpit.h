@@ -178,8 +178,8 @@ public:
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
 
-    const RC_Modes& getRC_Modes() const { return _rcModes; }
-    RC_Modes& getRC_ModesMutable() { return _rcModes; }
+    const RcModes& get_rc_modes() const { return _rc_modes; }
+    RcModes& get_rc_modes_mutable() { return _rc_modes; }
 #if defined(USE_RC_ADJUSTMENTS)
     const RC_Adjustments& getRC_Adjustments() const { return _rcAdjustments; }
     RC_Adjustments& getRC_Adjustments() { return _rcAdjustments; }
@@ -192,13 +192,13 @@ public:
     void setRebootRequired();
     bool getRebootRequired() const;
 
-    bool getBoxIdState(MSP_Box::id_e boxId, const RC_Modes& rcModes) const;
-    size_t packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags, const RC_Modes& rcModes) const;
+    bool getBoxIdState(MSP_Box::id_e boxId, const RcModes& rcModes) const;
+    size_t packFlightModeFlags(MSP_Box::bitset_t& flightModeFlags, const RcModes& rcModes) const;
     void serializeBoxReplyBoxName(StreamBuf& dst, size_t page) const { _mspBox.serializeBoxReplyBoxName(dst, page); }
     void serializeBoxReplyPermanentId(StreamBuf& dst, size_t page) const { _mspBox.serializeBoxReplyPermanentId(dst, page); }
 private:
     MSP_Box _mspBox;
-    RC_Modes _rcModes;
+    RcModes _rc_modes;
     Features _features {};
     FlightController& _flightController;
     Autopilot& _autopilot;

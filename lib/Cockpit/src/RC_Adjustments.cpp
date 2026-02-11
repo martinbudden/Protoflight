@@ -540,7 +540,7 @@ void RC_Adjustments::processStepwiseAdjustments(const ReceiverBase& receiver, Fl
         const adjustment_config_t& adjustmentConfig = (*_defaultAdjustmentConfigs)[adjustmentRange.adjustmentConfig - ADJUSTMENT_FUNCTION_CONFIG_INDEX_OFFSET];
         const adjustment_e adjustment = adjustmentConfig.adjustment;
 
-        if (!receiver.is_range_active(adjustmentRange.auxChannelIndex, adjustmentRange.range) || adjustment == ADJUSTMENT_NONE) {
+        if (!receiver.is_range_active(adjustmentRange.aux_channel_index, adjustmentRange.range) || adjustment == ADJUSTMENT_NONE) {
             adjustmentState.timeoutAtMilliseconds = 0;
             continue;
         }
@@ -586,7 +586,7 @@ void RC_Adjustments::processContinuosAdjustments(const ReceiverBase& receiver, F
         const adjustment_config_t& adjustmentConfig = (*_defaultAdjustmentConfigs)[adjustmentRange.adjustmentConfig - ADJUSTMENT_FUNCTION_CONFIG_INDEX_OFFSET];
         const adjustment_e adjustment = adjustmentConfig.adjustment;
 
-        if (receiver.is_range_active(adjustmentRange.auxChannelIndex, adjustmentRange.range) && adjustment != ADJUSTMENT_NONE) {
+        if (receiver.is_range_active(adjustmentRange.aux_channel_index, adjustmentRange.range) && adjustment != ADJUSTMENT_NONE) {
 
             const uint16_t auxChannelPWM = receiver.get_auxiliary_channel(adjustmentRange.auxSwitchChannelIndex);
             if (auxChannelPWM != adjustmentState.lastRcData) {

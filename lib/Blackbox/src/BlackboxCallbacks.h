@@ -7,7 +7,7 @@ class Cockpit;
 class Debug;
 class FlightController;
 class GPS;
-class RC_Modes;
+class RcModes;
 class ReceiverBase;
 
 
@@ -31,7 +31,7 @@ private:
     const AHRS_MessageQueue& _messageQueue;
     const FlightController& _flightController;
     const Cockpit& _cockpit;
-    const RC_Modes& _rcModes;
+    const RcModes& _rc_modes;
     const ReceiverBase& _receiver;
     const Debug& _debug;
     GPS* _gps;

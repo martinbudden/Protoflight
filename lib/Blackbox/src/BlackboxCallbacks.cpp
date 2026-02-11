@@ -19,7 +19,7 @@ BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, cons
     _messageQueue(messageQueue),
     _flightController(flightController),
     _cockpit(cockpit),
-    _rcModes(cockpit.getRC_Modes()),
+    _rc_modes(cockpit.get_rc_modes()),
     _receiver(receiver),
     _debug(debug),
     _gps(gps)
@@ -37,17 +37,17 @@ bool BlackboxCallbacks::areMotorsRunning() const
 
 bool BlackboxCallbacks::isBlackboxModeActive() const
 {
-    return _cockpit.getRC_Modes().isModeActive(MSP_Box::BOX_BLACKBOX);
+    return _cockpit.get_rc_modes().is_mode_active(MSP_Box::BOX_BLACKBOX);
 }
 
 bool BlackboxCallbacks::isBlackboxEraseModeActive() const
 {
-    return _rcModes.isModeActive(MSP_Box::BOX_BLACKBOX_ERASE);
+    return _rc_modes.is_mode_active(MSP_Box::BOX_BLACKBOX_ERASE);
 }
 
 bool BlackboxCallbacks::isBlackboxModeActivationConditionPresent() const
 {
-    return _rcModes.isModeActivationConditionPresent(MSP_Box::BOX_BLACKBOX);
+    return _rc_modes.is_mode_activation_condition_present(MSP_Box::BOX_BLACKBOX);
 }
 
 uint32_t BlackboxCallbacks::getArmingBeepTimeMicroseconds() const
@@ -66,7 +66,7 @@ uint32_t BlackboxCallbacks::rcModeActivationMask() const
 
 void BlackboxCallbacks::loadSlowState(blackbox_slow_state_t& slowState)
 {
-    //memcpy(&slowState->flightModeFlags, &_rcModeActivationBitset, sizeof(slowState->flightModeFlags)); //was flightModeFlags;
+    //memcpy(&slowState->flightModeFlags, &_rc_mode_activation_bitset, sizeof(slowState->flightModeFlags)); //was flightModeFlags;
     slowState.flightModeFlags = _cockpit.getFlightModeFlags();
     slowState.stateFlags = 0; // this is GPS state
     slowState.failsafePhase = _cockpit.getFailsafePhase();
