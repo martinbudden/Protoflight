@@ -37,6 +37,7 @@ Blackbox* Main::createBlackBox(FlightController& flightController, Cockpit& cock
     (void)flightController;
     (void)cockpit;
     (void)receiver;
+    (void)rc_modes;
     (void)imuFilters;
     (void)debug;
     (void)gps;

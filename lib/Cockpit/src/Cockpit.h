@@ -134,7 +134,7 @@ public:
     const FlightController& getFlightController() const { return _flightController; }
     FlightController& getFlightControllerMutable() { return _flightController; }
 
-    void handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver, const RcModes& rcModes);
+    void handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver, const RcModes& rc_modes);
     virtual void update_controls(uint32_t tickCount, ReceiverBase& receiver) override;
 
     bool featureIsEnabled(uint32_t mask) const { return _features.isEnabled(mask); }
@@ -166,7 +166,7 @@ public:
 
     const rates_t& getRates() const { return _rates; }
     rates_t& getRates() { return _rates; }
-    void setRates(const rates_t& rates, FlightController& flightController);
+    void setRates(const rates_t& rates);
     void setRatesToPassThrough();
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;

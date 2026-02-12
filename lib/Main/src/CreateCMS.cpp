@@ -17,6 +17,7 @@ CMS* Main::createCMS(DisplayPortBase& displayPort, Cockpit& cockpit, const Recei
     (void)cockpit;
     (void)receiver;
     (void)rc_modes;
+    (void)nvs;
     (void)imuFilters;
     (void)imu;
     (void)vtx;

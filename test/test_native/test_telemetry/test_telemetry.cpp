@@ -57,15 +57,16 @@ void test_telemetry_msp()
     static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
     static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, &debug);
     static ReceiverVirtual receiver;
+    static RcModes rc_modes;
     static AHRS_MessageQueue ahrsMessageQueue;
     static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
     static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
     static Autopilot autopilot(ahrsMessageQueue);
     TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
 
     // statically allocate an MSP object
-    static MSP_Protoflight msp(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, nullptr, nullptr, nullptr, nullptr);
+    static MSP_Protoflight msp(ahrs, flightController, cockpit, receiver, rc_modes, imuFilters, debug, nvs, nullptr, nullptr, nullptr, nullptr);
 //size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, MSP_Base& msp, int16_t cmdMSP)
     static std::array<uint8_t, 256> buf;
     enum { ID = 0x11223344 };

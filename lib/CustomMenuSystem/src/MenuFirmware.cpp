@@ -1,6 +1,6 @@
 #include "CMSX.h"
 #include "CMS_Types.h"
-#include "version.h"
+//#include "version.h"
 #include <IMU_Base.h>
 
 std::array<char, CMSX::CALIBRATION_STATUS_MAX_LENGTH> CMSX::GyroCalibrationStatus {};
@@ -74,6 +74,10 @@ CMSX::menu_t CMSX::menuCalibrate {
     .onDisplayUpdate = menuCalibrateOnDisplayUpdate,
     .entries = &menuCalibrateEntries[0]
 };
+
+#define FC_FIRMWARE_NAME            "Betaflight"
+#define FC_FIRMWARE_IDENTIFIER      "BTFL"
+#define FC_VERSION_STRING           "4.5.0"
 
 static const std::array<CMSX::OSD_Entry, 7> menuFirmwareEntries
 {{

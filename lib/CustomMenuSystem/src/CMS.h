@@ -6,6 +6,7 @@
 #include <array>
 #include <cstdint>
 
+struct receiver_controls_pwm_t;
 class Cockpit;
 class DisplayPortBase;
 class IMU_Base;
@@ -43,22 +44,18 @@ public:
     void updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta); //!< CMS Task function, called by Task
 
     uint16_t handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount);
-    bool scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs);
+    bool scanKeys(int32_t timeDelta, const receiver_controls_pwm_t& controls, bool isArmed);
     void setExternKey(CMSX::key_e externKey);
 
     DisplayPortBase* displayPortSelectNext();
     void setDisplayPort(DisplayPortBase* displayPort) { _displayPort = displayPort; }
     bool displayPortSelect(const DisplayPortBase* displayPort);
-    void setArmingDisabled();
-    void clearArmingDisabled();
 
-    const Cockpit& getCockpit() const { return _cockpit; }
-    Cockpit& getCockpitMutable() { return _cockpit; }
     const ReceiverBase& getReceiver() const { return _receiver; }
 private:
     DisplayPortBase* _displayPort;
     CMSX _cmsx;
-    Cockpit& _cockpit;
+    const Cockpit& _cockpit;
     const ReceiverBase& _receiver;
     const RcModes& _rc_modes;
     config_t _config {};

@@ -4,7 +4,6 @@
 #include "Cockpit.h"
 #include "DisplayPortBase.h"
 #include "FormatInteger.h"
-#include "NonVolatileStorage.h"
 #include "OSD_Elements.h"
 #include "Targets.h"
 
@@ -27,8 +26,9 @@ const CMSX::menu_t* CMSX::MENU_BACK              = CMSX::MENU_NULL_PTR + 7;
 //NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 
-CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, RcModes& rc_modes, NonVolatileStorage& nvs, VTX* vtx) :
+CMSX::CMSX(CMS& cms, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, RcModes& rc_modes, NonVolatileStorage& nvs, VTX* vtx) :
     _cms(cms),
+    _cockpit(cockpit),
     _imuFilters(imuFilters),
     _imu(imu),
     _rc_modes(rc_modes),
@@ -41,34 +41,14 @@ CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, RcModes& rc_modes, 
 {
 }
 
-uint8_t CMSX::getCurrentPidProfileIndex() const
-{
-    return _nvs.getCurrentPidProfileIndex();
-}
-
-void CMSX::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) 
-{
-    _nvs.setCurrentPidProfileIndex(currentPidProfileIndex);
-}
-
-uint8_t CMSX::getCurrentRateProfileIndex() const
-{
-    return _nvs.getCurrentRateProfileIndex();
-}
-
-void CMSX::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex) 
-{
-    _nvs.setCurrentRateProfileIndex(currentRateProfileIndex);
-}
-
 const Cockpit& CMSX::getCockpit() const
 {
-    return _cms.getCockpit();
+    return _cockpit;
 }
 
 Cockpit& CMSX::getCockpitMutable()
 {
-    return _cms.getCockpitMutable();
+    return _cockpit;
 }
 
 void CMSX::setRebootRequired()
@@ -81,7 +61,7 @@ bool CMSX::getRebootRequired() const
     return _rebootRequired;
 }
 
-CMSX::menu_t* CMSX::getSaveExitMenu()
+CMSX::menu_t* CMSX::getSaveExitMenu() const
 {
     if (_rebootRequired) {
         return &CMSX::menuSaveExitReboot;
@@ -850,7 +830,7 @@ void CMSX::menuOpen(DisplayPortBase& displayPort)
         startMenu = &_menuMain;
         _currentMenuContext = { nullptr, 0, 0 };
         menuStackReset();
-        _cms.setArmingDisabled();
+        setArmingDisabled();
         _cursorRow = CURSOR_ROW_NOT_SET;
         displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
         displayPort.grab();
@@ -978,10 +958,21 @@ const void* CMSX::menuExit(DisplayPortBase& displayPort, const menu_t* menu)
 #endif
     }
 
-   _cms.clearArmingDisabled();
+   clearArmingDisabled();
 
     return nullptr;
 }
+
+void CMSX::setArmingDisabled()
+{
+    _cockpit.setArmingDisabledFlag(ARMING_DISABLED_CMS_MENU);
+}
+
+void CMSX::clearArmingDisabled()
+{
+    _cockpit.clearArmingDisabledFlag(ARMING_DISABLED_CMS_MENU);
+}
+
 
 void CMSX::pageSelect(uint8_t newpage)
 {

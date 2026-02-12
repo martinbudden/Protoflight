@@ -160,7 +160,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         if (src.bytes_remaining() >= 1) {
             src.read_u8(); // hardcoded to RATES_TYPE_ACTUAL
         }
-        _cockpit.setRates(rates, _flightController);
+        _cockpit.setRates(rates);
         break;
     }
     case MSP_SET_MOTOR_CONFIG:

@@ -12,7 +12,7 @@ DisplayPortM5GFX::DisplayPortM5GFX(M5Canvas& canvas, uint32_t screenWidthPixels,
     _rowCount = 15;
     _columnCount = 26;
     _canvas.setColorDepth(1);
-    if (!_canvas.createSprite(_screenWidthPixels, _screenHeightPixels)) {
+    if (!_canvas.createSprite(static_cast<int32_t>(_screenWidthPixels), static_cast<int32_t>(_screenHeightPixels))) {
         assert(false);
     }
     _canvas.fillSprite(TFT_WHITE);

@@ -346,14 +346,14 @@ void Cockpit::setRX_FailsafeChannelConfigs(const RX::failsafe_channel_configs_t&
     _rxFailsafeChannelConfigs = rxFailsafeChannelConfigs;
 }
 
-void Cockpit::setRates(const rates_t& rates, FlightController& flightController) // NOLINT(readability-make-member-function-const)
+void Cockpit::setRates(const rates_t& rates) // NOLINT(readability-make-member-function-const)
 {
     _rates = rates;
     const float maxAngleRateRollDPS = applyRates(rates_t::ROLL, 1.0F);
     const float maxAngleRatePitchDPS = applyRates(rates_t::PITCH, 1.0F);
     const float maxAngleRateYawDPS = applyRates(rates_t::YAW, 1.0F);
 
-    flightController.setMaxAngleRates(maxAngleRateRollDPS, maxAngleRatePitchDPS, maxAngleRateYawDPS);
+    _flightController.setMaxAngleRates(maxAngleRateRollDPS, maxAngleRatePitchDPS, maxAngleRateYawDPS);
 }
 
 /*!

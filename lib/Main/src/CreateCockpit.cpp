@@ -28,7 +28,7 @@ Cockpit& Main::createCockpit(RcModes& rc_modes, FlightController& flightControll
 #else
     static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
 #endif
-    cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()), flightController);
+    cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()));
     cockpit.setFeatures(nvs.loadFeaturesConfig().enabledFeatures);
     rc_modes.set_mode_activation_conditions(nvs.load_rc_mode_activation_conditions());
 

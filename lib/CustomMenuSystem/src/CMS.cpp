@@ -14,7 +14,7 @@
 
 CMS::CMS(DisplayPortBase* displayPort, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, VTX* vtx) :
     _displayPort(displayPort),
-    _cmsx(*this, imuFilters, imu, rc_modes, nvs, vtx),
+    _cmsx(*this, cockpit, imuFilters, imu, rc_modes, nvs, vtx),
     _cockpit(cockpit),
     _receiver(receiver),
     _rc_modes(rc_modes)
@@ -33,16 +33,6 @@ void CMS::setConfig(const config_t& config)
     _config = config;
 }
 
-void CMS::setArmingDisabled()
-{
-    _cockpit.setArmingDisabledFlag(ARMING_DISABLED_CMS_MENU);
-}
-
-void CMS::clearArmingDisabled()
-{
-    _cockpit.clearArmingDisabledFlag(ARMING_DISABLED_CMS_MENU);
-}
-
 void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // NOLINT(readability-function-cognitive-complexity)
 {
     (void)timeMicrosecondsDelta;
@@ -53,8 +43,10 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
 
     const uint32_t currentTimeMs = currentTimeUs / 1000;
 
+    const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
+    const bool isArmed = _cockpit.isArmed();
     if (_cmsx.isInMenu()) {
-        if (scanKeys(currentTimeMs, _lastCalledMs)) {
+        if (scanKeys(static_cast<int32_t>(currentTimeMs - _lastCalledMs), controls, isArmed)) {
             _cmsx.drawMenu(*_displayPort, currentTimeUs);
             _displayPort->commitTransaction();
         }
@@ -65,8 +57,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         }
     } else {
         // Detect menu invocation
-        if (!_cockpit.isArmed() && !_rc_modes.is_mode_active(MspBox::BOX_STICK_COMMAND_DISABLE)) {
-            const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
+        if (!isArmed && !_rc_modes.is_mode_active(MspBox::BOX_STICK_COMMAND_DISABLE)) {
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW )
             if (RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch)) {
 #else
@@ -104,7 +95,7 @@ uint16_t CMS::handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount)
     return ret;
 }
 
-bool CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(readability-function-cognitive-complexity)
+bool CMS::scanKeys(int32_t timeDelta, const receiver_controls_pwm_t& controls, bool isArmed) // NOLINT(readability-function-cognitive-complexity)
 {
     if (_externKey != CMSX::KEY_NONE) {
         _keyDelayMs = _cmsx.handleKey(*_displayPort, _externKey);
@@ -113,10 +104,8 @@ bool CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(read
         return true;
     }
 
-    const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
-
     CMSX::key_e key = CMSX::KEY_NONE;
-    if (_cockpit.isArmed() == false && RcModes::pwm_is_mid(controls.throttle) && RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch)) {
+    if (isArmed == false && RcModes::pwm_is_mid(controls.throttle) && RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch)) {
         key = CMSX::KEY_MENU;
     } else if (RcModes::pwm_is_high(controls.pitch)) {
         key = CMSX::KEY_UP;
@@ -141,7 +130,7 @@ bool CMS::scanKeys(uint32_t currentTimeMs, uint32_t lastCalledMs) // NOLINT(read
         ++_holdCount;
     }
     if (_keyDelayMs > 0) {
-        _keyDelayMs -= static_cast<int32_t>(currentTimeMs - lastCalledMs);
+        _keyDelayMs -= timeDelta;
         return false;
     }
     if (key) {

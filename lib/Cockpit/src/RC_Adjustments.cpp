@@ -446,6 +446,7 @@ int32_t RC_Adjustments::applyAbsoluteAdjustment(FlightController& flightControll
 
 uint8_t RC_Adjustments::applySelectAdjustment(FlightController& flightController, Cockpit& cockpit, [[maybe_unused]] OSD* osd, adjustment_e adjustment, uint8_t position)
 {
+    (void)cockpit;
     uint8_t beeps = 0;
 
     switch (adjustment) {

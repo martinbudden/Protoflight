@@ -18,7 +18,7 @@ class VTX;
 
 class CMSX {
 public:
-    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, RcModes& rc_modes, NonVolatileStorage& nvs, VTX* vtx);
+    CMSX(CMS& cms, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, RcModes& rc_modes, NonVolatileStorage& nvs, VTX* vtx);
 private:
     // CMS is not copyable or moveable
     CMSX(const CMSX&) = delete;
@@ -88,11 +88,14 @@ public:
     void menuOpen(DisplayPortBase& displayPort);
     void drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs);
     bool setupPopupMenuBuild();
-    menu_t* getSaveExitMenu();
+    menu_t* getSaveExitMenu() const;
     void inhibitSaveMenu() { _saveMenuInhibited = true; }
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key);
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entry* entry, uint16_t& entryFlags);
     void saveConfigAndNotify();
+
+    void setArmingDisabled();
+    void clearArmingDisabled();
 
     uint8_t getCurrentPidProfileIndex() const;
     void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex);
@@ -158,6 +161,7 @@ public:
 
 private:
     CMS& _cms;
+    Cockpit& _cockpit;
     IMU_Filters& _imuFilters;
     IMU_Base& _imu;
     RcModes& _rc_modes;

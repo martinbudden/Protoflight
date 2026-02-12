@@ -851,7 +851,7 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
 #if defined(USE_DYNAMIC_IDLE)
     const DynamicIdleController* dynamicIdleController = flightController.getMotorMixer().get_dynamic_idle_controller();
     if (dynamicIdleController) {
-        storeDynamicIdleControllerConfig(dynamicIdleController->get_config(), pidProfile);
+        storeDynamicIdleControllerConfig(dynamicIdleController->get_config(), _currentPidProfileIndex);
     }
 #endif
 #if defined(USE_RPM_FILTERS)
@@ -907,8 +907,26 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
 #if defined(USE_CMS)
 void CMSX::saveConfigAndNotify()
 {
-    Cockpit& cockpit = _cms.getCockpitMutable();
+    _nvs.storeAll(_imuFilters, _cockpit.getFlightController(), _cockpit, _rc_modes);
+}
 
-    _nvs.storeAll(_imuFilters, cockpit.getFlightController(), cockpit, _rc_modes);
+uint8_t CMSX::getCurrentPidProfileIndex() const
+{
+    return _nvs.getCurrentPidProfileIndex();
+}
+
+void CMSX::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) 
+{
+    _nvs.setCurrentPidProfileIndex(currentPidProfileIndex);
+}
+
+uint8_t CMSX::getCurrentRateProfileIndex() const
+{
+    return _nvs.getCurrentRateProfileIndex();
+}
+
+void CMSX::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex) 
+{
+    _nvs.setCurrentRateProfileIndex(currentRateProfileIndex);
 }
 #endif
