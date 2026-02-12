@@ -449,13 +449,13 @@ uint8_t RC_Adjustments::applySelectAdjustment(FlightController& flightController
     uint8_t beeps = 0;
 
     switch (adjustment) {
-    case ADJUSTMENT_RATE_PROFILE:
+    /*!!case ADJUSTMENT_RATE_PROFILE:
         if (cockpit.getCurrentRateProfileIndex() != position) {
             cockpit.setCurrentRateProfileIndex(position);
             blackboxLogInflightAdjustmentEvent(ADJUSTMENT_RATE_PROFILE, position);
             beeps = position + 1;
         }
-        break;
+        break;*/
     case ADJUSTMENT_HORIZON_STRENGTH: {
         const uint8_t newValue = std::clamp(position, uint8_t{0}, uint8_t{FlightController::PID_GAIN_MAX}); // FIXME magic numbers repeated in serial_cli.c
         const FlightController::PIDF_uint16_t pid = flightController.getPID_MSP(FlightController::ROLL_ANGLE_DEGREES);

@@ -101,12 +101,12 @@ Targets
     #define SDCARD_SPI_PINS     SPI_X_PINS
     #define USE_BLACKBOX
     //#define USE_BLACKBOX_TEST
-    //#define USE_MSP
+    #define USE_MSP
     #define MSP_UART_INDEX      0
     #define MSP_UART_PINS       UART_0_PINS
     #define USE_DASHBOARD
     #define USE_OSD
-    //#define USE_CMS
+    #define USE_CMS
     //#define USE_VTX
     //#define USE_GPS
     #define GPS_UART_INDEX      0

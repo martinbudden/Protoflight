@@ -12,11 +12,12 @@
 #endif
 
 
-CMS::CMS(DisplayPortBase* displayPort, Cockpit& cockpit, const ReceiverBase& receiver, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx) :
+CMS::CMS(DisplayPortBase* displayPort, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, VTX* vtx) :
     _displayPort(displayPort),
-    _cmsx(*this, imuFilters, imu, vtx),
+    _cmsx(*this, imuFilters, imu, rc_modes, nvs, vtx),
     _cockpit(cockpit),
-    _receiver(receiver)
+    _receiver(receiver),
+    _rc_modes(rc_modes)
 {
 }
 
@@ -46,7 +47,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
 {
     (void)timeMicrosecondsDelta;
 
-    if (_cockpit.get_rc_modes().is_mode_active(MspBox::BOX_PARALYZE)) {
+    if (_rc_modes.is_mode_active(MspBox::BOX_PARALYZE)) {
         return;
     }
 
@@ -64,7 +65,7 @@ void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // N
         }
     } else {
         // Detect menu invocation
-        if (!_cockpit.isArmed() && !_cockpit.get_rc_modes().is_mode_active(MspBox::BOX_STICK_COMMAND_DISABLE)) {
+        if (!_cockpit.isArmed() && !_rc_modes.is_mode_active(MspBox::BOX_STICK_COMMAND_DISABLE)) {
             const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW )
             if (RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch)) {

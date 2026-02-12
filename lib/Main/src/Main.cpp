@@ -76,16 +76,17 @@ void Main::setup()
 
     ReceiverBase& receiver = createReceiver(nvs);
 
-    Cockpit& cockpit = createCockpit(flightController, debug, imuFilters, nvs);
+    static RcModes rc_modes; // !!for now, to be owned by receiver task
+    Cockpit& cockpit = createCockpit(rc_modes, flightController, debug, imuFilters, nvs);
 
     // create the optional components according to build flags
     DisplayPortBase& displayPort = createDisplayPort(debug);
     VTX* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
     GPS* gps = createGPS(debug);
-    OSD* osd = createOSD(displayPort, flightController, cockpit, receiver, debug, nvs, vtx, gps);
-    [[maybe_unused]] CMS* cms = createCMS(displayPort, cockpit, receiver, imuFilters, imuSensor, vtx);
-    Blackbox* blackbox = createBlackBox(flightController, cockpit, receiver, imuFilters, debug, gps);
-    [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, blackbox, vtx, osd, gps);
+    OSD* osd = createOSD(displayPort, flightController, cockpit, receiver, rc_modes, debug, nvs, vtx, gps);
+    [[maybe_unused]] CMS* cms = createCMS(displayPort, cockpit, receiver, rc_modes, imuFilters, imuSensor, nvs, vtx);
+    Blackbox* blackbox = createBlackBox(flightController, cockpit, receiver, rc_modes, imuFilters, debug, gps);
+    [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, rc_modes, imuFilters, debug, nvs, blackbox, vtx, osd, gps);
     [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, flightController, receiver);
 #if defined(USE_BLACKBOX_TEST)
     testBlackbox(blackbox, ahrs, receiver, debug);

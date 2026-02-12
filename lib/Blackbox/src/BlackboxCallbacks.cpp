@@ -15,11 +15,11 @@
 #endif
 
 
-BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const Debug& debug, GPS* gps) :
+BlackboxCallbacks::BlackboxCallbacks(const AHRS_MessageQueue& messageQueue, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const RcModes& rc_modes, const Debug& debug, const GPS* gps) :
     _messageQueue(messageQueue),
     _flightController(flightController),
     _cockpit(cockpit),
-    _rc_modes(cockpit.get_rc_modes()),
+    _rc_modes(rc_modes),
     _receiver(receiver),
     _debug(debug),
     _gps(gps)
@@ -37,7 +37,7 @@ bool BlackboxCallbacks::areMotorsRunning() const
 
 bool BlackboxCallbacks::isBlackboxModeActive() const
 {
-    return _cockpit.get_rc_modes().is_mode_active(MspBox::BOX_BLACKBOX);
+    return _rc_modes.is_mode_active(MspBox::BOX_BLACKBOX);
 }
 
 bool BlackboxCallbacks::isBlackboxEraseModeActive() const

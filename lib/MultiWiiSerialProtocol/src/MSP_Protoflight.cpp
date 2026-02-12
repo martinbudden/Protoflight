@@ -5,11 +5,12 @@
 #include <MSP_Protocol.h>
 
 
-MSP_Protoflight::MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd, GPS* gps) :
+MSP_Protoflight::MSP_Protoflight(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd, GPS* gps) :
     _ahrs(ahrs),
     _flightController(flightController),
     _cockpit(cockpit),
     _receiver(receiver),
+    _rc_modes(rc_modes),
     _imuFilters(imuFilters),
     _debug(debug),
     _nonVolatileStorage(nvs),

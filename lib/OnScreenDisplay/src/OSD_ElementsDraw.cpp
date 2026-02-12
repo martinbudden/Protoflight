@@ -385,7 +385,7 @@ void OSD_Elements::draw_VTX_CHANNEL(DisplayPortBase& displayPort)
     }
     const char* vtxPowerLabel = _vtx->lookupPowerName(vtxPower);
     char vtxStatusIndicator = '\0';
-    if (_cockpit.get_rc_modes().is_mode_active(MspBox::BOX_VTX_CONTROL_DISABLE)) {
+    if (_rc_modes.is_mode_active(MspBox::BOX_VTX_CONTROL_DISABLE)) {
         vtxStatusIndicator = 'D';
     } else if (vtxStatus & VTX::STATUS_PIT_MODE) {
         vtxStatusIndicator = 'P';

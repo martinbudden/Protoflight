@@ -16,7 +16,6 @@ class Debug;
 class Blackbox;
 class FlightController;
 class IMU_Filters;
-class NonVolatileStorage;
 class ReceiverBase;
 
 enum arming_disabled_flags_e {
@@ -54,7 +53,7 @@ enum { ARMING_DISABLE_FLAGS_COUNT = 27 };
 
 class Cockpit : public CockpitBase {
 public:
-    Cockpit(FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs);
+    Cockpit(RcModes& rc_modes, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs);
 public:
     enum failsafe_phase_e {
         FAILSAFE_DISARMED = 0,
@@ -134,14 +133,8 @@ public:
     Autopilot& getAutopilotMutable() { return _autopilot; }
     const FlightController& getFlightController() const { return _flightController; }
     FlightController& getFlightControllerMutable() { return _flightController; }
-    NonVolatileStorage& getNonVolatileStorage() { return _nvs; }
 
-    uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
-    void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex);
-
-    uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
-    void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex);
-    void handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver);
+    void handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver, const RcModes& rcModes);
     virtual void update_controls(uint32_t tickCount, ReceiverBase& receiver) override;
 
     bool featureIsEnabled(uint32_t mask) const { return _features.isEnabled(mask); }
@@ -178,8 +171,6 @@ public:
     float applyRates(size_t axis, float rcCommand) const;
     float mapThrottle(float throttle) const;
 
-    const RcModes& get_rc_modes() const { return _rc_modes; }
-    RcModes& get_rc_modes_mutable() { return _rc_modes; }
 #if defined(USE_RC_ADJUSTMENTS)
     const RC_Adjustments& getRC_Adjustments() const { return _rcAdjustments; }
     RC_Adjustments& getRC_Adjustments() { return _rcAdjustments; }
@@ -189,22 +180,18 @@ public:
     void startBlackboxRecording(FlightController& flightController);
     void stopBlackboxRecording(FlightController& flightController);
 
-    void setRebootRequired();
-    bool getRebootRequired() const;
-
     bool getBoxIdState(uint8_t boxId, const RcModes& rcModes) const;
     size_t packFlightModeFlags(MspBox::bitset_t& flightModeFlags, const RcModes& rcModes) const;
     void serialize_box_reply_box_name(StreamBufWriter& dst, size_t page) const { _mspBox.serialize_box_reply_box_name(dst, page); }
     void serialize_box_reply_permanent_id(StreamBufWriter& dst, size_t page) const { _mspBox.serialize_box_reply_permanent_id(dst, page); }
 private:
     MspBox _mspBox;
-    RcModes _rc_modes;
+    RcModes& _rc_modes;
     Features _features {};
     FlightController& _flightController;
     Autopilot& _autopilot;
     IMU_Filters& _imuFilters;
     Debug& _debug;
-    NonVolatileStorage& _nvs;
     rates_t _rates {
         .rateLimits = { rates_t::LIMIT_MAX, rates_t::LIMIT_MAX, rates_t::LIMIT_MAX },
         .rcRates = { 100, 100, 100 },
@@ -230,8 +217,6 @@ private:
         .tickCountThreshold = 1500,
         .tickCountSwitchOffThreshold = 5000
     };
-    uint8_t _currentPidProfileIndex {0};
-    uint8_t _currentRateProfileIndex {0};
     bool _recordToBlackboxWhenArmed { false };
     bool _rebootRequired {false};
     bool _onOffSwitchPressed {false}; // on/off switch debouncing

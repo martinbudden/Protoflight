@@ -277,7 +277,7 @@ static std::array<uint8_t, 3> pidProfileIndexString = { 'P', '1', '\0' };
 // cppcheck-suppress constParameterCallback
 static const void* menuPID_TuningOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
-    pidProfileIndexString[1] = '1' + cmsx.getCockpit().getCurrentPidProfileIndex();
+    pidProfileIndexString[1] = '1' + cmsx.getCurrentPidProfileIndex();
     const FlightController& flightController = cmsx.getCockpit().getFlightController();
     data.pids[FlightController::ROLL_RATE_DPS] = flightController.getPID_Constants(FlightController::ROLL_RATE_DPS);
     data.pids[FlightController::PITCH_RATE_DPS] = flightController.getPID_Constants(FlightController::PITCH_RATE_DPS);
@@ -385,8 +385,8 @@ static const std::array<CMSX::OSD_Entry, 10> menuProfileEntries
 // cppcheck-suppress constParameterCallback
 static const void* menuProfileOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
 {
-    pidProfileIndex = cmsx.getCockpit().getCurrentPidProfileIndex();
-    rateProfileIndex = cmsx.getCockpit().getCurrentRateProfileIndex();
+    pidProfileIndex = 0;//!!!cmsx.getCockpit().getCurrentPidProfileIndex();
+    rateProfileIndex = 0;//!!!cmsx.getCockpit().getCurrentRateProfileIndex();
 
     //CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;
@@ -394,8 +394,8 @@ static const void* menuProfileOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBa
 
 static const void* menuProfileOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    cmsx.getCockpitMutable().setCurrentPidProfileIndex(pidProfileIndex);
-    cmsx.getCockpitMutable().setCurrentRateProfileIndex(rateProfileIndex);
+    cmsx.setCurrentPidProfileIndex(pidProfileIndex);
+    cmsx.setCurrentRateProfileIndex(rateProfileIndex);
 
     //CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
     return nullptr;

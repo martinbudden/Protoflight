@@ -10,7 +10,7 @@
 #include <ReceiverBase.h>
 
 
-Cockpit& Main::createCockpit(FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
+Cockpit& Main::createCockpit(RcModes& rc_modes, FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_ALTITUDE_HOLD)
     static AltitudeMessageQueue altitudeMessageQueue;
@@ -23,16 +23,14 @@ Cockpit& Main::createCockpit(FlightController& flightController, Debug& debug, I
 #endif
 
 #if defined(USE_RC_ADJUSTMENTS)
-    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, &DEFAULTS::RC_AdjustmentConfigs);
+    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, &DEFAULTS::RC_AdjustmentConfigs);
     cockpit.getRC_Adjustments().setAdjustmentRanges(nvs.loadRC_AdjustmentRanges());
 #else
-    static Cockpit cockpit(flightController, autopilot, imuFilters, debug, nvs, nullptr);
+    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
 #endif
-    cockpit.setCurrentPidProfileIndex(nvs.getCurrentPidProfileIndex());
-    cockpit.setCurrentRateProfileIndex(nvs.getCurrentRateProfileIndex());
     cockpit.setRates(nvs.loadRates(nvs.getCurrentRateProfileIndex()), flightController);
     cockpit.setFeatures(nvs.loadFeaturesConfig().enabledFeatures);
-    cockpit.get_rc_modes_mutable().set_mode_activation_conditions(nvs.load_rc_mode_activation_conditions());
+    rc_modes.set_mode_activation_conditions(nvs.load_rc_mode_activation_conditions());
 
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW) && false
     const rc_modes_activation_condition_t macAngle = {

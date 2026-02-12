@@ -10,12 +10,12 @@
 
 #include <cmath>
 
-Cockpit::Cockpit(FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, [[maybe_unused]] const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs) :
+Cockpit::Cockpit(RcModes& rc_modes, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, [[maybe_unused]] const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs) :
+    _rc_modes(rc_modes),
     _flightController(flightController),
     _autopilot(autopilot),
     _imuFilters(imuFilters),
-    _debug(debug),
-    _nvs(nvs)
+    _debug(debug)
 #if defined(USE_RC_ADJUSTMENTS)
     ,_rcAdjustments(defaultAdjustmentConfigs)
 #endif
@@ -61,16 +61,6 @@ Cockpit::Cockpit(FlightController& flightController, Autopilot& autopilot, IMU_F
     static_assert(BoxIdToFlightModeMap[MspBox::BOX_PASSTHRU]      == LOG2_PASSTHRU_MODE);
     static_assert(BoxIdToFlightModeMap[MspBox::BOX_FAILSAFE]      == LOG2_FAILSAFE_MODE);
     static_assert(BoxIdToFlightModeMap[MspBox::BOX_GPS_RESCUE]    == LOG2_GPS_RESCUE_MODE);
-}
-
-void Cockpit::setRebootRequired()
-{
-    _rebootRequired = true;
-}
-
-bool Cockpit::getRebootRequired() const
-{
-    return _rebootRequired;
 }
 
 bool Cockpit::isArmed() const
@@ -173,9 +163,10 @@ void Cockpit::stopBlackboxRecording(FlightController& flightController)
     }
 }
 
-void Cockpit::handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver)
+void Cockpit::handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver, const RcModes& rc_modes)
 {
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
+    (void)rc_modes;
     if (receiver.get_switch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
         _onOffSwitchPressed = true;
     } else {
@@ -196,7 +187,7 @@ void Cockpit::handleArmingSwitch(FlightController& flightController, const Recei
     }
 #else
     (void)receiver;
-    if (_rc_modes.is_mode_active(MspBox::BOX_ARM)) {
+    if (rc_modes.is_mode_active(MspBox::BOX_ARM)) {
         if (!isArmed()) {
             if (_recordToBlackboxWhenArmed) {
                 startBlackboxRecording(flightController);
@@ -227,7 +218,7 @@ void Cockpit::update_controls(uint32_t tickCount, ReceiverBase& receiver)
     // set the RC modes according to the receiver channel values
     rcModes.update_activated_modes(receiver);
 
-    handleArmingSwitch(flightController, receiver);
+    handleArmingSwitch(flightController, receiver, rcModes);
 
 #if defined(USE_RC_ADJUSTMENTS)
     // process any in-flight adjustments

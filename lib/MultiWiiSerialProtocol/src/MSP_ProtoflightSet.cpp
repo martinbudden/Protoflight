@@ -70,7 +70,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
         if (box == nullptr) {
             return RESULT_ERROR;
         }
-        rc_modes_activation_condition_t mac = _cockpit.get_rc_modes().get_mode_activation_condition(macIndex);
+        rc_modes_activation_condition_t mac = _rc_modes.get_mode_activation_condition(macIndex);
         mac.mode_id = box->id;
         mac.auxiliary_channel_index = src.read_u8();
         mac.range.start_step = src.read_u8();
@@ -83,8 +83,8 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
                 mac.linked_to = linkBox->id;
             }
         }
-        _cockpit.get_rc_modes_mutable().set_mode_activation_condition(macIndex, mac);
-        _cockpit.get_rc_modes_mutable().analyze_mode_activation_conditions();
+        _rc_modes.set_mode_activation_condition(macIndex, mac);
+        _rc_modes.analyze_mode_activation_conditions();
         break;
     }
     case MSP_SET_ADJUSTMENT_RANGE: {
@@ -504,7 +504,7 @@ MSP_Base::result_e MSP_Protoflight::processSetCommand(int16_t cmdMSP, StreamBufR
             // can't save to non volatile storage if the motors are on
             return RESULT_ERROR;
         }
-        _nonVolatileStorage.storeAll(_imuFilters, _flightController, _cockpit, _pidProfileIndex, _ratesProfileIndex);
+        _nonVolatileStorage.storeAll(_imuFilters, _flightController, _cockpit, _rc_modes);
         break;
 #ifdef USE_BLACKBOX
     case MSP_SET_BLACKBOX_CONFIG:

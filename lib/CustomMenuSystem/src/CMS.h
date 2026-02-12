@@ -10,7 +10,9 @@ class Cockpit;
 class DisplayPortBase;
 class IMU_Base;
 class IMU_Filters;
+class NonVolatileStorage;
 class OSD;
+class RcModes;
 class ReceiverBase;
 
 
@@ -19,7 +21,7 @@ Custom Menu System.
 */
 class CMS {
 public:
-    CMS(DisplayPortBase* displayPort, Cockpit& cockpit, const ReceiverBase& receiver, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx);
+    CMS(DisplayPortBase* displayPort, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, VTX* vtx);
     void init();
 private:
     // CMS is not copyable or moveable
@@ -58,6 +60,7 @@ private:
     CMSX _cmsx;
     Cockpit& _cockpit;
     const ReceiverBase& _receiver;
+    const RcModes& _rc_modes;
     config_t _config {};
     int32_t _keyDelayMs {CMSX::BUTTON_TIME_MS};
     uint32_t _lastCalledMs {};

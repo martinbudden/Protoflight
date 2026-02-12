@@ -32,7 +32,7 @@ void CMS_Task::loop()
 }
 
 /*!
-Task function for the AHRS. Sets up and runs the task loop() function.
+Task function for the CMS. Sets up and runs the task loop() function.
 */
 [[noreturn]] void CMS_Task::task()
 {
@@ -67,7 +67,7 @@ Task function for the AHRS. Sets up and runs the task loop() function.
 }
 
 /*!
-Wrapper function for AHRS::Task with the correct signature to be used in xTaskCreate.
+Wrapper function for CMS::Task with the correct signature to be used in xTaskCreate.
 */
 [[noreturn]] void CMS_Task::Task(void* arg)
 {

@@ -72,7 +72,7 @@ public:
     int32_t storeItem(uint16_t key, const void* item, size_t length, const void* defaults);
     int32_t storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults);
 
-    int32_t storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, uint8_t pidProfile, uint8_t ratesProfile);
+    int32_t storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, const RcModes& rc_modes);
 
     void loadMacAddress(uint8_t* macAddress) const;
     int32_t storeMacAddress(const uint8_t* macAddress);

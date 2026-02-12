@@ -846,7 +846,7 @@ int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
 #endif
 }
 
-int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, uint8_t pidProfile, uint8_t ratesProfile)
+int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, const RcModes& rc_modes)
 {
 #if defined(USE_DYNAMIC_IDLE)
     const DynamicIdleController* dynamicIdleController = flightController.getMotorMixer().get_dynamic_idle_controller();
@@ -861,27 +861,27 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
     }
 #endif
 
-    storeFlightControllerFiltersConfig(flightController.getFiltersConfig(), pidProfile);
+    storeFlightControllerFiltersConfig(flightController.getFiltersConfig(), _currentPidProfileIndex);
 
-    storeFlightControllerFlightModeConfig(flightController.getFlightModeConfig(), pidProfile);
+    storeFlightControllerFlightModeConfig(flightController.getFlightModeConfig(),  _currentPidProfileIndex);
 
-    storeFlightControllerTPA_Config(flightController.getTPA_Config(), pidProfile);
+    storeFlightControllerTPA_Config(flightController.getTPA_Config(),  _currentPidProfileIndex);
 
-    storeFlightControllerAntiGravityConfig(flightController.getAntiGravityConfig(), pidProfile);
+    storeFlightControllerAntiGravityConfig(flightController.getAntiGravityConfig(),  _currentPidProfileIndex);
 
     storeFlightControllerCrashFlipConfig(flightController.getCrashFlipConfig());
 
 #if defined(USE_D_MAX)
-    storeFlightControllerDMaxConfig(flightController.getDMaxConfig(), pidProfile);
+    storeFlightControllerDMaxConfig(flightController.getDMaxConfig(),  _currentPidProfileIndex);
 #endif
 #if defined(USE_ITERM_RELAX)
-    storeFlightControllerITermRelaxConfig(flightController.getITermRelaxConfig(), pidProfile);
+    storeFlightControllerITermRelaxConfig(flightController.getITermRelaxConfig(),  _currentPidProfileIndex);
 #endif
 #if defined(USE_YAW_SPIN_RECOVERY)
-    storeFlightControllerYawSpinRecoveryConfig(flightController.getYawSpinRecoveryConfig(), pidProfile);
+    storeFlightControllerYawSpinRecoveryConfig(flightController.getYawSpinRecoveryConfig(),  _currentPidProfileIndex);
 #endif
 #if defined(USE_CRASH_RECOVERY)
-    storeFlightControllerCrashRecoveryConfig(flightController.getCrashRecoveryConfig(), pidProfile);
+    storeFlightControllerCrashRecoveryConfig(flightController.getCrashRecoveryConfig(),  _currentPidProfileIndex);
 #endif
 #if defined(USE_ALTITUDE_HOLD)
     storeAltitudeHoldConfig(cockpit.getAutopilot().getAltitudeHoldConfig());
@@ -894,8 +894,8 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
     storeDynamicNotchFilterConfig(imuFilters.getDynamicNotchFilterConfig());
 #endif
 
-    storeRates(cockpit.getRates(), ratesProfile);
-    store_rc_mode_activation_conditions(cockpit.get_rc_modes().get_mode_activation_conditions());
+    storeRates(cockpit.getRates(), _currentRateProfileIndex);
+    store_rc_mode_activation_conditions(rc_modes.get_mode_activation_conditions());
 #if defined(USE_RC_ADJUSTMENTS)
     storeRC_AdjustmentRanges(cockpit.getRC_Adjustments().getAdjustmentRanges());
 #endif
@@ -904,23 +904,11 @@ int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const Flight
     return OK;
 }
 
-void Cockpit::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex)
-{
-    _currentRateProfileIndex = currentRateProfileIndex;
-    _rates = _nvs.loadRates(currentRateProfileIndex);
-}
-
-void Cockpit::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex)
-{
-    _currentPidProfileIndex = currentPidProfileIndex;
-}
-
 #if defined(USE_CMS)
 void CMSX::saveConfigAndNotify()
 {
     Cockpit& cockpit = _cms.getCockpitMutable();
-    NonVolatileStorage& nvs = cockpit.getNonVolatileStorage();
 
-    nvs.storeAll(_imuFilters, cockpit.getFlightController(), cockpit, cockpit.getCurrentPidProfileIndex(), cockpit.getCurrentRateProfileIndex());
+    _nvs.storeAll(_imuFilters, cockpit.getFlightController(), cockpit, _rc_modes);
 }
 #endif

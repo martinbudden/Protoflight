@@ -27,10 +27,11 @@
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
-OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, const VTX* vtx, const GPS* gps) : // cppcheck-suppress constParameterReference
-    _elements(*this, flightController, cockpit, receiver, debug, vtx, gps),
+OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const RcModes& rc_modes, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, const VTX* vtx, const GPS* gps) : // cppcheck-suppress constParameterReference
+    _elements(*this, flightController, cockpit, receiver, rc_modes, debug, vtx, gps),
     _cockpit(cockpit),
     _receiver(receiver),
+    _rc_modes(rc_modes),
     _ahrsMessageQueue(ahrsMessageQueue)
 {
 }
@@ -283,7 +284,7 @@ void OSD::processStats2(timeUs32_t currentTimeUs)
             // in timeout period, check sticks for activity or CRASH_FLIP switch to resume display.
             if (!_cockpit.isArmed()) {
                 const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
-                if (RcModes::pwm_is_high(controls.throttle) || RcModes::pwm_is_high(controls.pitch) || _cockpit.get_rc_modes().is_mode_active(MspBox::BOX_CRASH_FLIP)) {
+                if (RcModes::pwm_is_high(controls.throttle) || RcModes::pwm_is_high(controls.pitch) || _rc_modes.is_mode_active(MspBox::BOX_CRASH_FLIP)) {
                     _resumeRefreshAtUs = currentTimeUs;
                 }
             }
@@ -435,7 +436,7 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
         break;
     case STATE_UPDATE_CANVAS: {
         //Serial.printf("STATE_UPDATE_CANVAS\r\n");
-        if (_cockpit.get_rc_modes().is_mode_active(MspBox::BOX_OSD)) {
+        if (_rc_modes.is_mode_active(MspBox::BOX_OSD)) {
             // Hide OSD when OSD SW mode is active
             _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
             _state = STATE_COMMIT;

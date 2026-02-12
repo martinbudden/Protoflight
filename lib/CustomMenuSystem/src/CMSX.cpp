@@ -4,6 +4,7 @@
 #include "Cockpit.h"
 #include "DisplayPortBase.h"
 #include "FormatInteger.h"
+#include "NonVolatileStorage.h"
 #include "OSD_Elements.h"
 #include "Targets.h"
 
@@ -26,16 +27,38 @@ const CMSX::menu_t* CMSX::MENU_BACK              = CMSX::MENU_NULL_PTR + 7;
 //NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 
-CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx) :
+CMSX::CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, RcModes& rc_modes, NonVolatileStorage& nvs, VTX* vtx) :
     _cms(cms),
     _imuFilters(imuFilters),
     _imu(imu),
+    _rc_modes(rc_modes),
+    _nvs(nvs),
     _vtx(vtx),
     _menuMain(menuMain)
     //_menuMain(menuFilters)
     //_menuMain(menuRates)
     //_menuMain(menuRcPreview)
 {
+}
+
+uint8_t CMSX::getCurrentPidProfileIndex() const
+{
+    return _nvs.getCurrentPidProfileIndex();
+}
+
+void CMSX::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) 
+{
+    _nvs.setCurrentPidProfileIndex(currentPidProfileIndex);
+}
+
+uint8_t CMSX::getCurrentRateProfileIndex() const
+{
+    return _nvs.getCurrentRateProfileIndex();
+}
+
+void CMSX::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex) 
+{
+    _nvs.setCurrentRateProfileIndex(currentRateProfileIndex);
 }
 
 const Cockpit& CMSX::getCockpit() const
@@ -50,17 +73,17 @@ Cockpit& CMSX::getCockpitMutable()
 
 void CMSX::setRebootRequired()
 {
-    _cms.getCockpitMutable().setRebootRequired();
+    _rebootRequired = true;
 }
 
 bool CMSX::getRebootRequired() const
 {
-    return _cms.getCockpit().getRebootRequired();
+    return _rebootRequired;
 }
 
 CMSX::menu_t* CMSX::getSaveExitMenu()
 {
-    if (getRebootRequired()) {
+    if (_rebootRequired) {
         return &CMSX::menuSaveExitReboot;
     }
     return &CMSX::menuSaveExit;

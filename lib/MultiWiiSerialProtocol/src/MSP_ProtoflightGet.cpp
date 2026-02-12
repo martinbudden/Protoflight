@@ -54,7 +54,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBufW
         static constexpr uint16_t SENSOR_GYROSCOPE = 0x01U << 5U;
         dst.write_u16(SENSOR_ACCELEROMETER | SENSOR_GYROSCOPE);
         MspBox::bitset_t flightModeFlags;
-        const size_t flagBitCount = _cockpit.packFlightModeFlags(flightModeFlags, _cockpit.get_rc_modes());
+        const size_t flagBitCount = _cockpit.packFlightModeFlags(flightModeFlags, _rc_modes);
         dst.write_data(&flightModeFlags, 4); // unconditional part of flags, first 32 bits
         dst.write_u8(_nonVolatileStorage.getCurrentPidProfileIndex());
         dst.write_u16(10); //constrain(getAverageSystemLoadPercent(), 0, LOAD_PERCENTAGE_ONE))
@@ -234,7 +234,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBufW
         break;
     }
     case MSP_MODE_RANGES:
-        for (const auto& mac : _cockpit.get_rc_modes().get_mode_activation_conditions()) {
+        for (const auto& mac : _rc_modes.get_mode_activation_conditions()) {
             const MspBox::box_t* box = MspBox::findBoxByBoxId(mac.mode_id);
             if (box == nullptr) {
                 return RESULT_CMD_UNKNOWN;
@@ -247,7 +247,7 @@ MSP_Base::result_e MSP_Protoflight::processGetCommand(int16_t cmdMSP, StreamBufW
         break;
     case MSP_MODE_RANGES_EXTRA:
         dst.write_u8(RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT);
-        for (const auto& mac : _cockpit.get_rc_modes().get_mode_activation_conditions()) {
+        for (const auto& mac : _rc_modes.get_mode_activation_conditions()) {
             const MspBox::box_t* box = MspBox::findBoxByBoxId(mac.mode_id);
             const MspBox::box_t* linkedBox = MspBox::findBoxByBoxId(mac.linked_to);
             if (box == nullptr || linkedBox == nullptr) {

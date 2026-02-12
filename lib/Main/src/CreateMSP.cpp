@@ -10,10 +10,10 @@
 /*!
 Statically allocate the MSP and associated objects.
 */
-MSP_Serial* Main::createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd, GPS* gps)
+MSP_Serial* Main::createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd, GPS* gps)
 {
 #if defined(USE_MSP)
-    static MSP_Protoflight mspProtoflight(ahrs, flightController, cockpit, receiver, imuFilters, debug, nvs, blackbox, vtx, osd, gps);
+    static MSP_Protoflight mspProtoflight(ahrs, flightController, cockpit, receiver, rc_modes, imuFilters, debug, nvs, blackbox, vtx, osd, gps);
     static MSP_Stream mspStream(mspProtoflight);
     enum { BAUD_RATE = 115200 };
     enum { DATA_BITS = 8, PARITY = SerialPort::PARITY_NONE, STOP_BITS = 1 }; // 8N1
@@ -26,6 +26,7 @@ MSP_Serial* Main::createMSP(AHRS& ahrs, FlightController& flightController, Cock
     (void)flightController;
     (void)cockpit;
     (void)receiver;
+    (void)rc_modes;
     (void)imuFilters;
     (void)debug;
     (void)nvs;

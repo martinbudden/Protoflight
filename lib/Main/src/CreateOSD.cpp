@@ -7,10 +7,10 @@
 /*!
 Statically allocate the OSD and load its default configuration.
 */
-OSD* Main::createOSD(DisplayPortBase& displayPort, const FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, Debug& debug, NonVolatileStorage& nvs, const VTX* vtx, const GPS* gps) // cppcheck-suppress constParameterReference
+OSD* Main::createOSD(DisplayPortBase& displayPort, const FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const RcModes& rc_modes, Debug& debug, NonVolatileStorage& nvs, const VTX* vtx, const GPS* gps) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_OSD)
-    static OSD osd(flightController, cockpit, receiver, flightController.getAHRS_MessageQueue(), debug, vtx, gps);
+    static OSD osd(flightController, cockpit, receiver, rc_modes, flightController.getAHRS_MessageQueue(), debug, vtx, gps);
     cockpit.setOSD(osd);
     osd.init(&displayPort);
     osd.setConfig(nvs.loadOSD_Config());
@@ -25,6 +25,7 @@ OSD* Main::createOSD(DisplayPortBase& displayPort, const FlightController& fligh
     (void)flightController;
     (void)cockpit;
     (void)receiver;
+    (void)rc_modes;
     (void)debug;
     (void)nvs;
     (void)vtx;

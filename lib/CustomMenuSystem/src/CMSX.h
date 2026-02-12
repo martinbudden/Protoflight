@@ -10,13 +10,15 @@ class Cockpit;
 class DisplayPortBase;
 class IMU_Base;
 class IMU_Filters;
+class NonVolatileStorage;
 class ReceiverBase;
+class RcModes;
 class VTX;
 
 
 class CMSX {
 public:
-    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, VTX* vtx);
+    CMSX(CMS& cms, IMU_Filters& imuFilters, IMU_Base& imu, RcModes& rc_modes, NonVolatileStorage& nvs, VTX* vtx);
 private:
     // CMS is not copyable or moveable
     CMSX(const CMSX&) = delete;
@@ -92,6 +94,11 @@ public:
     uint16_t handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entry* entry, uint16_t& entryFlags);
     void saveConfigAndNotify();
 
+    uint8_t getCurrentPidProfileIndex() const;
+    void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex);
+    uint8_t getCurrentRateProfileIndex() const;
+    void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex);
+
     const CMS& getCMS() const { return _cms; }
     CMS& getCMS_Mutable() { return _cms; }
     Cockpit& getCockpitMutable();
@@ -153,15 +160,17 @@ private:
     CMS& _cms;
     IMU_Filters& _imuFilters;
     IMU_Base& _imu;
+    RcModes& _rc_modes;
+    NonVolatileStorage& _nvs;
     VTX* _vtx;
     menu_t& _menuMain;
     menu_context_t _currentMenuContext {};
-    uint8_t _menuStackIndex {};
     std::array<menu_context_t, MAX_MENU_STACK_DEPTH> _menuStack {};
     const OSD_Entry* _pageTop {}; // First entry for the current page
     uint32_t _lastPolledUs {};
     uint16_t _osdProfileCursor {};
     uint16_t _profile {0};
+    uint8_t _menuStackIndex {};
     uint8_t _maxMenuItems {};
     uint8_t _pageCount {}; // Number of pages in the current menu
     uint8_t _pageMaxRow {}; // Max row in the current page
@@ -169,6 +178,7 @@ private:
     uint8_t _leftMenuColumn {};
     uint8_t _rightMenuColumn {};
     uint8_t _linesPerMenuItem {}; // normally 1, but may be 2 for narrow screens
+    bool _rebootRequired {false};
     bool _smallScreen {false};
     bool _rightAligned {false};
     bool _saveMenuInhibited {false};
