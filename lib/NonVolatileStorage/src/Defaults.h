@@ -542,7 +542,7 @@ static constexpr gps_config_t GPS_CONFIG = {
     .provider = GPS::GPS_UBLOX,
 #endif
     .sbasMode = GPS::SBAS_NONE,
-    .auto_CONFIG = GPS::AUTO_CONFIG_ON,
+    .autoConfig = GPS::AUTO_CONFIG_ON,
     .autoBaud = GPS::AUTO_BAUD_OFF,
     .gps_ublox_acquire_model = GPS::MODEL_STATIONARY,
     .gps_ublox_flight_model = GPS::MODEL_AIRBORNE_4G,
