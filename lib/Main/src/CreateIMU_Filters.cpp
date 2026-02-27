@@ -2,23 +2,21 @@
 #include "Main.h"
 #include "NonVolatileStorage.h"
 
-#include <MotorMixerBase.h>
+#include <motor_mixer_base.h>
 
 
-IMU_Filters& Main::createIMU_Filters(float taskIntervalSeconds, MotorMixerBase& motorMixer, Debug& debug, const NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
+IMU_Filters& Main::createIMU_Filters(float taskIntervalSeconds, RpmFilters* rpmFilters, const NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
+    (void)rpmFilters;
+
     // Statically allocate the IMU_Filters
-    static IMU_Filters imuFilters(motorMixer.get_motor_count(), debug, taskIntervalSeconds);
-    imuFilters.setConfig(nvs.loadIMU_FiltersConfig());
+    static IMU_Filters imuFilters(taskIntervalSeconds);
+    imuFilters.setConfig(nvs.load_imu_filters_config());
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
-    imuFilters.setDynamicNotchFilterConfig(nvs.loadDynamicNotchFilterConfig());
+    imuFilters.set_dynamic_notch_filter_config(nvs.load_dynamic_notch_filter_config());
 #endif
 #if defined(USE_RPM_FILTERS)
-    RpmFilters* rpmFilters = motorMixer.get_rpm_filters();
-    if (rpmFilters) {
-        rpmFilters->set_config(nvs.loadRPM_FiltersConfig());
-        imuFilters.setRPM_Filters(rpmFilters);
-    }
+    imuFilters.setRPM_Filters(rpmFilters);
 #endif
     return imuFilters;
 }

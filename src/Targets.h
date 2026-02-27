@@ -11,7 +11,10 @@ Targets
 #define USE_OSD_STATS
 #define USE_SIN_ANGLE_PIDS
 #define USE_GYRO_FILTERS_EXTENDED
+
+#if !defined(FRAMEWORK_TEST)
 #define USE_RC_ADJUSTMENTS
+#endif
 
 #endif
 
@@ -21,10 +24,12 @@ Targets
     #define BOARD_IDENTIFIER    "EPS3"
 
     #define SPI_1_PINS          spi_pins_t{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=11}
-    #define I2C_X_PINS          i2c_pins_t{.sda=3,.scl=4,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define I2C_X_PINS          i2c_pins_t{.sda=3,.scl=4,.irq=BusI2c::IRQ_NOT_SET}
     #define MOTOR_PINS          motor_pins_t{.m0=5,.m1=10,.m2=42,.m3=41} // BR, FR, BL, FL
     // KH-A1001WF-06A connector, connected to PMW3901MB-TXQT Optical Motion Tracking Chip
     #define OPTICAL_FLOW_PINS   spi_pins_t{.cs=12,.sck=44,.cipo=43,.copi=14,.irq=0xFF}
+
+    //#define USE_ARDUINO_ESP32_PREFERENCES
 
     #define GYRO_SAMPLE_RATE_HZ 1600
     #define AHRS_TASK_IS_TIMER_DRIVEN
@@ -33,7 +38,7 @@ Targets
     #define USE_IMU_BMI270
     #define IMU_SPI_INDEX       BUS_INDEX_1
     #define IMU_SPI_PINS        SPI_1_PINS
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS_NED
 
     #define USE_ALTITUDE_HOLD
     #define USE_BAROMETER
@@ -59,7 +64,7 @@ Targets
 
     #define USE_IMU_BMI270
     #define IMU_I2C_PINS        I2C_X_PINS
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
@@ -75,7 +80,7 @@ Targets
     #define BOARD_IDENTIFIER    "EPS3"
 
     #define SPI_X_PINS          spi_pins_t{.cs=4,.sck=18,.cipo=38,.copi=23,.irq=0xFF}
-    #define I2C_X_PINS          i2c_pins_t{.sda=21,.scl=22,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define I2C_X_PINS          i2c_pins_t{.sda=21,.scl=22,.irq=BusI2c::IRQ_NOT_SET}
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
     #define UART_0_PINS         uart_pins_t{.rx=1,.tx=0}
 
@@ -90,7 +95,7 @@ Targets
     #define USE_IMU_MPU6886
 #endif
     #define IMU_I2C_PINS        I2C_X_PINS
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
 
     //#define USE_BAROMETER
     //#define USE_BAROMETER_BMP280
@@ -136,7 +141,7 @@ Targets
     #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
 
     #define USE_IMU_ISM330DHCX
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
 
     #define USE_MOTOR_MIXER_QUAD_X_PWM
 
@@ -154,7 +159,7 @@ Targets
     #define BOARD_IDENTIFIER    "NONE"
 
     #define SPI_X_PINS          spi_pins_t{.cs=0,.sck=0,.cipo=0,.copi=0,.irq=0xFF}
-    #define I2C_X_PINS          i2c_pins_t{.sda=0,.scl=0,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define I2C_X_PINS          i2c_pins_t{.sda=0,.scl=0,.irq=BusI2c::IRQ_NOT_SET}
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
     #define UART_0_PINS         uart_pins_t{.rx=1,.tx=0}
     #define UART_1_PINS         uart_pins_t{.rx=3,.tx=2}
@@ -164,7 +169,7 @@ Targets
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define RECEIVER_TASK_INTERVAL_MICROSECONDS 0
 
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS_NED
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS_NED
 
     #define RECEIVER_UART_INDEX 0
     #define RECEIVER_PINS       UART_0_PINS
@@ -208,14 +213,16 @@ Targets
     #define SPI_0_PINS          spi_pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
     #define SPI_1_PINS          spi_pins_t{.cs=13,.sck=14,.cipo=12,.copi=15,.irq=0xFF} // !!TODO check
     #define UART_0_PINS         uart_pins_t{.rx=0,.tx=0}
-    #define I2C_0_PINS          i2c_pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define I2C_0_PINS          i2c_pins_t{.sda=07,.scl=27,.irq=BusI2c::IRQ_NOT_SET}
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
+
+    #define USE_FLASH_KLV
 
     #define GYRO_SAMPLE_RATE_HZ 1000
     #define AHRS_TASK_IS_TIMER_DRIVEN
 
     #define USE_IMU_LSM6DS3TR_C
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
 #if defined(LIBRARY_SENSORS_IMU_USE_SPI_BUS)
     #define IMU_SPI_INDEX       BUS_INDEX_0
     #define IMU_SPI_PINS        SPI_0_PINS
@@ -243,15 +250,17 @@ Targets
     #define SPI_0_PINS          spi_pins_t{.cs=17,.sck=18,.cipo=16,.copi=19,.irq=20}
     #define SPI_1_PINS          spi_pins_t{.cs=13,.sck=14,.cipo=12,.copi=15,.irq=0xFF} // !!TODO check
     #define UART_0_PINS         uart_pins_t{.rx=0,.tx=0}
-    #define I2C_0_PINS          i2c_pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define I2C_0_PINS          i2c_pins_t{.sda=07,.scl=27,.irq=BusI2c::IRQ_NOT_SET}
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
     //#define MOTOR_PINS          motor_pins_t{.m0=2,.m1=3,.m2=4,.m3=5}
+
+    #define USE_FLASH_KLV
 
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define GYRO_SAMPLE_RATE_HZ 1000
     #define OUTPUT_TO_MOTORS_DENOMINATOR 1
 
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
     #define USE_IMU_LSM6DS3TR_C
 #if defined(LIBRARY_SENSORS_IMU_USE_SPI_BUS)
     #define IMU_SPI_INDEX       BUS_INDEX_0
@@ -295,14 +304,14 @@ Targets
     #define SPI_0_PINS                  spi_pins_t{.cs=17,.sck=16,.cipo=14,.copi=15,.irq=13}
     #define UART_0_PINS                 uart_pins_t{.rx=7,.tx=21}
     #define UART_1_PINS                 uart_pins_t{.rx=6,.tx=9}
-    #define I2C_0_PINS                  i2c_pins_t{.sda=11,.scl=10,.irq=BUS_I2C::IRQ_NOT_SET}
-    #define I2C_1_PINS                  i2c_pins_t{.sda=33,.scl=39,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define I2C_0_PINS                  i2c_pins_t{.sda=11,.scl=10,.irq=BusI2c::IRQ_NOT_SET}
+    #define I2C_1_PINS                  i2c_pins_t{.sda=33,.scl=39,.irq=BusI2c::IRQ_NOT_SET}
     #define SD_MMC_PINS                 mmc_pins_t{.dat=37,.clk=36,.cmd=35}
     #define MOTOR_PINS                  motor_pins_t{.m0=1,.m1=2,.m2=3,.m3=4} // BR, TR, BL, TL
     #define NEO_PIXEL_PIN               12
     // other output pins are: 45, 42, 41, 5
 
-    #define IMU_AXIS_ORDER              IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER              ImuBase::XPOS_YPOS_ZPOS
     #define USE_IMU_ICM426XX
     #define AHRS_TASK_IS_TIMER_DRIVEN
     #define OUTPUT_TO_MOTORS_DENOMINATOR 1
@@ -344,17 +353,19 @@ Targets
     #define SPI_1_PINS                  spi_pins_t{.cs=29,.sck=30,.cipo=28,.copi=31,.irq=27}
     #define UART_0_PINS                 uart_pins_t{.rx=1,.tx=0}
     #define UART_1_PINS                 uart_pins_t{.rx=5,.tx=4}
-    #define I2C_0_PINS                  i2c_pins_t{.sda=32,.scl=33,.irq=BUS_I2C::IRQ_NOT_SET} // for barometer, battery, and magnetometer
-    #define I2C_1_PINS                  i2c_pins_t{.sda=2,.scl=3,.irq=BUS_I2C::IRQ_NOT_SET} // for GPS
+    #define I2C_0_PINS                  i2c_pins_t{.sda=32,.scl=33,.irq=BusI2c::IRQ_NOT_SET} // for barometer, battery, and magnetometer
+    #define I2C_1_PINS                  i2c_pins_t{.sda=2,.scl=3,.irq=BusI2c::IRQ_NOT_SET} // for GPS
     #define SD_MMC_PINS                 mmc_pins_t{.dat=36,.clk=34,.cmd=35}
     #define MOTOR_PINS                  motor_pins_t{.m0=6,.m1=7,.m2=8,.m3=9} // BR, TR, BL, TL
     #define NEO_PIXEL_PIN               46
+
+    #define USE_FLASH_KLV
 
     #define GYRO_SAMPLE_RATE_HZ         8000
     //#define AHRS_TASK_IS_TIMER_DRIVEN
     #define OUTPUT_TO_MOTORS_DENOMINATOR 2
 
-    #define IMU_AXIS_ORDER              IMU_Base::XNEG_YNEG_ZPOS
+    #define IMU_AXIS_ORDER              ImuBase::XNEG_YNEG_ZPOS
     #define USE_IMU_ICM426XX
     #define IMU_SPI_INDEX               BUS_INDEX_1
     #define IMU_SPI_PINS                SPI_1_PINS
@@ -397,13 +408,13 @@ Targets
 
     #define BOARD_IDENTIFIER    "EPC3"
 
-    #define I2C_X_PINS          i2c_pins_t{.sda=8,.scl=9,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define I2C_X_PINS          i2c_pins_t{.sda=8,.scl=9,.irq=BusI2c::IRQ_NOT_SET}
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
 
     #define GYRO_SAMPLE_RATE_HZ 1000
     #define AHRS_TASK_IS_TIMER_DRIVEN
 
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
     #define USE_IMU_BNO085
     #define IMU_I2C_PINS        I2C_X_PINS
 
@@ -431,7 +442,7 @@ Targets
     #define GYRO_SAMPLE_RATE_HZ 1000
     #define AHRS_TASK_IS_TIMER_DRIVEN
 
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
     // On afroflight Rev 5 MPU6050 is connected to IC2 index 2
     #define USE_IMU_MPU6000
     #define IMU_I2C_PINS        I2C_X_PINS
@@ -458,7 +469,7 @@ Targets
 
     #define BOARD_IDENTIFIER    "5284"
 
-    #define I2C_X_PINS          i2c_pins_t{.sda=07,.scl=27,.irq=BUS_I2C::IRQ_NOT_SET}
+    #define I2C_X_PINS          i2c_pins_t{.sda=07,.scl=27,.irq=BusI2c::IRQ_NOT_SET}
     #define UART_0_PINS         uart_pins_t{.rx=0,.tx=0}
     #define MOTOR_PINS          motor_pins_t{.m0=0xFF,.m1=0xFF,.m2=0xFF,.m3=0xFF} // BR, TR, BL, TL
 
@@ -466,7 +477,7 @@ Targets
     #define AHRS_TASK_IS_TIMER_DRIVEN
 
     #define USE_IMU_LSM6DS3TR_C
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
     #define IMU_I2C_PINS        I2C_X_PINS
 
     #define USE_RECEIVER_SBUS
@@ -491,7 +502,7 @@ Targets
     #define AHRS_TASK_IS_TIMER_DRIVEN
 
     #define USE_IMU_LSM6DS3TR_C
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
     //#define USE_IMU_ICM426XX
     //#define USE_IMU_MPU6000
 #if defined(LIBRARY_SENSORS_IMU_USE_SPI_BUS)
@@ -539,7 +550,7 @@ Targets
     #define GYRO_SAMPLE_RATE_HZ 1000
     #define AHRS_TASK_IS_TIMER_DRIVEN
 
-    #define IMU_AXIS_ORDER      IMU_Base::XPOS_YPOS_ZPOS
+    #define IMU_AXIS_ORDER      ImuBase::XPOS_YPOS_ZPOS
 
     //#define USE_IMU_LSM303AGR
     #define USE_IMU_MPU6000 // !!TODO:temporary to fix to get to build

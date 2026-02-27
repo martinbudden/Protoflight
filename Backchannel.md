@@ -5,22 +5,22 @@ This needs refactoring. In particular `BackchannelESPNOW` should not be derived 
 classDiagram
     class BackchannelTransceiverBase {
         <<abstract>>
-        sendData() const int *
+        send_data() const int *
         WAIT_FOR_DATA_RECEIVED() *
         getReceivedDataLength() const size_t *
         setReceivedDataLengthToZero() *
         getTickCountDeltaAndReset() uint32_t *
     }
 
-    BackchannelTransceiverBase <|-- BackchannelTransceiverESPNOW
-    BackchannelTransceiverESPNOW o-- ESPNOW_Transceiver
+    BackchannelTransceiverBase <|-- BackchannelTransceiverEspnow
+    BackchannelTransceiverEspnow o-- ESPNOW_Transceiver
 
     class BackchannelBase {
         <<abstract>>
         WAIT_FOR_DATA_RECEIVED()
-        sendData() const int
+        send_data() const int
         processedReceivedPacket() bool *
-        sendPacket() bool *
+        send_packet() bool *
     }
     BackchannelBase *-- BackchannelTransceiverBase : calls WAIT_FOR_DATA_RECEIVED
 
@@ -37,12 +37,12 @@ classDiagram
 
     BackchannelBase <|-- BackchannelStabilizedVehicle
     class BackchannelStabilizedVehicle {
-        +sendPacket(uint8_t subCommand) bool override;
+        +send_packet(uint8_t sub_command) bool override;
         #processedReceivedPacket() bool override;
         #virtual packetRequestData() bool
-        #virtual packetSetOffset() bool
-        #virtual packetControl() bool
-        #virtual packetSetPID() bool
+        #virtual packet_set_offset() bool
+        #virtual packet_control() bool
+        #virtual packet_set_pid() bool
     }
     BackchannelStabilizedVehicle o-- DashboardTask
     BackchannelStabilizedVehicle *-- AHRS
@@ -52,27 +52,27 @@ classDiagram
 
     BackchannelStabilizedVehicle <|--BackchannelFlightController
     class BackchannelFlightController {
-        +sendPacket() bool override
-        #packetControl() bool override;
-        #bool packetSetPID() bool override;
+        +send_packet() bool override
+        #packet_control() bool override;
+        #bool packet_set_pid() bool override;
     }
     VehicleControllerBase <|-- FlightController
     BackchannelFlightController o-- FlightController
 
     BackchannelFlightController <|-- BackchannelESPNOW
-    BackchannelESPNOW *-- BackchannelTransceiverESPNOW
+    BackchannelESPNOW *-- BackchannelTransceiverEspnow
 
 
 
 
     class TaskBase {
-        uint32_t _taskIntervalMicroseconds
+        uint32_t _task_interval_microseconds
     }
     TaskBase <|-- BackchannelTask
     class BackchannelTask {
         +loop()
         -task() [[noreturn]]
     }
-    BackchannelTask o-- BackchannelBase : calls processedReceivedPacket sendPacket
+    BackchannelTask o-- BackchannelBase : calls processedReceivedPacket send_packet
 ```
 

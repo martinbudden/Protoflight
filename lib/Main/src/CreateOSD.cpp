@@ -1,3 +1,4 @@
+#include "Cockpit.h"
 #include "DisplayPortBase.h"
 #include "Main.h"
 #include "NonVolatileStorage.h"
@@ -7,29 +8,21 @@
 /*!
 Statically allocate the OSD and load its default configuration.
 */
-OSD* Main::createOSD(DisplayPortBase& displayPort, const FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const RcModes& rc_modes, Debug& debug, NonVolatileStorage& nvs, const VTX* vtx, const GPS* gps) // cppcheck-suppress constParameterReference
+OSD* Main::createOSD(DisplayPortBase& displayPort, NonVolatileStorage& nvs) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_OSD)
-    static OSD osd(flightController, cockpit, receiver, rc_modes, flightController.getAHRS_MessageQueue(), debug, vtx, gps);
-    cockpit.setOSD(osd);
+    static OSD osd;
     osd.init(&displayPort);
-    osd.setConfig(nvs.loadOSD_Config());
+    osd.setConfig(nvs.load_osd_config());
 
     OSD_Elements& osdElements = osd.getOSD_Elements();
-    if (!nvs.loadOSD_ElementsConfig(osdElements.getConfig())) {
+    if (!nvs.load_osd_elements_config(osdElements.getConfig())) {
         osdElements.setDefaultConfig(displayPort.getRowCount(), displayPort.getColumnCount());
     }
     return &osd;
 #else
     (void)displayPort;
-    (void)flightController;
-    (void)cockpit;
-    (void)receiver;
-    (void)rc_modes;
-    (void)debug;
     (void)nvs;
-    (void)vtx;
-    (void)gps;
     return nullptr;
 #endif
 }

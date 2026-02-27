@@ -2,14 +2,14 @@
 
 #include "CMSX.h"
 
-#include <TimeMicroseconds.h>
 #include <array>
 #include <cstdint>
+#include <time_microseconds.h>
 
 struct receiver_controls_pwm_t;
 class Cockpit;
 class DisplayPortBase;
-class IMU_Base;
+class ImuBase;
 class IMU_Filters;
 class NonVolatileStorage;
 class OSD;
@@ -22,7 +22,7 @@ Custom Menu System.
 */
 class CMS {
 public:
-    CMS(DisplayPortBase* displayPort, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, VTX* vtx);
+    CMS();
     void init();
 private:
     // CMS is not copyable or moveable
@@ -41,23 +41,13 @@ public:
     const config_t& getConfig() const { return _config; }
     void setConfig(const config_t& config);
 
-    void updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta); //!< CMS Task function, called by Task
+    void updateCMS(cms_parameter_group_t& pg, uint32_t currentTimeUs, uint32_t time_microseconds_delta); //!< CMS Task function, called by Task
 
-    uint16_t handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount);
-    bool scanKeys(int32_t timeDelta, const receiver_controls_pwm_t& controls, bool isArmed);
+    uint16_t handleKeyWithRepeat(cms_parameter_group_t& pg, CMSX::key_e key, size_t repeatCount);
+    bool scanKeys(cms_parameter_group_t& pg, int32_t timeDelta, const receiver_controls_pwm_t& controls, bool isArmed);
     void setExternKey(CMSX::key_e externKey);
-
-    DisplayPortBase* displayPortSelectNext();
-    void setDisplayPort(DisplayPortBase* displayPort) { _displayPort = displayPort; }
-    bool displayPortSelect(const DisplayPortBase* displayPort);
-
-    const ReceiverBase& getReceiver() const { return _receiver; }
 private:
-    DisplayPortBase* _displayPort;
     CMSX _cmsx;
-    const Cockpit& _cockpit;
-    const ReceiverBase& _receiver;
-    const RcModes& _rc_modes;
     config_t _config {};
     int32_t _keyDelayMs {CMSX::BUTTON_TIME_MS};
     uint32_t _lastCalledMs {};

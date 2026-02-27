@@ -1,27 +1,28 @@
 #include "Cockpit.h"
 #include "FlightController.h"
+#include "IMU_Filters.h"
 #include "Main.h"
 
-#include <AHRS.h>
 #include <BlackboxCallbacks.h>
 #include <BlackboxProtoflight.h>
-#include <BlackboxSerialDeviceSDCard.h>
-#include <Debug.h>
-#include <ReceiverBase.h>
-#include <TimeMicroseconds.h>
+
+#include <ahrs.h>
+#include <blackbox_serial_device_sdcard.h>
+#include <debug.h>
+#include <receiver_base.h>
+#include <time_microseconds.h>
 
 
 /*!
 Statically allocate the Blackbox and associated objects.
 */
-Blackbox* Main::createBlackBox(FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const RcModes& rc_modes, const IMU_Filters& imuFilters, const Debug& debug, GPS* gps) // cppcheck-suppress constParameterReference
+Blackbox* Main::createBlackBox(uint32_t task_interval_microseconds) // cppcheck-suppress constParameterReference
 {
 #if defined(USE_BLACKBOX)
-    static BlackboxCallbacks            blackboxCallbacks(flightController.getAHRS_MessageQueue(), flightController, cockpit, receiver, rc_modes, debug, gps);
+    static BlackboxCallbacks            blackboxCallbacks;
     static BlackboxSerialDeviceSDCard   blackboxSerialDevice(BlackboxSerialDeviceSDCard::SDCARD_SPI_PINS);
 
-    static BlackboxProtoflight          blackbox(flightController.getTaskIntervalMicroseconds(), blackboxCallbacks, blackboxSerialDevice, flightController, cockpit, imuFilters);
-    cockpit.setBlackbox(blackbox);
+    static BlackboxProtoflight          blackbox(task_interval_microseconds, blackboxCallbacks, blackboxSerialDevice);
 
     blackbox.init({
         .sample_rate = Blackbox::RATE_ONE,
@@ -34,37 +35,31 @@ Blackbox* Main::createBlackBox(FlightController& flightController, Cockpit& cock
     });
     return &blackbox;
 #else
-    (void)flightController;
-    (void)cockpit;
-    (void)receiver;
-    (void)rc_modes;
-    (void)imuFilters;
-    (void)debug;
-    (void)gps;
+    (void)task_interval_microseconds;
     return nullptr;
 #endif
 }
 
 #if defined(USE_BLACKBOX)
-void Main::testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug)
+void Main::testBlackbox(Blackbox& blackbox, Ahrs& ahrs, ReceiverBase& receiver, FlightController& flightController, IMU_Filters& imuFilters, Debug& debug, const blackbox_parameter_group_t& pg)
 {
-    static uint32_t timeMicrosecondsPrevious = 0;
+    static uint32_t time_microseconds_previous = 0;
 
     print("***StartLog\r\n");
     blackbox.start(Blackbox::start_t{.debugMode = static_cast<uint16_t>(debug.getMode()), .motorCount = 4, .servoCount = 0});
 
     for (size_t ii = 0; ii < 1500; ++ii) {
-        const uint32_t timeMicroseconds = timeUs();
+        const uint32_t time_microseconds = time_us();
 
-        static const uint32_t timeMicrosecondsDelta = timeMicroseconds - timeMicrosecondsPrevious;
-        timeMicrosecondsPrevious = timeMicroseconds;
+        static const uint32_t time_microseconds_delta = time_microseconds - time_microseconds_previous;
+        time_microseconds_previous = time_microseconds;
 
-        const uint32_t state = blackbox.updateLog(timeMicroseconds);
+        const uint32_t state = blackbox.update_log(pg, time_microseconds);
         (void)state;
         // Serial.printf("ii:%3d, s:%2d\r\n", ii, state);
 
-        ahrs.readIMUandUpdateOrientation(timeMicroseconds, timeMicrosecondsDelta);
-        receiver.update(timeMicrosecondsDelta / 1000);
+        ahrs.read_imu_and_update_orientation(time_microseconds, time_microseconds_delta, imuFilters, flightController, debug);
+        receiver.update(time_microseconds_delta / 1000);
 #if defined(FRAMEWORK_RPI_PICO)
 #elif defined(FRAMEWORK_ESPIDF)
 #elif defined(FRAMEWORK_STM32_CUBE)

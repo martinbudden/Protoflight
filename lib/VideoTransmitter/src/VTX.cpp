@@ -1,7 +1,7 @@
 #include "VTX.h"
 
 
-void VTX::setConfig(const config_t& config)
+void VTX::setConfig(const vtx_config_t& config)
 {
     _config = config;
 }

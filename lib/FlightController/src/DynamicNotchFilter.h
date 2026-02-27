@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Filters.h>
 #include <SDFT.h>
+#include <filters.h>
 
 #include <xyz_type.h>
 
@@ -9,11 +9,19 @@
 class Debug;
 
 
+struct dynamic_notch_filter_config_t {
+    uint16_t dyn_notch_min_hz;
+    uint16_t dyn_notch_max_hz;
+    uint16_t dyn_notch_q;
+    uint8_t  dyn_notch_count;
+    uint8_t  dyn_notch_smoothing;
+};
+
 class DynamicNotchFilter {
 public:
     virtual ~DynamicNotchFilter() = default;
-    DynamicNotchFilter(Debug& debug, float looptimeSeconds);
-    DynamicNotchFilter(Debug& debug, uint32_t looptime) = delete;
+    DynamicNotchFilter(float looptimeSeconds);
+    DynamicNotchFilter(uint32_t looptime) = delete;
 private:
     // DynamicNotchFilter is not copyable or moveable
     DynamicNotchFilter(const DynamicNotchFilter&) = delete;
@@ -39,13 +47,6 @@ public:
     };
     static constexpr float DYN_NOTCH_MIN_THROTTLE = 0.20F;
 
-    struct config_t {
-        uint16_t dyn_notch_min_hz;
-        uint16_t dyn_notch_max_hz;
-        uint16_t dyn_notch_q;
-        uint8_t  dyn_notch_count;
-        uint8_t  dyn_notch_smoothing;
-    };
     struct peak_t {
         size_t bin;
         float value;
@@ -55,10 +56,10 @@ public:
         size_t axis;
     };
 public:
-    void setConfig(const config_t& config);
-    const config_t& getConfig() const { return _config; }
+    void setConfig(const dynamic_notch_filter_config_t& config);
+    const dynamic_notch_filter_config_t& getConfig() const { return _config; }
     void push(const xyz_t& sample);
-    void updateNotchFrequencies();
+    void updateNotchFrequencies(Debug& debug);
     void filter(xyz_t& value);
     bool isActive() const { return _notchCount > 0; }
     float getMaxCenterFrequency() const { return _maxCenterFrequencyHz; }
@@ -79,9 +80,8 @@ public:
     const float* getCenterFrequencyHzX() const { return &_centerFrequencyHz[X][0]; }
 #endif
 private:
-    Debug& _debug;
     float _looptimeSeconds;
-    config_t _config {};
+    dynamic_notch_filter_config_t _config {};
     float _throttleAbsolute {};
     float _q {};
     float _minHz {};

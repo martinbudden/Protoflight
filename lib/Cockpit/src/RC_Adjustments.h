@@ -1,12 +1,14 @@
 #pragma once
 
-#include <ReceiverBase.h>
 #include <array>
+#include <cstddef>
+#include <cstdint>
 
 class Blackbox;
 class Cockpit;
 class FlightController;
 class OSD;
+class ReceiverBase;
 struct rates_t;
 
 
@@ -51,6 +53,22 @@ enum adjustment_e {
 };
 
 
+struct rc_adjustment_range_t {
+    // when aux channel is in range...
+    uint8_t range_start;
+    uint8_t range_end;
+    uint8_t aux_channel_index;
+    // ..then apply the adjustment function to the auxSwitchChannel ...
+    uint8_t adjustmentConfig;
+    uint8_t auxSwitchChannelIndex;
+    uint8_t adjustmentCenter;
+    uint16_t adjustmentScale;
+};
+
+static constexpr size_t RC_MAX_ADJUSTMENT_RANGE_COUNT = 30;
+typedef std::array<rc_adjustment_range_t, RC_MAX_ADJUSTMENT_RANGE_COUNT> rc_adjustment_ranges_t;
+
+
 class RC_Adjustments {
 public:
     virtual ~RC_Adjustments() = default;
@@ -61,20 +79,9 @@ private:
     RC_Adjustments(RC_Adjustments&&) = delete;
     RC_Adjustments& operator=(RC_Adjustments&&) = delete;
 public:
-    enum { MAX_ADJUSTMENT_RANGE_COUNT = 30 };
     enum { ADJUSTMENT_RANGE_COUNT_INVALID = -1 };
 
     enum adjustment_mode_e { ADJUSTMENT_MODE_STEP, ADJUSTMENT_MODE_SELECT };
-    struct adjustment_range_t {
-        // when aux channel is in range...
-        receiver_channel_range_t range;
-        uint8_t aux_channel_index;
-        // ..then apply the adjustment function to the auxSwitchChannel ...
-        uint8_t adjustmentConfig;
-        uint8_t auxSwitchChannelIndex;
-        uint8_t adjustmentCenter;
-        uint16_t adjustmentScale;
-    };
     struct timed_adjustment_state_t {
         uint32_t timeoutAtMilliseconds;
         uint8_t adjustmentRangeIndex;
@@ -93,43 +100,41 @@ public:
         adjustment_mode_e mode;
         adjustment_data_u data;
     };
-    typedef std::array<adjustment_range_t, MAX_ADJUSTMENT_RANGE_COUNT> adjustment_ranges_t;
     typedef std::array<adjustment_config_t, ADJUSTMENT_FUNCTION_COUNT> adjustment_configs_t;
 public:
     explicit RC_Adjustments(const adjustment_configs_t* defaultAdjustmentConfigs);
 
-    void setAdjustmentRanges(const adjustment_ranges_t& adjustmentRanges);
-    const adjustment_ranges_t& getAdjustmentRanges() const;
+    void setAdjustmentRanges(const rc_adjustment_ranges_t& adjustmentRanges);
+    const rc_adjustment_ranges_t& getAdjustmentRanges() const;
 
-    const adjustment_range_t& getAdjustmentRange(size_t index) const;
-    void setAdjustmentRange(size_t index, const adjustment_range_t& adjustmentRange);
+    const rc_adjustment_range_t& getAdjustmentRange(size_t index) const;
+    void setAdjustmentRange(size_t index, const rc_adjustment_range_t& adjustmentRange);
     void activeAdjustmentRangeReset();
 
     void setAdjustmentConfigs(const adjustment_configs_t& adjustmentConfigs);
     const adjustment_configs_t& getAdjustmentConfigs() const;
 
-    void processAdjustments(const ReceiverBase& receiver, FlightController& flightController, Cockpit& cockpit, OSD* osd, bool isReceiverSignal);
+    void processAdjustments(const ReceiverBase& receiver, FlightController& flightController, Blackbox* blackbox, Cockpit& cockpit, OSD* osd, bool isReceiverSignal);
 // public for test code
-    int32_t applyStepAdjustment(FlightController& flightController, rates_t& rates, adjustment_e adjustment, int32_t delta);
-    int32_t applyAbsoluteAdjustment(FlightController& flightController, rates_t& rates, adjustment_e adjustment, int32_t value);
-    uint8_t applySelectAdjustment(FlightController& flightController, Cockpit& cockpit, OSD* osd, adjustment_e adjustment, uint8_t position);
+    int32_t applyStepAdjustment(FlightController& flightController, Blackbox* blackbox, rates_t& rates, adjustment_e adjustment, int32_t delta);
+    int32_t applyAbsoluteAdjustment(FlightController& flightController, Blackbox* blackbox, rates_t& rates, adjustment_e adjustment, int32_t value);
+    uint8_t applySelectAdjustment(FlightController& flightController, Cockpit& cockpit, Blackbox* blackbox, OSD* osd, adjustment_e adjustment, uint8_t position);
 private:
     enum { ADJUSTMENT_FUNCTION_CONFIG_INDEX_OFFSET = 1};
-    void blackboxLogInflightAdjustmentEvent(adjustment_e adjustment, int32_t newValue);
-    void processStepwiseAdjustments(const ReceiverBase& receiver, FlightController& flightController, rates_t& rates, bool canUseRxData);
-    void processContinuosAdjustments(const ReceiverBase& receiver, FlightController& flightController, Cockpit& cockpit, OSD* osd);
+    void blackboxLogInflightAdjustmentEvent(Blackbox* blackbox, adjustment_e adjustment, int32_t newValue);
+    void processStepwiseAdjustments(const ReceiverBase& receiver, FlightController& flightController, Blackbox* blackbox, rates_t& rates, bool canUseRxData);
+    void processContinuosAdjustments(const ReceiverBase& receiver, FlightController& flightController, Cockpit& cockpit, Blackbox* blackbox, OSD* osd);
     void calculateActiveAdjustmentRanges();
     void beeperConfirmationBeeps(uint8_t beepCount);
 
     const char *getRangeName();
     int getRangeValue();
 private:
-    Blackbox* _blackbox {nullptr};
     int32_t _stepwiseAdjustmentCount {ADJUSTMENT_RANGE_COUNT_INVALID};
     int32_t _continuosAdjustmentCount {};
-    std::array<timed_adjustment_state_t, MAX_ADJUSTMENT_RANGE_COUNT> _stepwiseAdjustments {};
-    std::array<continuos_adjustment_state_t, MAX_ADJUSTMENT_RANGE_COUNT> _continuosAdjustments {};
-    std::array<adjustment_range_t, MAX_ADJUSTMENT_RANGE_COUNT> _adjustmentRanges {};
+    std::array<timed_adjustment_state_t, RC_MAX_ADJUSTMENT_RANGE_COUNT> _stepwiseAdjustments {};
+    std::array<continuos_adjustment_state_t, RC_MAX_ADJUSTMENT_RANGE_COUNT> _continuosAdjustments {};
+    std::array<rc_adjustment_range_t, RC_MAX_ADJUSTMENT_RANGE_COUNT> _adjustmentRanges {};
     std::array<adjustment_config_t, ADJUSTMENT_FUNCTION_COUNT> _adjustmentConfigs {};
     const adjustment_configs_t* _defaultAdjustmentConfigs;
 };

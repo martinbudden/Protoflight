@@ -1,10 +1,10 @@
 #include "Main.h"
 
-#include <AHRS.h>
-#include <SensorFusion.h>
+#include <ahrs.h>
+#include <sensor_fusion.h>
 
 
-AHRS& Main::createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters)
+Ahrs& Main::createAHRS(ImuBase& imuSensor)
 {
     // Statically allocate the Sensor Fusion Filter
     // Timings are for 240MHz ESP32-S3
@@ -29,9 +29,9 @@ AHRS& Main::createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSe
 
     // Statically allocate the AHRS object
 #if defined(AHRS_TASK_IS_TIMER_DRIVEN)
-    static AHRS ahrs(AHRS::TIMER_DRIVEN, vehicleController, sensorFusionFilter, imuSensor, imuFilters);
+    static Ahrs ahrs(Ahrs::TIMER_DRIVEN, sensorFusionFilter, imuSensor);
 #else
-    static AHRS ahrs(AHRS::INTERRUPT_DRIVEN, vehicleController, sensorFusionFilter, imuSensor, imuFilters);
+    static Ahrs ahrs(Ahrs::INTERRUPT_DRIVEN, sensorFusionFilter, imuSensor);
 #endif
     return ahrs;
 }

@@ -1,22 +1,23 @@
 # Libraries used by Protoflight
 
-| Library                | On github | release | platformio | Arduino | Releases |
-| ---------------------- | --------- | ------- | ---------- | ------- | -------- |
-| Filter                 | yes       | 0.0.1   | yes        | no      |  1       |
-| PID                    | yes       | 0.0.1   | yes        | no      |  1       |
-| VectorQuaternionMatrix | yes       | 0.4.10  | yes        | no      | 17       |
-| MotorMixers            | yes       | 0.0.7   | yes        | no      |  6       |
-| SensorFusion           | yes       | 0.2.14  | yes        | no      | 20       |
-| StreamBuf              | yes       | 0.0.4   | yes        | no      |  4       |
-| Sensors                | yes       | 0.0.6   | yes        | no      |  6       |
-| TaskUtilities          | yes       | 0.0.1   | yes        | no      |  1       |
-| StabilizedVehicle      | yes       | 0.5.25  | yes        | no      | 48       |
-| Receiver               | yes       | 0.0.1   | yes        | no      |  1       |
-| Backchannel            | yes       | 0.1.14  | yes        | no      | 25       |
-| MultiWiiSerialProtocol | yes       | 0.0.17  | yes        | no      | 17       |
-| Blackbox               | yes       | 0.0.25  | yes        | no      | 25       |
-| FlashKLV               | yes       | 0.0.3   | yes        | no      |  3       |
-|                        |           |         |            |         |          |
+| Library                | On github | release | platformio | Arduino | Releases | Converted |
+| ---------------------- | --------- | ------- | ---------- | ------- | -------- | ----------|
+| Filter                 | yes       | 0.0.1   | yes        | no      |  1       | yes       |
+| PID                    | yes       | 0.0.1   | yes        | no      |  1       | yes       |
+| VectorQuaternionMatrix | yes       | 0.4.10  | yes        | no      | 17       | yes       |
+| MotorMixers            | yes       | 0.0.7   | yes        | no      |  6       | yes       |
+| SensorFusion           | yes       | 0.2.14  | yes        | no      | 20       | all except VQF |
+| StreamBuf              | yes       | 0.0.4   | yes        | no      |  4       | yes       |
+| Sensors                | yes       | 0.0.6   | yes        | no      |  6       | mostly    |
+| TaskUtilities          | yes       | 0.0.1   | yes        | no      |  1       | yes       |
+| StabilizedVehicle      | yes       | 0.5.25  | yes        | no      | 48       | yes       |
+| Receiver               | yes       | 0.0.1   | yes        | no      |  1       | yes       |
+| Backchannel            | yes       | 0.1.14  | yes        | no      | 25       | yes       |
+| MultiWiiSerialProtocol | yes       | 0.0.17  | yes        | no      | 17       | yes       |
+| Blackbox               | yes       | 0.0.25  | yes        | no      | 25       | no        |
+| FlashKLV               | yes       | 0.0.3   | yes        | no      |  3       | no        |
+
+|                        |           |                     |            |         |          |
 | IMU                    | yes       | 0.9.8  - superseded | yes        | no      |          |
 | TaskBase               | yes       | 0.0.13 - superseded | yes        | no      | 13       |
 | Receiver               | yes       | 0.5.14 - superseded | yes        | no      | 33       |

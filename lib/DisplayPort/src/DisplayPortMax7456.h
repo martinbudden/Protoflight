@@ -2,9 +2,9 @@
 
 #include "DisplayPortBase.h"
 #if !defined(FRAMEWORK_TEST)
-#include <BUS_SPI.h>
-#include <Debug.h>
-#include <TimeMicroseconds.h>
+#include <bus_spi.h>
+#include <debug.h>
+#include <time_microseconds.h>
 #endif
 
 #include <array>
@@ -23,8 +23,8 @@ public:
 #if defined(FRAMEWORK_TEST)
     DisplayPortMax7456() = default;
 #else
-    DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::stm32_spi_pins_t& pins, Debug& debug);
-    DisplayPortMax7456(BUS_BASE::bus_index_e SPI_index, const BUS_SPI::spi_pins_t& pins, Debug& debug);
+    DisplayPortMax7456(uint8_t SPI_index, const BusSpi::stm32_spi_pins_t& pins);
+    DisplayPortMax7456(uint8_t SPI_index, const BusSpi::spi_pins_t& pins);
 #endif
     enum init_status_e {
         INIT_OK = 0, // IO defined and MAX7456 was detected
@@ -79,19 +79,19 @@ public:
 
     void hardwareReset();
     //void    Preinit(const struct Config_s *Config);
-    init_status_e init(const config_t* config, const vcd_profile_t* vcdProfile, bool cpuOverclock);
+    init_status_e init(const config_t* config, const vcd_profile_t* vcdProfile, bool cpuOverclock, Debug& debug);
     void preinit(const config_t& config);
     void invert(bool invert);
     void brightness(uint8_t black, uint8_t white);
-    bool reInitIfRequired(bool forceStallCheck);
+    bool reInitIfRequired(bool forceStallCheck, Debug& debug);
     bool writeNvm(uint8_t char_address, const uint8_t *font_data);
-    void refreshAll();
+    void refreshAll(Debug& debug);
     static bool dmaInProgress();
     bool buffersSynced() const;
     bool isDeviceDetected();
     void concludeCurrentSPI_Transaction();
 #if !defined(FRAMEWORK_TEST)
-    static BUS_SPI::bus_status_e callbackReady(uint32_t arg);
+    static uint8_t callbackReady(uint32_t arg);
 #endif
 private:
     uint8_t* getLayerBuffer(layer_e layer);
@@ -103,14 +103,13 @@ public:
     void reInit();
 private:
 #if !defined(FRAMEWORK_TEST)
-    BUS_SPI _bus; //!< SPI bus interface
-    Debug& _debug;
-    timeMs32_t _lastSigCheckMs {0};
-    timeMs32_t _videoDetectTimeMs {0};
-    timeMs32_t _lastStallCheckMs {STALL_CHECK_INTERVAL_MS / 2}; // offset so that it doesn't coincide with the signal check
-    std::array<BUS_SPI::segment_t, 2> _segments {
-        BUS_SPI::segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = callbackReady},
-        BUS_SPI::segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negateCS = true, .callbackFn = nullptr},
+    BusSpi _bus; //!< SPI bus interface
+    time_ms32_t _lastSigCheckMs {0};
+    time_ms32_t _videoDetectTimeMs {0};
+    time_ms32_t _lastStallCheckMs {STALL_CHECK_INTERVAL_MS / 2}; // offset so that it doesn't coincide with the signal check
+    std::array<BusSpi::segment_t, 2> _segments {
+        BusSpi::segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negate_cs = true, .callbackFn = callbackReady},
+        BusSpi::segment_t {.u = {.link = {.dev = nullptr, .segments = nullptr}}, .len = 0, .negate_cs = true, .callbackFn = nullptr},
     };
 #endif
     uint16_t _reInitCount {0};

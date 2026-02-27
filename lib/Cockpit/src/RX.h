@@ -5,6 +5,25 @@
 #include <cstdint>
 
 
+struct rx_config_t {
+    // std::array<uint8_t, MAPPABLE_CHANNEL_COUNT> rc_map;  // mapping of radio channels to internal RPYTA+ order
+    uint8_t serial_rx_provider;
+    uint8_t serial_rx_inverted; // invert the serial RX protocol compared to its default setting
+    uint8_t half_duplex;        // allow rx to operate in half duplex mode on F4, ignored for F1 and F3.
+    uint8_t rssi_channel;
+    uint8_t rssi_scale;
+    uint8_t rssi_invert;
+    int8_t rssi_offset;         // offset applied to the RSSI value
+    uint8_t fpvCamAngleDegrees;         // Camera angle to be scaled into rc commands
+    uint8_t airModeActivateThreshold;   // Throttle setpoint percent where airmode gets activated
+    uint8_t spektrum_sat_bind;  // number of bind pulses for Spektrum satellite receivers
+    uint16_t mid_rc;            // Some radios have not a neutral point centered on 1500. can be changed here
+    uint16_t min_check;         // minimum rc end
+    uint16_t max_check;         // maximum rc end
+    uint16_t rx_min_usec;
+    uint16_t rx_max_usec;
+};
+
 class RX {
 public:
     enum {
@@ -83,24 +102,6 @@ public:
     };
     enum { LINK_QUALITY_MAX_VALUE = 1023 };
     enum { MAPPABLE_CHANNEL_COUNT = 8 };
-    struct config_t {
-        // std::array<uint8_t, MAPPABLE_CHANNEL_COUNT> rc_map;  // mapping of radio channels to internal RPYTA+ order
-        uint8_t serial_rx_provider;
-        uint8_t serial_rx_inverted; // invert the serial RX protocol compared to its default setting
-        uint8_t half_duplex;        // allow rx to operate in half duplex mode on F4, ignored for F1 and F3.
-        uint8_t rssi_channel;
-        uint8_t rssi_scale;
-        uint8_t rssi_invert;
-        int8_t rssi_offset;         // offset applied to the RSSI value
-        uint8_t fpvCamAngleDegrees;         // Camera angle to be scaled into rc commands
-        uint8_t airModeActivateThreshold;   // Throttle setpoint percent where airmode gets activated
-        uint8_t spektrum_sat_bind;  // number of bind pulses for Spektrum satellite receivers
-        uint16_t mid_rc;            // Some radios have not a neutral point centered on 1500. can be changed here
-        uint16_t min_check;         // minimum rc end
-        uint16_t max_check;         // maximum rc end
-        uint16_t rx_min_usec;
-        uint16_t rx_max_usec;
-    };
     enum failsafe_channel_type_e {
         FAILSAFE_TYPE_FLIGHT = 0,
         FAILSAFE_TYPE_AUX,
@@ -124,7 +125,7 @@ public:
     };
     typedef std::array<RX::channel_range_config_t, RX::STICK_CHANNEL_COUNT> channel_range_configs_t;
 public:
-    config_t _config;
+    rx_config_t _config;
     failsafe_channel_configs_t _failsafeChannelConfigs;
     channel_range_configs_t _channelRangeConfigs;
 };

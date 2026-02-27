@@ -9,19 +9,21 @@ std::array<char, CMSX::CALIBRATION_STATUS_MAX_LENGTH> CMSX::AccCalibrationStatus
 std::array<char, CMSX::CALIBRATION_STATUS_MAX_LENGTH> CMSX::BaroCalibrationStatus {};
 #endif
 
-const void* CMSX::menuCalibrateGyro(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+const void* CMSX::menuCalibrateGyro(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::menu_t* menu)
 {
-    CMSX::menuChange(cmsx, displayPort, nullptr);//&menuCalibrateGyro);
+    CMSX::menuChange(cmsx, pg, nullptr);//&menuCalibrateGyro);
     return nullptr;
 }
 
-static const void* calibrateAcc(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+static const void* calibrateAcc(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::menu_t* menu)
 {
+    (void)cmsx;
+    (void)pg;
 #if defined(FRAMEWORK_TEST)
     (void)cmsx;
 #else
     enum { CALIBRATION_COUNT = 5000 };
-    cmsx.getIMU().calibrate(IMU_Base::CALIBRATE_ACC_AND_GYRO, CALIBRATION_COUNT);
+    pg.imu.calibrate(ImuBase::CALIBRATE_ACC_AND_GYRO, CALIBRATION_COUNT);
 #endif
 
     return CMSX::MENU_BACK;
@@ -38,15 +40,15 @@ static const std::array<CMSX::OSD_Entry, 7> menuCalibrateAccEntries
     { nullptr, OME_END, nullptr, nullptr}
 }};
 
-const void* CMSX::menuCalibrateAcc(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+const void* CMSX::menuCalibrateAcc(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::menu_t* menu)
 {
-    CMSX::menuChange(cmsx, displayPort, nullptr);//&menuCalibrateAcc);
+    CMSX::menuChange(cmsx, pg, nullptr);//&menuCalibrateAcc);
     return nullptr;
 }
 
-const void* CMSX::menuCalibrateBaro(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+const void* CMSX::menuCalibrateBaro(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::menu_t* menu)
 {
-    CMSX::menuChange(cmsx, displayPort, nullptr);//&menuCalibrateBaro);
+    CMSX::menuChange(cmsx, pg, nullptr);//&menuCalibrateBaro);
     return nullptr;
 }
 
@@ -62,9 +64,10 @@ static const std::array<CMSX::OSD_Entry, 7> menuCalibrateEntries
     { nullptr, OME_END, nullptr, nullptr}
 }};
 
-static const void* menuCalibrateOnDisplayUpdate(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* selected)
+static const void* menuCalibrateOnDisplayUpdate(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::OSD_Entry* selected)
 {
     (void)cmsx;
+    (void)pg;
     return nullptr;
 }
 
@@ -75,9 +78,11 @@ CMSX::menu_t CMSX::menuCalibrate {
     .entries = &menuCalibrateEntries[0]
 };
 
+// NOLINTBEGIN(cppcoreguidelines-macro-usage)
 #define FC_FIRMWARE_NAME            "Betaflight"
 #define FC_FIRMWARE_IDENTIFIER      "BTFL"
 #define FC_VERSION_STRING           "4.5.0"
+// NOLINTEND(cppcoreguidelines-macro-usage)
 
 static const std::array<CMSX::OSD_Entry, 7> menuFirmwareEntries
 {{

@@ -1,9 +1,17 @@
+#include "Autopilot.h"
+#include "Cockpit.h"
 #include "Defaults.h"
 #if defined(USE_CMS)
 #include "CMS.h"
 #endif
+#if defined(USE_GPS)
+#include "GPS.h"
+#endif
 #include "NonVolatileStorage.h"
-#include <AHRS.h>
+#if defined(USE_OSD)
+#include "OSD.h"
+#endif
+#include <ahrs.h>
 #include <cstring>
 
 
@@ -50,7 +58,7 @@ constexpr uint16_t FLIGHT_CONTROLLER_FILTERS_CONFIG_KEY = 0x0400;
 constexpr uint16_t DYNAMIC_IDLE_CONTROLLER_CONFIG_KEY = 0x0404;
 constexpr uint16_t FLIGHT_CONTROLLER_FLIGHTMODE_CONFIG_KEY = 0x408;
 constexpr uint16_t FLIGHT_CONTROLLER_TPA_CONFIG_KEY = 0x40C;
-constexpr uint16_t FLIGHT_CONTROLLER_AntiGravity_CONFIG_KEY = 0x0410;
+constexpr uint16_t FLIGHT_CONTROLLER_ANTI_GRAVITY_CONFIG_KEY = 0x0410;
 constexpr uint16_t FLIGHT_CONTROLLER_DMAX_CONFIG_KEY = 0x0414;
 constexpr uint16_t FLIGHT_CONTROLLER_ITERM_RELAX_CONFIG_KEY = 0x0418;
 constexpr uint16_t FLIGHT_CONTROLLER_YAW_SPIN_RECOVERY_CONFIG_KEY = 0x041C;
@@ -129,7 +137,7 @@ int32_t NonVolatileStorage::clear()
 #endif
 }
 
-void NonVolatileStorage::toHexChars(char* charPtr, uint16_t value)
+void NonVolatileStorage::to_hex_chars(char* charPtr, uint16_t value)
 {
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
     *charPtr++ = '0';
@@ -154,7 +162,7 @@ int32_t NonVolatileStorage::remove(uint16_t key)
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
         std::array<char, 8> keyS;
-        toHexChars(&keyS[0], key);
+        to_hex_chars(&keyS[0], key);
         _preferences.remove(&keyS[0]);
         _preferences.end();
     }
@@ -166,7 +174,7 @@ int32_t NonVolatileStorage::remove(uint16_t key)
 }
 
 
-bool NonVolatileStorage::loadItem(uint16_t key, void* item, size_t length) const
+bool NonVolatileStorage::load_item(uint16_t key, void* item, size_t length) const
 {
 #if defined(USE_FLASH_KLV)
     if (FlashKLV::OK == _flashKLV.read(item, length, key)) {
@@ -175,7 +183,7 @@ bool NonVolatileStorage::loadItem(uint16_t key, void* item, size_t length) const
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
         std::array<char, 8> keyS;
-        toHexChars(&keyS[0], key);
+        to_hex_chars(&keyS[0], key);
         if (_preferences.isKey(&keyS[0])) {
             _preferences.getBytes(&keyS[0], item, length);
             _preferences.end();
@@ -191,15 +199,15 @@ bool NonVolatileStorage::loadItem(uint16_t key, void* item, size_t length) const
     return false;
 }
 
-bool NonVolatileStorage::loadItem(uint16_t key, uint8_t pidProfileIndex, void* item, size_t length) const
+bool NonVolatileStorage::load_item(uint16_t key, uint8_t pid_profile_index, void* item, size_t length) const
 {
-    if (pidProfileIndex >= PID_PROFILE_COUNT) {
+    if (pid_profile_index >= PID_PROFILE_COUNT) {
         return false;
     }
-    return loadItem(key + pidProfileIndex, item, length);
+    return load_item(key + pid_profile_index, item, length);
 }
 
-int32_t NonVolatileStorage::storeItem(uint16_t key, const void* item, size_t length, const void* defaults)
+int32_t NonVolatileStorage::store_item(uint16_t key, const void* item, size_t length, const void* defaults)
 {
 #if defined(USE_FLASH_KLV)
     if (!memcmp(defaults, item, length)) {
@@ -211,7 +219,7 @@ int32_t NonVolatileStorage::storeItem(uint16_t key, const void* item, size_t len
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
         std::array<char, 8> keyS;
-        toHexChars(&keyS[0], key);
+        to_hex_chars(&keyS[0], key);
         if (!memcmp(defaults, item, length)) {
             // value is the same as default, so no need to store it
             _preferences.remove(&keyS[0]);
@@ -232,434 +240,434 @@ int32_t NonVolatileStorage::storeItem(uint16_t key, const void* item, size_t len
 #endif
 }
 
-int32_t NonVolatileStorage::storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults)
+int32_t NonVolatileStorage::store_item(uint16_t key, uint8_t pid_profile_index, const void* item, size_t length, const void* defaults)
 {
-    if (pidProfileIndex >= PID_PROFILE_COUNT) {
+    if (pid_profile_index >= PID_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
     }
-    return storeItem(key + pidProfileIndex, item, length, defaults);
+    return store_item(key + pid_profile_index, item, length, defaults);
 }
 
 
-uint8_t NonVolatileStorage::loadPidProfileIndex() const
+uint8_t NonVolatileStorage::load_pid_profile_index() const
 {
-    uint8_t profileIndex {};
-    if (loadItem(PID_PROFILE_INDEX_KEY, &profileIndex, sizeof(profileIndex))) { // cppcheck-suppress knownConditionTrueFalse
-        return profileIndex;
+    uint8_t profile_index {};
+    if (load_item(PID_PROFILE_INDEX_KEY, &profile_index, sizeof(profile_index))) { // cppcheck-suppress knownConditionTrueFalse
+        return profile_index;
     }
     return DEFAULT_PID_PROFILE;
 }
 
-int32_t NonVolatileStorage::storePidProfileIndex(uint8_t profileIndex)
+int32_t NonVolatileStorage::store_pid_profile_index(uint8_t profile_index)
 {
-    if (profileIndex >= PID_PROFILE_COUNT) {
+    if (profile_index >= PID_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
     }
-    const uint8_t defaultProfileIndex = DEFAULT_PID_PROFILE;
-    return storeItem(PID_PROFILE_INDEX_KEY, &profileIndex, sizeof(profileIndex), &defaultProfileIndex);
+    const uint8_t default_profile_index = DEFAULT_PID_PROFILE;
+    return store_item(PID_PROFILE_INDEX_KEY, &profile_index, sizeof(profile_index), &default_profile_index);
 }
 
 
-uint8_t NonVolatileStorage::loadRateProfileIndex() const
+uint8_t NonVolatileStorage::load_rate_profile_index() const
 {
-    uint8_t profileIndex {};
-    if (loadItem(RATE_PROFILE_INDEX_KEY, &profileIndex, sizeof(profileIndex))) { // cppcheck-suppress knownConditionTrueFalse
-        return profileIndex;
+    uint8_t profile_index {};
+    if (load_item(RATE_PROFILE_INDEX_KEY, &profile_index, sizeof(profile_index))) { // cppcheck-suppress knownConditionTrueFalse
+        return profile_index;
     }
     return DEFAULT_RATE_PROFILE;
 }
 
-int32_t NonVolatileStorage::storeRateProfileIndex(uint8_t profileIndex)
+int32_t NonVolatileStorage::store_rate_profile_index(uint8_t profile_index)
 {
-    if (profileIndex >= RATE_PROFILE_COUNT) {
+    if (profile_index >= RATE_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
     }
-    const uint8_t defaultProfileIndex = DEFAULT_RATE_PROFILE;
-    return storeItem(RATE_PROFILE_INDEX_KEY, &profileIndex, sizeof(profileIndex), &defaultProfileIndex);
+    const uint8_t default_profile_index = DEFAULT_RATE_PROFILE;
+    return store_item(RATE_PROFILE_INDEX_KEY, &profile_index, sizeof(profile_index), &default_profile_index);
 }
 
 
-DynamicIdleController::config_t NonVolatileStorage::loadDynamicIdleControllerConfig(uint8_t pidProfileIndex) const
+dynamic_idle_controller_config_t NonVolatileStorage::load_dynamic_idle_controller_config(uint8_t pid_profile_index) const
 {
-    {DynamicIdleController::config_t config {};
-    if (loadItem(DYNAMIC_IDLE_CONTROLLER_CONFIG_KEY, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {dynamic_idle_controller_config_t config {};
+    if (load_item(DYNAMIC_IDLE_CONTROLLER_CONFIG_KEY, pid_profile_index, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::dynamicIdleControllerConfig;
+    return DEFAULTS::DYNAMIC_IDLE_CONTROLLER_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_dynamic_idle_controller_config(const dynamic_idle_controller_config_t& config, uint8_t pid_profile_index)
 {
-    return storeItem(DYNAMIC_IDLE_CONTROLLER_CONFIG_KEY, pidProfileIndex, &config, sizeof(config), &DEFAULTS::dynamicIdleControllerConfig);
+    return store_item(DYNAMIC_IDLE_CONTROLLER_CONFIG_KEY, pid_profile_index, &config, sizeof(config), &DEFAULTS::DYNAMIC_IDLE_CONTROLLER_CONFIG);
 }
 
-MotorMixerBase::mixer_config_t NonVolatileStorage::loadMotorMixerConfig() const
+mixer_config_t NonVolatileStorage::load_motor_mixer_config() const
 {
-    {MotorMixerBase::mixer_config_t config {};
-    if (loadItem(DYNAMIC_IDLE_CONTROLLER_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {mixer_config_t config {};
+    if (load_item(DYNAMIC_IDLE_CONTROLLER_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::motorMixerConfig;
+    return DEFAULTS::MOTOR_MIXER_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeMotorMixerConfig(const MotorMixerBase::mixer_config_t& config)
+int32_t NonVolatileStorage::store_motor_mixer_config(const mixer_config_t& config)
 {
-    return storeItem(MOTOR_MIXER_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::motorMixerConfig);
+    return store_item(MOTOR_MIXER_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::MOTOR_MIXER_CONFIG);
 }
 
 
-MotorMixerBase::motor_config_t NonVolatileStorage::loadMotorConfig() const
+motor_config_t NonVolatileStorage::load_motor_config() const
 {
-    {MotorMixerBase::motor_config_t config {};
-    if (loadItem(MOTOR_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {motor_config_t config {};
+    if (load_item(MOTOR_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::motorConfig;
+    return DEFAULTS::MOTOR_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeMotorConfig(const MotorMixerBase::motor_config_t& config)
+int32_t NonVolatileStorage::store_motor_config(const motor_config_t& config)
 {
-    return storeItem(MOTOR_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::motorConfig);
+    return store_item(MOTOR_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::MOTOR_CONFIG);
 }
 
 
-FlightController::filters_config_t NonVolatileStorage::loadFlightControllerFiltersConfig(uint8_t pidProfileIndex) const
+flight_controller_filters_config_t NonVolatileStorage::load_flight_controller_filters_config(uint8_t pid_profile_index) const
 {
-    {FlightController::filters_config_t config {};
-    if (loadItem(FLIGHT_CONTROLLER_FILTERS_CONFIG_KEY, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {flight_controller_filters_config_t config {};
+    if (load_item(FLIGHT_CONTROLLER_FILTERS_CONFIG_KEY, pid_profile_index, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::flightControllerFiltersConfig;
+    return DEFAULTS::FLIGHT_CONTROLLER_FILTERS_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerFiltersConfig(const FlightController::filters_config_t& config, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_flight_controller_filters_config(const flight_controller_filters_config_t& config, uint8_t pid_profile_index)
 {
-    return storeItem(FLIGHT_CONTROLLER_FILTERS_CONFIG_KEY, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerFiltersConfig);
+    return store_item(FLIGHT_CONTROLLER_FILTERS_CONFIG_KEY, pid_profile_index, &config, sizeof(config), &DEFAULTS::FLIGHT_CONTROLLER_FILTERS_CONFIG);
 }
 
 
-FlightController::flight_mode_config_t NonVolatileStorage::loadFlightControllerFlightModeConfig(uint8_t pidProfileIndex) const
+flight_mode_config_t NonVolatileStorage::load_flight_controller_flight_mode_config(uint8_t pid_profile_index) const
 {
-    {FlightController::flight_mode_config_t config {};
-    if (loadItem(FLIGHT_CONTROLLER_FLIGHTMODE_CONFIG_KEY, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {flight_mode_config_t config {};
+    if (load_item(FLIGHT_CONTROLLER_FLIGHTMODE_CONFIG_KEY, pid_profile_index, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::flightControllerFlightModeConfig;
+    return DEFAULTS::FLIGHT_CONTROLLER_FLIGHT_MODE_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerFlightModeConfig(const FlightController::flight_mode_config_t& config, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_flight_controller_flight_mode_config(const flight_mode_config_t& config, uint8_t pid_profile_index)
 {
-    return storeItem(FLIGHT_CONTROLLER_FLIGHTMODE_CONFIG_KEY, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerFlightModeConfig);
+    return store_item(FLIGHT_CONTROLLER_FLIGHTMODE_CONFIG_KEY, pid_profile_index, &config, sizeof(config), &DEFAULTS::FLIGHT_CONTROLLER_FLIGHT_MODE_CONFIG);
 }
 
 
-FlightController::tpa_config_t NonVolatileStorage::loadFlightControllerTPA_Config(uint8_t pidProfileIndex) const
+tpa_config_t NonVolatileStorage::load_flight_controller_tpa_config(uint8_t pid_profile_index) const
 {
-    {FlightController::tpa_config_t config {};
-    if (loadItem(FLIGHT_CONTROLLER_TPA_CONFIG_KEY, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {tpa_config_t config {};
+    if (load_item(FLIGHT_CONTROLLER_TPA_CONFIG_KEY, pid_profile_index, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::flightControllerTPA_Config;
+    return DEFAULTS::FLIGHT_CONTROLLER_TPA__CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerTPA_Config(const FlightController::tpa_config_t& config, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_flight_controller_tpa_config(const tpa_config_t& config, uint8_t pid_profile_index)
 {
-    return storeItem(FLIGHT_CONTROLLER_TPA_CONFIG_KEY, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerTPA_Config);
+    return store_item(FLIGHT_CONTROLLER_TPA_CONFIG_KEY, pid_profile_index, &config, sizeof(config), &DEFAULTS::FLIGHT_CONTROLLER_TPA__CONFIG);
 }
 
 
-FlightController::anti_gravity_config_t NonVolatileStorage::loadFlightControllerAntiGravityConfig(uint8_t pidProfileIndex) const
+anti_gravity_config_t NonVolatileStorage::load_flight_controller_anti_gravity_config(uint8_t pid_profile_index) const
 {
-    {FlightController::anti_gravity_config_t config {};
-    if (loadItem(FLIGHT_CONTROLLER_AntiGravity_CONFIG_KEY, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {anti_gravity_config_t config {};
+    if (load_item(FLIGHT_CONTROLLER_ANTI_GRAVITY_CONFIG_KEY, pid_profile_index, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::flightControllerAntiGravityConfig;
+    return DEFAULTS::FLIGHT_CONTROLLER_ANTI_GRAVITY_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerAntiGravityConfig(const FlightController::anti_gravity_config_t& config, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_flight_controller_anti_gravity_config(const anti_gravity_config_t& config, uint8_t pid_profile_index)
 {
-    return storeItem(FLIGHT_CONTROLLER_AntiGravity_CONFIG_KEY, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerAntiGravityConfig);
+    return store_item(FLIGHT_CONTROLLER_ANTI_GRAVITY_CONFIG_KEY, pid_profile_index, &config, sizeof(config), &DEFAULTS::FLIGHT_CONTROLLER_ANTI_GRAVITY_CONFIG);
 }
 
 
-FlightController::crash_flip_config_t NonVolatileStorage::loadFlightControllerCrashFlipConfig() const
+crash_flip_config_t NonVolatileStorage::load_flight_controller_crash_flip_config() const
 {
-    {FlightController::crash_flip_config_t config {};
-    if (loadItem(FLIGHT_CONTROLLER_CRASH_FLIP_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {crash_flip_config_t config {};
+    if (load_item(FLIGHT_CONTROLLER_CRASH_FLIP_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::flightControllerCrashFlipConfig;
+    return DEFAULTS::FLIGHT_CONTROLLER_CRASH_FLIP_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerCrashFlipConfig(const FlightController::crash_flip_config_t& config)
+int32_t NonVolatileStorage::store_flight_controller_crash_flip_config(const crash_flip_config_t& config)
 {
-    return storeItem(FLIGHT_CONTROLLER_CRASH_FLIP_KEY, &config, sizeof(config), &DEFAULTS::flightControllerCrashFlipConfig);
+    return store_item(FLIGHT_CONTROLLER_CRASH_FLIP_KEY, &config, sizeof(config), &DEFAULTS::FLIGHT_CONTROLLER_CRASH_FLIP_CONFIG);
 }
 
 
 #if defined(USE_D_MAX)
-FlightController::d_max_config_t NonVolatileStorage::loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const
+d_max_config_t NonVolatileStorage::load_flight_controller_d_max_config(uint8_t pid_profile_index) const
 {
-    {FlightController::d_max_config_t config {};
-    if (loadItem(FLIGHT_CONTROLLER_DMAX_CONFIG_KEY, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {d_max_config_t config {};
+    if (load_item(FLIGHT_CONTROLLER_DMAX_CONFIG_KEY, pid_profile_index, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::flightControllerDMaxConfig;
+    return DEFAULTS::FLIGHT_CONTROLLER_D_MAX_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerDMaxConfig(const FlightController::d_max_config_t& config, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_flight_controller_d_max_config(const d_max_config_t& config, uint8_t pid_profile_index)
 {
-    return storeItem(FLIGHT_CONTROLLER_DMAX_CONFIG_KEY, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerDMaxConfig);
+    return store_item(FLIGHT_CONTROLLER_DMAX_CONFIG_KEY, pid_profile_index, &config, sizeof(config), &DEFAULTS::FLIGHT_CONTROLLER_D_MAX_CONFIG);
 }
 #endif
 
 
 #if defined(USE_ITERM_RELAX)
-FlightController::iterm_relax_config_t NonVolatileStorage::loadFlightControllerITermRelaxConfig(uint8_t pidProfileIndex) const
+iterm_relax_config_t NonVolatileStorage::load_flight_controller_iterm_relax_config(uint8_t pid_profile_index) const
 {
-    {FlightController::iterm_relax_config_t config {};
-    if (loadItem(FLIGHT_CONTROLLER_ITERM_RELAX_CONFIG_KEY, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {iterm_relax_config_t config {};
+    if (load_item(FLIGHT_CONTROLLER_ITERM_RELAX_CONFIG_KEY, pid_profile_index, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::flightControllerITermRelaxConfig;
+    return DEFAULTS::FLIGHT_CONTROLLER_ITERM_RELAX_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerITermRelaxConfig(const FlightController::iterm_relax_config_t& config, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_flight_controller_iterm_relax_config(const iterm_relax_config_t& config, uint8_t pid_profile_index)
 {
-    return storeItem(FLIGHT_CONTROLLER_ITERM_RELAX_CONFIG_KEY, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerITermRelaxConfig);
+    return store_item(FLIGHT_CONTROLLER_ITERM_RELAX_CONFIG_KEY, pid_profile_index, &config, sizeof(config), &DEFAULTS::FLIGHT_CONTROLLER_ITERM_RELAX_CONFIG);
 }
 #endif
 
 
 #if defined(USE_YAW_SPIN_RECOVERY)
-FlightController::yaw_spin_recovery_config_t NonVolatileStorage::loadFlightControllerYawSpinRecoveryConfig(uint8_t pidProfileIndex) const
+yaw_spin_recovery_config_t NonVolatileStorage::load_flight_controller_yaw_spin_recovery_config(uint8_t pid_profile_index) const
 {
-    {FlightController::yaw_spin_recovery_config_t config {};
-    if (loadItem(FLIGHT_CONTROLLER_YAW_SPIN_RECOVERY_CONFIG_KEY, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {yaw_spin_recovery_config_t config {};
+    if (load_item(FLIGHT_CONTROLLER_YAW_SPIN_RECOVERY_CONFIG_KEY, pid_profile_index, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::flightControllerYawSpinRecoveryConfig;
+    return DEFAULTS::FLIGHT_CONTROLLER_YAW_SPIN_RECOVERY_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerYawSpinRecoveryConfig(const FlightController::yaw_spin_recovery_config_t& config, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_flight_controller_yaw_spin_recovery_config(const yaw_spin_recovery_config_t& config, uint8_t pid_profile_index)
 {
-    return storeItem(FLIGHT_CONTROLLER_YAW_SPIN_RECOVERY_CONFIG_KEY, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerYawSpinRecoveryConfig);
+    return store_item(FLIGHT_CONTROLLER_YAW_SPIN_RECOVERY_CONFIG_KEY, pid_profile_index, &config, sizeof(config), &DEFAULTS::FLIGHT_CONTROLLER_YAW_SPIN_RECOVERY_CONFIG);
 }
 #endif
 
 
 #if defined(USE_CRASH_RECOVERY)
-FlightController::crash_recovery_config_t NonVolatileStorage::loadFlightControllerCrashRecoveryConfig(uint8_t pidProfileIndex) const
+crash_recovery_config_t NonVolatileStorage::load_flight_controller_crash_recovery_config(uint8_t pid_profile_index) const
 {
-    {FlightController::crash_recovery_config_t config {};
-    if (loadItem(FLIGHT_CONTROLLER_CRASH_RECOVERY_CONFIG_KEY, pidProfileIndex, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {crash_recovery_config_t config {};
+    if (load_item(FLIGHT_CONTROLLER_CRASH_RECOVERY_CONFIG_KEY, pid_profile_index, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::flightControllerCrashRecoveryConfig;
+    return DEFAULTS::FLIGHT_CONTROLLER_CRASH_RECOVERY_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& config, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_flight_controller_crash_recovery_config(const crash_recovery_config_t& config, uint8_t pid_profile_index)
 {
-    return storeItem(FLIGHT_CONTROLLER_CRASH_RECOVERY_CONFIG_KEY, pidProfileIndex, &config, sizeof(config), &DEFAULTS::flightControllerCrashRecoveryConfig);
+    return store_item(FLIGHT_CONTROLLER_CRASH_RECOVERY_CONFIG_KEY, pid_profile_index, &config, sizeof(config), &DEFAULTS::FLIGHT_CONTROLLER_CRASH_RECOVERY_CONFIG);
 }
 #endif
 
 
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
-DynamicNotchFilter::config_t NonVolatileStorage::loadDynamicNotchFilterConfig() const
+dynamic_notch_filter_config_t NonVolatileStorage::load_dynamic_notch_filter_config() const
 {
-    {DynamicNotchFilter::config_t config {};
-    if (loadItem(DYNAMIC_NOTCH_FILTER_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {dynamic_notch_filter_config_t config {};
+    if (load_item(DYNAMIC_NOTCH_FILTER_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::dynamicNotchFilterConfig;
+    return DEFAULTS::DYNAMIC_NOTCH_FILTER_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config)
+int32_t NonVolatileStorage::store_dynamic_notch_filter_config(const dynamic_notch_filter_config_t& config)
 {
-    return storeItem(DYNAMIC_NOTCH_FILTER_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::dynamicNotchFilterConfig);
+    return store_item(DYNAMIC_NOTCH_FILTER_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::DYNAMIC_NOTCH_FILTER_CONFIG);
 }
 #endif
 
 #if defined(USE_RPM_FILTERS)
-RpmFilters::config_t NonVolatileStorage::loadRPM_FiltersConfig() const
+rpm_filters_config_t NonVolatileStorage::load_rpm_filters_config() const
 {
-    {RpmFilters::config_t config {};
-    if (loadItem(RPM_FILTERS_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {rpm_filters_config_t config {};
+    if (load_item(RPM_FILTERS_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::rpmFiltersConfig;
+    return DEFAULTS::RPM_FILTERS_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeRPM_FiltersConfig(const RpmFilters::config_t& config)
+int32_t NonVolatileStorage::store_rpm_filters_config(const rpm_filters_config_t& config)
 {
-    return storeItem(RPM_FILTERS_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::rpmFiltersConfig);
+    return store_item(RPM_FILTERS_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::RPM_FILTERS_CONFIG);
 }
 #endif
 #if defined(USE_OSD)
-OSD::config_t NonVolatileStorage::loadOSD_Config() const
+osd_config_t NonVolatileStorage::load_osd_config() const
 {
-    {OSD::config_t config {};
-    if (loadItem(OSD_ELEMENTS_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {osd_config_t config {};
+    if (load_item(OSD_ELEMENTS_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::osdConfig;
+    return DEFAULTS::OSD_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeOSD_Config(const OSD::config_t& config)
+int32_t NonVolatileStorage::store_osd_config(const osd_config_t& config)
 {
-    return storeItem(OSD_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::osdConfig);
+    return store_item(OSD_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::OSD_CONFIG);
 }
 
-bool NonVolatileStorage::loadOSD_ElementsConfig(OSD_Elements::config_t& config) const
+bool NonVolatileStorage::load_osd_elements_config(osd_elements_config_t& config) const
 {
-    if (loadItem(OSD_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    if (load_item(OSD_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return true;
     }
     return false;
 }
 
-int32_t NonVolatileStorage::storeOSD_ElementsConfig(const OSD_Elements::config_t& config)
+int32_t NonVolatileStorage::store_osd_elements_config(const osd_elements_config_t& config)
 {
-    return storeItem(OSD_ELEMENTS_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::osdElementsConfig);
+    return store_item(OSD_ELEMENTS_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::OSD_ELEMENTS_CONFIG);
 }
 #endif
 #if defined(USE_VTX)
-VTX::config_t NonVolatileStorage::loadVTX_Config() const
+vtx_config_t NonVolatileStorage::load_vtx_config() const
 {
-    {VTX::config_t config {};
-    if (loadItem(VTX_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {vtx_config_t config {};
+    if (load_item(VTX_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::vtxConfig;
+    return DEFAULTS::VTX_CONFIG;
 }
-int32_t NonVolatileStorage::storeVTX_Config(const VTX::config_t& config)
+int32_t NonVolatileStorage::store_vtx_config(const vtx_config_t& config)
 {
-    return storeItem(VTX_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::vtxConfig);
+    return store_item(VTX_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::VTX_CONFIG);
 }
 #endif
 #if defined(USE_GPS)
-GPS::config_t NonVolatileStorage::loadGPS_Config() const
+gps_config_t NonVolatileStorage::load_gps_config() const
 {
-    {GPS::config_t config {};
-    if (loadItem(GPS_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {gps_config_t config {};
+    if (load_item(GPS_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::gpsConfig;
+    return DEFAULTS::GPS_CONFIG;
 }
-int32_t NonVolatileStorage::storeGPS_Config(const GPS::config_t& config)
+int32_t NonVolatileStorage::store_gps_config(const gps_config_t& config)
 {
-    return storeItem(GPS_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::gpsConfig);
+    return store_item(GPS_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::GPS_CONFIG);
 }
 #endif
 #if defined(USE_ALTITUDE_HOLD)
-Autopilot::autopilot_config_t NonVolatileStorage::loadAutopilotConfig() const
+autopilot_config_t NonVolatileStorage::load_autopilot_config() const
 {
-    {Autopilot::autopilot_config_t config {};
-    if (loadItem(AUTOPILOT_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {autopilot_config_t config {};
+    if (load_item(AUTOPILOT_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::autopilotConfig;
+    return DEFAULTS::AUTOPILOT_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeAutopilotConfig(const Autopilot::autopilot_config_t& config)
+int32_t NonVolatileStorage::store_autopilot_config(const autopilot_config_t& config)
 {
-    return storeItem(AUTOPILOT_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::autopilotConfig);
+    return store_item(AUTOPILOT_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::AUTOPILOT_CONFIG);
 }
 
-Autopilot::position_config_t NonVolatileStorage::loadAutopilotPositionConfig() const
+position_hold_config_t NonVolatileStorage::load_autopilot_position_hold_config() const
 {
-    {Autopilot::position_config_t config {};
-    if (loadItem(AUTOPILOT_POSITION_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {position_hold_config_t config {};
+    if (load_item(AUTOPILOT_POSITION_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::autopilotPositionConfig;
+    return DEFAULTS::AUTOPILOT_POSITION_HOLD_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeAutopilotPositionConfig(const Autopilot::position_config_t& config)
+int32_t NonVolatileStorage::store_autopilot_position_hold_config(const position_hold_config_t& config)
 {
-    return storeItem(AUTOPILOT_POSITION_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::autopilotPositionConfig);
+    return store_item(AUTOPILOT_POSITION_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::AUTOPILOT_POSITION_HOLD_CONFIG);
 }
 
-Autopilot::altitude_hold_config_t NonVolatileStorage::loadAltitudeHoldConfig() const
+altitude_hold_config_t NonVolatileStorage::load_altitude_hold_config() const
 {
-    {Autopilot::altitude_hold_config_t config {};
-    if (loadItem(ALTITUDE_HOLD_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {altitude_hold_config_t config {};
+    if (load_item(ALTITUDE_HOLD_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::autopilotAltitudeHoldConfig;
+    return DEFAULTS::AUTOPILOT_ALTITUDE_HOLD_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeAltitudeHoldConfig(const Autopilot::altitude_hold_config_t& config)
+int32_t NonVolatileStorage::store_altitude_hold_config(const altitude_hold_config_t& config)
 {
-    return storeItem(ALTITUDE_HOLD_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::autopilotAltitudeHoldConfig);
+    return store_item(ALTITUDE_HOLD_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::AUTOPILOT_ALTITUDE_HOLD_CONFIG);
 }
 #endif
 
 
-IMU_Filters::config_t NonVolatileStorage::loadIMU_FiltersConfig() const
+imu_filters_config_t NonVolatileStorage::load_imu_filters_config() const
 {
-    {IMU_Filters::config_t config {};
-    if (loadItem(IMU_FILTERS_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {imu_filters_config_t config {};
+    if (load_item(IMU_FILTERS_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::imuFiltersConfig;
+    return DEFAULTS::IMU_FILTERS_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeIMU_FiltersConfig(const IMU_Filters::config_t& config)
+int32_t NonVolatileStorage::store_imu_filters_config(const imu_filters_config_t& config)
 {
-    return storeItem(IMU_FILTERS_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::imuFiltersConfig);
+    return store_item(IMU_FILTERS_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::IMU_FILTERS_CONFIG);
 }
 
 
-Cockpit::failsafe_config_t NonVolatileStorage::loadFailsafeConfig() const
+failsafe_config_t NonVolatileStorage::load_failsafe_config() const
 {
-    {Cockpit::failsafe_config_t config {};
-    if (loadItem(FAILSAFE_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {failsafe_config_t config {};
+    if (load_item(FAILSAFE_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::cockpitFailSafeConfig;
+    return DEFAULTS::COCKPIT_FAILSAFE_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFailsafeConfig(const Cockpit::failsafe_config_t& config)
+int32_t NonVolatileStorage::store_failsafe_config(const failsafe_config_t& config)
 {
-    return storeItem(FAILSAFE_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::cockpitFailSafeConfig);
+    return store_item(FAILSAFE_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::COCKPIT_FAILSAFE_CONFIG);
 }
 
-Features::config_t NonVolatileStorage::loadFeaturesConfig() const
+features_config_t NonVolatileStorage::load_features_config() const
 {
-    {Features::config_t config {};
-    if (loadItem(FEATURES_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {features_config_t config {};
+    if (load_item(FEATURES_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::featuresConfig;
+    return DEFAULTS::FEATURES_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeFeaturesConfig(const Features::config_t& config)
+int32_t NonVolatileStorage::store_features_config(const features_config_t& config)
 {
-    return storeItem(FEATURES_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::featuresConfig);
+    return store_item(FEATURES_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::FEATURES_CONFIG);
 }
 
-RX::config_t NonVolatileStorage::loadRX_Config() const
+rx_config_t NonVolatileStorage::load_rx_config() const
 {
-    {RX::config_t config {};
-    if (loadItem(RX_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
+    {rx_config_t config {};
+    if (load_item(RX_CONFIG_KEY, &config, sizeof(config))) { // cppcheck-suppress knownConditionTrueFalse
         return config;
     }}
-    return DEFAULTS::RX_Config;
+    return DEFAULTS::RX_CONFIG;
 }
 
-int32_t NonVolatileStorage::storeRX_Config(const RX::config_t& config)
+int32_t NonVolatileStorage::store_rx_config(const rx_config_t& config)
 {
-    return storeItem(RX_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::RX_Config);
+    return store_item(RX_CONFIG_KEY, &config, sizeof(config), &DEFAULTS::RX_CONFIG);
 }
 
 
 rc_modes_activation_condition_array_t NonVolatileStorage::load_rc_mode_activation_conditions() const
 {
     {rc_modes_activation_condition_array_t mode_activation_conditions {};
-    if (loadItem(RC_MODES_ACTIVATION_CONDITIONS_KEY, &mode_activation_conditions, sizeof(mode_activation_conditions))) {
+    if (load_item(RC_MODES_ACTIVATION_CONDITIONS_KEY, &mode_activation_conditions, sizeof(mode_activation_conditions))) {
         return mode_activation_conditions;
     }}
     return DEFAULTS::RC_MODE_ACTIVATION_CONDITIONS;
@@ -667,266 +675,267 @@ rc_modes_activation_condition_array_t NonVolatileStorage::load_rc_mode_activatio
 
 int32_t NonVolatileStorage::store_rc_mode_activation_conditions(const rc_modes_activation_condition_array_t& mode_activation_conditions)
 {
-    return storeItem(RC_MODES_ACTIVATION_CONDITIONS_KEY, &mode_activation_conditions, sizeof(mode_activation_conditions), &DEFAULTS::RC_MODE_ACTIVATION_CONDITIONS);
+    return store_item(RC_MODES_ACTIVATION_CONDITIONS_KEY, &mode_activation_conditions, sizeof(mode_activation_conditions), &DEFAULTS::RC_MODE_ACTIVATION_CONDITIONS);
 }
 
 #if defined(USE_RC_ADJUSTMENTS)
-RC_Adjustments::adjustment_ranges_t NonVolatileStorage::loadRC_AdjustmentRanges() const
+rc_adjustment_ranges_t NonVolatileStorage::load_rc_adjustment_ranges() const
 {
-    {RC_Adjustments::adjustment_ranges_t adjustmentRanges {};
-    if (loadItem(RC_ADJUSTMENT_RANGES_KEY, &adjustmentRanges, sizeof(adjustmentRanges))) {
+    {rc_adjustment_ranges_t adjustmentRanges {};
+    if (load_item(RC_ADJUSTMENT_RANGES_KEY, &adjustmentRanges, sizeof(adjustmentRanges))) {
         return adjustmentRanges;
     }}
-    return DEFAULTS::RC_AdjustmentRanges;
+    return DEFAULTS::RC_ADJUSTMENT_RANGES;
 }
 
-int32_t NonVolatileStorage::storeRC_AdjustmentRanges(const RC_Adjustments::adjustment_ranges_t& adjustmentRanges)
+int32_t NonVolatileStorage::store_rc_adjustment_ranges(const rc_adjustment_ranges_t& adjustmentRanges)
 {
-    return storeItem(RC_ADJUSTMENT_RANGES_KEY, &adjustmentRanges, sizeof(adjustmentRanges), &DEFAULTS::RC_AdjustmentRanges);
+    return store_item(RC_ADJUSTMENT_RANGES_KEY, &adjustmentRanges, sizeof(adjustmentRanges), &DEFAULTS::RC_ADJUSTMENT_RANGES);
 }
 #endif
 
-rates_t NonVolatileStorage::loadRates(uint8_t rateProfileIndex) const
+rates_t NonVolatileStorage::load_rates(uint8_t rate_profile_index) const
 {
     {rates_t rates {};
-    if (rateProfileIndex < RATE_PROFILE_COUNT && loadItem(RATES_KEY + rateProfileIndex, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
+    if (rate_profile_index < RATE_PROFILE_COUNT && load_item(RATES_KEY + rate_profile_index, &rates, sizeof(rates))) { // cppcheck-suppress knownConditionTrueFalse
         return rates;
     }}
-    return DEFAULTS::cockpitRates;
+    return DEFAULTS::COCKPIT_RATES;
 }
 
-int32_t NonVolatileStorage::storeRates(const rates_t& rates, uint8_t rateProfileIndex)
+int32_t NonVolatileStorage::store_rates(const rates_t& rates, uint8_t rate_profile_index)
 {
-    if (rateProfileIndex >= RATE_PROFILE_COUNT) {
+    if (rate_profile_index >= RATE_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
     }
-    const uint16_t key = RATES_KEY + rateProfileIndex;
-    return storeItem(key, &rates, sizeof(rates), &DEFAULTS::cockpitRates);
+    const uint16_t key = RATES_KEY + rate_profile_index;
+    return store_item(key, &rates, sizeof(rates), &DEFAULTS::COCKPIT_RATES);
 }
 
-VehicleControllerBase::PIDF_uint16_t NonVolatileStorage::loadPID(uint8_t pidIndex, uint8_t pidProfileIndex) const
+VehicleControllerBase::PIDF_uint16_t NonVolatileStorage::load_pid(uint8_t pid_index, uint8_t pid_profile_index) const
 {
-    assert(pidIndex <= FlightController::PID_COUNT);
+    assert(pid_index <= FlightController::PID_COUNT);
     {VehicleControllerBase::PIDF_uint16_t pid {};
-    if (pidProfileIndex < PID_PROFILE_COUNT && loadItem(PID_Keys[pidIndex] + pidProfileIndex, &pid, sizeof(pid))) { // cppcheck-suppress knownConditionTrueFalse
+    if (pid_profile_index < PID_PROFILE_COUNT && load_item(PID_Keys[pid_index] + pid_profile_index, &pid, sizeof(pid))) { // cppcheck-suppress knownConditionTrueFalse
         return pid;
     }}
-    return DEFAULTS::flightControllerPIDs[pidIndex];
+    return DEFAULTS::FLIGHT_CONTROLLER_PIDS[pid_index];
 }
 
-int32_t NonVolatileStorage::storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_pid(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pid_index, uint8_t pid_profile_index)
 {
-    assert(pidIndex <= FlightController::PID_COUNT);
-    if (pidProfileIndex >= PID_PROFILE_COUNT) {
+    assert(pid_index <= FlightController::PID_COUNT);
+    if (pid_profile_index >= PID_PROFILE_COUNT) {
         return ERROR_INVALID_PROFILE;
     }
-    const uint16_t key = PID_Keys[pidIndex] + pidProfileIndex;
-    return storeItem(key, &pid, sizeof(pid), &DEFAULTS::flightControllerPIDs[pidIndex]);
+    const uint16_t key = PID_Keys[pid_index] + pid_profile_index;
+    return store_item(key, &pid, sizeof(pid), &DEFAULTS::FLIGHT_CONTROLLER_PIDS[pid_index]);
 }
 
-void NonVolatileStorage::resetPID(uint8_t pidIndex, uint8_t pidProfileIndex)
+void NonVolatileStorage::reset_pid(uint8_t pid_index, uint8_t pid_profile_index)
 {
-    assert(pidIndex <= FlightController::PID_COUNT);
-    assert(pidProfileIndex < PID_PROFILE_COUNT);
-    remove(PID_Keys[pidIndex]);
-    (void)pidProfileIndex; //!!TODO: check if this is needed
+    assert(pid_index <= FlightController::PID_COUNT);
+    assert(pid_profile_index < PID_PROFILE_COUNT);
+    remove(PID_Keys[pid_index]);
+    (void)pid_profile_index; //!!TODO: check if this is needed
 }
 
-FlightController::simplified_pid_settings_t NonVolatileStorage::loadSimplifiedPID_settings(uint8_t pidProfileIndex) const
+simplified_pid_settings_t NonVolatileStorage::load_simplified_pid_settings(uint8_t pid_profile_index) const
 {
-    assert(pidProfileIndex < PID_PROFILE_COUNT);
-    {FlightController::simplified_pid_settings_t settings {};
-    if (pidProfileIndex < PID_PROFILE_COUNT && loadItem(FLIGHT_CONTROLLER_SIMPLIFIED_PID_settingsKey + pidProfileIndex, &settings, sizeof(settings))) { // cppcheck-suppress knownConditionTrueFalse
+    assert(pid_profile_index < PID_PROFILE_COUNT);
+    {simplified_pid_settings_t settings {};
+    if (pid_profile_index < PID_PROFILE_COUNT && load_item(FLIGHT_CONTROLLER_SIMPLIFIED_PID_settingsKey + pid_profile_index, &settings, sizeof(settings))) { // cppcheck-suppress knownConditionTrueFalse
         return settings;
     }}
-    return DEFAULTS::flightControllerSimplifiedPID_settings;
+    return DEFAULTS::FLIGHT_CONTROLLER_SIMPLIFIED_PID_SETTINGS;
 }
 
-int32_t NonVolatileStorage::storeSimplifiedPID_settings(const FlightController::simplified_pid_settings_t& settings, uint8_t pidProfileIndex)
+int32_t NonVolatileStorage::store_simplified_pid_settings(const simplified_pid_settings_t& settings, uint8_t pid_profile_index)
 {
-    assert(pidProfileIndex < PID_PROFILE_COUNT);
-    const uint16_t key = FLIGHT_CONTROLLER_SIMPLIFIED_PID_settingsKey + pidProfileIndex;
-    return storeItem(key, &settings, sizeof(settings), &DEFAULTS::flightControllerSimplifiedPID_settings);
+    assert(pid_profile_index < PID_PROFILE_COUNT);
+    const uint16_t key = FLIGHT_CONTROLLER_SIMPLIFIED_PID_settingsKey + pid_profile_index;
+    return store_item(key, &settings, sizeof(settings), &DEFAULTS::FLIGHT_CONTROLLER_SIMPLIFIED_PID_SETTINGS);
 }
 
 
-NonVolatileStorage::calibration_state_e NonVolatileStorage::loadAccCalibrationState() const
+NonVolatileStorage::calibration_state_e NonVolatileStorage::load_acc_calibration_state() const
 {
-    calibration_state_e calibrationState {};
-    if (loadItem(ACC_CALIBRATION_STATE_KEY, &calibrationState, sizeof(calibrationState))) { // cppcheck-suppress knownConditionTrueFalse
-        return calibrationState;
+    calibration_state_e calibration_state {};
+    if (load_item(ACC_CALIBRATION_STATE_KEY, &calibration_state, sizeof(calibration_state))) { // cppcheck-suppress knownConditionTrueFalse
+        return calibration_state;
     }
     return NOT_CALIBRATED;
 }
 
-int32_t NonVolatileStorage::storeAccCalibrationState(calibration_state_e calibrationState)
+int32_t NonVolatileStorage::store_acc_calibration_state(calibration_state_e calibration_state)
 {
-    const calibration_state_e defaultCalibrationState = NOT_CALIBRATED;
-    return storeItem(ACC_CALIBRATION_STATE_KEY, &calibrationState, sizeof(calibrationState), &defaultCalibrationState);
+    const calibration_state_e defaultCalibration_state = NOT_CALIBRATED;
+    return store_item(ACC_CALIBRATION_STATE_KEY, &calibration_state, sizeof(calibration_state), &defaultCalibration_state);
 }
 
-xyz_t NonVolatileStorage::loadAccOffset() const
+xyz_t NonVolatileStorage::load_acc_offset() const
 {
     {xyz_t offset {};
-    if (loadItem(ACC_OFFSET_KEY, &offset, sizeof(offset))) { // cppcheck-suppress knownConditionTrueFalse
+    if (load_item(ACC_OFFSET_KEY, &offset, sizeof(offset))) { // cppcheck-suppress knownConditionTrueFalse
         return offset;
     }}
     return xyz_t { .x = 0.0F, .y = 0.0F, .z = 0.0F };
 }
 
-int32_t NonVolatileStorage::storeAccOffset(const xyz_t& offset)
+int32_t NonVolatileStorage::store_acc_offset(const xyz_t& offset)
 {
     const xyz_t defaultOffset = { .x = 0.0F, .y = 0.0F, .z = 0.0F };
-    return storeItem(ACC_OFFSET_KEY, &offset, sizeof(offset), &defaultOffset);
+    return store_item(ACC_OFFSET_KEY, &offset, sizeof(offset), &defaultOffset);
 }
 
-NonVolatileStorage::calibration_state_e NonVolatileStorage::loadGyroCalibrationState() const
+NonVolatileStorage::calibration_state_e NonVolatileStorage::load_gyro_calibration_state() const
 {
-    calibration_state_e calibrationState {};
-    if (loadItem(GYRO_CALIBRATION_STATE_KEY, &calibrationState, sizeof(calibrationState))) { // cppcheck-suppress knownConditionTrueFalse
-        return calibrationState;
+    calibration_state_e calibration_state {};
+    if (load_item(GYRO_CALIBRATION_STATE_KEY, &calibration_state, sizeof(calibration_state))) { // cppcheck-suppress knownConditionTrueFalse
+        return calibration_state;
     }
     return NOT_CALIBRATED;
 }
 
-int32_t NonVolatileStorage::storeGyroCalibrationState(calibration_state_e calibrationState)
+int32_t NonVolatileStorage::store_gyro_calibration_state(calibration_state_e calibration_state)
 {
-    const calibration_state_e defaultCalibrationState = NOT_CALIBRATED;
-    return storeItem(GYRO_CALIBRATION_STATE_KEY, &calibrationState, sizeof(calibrationState), &defaultCalibrationState);
+    const calibration_state_e defaultCalibration_state = NOT_CALIBRATED;
+    return store_item(GYRO_CALIBRATION_STATE_KEY, &calibration_state, sizeof(calibration_state), &defaultCalibration_state);
 }
 
-xyz_t NonVolatileStorage::loadGyroOffset() const
+xyz_t NonVolatileStorage::load_gyro_offset() const
 {
     {xyz_t offset {};
-    if (loadItem(GYRO_OFFSET_KEY, &offset, sizeof(offset))) { // cppcheck-suppress knownConditionTrueFalse
+    if (load_item(GYRO_OFFSET_KEY, &offset, sizeof(offset))) { // cppcheck-suppress knownConditionTrueFalse
         return offset;
     }}
     return xyz_t { .x = 0.0F, .y = 0.0F, .z = 0.0F };
 }
 
-int32_t NonVolatileStorage::storeGyroOffset(const xyz_t& offset)
+int32_t NonVolatileStorage::store_gyro_offset(const xyz_t& offset)
 {
     const xyz_t defaultOffset = { .x = 0.0F, .y = 0.0F, .z = 0.0F };
-    return storeItem(GYRO_OFFSET_KEY, &offset, sizeof(offset), &defaultOffset);
+    return store_item(GYRO_OFFSET_KEY, &offset, sizeof(offset), &defaultOffset);
 }
 
-void NonVolatileStorage::loadMacAddress(uint8_t* macAddress) const // NOLINT(readability-non-const-parameter)
+void NonVolatileStorage::load_mac_address(uint8_t* mac_address) const // NOLINT(readability-non-const-parameter)
 {
 #if defined(USE_FLASH_KLV)
-    (void)macAddress;
+    (void)mac_address;
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_ONLY)) {
         std::array<char, 8> keyS;
-        toHexChars(&keyS[0], MAC_ADDRESS_KEY);
-        _preferences.getBytes(&keyS[0], macAddress, MAC_ADDRESS_LEN);
+        to_hex_chars(&keyS[0], MAC_ADDRESS_KEY);
+        _preferences.getBytes(&keyS[0], mac_address, MAC_ADDRESS_LEN);
         _preferences.end();
     }
 #else
-    (void)macAddress;
+    (void)mac_address;
 #endif
 }
 
-int32_t NonVolatileStorage::storeMacAddress(const uint8_t* macAddress)
+int32_t NonVolatileStorage::store_mac_address(const uint8_t* mac_address)
 {
 #if defined(USE_FLASH_KLV)
-    (void)macAddress;
+    (void)mac_address;
     return OK;
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     if (_preferences.begin(nonVolatileStorageNamespace, READ_WRITE)) {
         std::array<char, 8> keyS;
-        toHexChars(&keyS[0], MAC_ADDRESS_KEY);
-        _preferences.putBytes(&keyS[0], macAddress, MAC_ADDRESS_LEN);
+        to_hex_chars(&keyS[0], MAC_ADDRESS_KEY);
+        _preferences.putBytes(&keyS[0], mac_address, MAC_ADDRESS_LEN);
         _preferences.end();
         return OK;
     }
     return ERROR_NOT_WRITTEN;
 #else
-    (void)macAddress;
+    (void)mac_address;
     return OK;
 #endif
 }
 
-int32_t NonVolatileStorage::storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, const RcModes& rc_modes)
+int32_t NonVolatileStorage::store_all(const IMU_Filters& imuFilters, const FlightController& flightController, const MotorMixerBase& motorMixer, const Cockpit& cockpit, const RcModes& rc_modes)
 {
+    (void)motorMixer;
 #if defined(USE_DYNAMIC_IDLE)
-    const DynamicIdleController* dynamicIdleController = flightController.getMotorMixer().get_dynamic_idle_controller();
-    if (dynamicIdleController) {
-        storeDynamicIdleControllerConfig(dynamicIdleController->get_config(), _currentPidProfileIndex);
+    const dynamic_idle_controller_config_t* dynamicIdleControllerConfig = motorMixer.get_dynamic_idle_config();
+    if (dynamicIdleControllerConfig) {
+        store_dynamic_idle_controller_config(*dynamicIdleControllerConfig, _current_pid_profile_index);
     }
 #endif
 #if defined(USE_RPM_FILTERS)
-    const RpmFilters* rpmFilters = flightController.getMotorMixer().get_rpm_filters();
+    const RpmFilters* rpmFilters = imuFilters.getRPM_Filters();
     if (rpmFilters) {
-        storeRPM_FiltersConfig(rpmFilters->get_config());
+        store_rpm_filters_config(rpmFilters->get_config());
     }
 #endif
 
-    storeFlightControllerFiltersConfig(flightController.getFiltersConfig(), _currentPidProfileIndex);
+    store_flight_controller_filters_config(flightController.getFiltersConfig(), _current_pid_profile_index);
 
-    storeFlightControllerFlightModeConfig(flightController.getFlightModeConfig(),  _currentPidProfileIndex);
+    store_flight_controller_flight_mode_config(flightController.getFlightModeConfig(), _current_pid_profile_index);
 
-    storeFlightControllerTPA_Config(flightController.getTPA_Config(),  _currentPidProfileIndex);
+    store_flight_controller_tpa_config(flightController.getTPA_Config(), _current_pid_profile_index);
 
-    storeFlightControllerAntiGravityConfig(flightController.getAntiGravityConfig(),  _currentPidProfileIndex);
+    store_flight_controller_anti_gravity_config(flightController.getAntiGravityConfig(), _current_pid_profile_index);
 
-    storeFlightControllerCrashFlipConfig(flightController.getCrashFlipConfig());
+    store_flight_controller_crash_flip_config(flightController.getCrashFlipConfig());
 
 #if defined(USE_D_MAX)
-    storeFlightControllerDMaxConfig(flightController.getDMaxConfig(),  _currentPidProfileIndex);
+    store_flight_controller_d_max_config(flightController.getDMaxConfig(), _current_pid_profile_index);
 #endif
 #if defined(USE_ITERM_RELAX)
-    storeFlightControllerITermRelaxConfig(flightController.getITermRelaxConfig(),  _currentPidProfileIndex);
+    store_flight_controller_iterm_relax_config(flightController.getITermRelaxConfig(), _current_pid_profile_index);
 #endif
 #if defined(USE_YAW_SPIN_RECOVERY)
-    storeFlightControllerYawSpinRecoveryConfig(flightController.getYawSpinRecoveryConfig(),  _currentPidProfileIndex);
+    store_flight_controller_yaw_spin_recovery_config(flightController.getYawSpinRecoveryConfig(), _current_pid_profile_index);
 #endif
 #if defined(USE_CRASH_RECOVERY)
-    storeFlightControllerCrashRecoveryConfig(flightController.getCrashRecoveryConfig(),  _currentPidProfileIndex);
+    store_flight_controller_crash_recovery_config(flightController.getCrashRecoveryConfig(), _current_pid_profile_index);
 #endif
 #if defined(USE_ALTITUDE_HOLD)
-    storeAltitudeHoldConfig(cockpit.getAutopilot().getAltitudeHoldConfig());
+    store_altitude_hold_config(cockpit.getAutopilot().get_altitude_hold_config());
 #endif
 
-    const IMU_Filters::config_t imuFiltersConfig = imuFilters.getConfig();
-    storeIMU_FiltersConfig(imuFiltersConfig);
+    const imu_filters_config_t imu_filters_config = imuFilters.getConfig();
+    store_imu_filters_config(imu_filters_config);
 
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
-    storeDynamicNotchFilterConfig(imuFilters.getDynamicNotchFilterConfig());
+    store_dynamic_notch_filter_config(imuFilters.get_dynamic_notch_filter_config());
 #endif
 
-    storeRates(cockpit.getRates(), _currentRateProfileIndex);
+    store_rates(cockpit.getRates(), _current_rate_profile_index);
     store_rc_mode_activation_conditions(rc_modes.get_mode_activation_conditions());
 #if defined(USE_RC_ADJUSTMENTS)
-    storeRC_AdjustmentRanges(cockpit.getRC_Adjustments().getAdjustmentRanges());
+    store_rc_adjustment_ranges(cockpit.getRC_Adjustments().getAdjustmentRanges());
 #endif
-    storeFeaturesConfig(cockpit.getFeaturesConfig());
+    store_features_config(cockpit.get_features_config());
 
     return OK;
 }
 
 #if defined(USE_CMS)
-void CMSX::saveConfigAndNotify()
+void CMSX::saveConfigAndNotify(cms_parameter_group_t& pg)
 {
-    _nvs.storeAll(_imuFilters, _cockpit.getFlightController(), _cockpit, _rc_modes);
+    pg.nvs.store_all(pg.imuFilters, pg.flightController, pg.motorMixer, pg.cockpit, pg.rc_modes);
 }
 
-uint8_t CMSX::getCurrentPidProfileIndex() const
+uint8_t CMSX::get_current_pid_profile_index(cms_parameter_group_t& pg) const
 {
-    return _nvs.getCurrentPidProfileIndex();
+    return pg.nvs.get_current_pid_profile_index();
 }
 
-void CMSX::setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) 
+void CMSX::set_current_pid_profile_index(cms_parameter_group_t& pg, uint8_t current_pid_profile_index) 
 {
-    _nvs.setCurrentPidProfileIndex(currentPidProfileIndex);
+    pg.nvs.set_current_pid_profile_index(current_pid_profile_index);
 }
 
-uint8_t CMSX::getCurrentRateProfileIndex() const
+uint8_t CMSX::get_current_rate_profile_index(cms_parameter_group_t& pg) const
 {
-    return _nvs.getCurrentRateProfileIndex();
+    return pg.nvs.get_current_rate_profile_index();
 }
 
-void CMSX::setCurrentRateProfileIndex(uint8_t currentRateProfileIndex) 
+void CMSX::set_current_rate_profile_index(cms_parameter_group_t& pg, uint8_t current_rate_profile_index) 
 {
-    _nvs.setCurrentRateProfileIndex(currentRateProfileIndex);
+    pg.nvs.set_current_rate_profile_index(current_rate_profile_index);
 }
 #endif

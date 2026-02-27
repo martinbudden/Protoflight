@@ -5,9 +5,9 @@ Packet definitions of telemetry data specific to Flight Controllers.
 */
 
 
-#include <PIDF.h>
 #include <array>
 #include <cstdint>
+#include <pid_controller.h>
 
 
 #pragma pack(push, 1)
@@ -20,8 +20,8 @@ struct TD_FC_PIDS {
 
     uint8_t type {TYPE};
     uint8_t len {sizeof(TD_FC_PIDS)}; //!< length of whole packet, ie sizeof(TD_FC_PIDS)
-    uint8_t subType {0};
-    uint8_t sequenceNumber {0};
+    uint8_t sub_type {0};
+    uint8_t sequence_number {0};
 
     enum {
         ROLL_RATE_DPS = 0,
@@ -36,7 +36,7 @@ struct TD_FC_PIDS {
     };
     struct SPID_t {
         float setpoint;
-        PIDF::PIDF_t pid;
+        pid_constants_t pid;
     };
     std::array<SPID_t, PID_COUNT> spids;
 };

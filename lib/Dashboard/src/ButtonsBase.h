@@ -1,6 +1,7 @@
 #pragma once
 
 class FlightController;
+class MotorMixerBase;
 class ReceiverBase;
 class ScreenBase;
 
@@ -10,7 +11,7 @@ public:
     virtual ~ButtonsBase() = default;
     ButtonsBase(ScreenBase* screen) :
         _screen(screen) {}
-    virtual void update(FlightController& flightController, const ReceiverBase& receiver) = 0;
+    virtual void update(FlightController& flightController, MotorMixerBase& motorMixer, const ReceiverBase& receiver) = 0;
 protected:
     ScreenBase* _screen;
 };

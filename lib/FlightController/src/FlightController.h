@@ -3,17 +3,102 @@
 #include "FlightControllerTelemetry.h"
 #include "Targets.h"
 
-#include <Filters.h>
-#include <VehicleControllerBase.h>
+#include <filters.h>
+#include <vehicle_controller_base.h>
 
+#include <quaternion.h>
 #include <string>
 #include <xyz_type.h>
 
-class AHRS_MessageQueue;
+class AhrsMessageQueue;
 class Debug;
 class DynamicNotchFilter;
 class MotorMixerBase;
+class MotorMixerMessageQueue;
 class Quaternion;
+
+struct flight_controller_filters_config_t {
+    enum { PT1 = 0, BIQUAD, PT2, PT3 };
+    uint16_t dterm_lpf1_hz;
+    uint16_t dterm_lpf2_hz;
+#if defined(USE_DTERM_FILTERS_EXTENDED)
+    uint16_t dterm_notch_hz;
+    uint16_t dterm_notch_cutoff;
+    uint16_t dterm_dynamic_lpf1_min_hz;
+    uint16_t dterm_dynamic_lpf1_max_hz;
+    uint8_t dterm_lpf1_type;
+    uint8_t dterm_lpf2_type;
+#endif
+    uint16_t yaw_lpf_hz;
+    uint16_t output_lpf_hz;
+    uint8_t rc_smoothing_feedforward_cutoff;
+};
+
+struct flight_mode_config_t {
+    uint8_t level_race_mode; // aka "NFE race mode": angle mode on roll, acro mode on pitch
+};
+
+struct tpa_config_t {
+    uint8_t tpa_mode;
+    uint8_t tpa_rate;
+    uint16_t tpa_breakpoint;
+    int8_t tpa_low_rate;
+    uint8_t tpa_low_always;
+    uint16_t tpa_low_breakpoint;
+};
+
+struct anti_gravity_config_t {
+    uint8_t cutoff_hz;
+    uint8_t p_gain;
+    uint8_t i_gain;
+};
+
+struct crash_flip_config_t {
+    uint8_t motor_percent;
+    uint8_t rate;
+    uint8_t auto_rearm;
+};
+
+struct yaw_spin_recovery_config_t {
+    int16_t yaw_spin_threshold;
+    uint8_t yaw_spin_recovery;
+};
+
+struct crash_recovery_config_t {
+    uint16_t crash_dthreshold;          // dterm crash value
+    uint16_t crash_gthreshold;          // gyro crash value
+    uint16_t crash_setpoint_threshold;  // setpoint must be below this value to detect crash, so flips and rolls are not interpreted as crashes
+    uint16_t crash_time;                // ms
+    uint16_t crash_delay;               // ms
+    uint16_t crash_limit_yaw;           // limits yaw error rate, so crashes don't cause huge throttle increase
+    uint8_t crash_recovery_angle;       // degrees
+    uint8_t crash_recovery_rate;        // degrees per second
+    uint8_t crash_recovery;             // off, on, on and beeps when it is in crash recovery mode
+};
+
+struct iterm_relax_config_t {
+    uint8_t iterm_relax_type; // not used
+    uint8_t iterm_relax;        // Enable iterm suppression during stick input
+    uint8_t iterm_relax_setpoint_threshold; // Full iterm suppression once setpoint has exceeded this value (degrees per second)
+    uint8_t iterm_relax_cutoff; // Cutoff frequency used by low pass filter which predicts average response of the quad to setpoint
+};
+
+struct d_max_config_t {
+    std::array<uint8_t, 2> d_max; // Maximum D value on each axis
+    uint8_t d_max_gain;     // gain factor for amount of gyro / setpoint activity required to boost D
+    uint8_t d_max_advance;  // percentage multiplier for setpoint
+};
+
+struct simplified_pid_settings_t {
+    uint16_t multiplier;
+    uint16_t roll_pitch_ratio;
+    uint16_t i_gain;
+    uint16_t d_gain;
+    uint16_t pi_gain;
+    uint16_t pitch_pi_gain;
+    uint16_t d_max_gain;
+    uint16_t k_gain;
+};
 
 /*!
 The flight controller which uses the North East Down (NED) coordinate frame.
@@ -36,9 +121,7 @@ have been put in place to help avoid race conditions. In particular:
 class FlightController : public VehicleControllerBase {
 public:
     virtual ~FlightController() = default;
-    FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, AHRS_MessageQueue& ahrsMessageQueue, Debug& debug);
-    const AHRS_MessageQueue& getAHRS_MessageQueue() const { return _ahrsMessageQueue; }
-    AHRS_MessageQueue& getAHRS_MessageQueue() { return _ahrsMessageQueue; }
+    FlightController(uint32_t task_interval_microseconds);
 private:
     // FlightController is not copyable or moveable
     FlightController(const FlightController&) = delete;
@@ -73,56 +156,15 @@ public:
     };
 
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
-    struct filters_config_t {
-        enum { PT1 = 0, BIQUAD, PT2, PT3 };
-        uint16_t dterm_lpf1_hz;
-        uint16_t dterm_lpf2_hz;
-#if defined(USE_DTERM_FILTERS_EXTENDED)
-        uint16_t dterm_notch_hz;
-        uint16_t dterm_notch_cutoff;
-        uint16_t dterm_dynamic_lpf1_min_hz;
-        uint16_t dterm_dynamic_lpf1_max_hz;
-        uint8_t dterm_lpf1_type;
-        uint8_t dterm_lpf2_type;
-#endif
-        uint16_t yaw_lpf_hz;
-        uint16_t output_lpf_hz;
-        uint8_t rc_smoothing_feedforward_cutoff;
-    };
-    struct flight_mode_config_t {
-        uint8_t level_race_mode; // aka "NFE race mode": angle mode on roll, acro mode on pitch
-    };
     enum tpa_mode_e { TPA_MODE_PD, TPA_MODE_D, TPA_MODE_PDS };
-    struct tpa_config_t {
-        uint8_t tpa_mode;
-        uint8_t tpa_rate;
-        uint16_t tpa_breakpoint;
-        int8_t tpa_low_rate;
-        uint8_t tpa_low_always;
-        uint16_t tpa_low_breakpoint;
-    };
     struct tpa_runtime_t {
         float breakpoint;
         float multiplier;
         float lowBreakpoint; //!!TODO: not used
         float lowMultiplier; //!!TODO: not used
     };
-    struct anti_gravity_config_t {
-        uint8_t cutoff_hz;
-        uint8_t p_gain;
-        uint8_t i_gain;
-    };
-    struct anti_gravity_runtime_t {
-        float PGain;
-        float IGain;
-    };
     static constexpr float D_MAX_DEFAULT_ROLL = 40.0F;
     static constexpr float D_MAX_DEFAULT_PITCH = 46.0F;
-    struct d_max_config_t {
-        std::array<uint8_t, RP_AXIS_COUNT> d_max; // Maximum D value on each axis
-        uint8_t d_max_gain;     // gain factor for amount of gyro / setpoint activity required to boost D
-        uint8_t d_max_advance;  // percentage multiplier for setpoint
-    };
     static constexpr float DMAX_GAIN_FACTOR = 0.00008F;
     static constexpr float DMAX_SETPOINT_GAIN_FACTOR = 0.00008F;
     static constexpr float DMAX_RANGE_HZ = 85.0F;
@@ -133,17 +175,12 @@ public:
         std::array<float, RP_AXIS_COUNT> percent;
         std::array<uint8_t, RP_AXIS_COUNT> max;
     };
-    struct crash_flip_config_t {
-        uint8_t motor_percent;
-        uint8_t rate;
-        uint8_t auto_rearm;
+    struct anti_gravity_runtime_t {
+        float PGain;
+        float IGain;
     };
 #if defined(USE_YAW_SPIN_RECOVERY)
     enum yaw_spin_recovery_mode_e { YAW_SPIN_RECOVERY_OFF = 0, YAW_SPIN_RECOVERY_ON, YAW_SPIN_RECOVERY_AUTO };
-    struct yaw_spin_recovery_config_t {
-        int16_t yaw_spin_threshold;
-        uint8_t yaw_spin_recovery;
-    };
     struct yaw_spin_recovery_runtime_t {
         float recoveredRPS;
         float partiallyRecoveredRPS;
@@ -151,17 +188,6 @@ public:
 #endif
 #if defined(USE_CRASH_RECOVERY)
     enum crash_recovery_e { CRASH_RECOVERY_OFF = 0, CRASH_RECOVERY_ON, CRASH_RECOVERY_BEEP, CRASH_RECOVERY_DISARM };
-    struct crash_recovery_config_t {
-        uint16_t crash_dthreshold;          // dterm crash value
-        uint16_t crash_gthreshold;          // gyro crash value
-        uint16_t crash_setpoint_threshold;  // setpoint must be below this value to detect crash, so flips and rolls are not interpreted as crashes
-        uint16_t crash_time;                // ms
-        uint16_t crash_delay;               // ms
-        uint16_t crash_limit_yaw;           // limits yaw error rate, so crashes don't cause huge throttle increase
-        uint8_t crash_recovery_angle;       // degrees
-        uint8_t crash_recovery_rate;        // degrees per second
-        uint8_t crash_recovery;             // off, on, on and beeps when it is in crash recovery mode
-    };
     struct crash_recovery_runtime_t {
         uint32_t timeLimitUs;
         uint32_t timeDelayUs;
@@ -175,18 +201,12 @@ public:
 #endif
 #if defined(USE_ITERM_RELAX)
     enum iterm_relax_e { ITERM_RELAX_OFF, ITERM_RELAX_ON };
-    struct iterm_relax_config_t {
-        uint8_t iterm_relax_type; // not used
-        uint8_t iterm_relax;        // Enable iterm suppression during stick input
-        uint8_t iterm_relax_setpoint_threshold; // Full iterm suppression once setpoint has exceeded this value (degrees per second)
-        uint8_t iterm_relax_cutoff; // Cutoff frequency used by low pass filter which predicts average response of the quad to setpoint
-    };
     struct iterm_relax_runtime_t {
         float setpointThresholdDPS;
     };
 #endif
     struct controls_t {
-        uint32_t tickCount;
+        uint32_t tick_count;
         float throttleStick;
         float rollStickDPS;
         float pitchStickDPS;
@@ -204,94 +224,79 @@ public:
     };
     static constexpr uint16_t PID_GAIN_MAX = 250;
     static constexpr uint16_t K_GAIN_MAX = 1000;
-    struct simplified_pid_settings_t {
-        uint16_t multiplier;
-        uint16_t roll_pitch_ratio;
-        uint16_t i_gain;
-        uint16_t d_gain;
-        uint16_t pi_gain;
-        uint16_t pitch_pi_gain;
-        uint16_t d_max_gain;
-        uint16_t k_gain;
-    };
 
 public:
     static float applyDeadband(float value, float deadband) {
         return (std::fabs(value) < deadband) ? 0.0F : (value >= 0.0F) ? value - deadband : value + deadband;
     }
 
-    bool motorsIsOn() const;
-    void motorsSwitchOff();
-    void motorsSwitchOn();
-    bool motorsIsDisabled() const;
+    void motorsSwitchOff(MotorMixerBase& motorMixer);
+    void motorsSwitchOn(MotorMixerBase& motorMixer);
     //! Sets blackboxActive flag so that ahrsData messages are sent to the blackbox task
     void setBlackboxActive(bool isActive);
+    bool isBlackboxActive() const { return _sh.blackboxActive; }
 
-    virtual uint32_t getOutputPowerTimeMicroseconds() const override; //!!TODO: is this still needed?
+    virtual uint32_t get_output_power_time_microseconds() const override; //!!TODO: is this still needed?
 
     control_mode_e getControlMode() const { return _rxC.controlMode; }
     void setControlMode(control_mode_e controlMode);
 
     pid_tuning_mode_e getPID_TuningMode() const { return _pidTuningMode; }
-    void setPID_TuningMode(pid_tuning_mode_e pidTuningMode);
+    void set_pid_tuning_mode(pid_tuning_mode_e pidTuningMode);
 
-    const std::string& getPID_Name(pid_index_e pidIndex) const;
+    const std::string& getPID_Name(pid_index_e pid_index) const;
 
-    inline const PIDF& getPID(pid_index_e pidIndex) const { return _sh.PIDS[pidIndex]; }
+    inline const PidController& getPID(pid_index_e pid_index) const { return _sh.PIDS[pid_index]; }
 
-    PIDF_uint16_t getPID_Constants(pid_index_e pidIndex) const;
-    void setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16);
+    PIDF_uint16_t get_pid_constants(pid_index_e pid_index) const;
+    void set_pid_constants(pid_index_e pid_index, const PIDF_uint16_t& pid16);
 
     const simplified_pid_settings_t& getSimplifiedPID_Settings() const;
     void setSimplifiedPID_Settings(const simplified_pid_settings_t& simplifiedPID_Settings);
 
-    virtual PIDF_uint16_t getPID_MSP(size_t index) const override;
-    void setPID_P_MSP(pid_index_e pidIndex, uint16_t kp);
-    void setPID_PD_MSP(pid_index_e pidIndex, uint16_t kp); // Set P and change D to preserve P/D ratio
-    void setPID_I_MSP(pid_index_e pidIndex, uint16_t ki);
-    void setPID_D_MSP(pid_index_e pidIndex, uint16_t kd);
-    void setPID_S_MSP(pid_index_e pidIndex, uint16_t ks);
-    void setPID_K_MSP(pid_index_e pidIndex, uint16_t kk);
+    virtual PIDF_uint16_t get_pid_msp(size_t index) const override;
+    void set_pid_p_msp(pid_index_e pid_index, uint16_t kp);
+    void set_pid_pd_msp(pid_index_e pid_index, uint16_t kp); // Set P and change D to preserve P/D ratio
+    void set_pid_i_msp(pid_index_e pid_index, uint16_t ki);
+    void set_pid_d_msp(pid_index_e pid_index, uint16_t kd);
+    void set_pid_s_msp(pid_index_e pid_index, uint16_t ks);
+    void set_pid_k_msp(pid_index_e pid_index, uint16_t kk);
 
-    PIDF_error_t getPID_Error(size_t index) const override;
-    float getPID_Setpoint(size_t index) const override;
+    PIDF_error_t get_pid_error(size_t index) const override;
+    float get_pid_setpoint(size_t index) const override;
 
-    inline float getPID_Setpoint(pid_index_e pidIndex) const { return _sh.PIDS[pidIndex].getSetpoint(); }
-    void setPID_Setpoint(pid_index_e pidIndex, float setpoint) { _sh.PIDS[pidIndex].setSetpoint(setpoint); }
+    inline float get_pid_setpoint(pid_index_e pid_index) const { return _sh.PIDS[pid_index].get_setpoint(); }
+    void setPID_Setpoint(pid_index_e pid_index, float setpoint) { _sh.PIDS[pid_index].set_setpoint(setpoint); }
 
-    void switchPID_integrationOn() { for (auto& pid : _sh.PIDS) { pid.switchIntegrationOn();} }
-    void switchPID_integrationOff() { for (auto& pid : _sh.PIDS) { pid.switchIntegrationOff();} }
+    void switchPID_integrationOn() { for (auto& pid : _sh.PIDS) { pid.switch_integration_on();} }
+    void switchPID_integrationOff() { for (auto& pid : _sh.PIDS) { pid.switch_integration_off();} }
 
-    // Functions to calculate roll, pitch, and yaw rates in the NED coordinate frame, converting from gyroRPS in the ENU coordinate frame
+    // Functions to calculate roll, pitch, and yaw rates in the NED coordinate frame, converting from gyro_rps in the ENU coordinate frame
     // Note that for NED, roll is about the y-axis and pitch is about the x-axis.
     static inline float rollRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.y * RADIANS_TO_DEGREES; }
     static inline float pitchRateNED_DPS(const xyz_t& gyroENU_RPS) { return gyroENU_RPS.x * RADIANS_TO_DEGREES; }
     static inline float yawRateNED_DPS(const xyz_t& gyroENU_RPS) { return -gyroENU_RPS.z * RADIANS_TO_DEGREES; }
 
-    static inline float rollSinAngleNED(const Quaternion& orientation) { return orientation.sinPitchClipped(); } // sin(x-180) = -sin(x)
-    static inline float rollCosAngleNED(const Quaternion& orientation) { return orientation.cosPitch(); }
-    static inline float rollAngleDegreesNED(const Quaternion& orientation) { return orientation.calculatePitchDegrees(); }
+    static inline float rollSinAngleNED(const Quaternion& orientation) { return orientation.sin_pitch_clipped(); } // sin(x-180) = -sin(x)
+    static inline float rollCosAngleNED(const Quaternion& orientation) { return orientation.cos_pitch(); }
+    static inline float rollAngleDegreesNED(const Quaternion& orientation) { return orientation.calculate_pitch_degrees(); }
 
-    static inline float pitchSinAngleNED(const Quaternion& orientation) { return orientation.sinRollClipped(); } // NOTE: this is cheaper to calculate than sinRoll
-    static inline float pitchCosAngleNED(const Quaternion& orientation)  { return orientation.cosRoll(); }
-    static inline float pitchAngleDegreesNED(const Quaternion& orientation) { return orientation.calculateRollDegrees(); };
+    static inline float pitchSinAngleNED(const Quaternion& orientation) { return orientation.sin_roll_clipped(); } // NOTE: this is cheaper to calculate than sinRoll
+    static inline float pitchCosAngleNED(const Quaternion& orientation)  { return orientation.cos_roll(); }
+    static inline float pitchAngleDegreesNED(const Quaternion& orientation) { return orientation.calculate_roll_degrees(); };
 
-    static inline float yawAngleDegreesNED(const Quaternion& orientation) { return -orientation.calculateYawDegrees(); };
+    static inline float yawAngleDegreesNED(const Quaternion& orientation) { return -orientation.calculate_yaw_degrees(); };
 
-    flight_controller_quadcopter_telemetry_t getTelemetryData() const;
-    const MotorMixerBase& getMotorMixer() const { return _motorMixer; }
-    MotorMixerBase& getMotorMixerMutable() { return _motorMixer; }
+    flight_controller_quadcopter_telemetry_t getTelemetryData(const MotorMixerBase& motorMixer) const;
 
-    const Debug& getDebug() const { return _debug; }
-    Debug& getDebugMutable() { return _debug; }
     inline uint32_t getTimeChecksMicroseconds(size_t index) const { return _sh.timeChecksMicroseconds[index]; } //!< Instrumentation time checks
 
     void setMaxAngleRates(float maxRollRateDPS, float maxPitchRateDPS, float maxYawRateDPS);
     float getMaxRollAngleDegrees() const { return _maxRollAngleDegrees; }
     float getMaxPitchAngleDegrees() const { return _maxPitchAngleDegrees; }
 
-    void setFiltersConfig(const filters_config_t& filtersConfig);
-    const filters_config_t& getFiltersConfig() const { return _filtersConfig; }
+    void setFiltersConfig(const flight_controller_filters_config_t& filtersConfig);
+    const flight_controller_filters_config_t& getFiltersConfig() const { return _filtersConfig; }
 
     void setFlightModeConfig(const flight_mode_config_t& flightModeConfig);
     const flight_mode_config_t& getFlightModeConfig() const { return _flightModeConfig; }
@@ -329,28 +334,23 @@ public:
     [[noreturn]] static void Task(void* arg);
 public:
     void detectCrashOrSpin();
-    void applyCrashFlipToMotors(const xyz_t& gyroRPS, float deltaT);
+    void applyCrashFlipToMotors(const xyz_t& gyro_rps, float deltaT, MotorMixerMessageQueue& motor_mixer_message_queue);
     void setYawSpinThresholdDPS(float yawSpinThresholdDPS);
-    void recoverFromYawSpin(const xyz_t& gyroRPS, float deltaT);
+    void recoverFromYawSpin(const xyz_t& gyro_rps, float deltaT, MotorMixerMessageQueue& motor_mixer_message_queue);
 
-    void calculateDMaxMultipliers();
-    void initializeSetpointFilters(float setpointDeltaT);
-    void applyDynamicPID_AdjustmentsOnThrottleChange(float throttle, uint32_t tickCount);
+    void calculateDMaxMultipliers(Debug& debug);
+    void initializeSetpointFilters(float setpoint_deltaT);
+    void applyDynamicPID_AdjustmentsOnThrottleChange(float throttle, uint32_t tick_count, Debug& debug);
     void clearDynamicPID_Adjustments();
-    void updateSetpoints(const controls_t& controls, failsafe_e failsafe);
+    void updateSetpoints(const controls_t& controls, failsafe_e failsafe, Debug& debug);
     void updateRateSetpointsForAngleMode(const Quaternion& orientationENU, float deltaT);
 
-    float calculateITermError(size_t axis, float measurement);
-    virtual void updateOutputsUsingPIDs(const ahrs_data_t& ahrsDataNED) override;
-    virtual void outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem) override;
+    float calculateITermError(size_t axis, float measurement, Debug& debug);
+    virtual void update_outputs_using_pids(const ahrs_data_t& ahrsData, AhrsMessageQueue& ahrsMessageQueue, MotorMixerMessageQueue& motor_mixer_message_queue, Debug& debug) override;
 
 private:
     static constexpr float DEGREES_TO_RADIANS = 3.14159265358979323846F / 180.0F;
-    MotorMixerBase& _motorMixer;
-    AHRS_MessageQueue& _ahrsMessageQueue;
-    Debug& _debug;
     DynamicNotchFilter* _dynamicNotchFilter {nullptr};
-    const uint32_t _outputToMotorsDenominator;
     const uint32_t _sendBlackboxMessageDenominator {8};
 
     //!!TODO: some constants below need to be made configurable
@@ -369,7 +369,7 @@ private:
     // configuration and runtime data is const once it has been set in set*Config()
     //
     pid_tuning_mode_e _pidTuningMode {PID_TUNING_STANDARD};
-    filters_config_t _filtersConfig {};
+    flight_controller_filters_config_t _filtersConfig {};
     flight_mode_config_t _flightModeConfig {};
     tpa_config_t _tpaConfig {};
     tpa_runtime_t _tpa { 0.0F, 1.0F, 0.0F, 1.0F };
@@ -400,11 +400,8 @@ private:
     // data that can be set by more than one task is in the shared_t struct
     //
     struct fc_t {
-        uint32_t outputToMixerCount {0};
-        std::array<PIDF::PIDF_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning
+        std::array<pid_constants_t, PID_COUNT> pidConstants {}; //!< the PID constants as set by tuning
         simplified_pid_settings_t simplifiedPID_Settings {};
-        std::array<float, RPY_AXIS_COUNT> outputs;
-        std::array<PowerTransferFilter1, RPY_AXIS_COUNT> outputFilters;
     };
     struct rx_t {
         control_mode_e controlMode {CONTROL_MODE_RATE};
@@ -413,10 +410,10 @@ private:
         uint32_t setpointTickCountSum {0};
         enum { SETPOINT_TICKCOUNT_COUNTER_START = 100};
         uint32_t setpointTickCountCounter {SETPOINT_TICKCOUNT_COUNTER_START};
-        float setpointDeltaT {};
+        float setpoint_deltaT {};
         float throttlePrevious {0.0F};
         float yawRateSetpointDPS {0.0F};
-        uint32_t useAngleMode {false}; // cache, to avoid complex condition test in updateOutputsUsingPIDs
+        uint32_t useAngleMode {false}; // cache, to avoid complex condition test in update_outputs_using_pids
         uint32_t useLevelRaceMode {false};
         float TPA {1.0F}; //!< Throttle PID Attenuation, reduces DTerm for large throttle values
 #if defined(USE_ITERM_RELAX)
@@ -446,11 +443,11 @@ private:
         float yawSpinThresholdDPS {0.0F};
 #endif
         float outputThrottle {0.0F}; // throttle value is scaled to the range [-1,0, 1.0]
-        std::array<PIDF, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID constants
+        std::array<PidController, PID_COUNT> PIDS {}; //!< PIDF controllers, with dynamically altered PID constants
         PowerTransferFilter2 antiGravityThrottleFilter {};
         std::array<PowerTransferFilter1, PID_COUNT> dTermFilters1 {};
         std::array<PowerTransferFilter1, PID_COUNT> dTermFilters2 {};
-        std::array<PowerTransferFilter3, RP_AXIS_COUNT> setpointDerivativeFilters {};
+        std::array<PowerTransferFilter3, RP_AXIS_COUNT> setpoint_derivativeFilters {};
 #if defined(USE_D_MAX)
         std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxRangeFilters {};
         std::array<PowerTransferFilter2, RP_AXIS_COUNT> dMaxLowpassFilters {};
@@ -458,6 +455,7 @@ private:
 #if defined(USE_ITERM_RELAX)
         std::array<PowerTransferFilter1, RP_AXIS_COUNT> iTermRelaxFilters {};
 #endif
+        std::array<PowerTransferFilter1, RPY_AXIS_COUNT> outputFilters;
         // instrumentation data
         std::array<uint32_t, TIME_CHECKS_COUNT + 1> timeChecksMicroseconds {};
     }; // shared_t
@@ -474,7 +472,7 @@ private:
     // Betaflight compatible mixer output scale factor: scales roll, pitch, and yaw from DPS range to [-1.0F, 1.0F]
     static constexpr float MIXER_OUTPUT_SCALE_FACTOR = 0.001F;
     // Betaflight-compatible PID scale factors.
-    static constexpr PIDF::PIDF_t _scaleFactors = {
+    static constexpr pid_constants_t _scaleFactors = {
         0.032029F,
         0.244381F,
         0.000529F,

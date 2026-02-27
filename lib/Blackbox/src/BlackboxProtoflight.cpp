@@ -1,10 +1,10 @@
+#include "BlackboxCallbacks.h"
 #include "BlackboxProtoflight.h"
 #include "Cockpit.h"
 #include "FlightController.h"
 #include "IMU_Filters.h"
 
-#include <BlackboxCallbacksBase.h>
-#include <MotorMixerBase.h>
+#include <motor_mixer_base.h>
 
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage)
@@ -23,7 +23,7 @@
 Transmit a portion of the system information headers. Call the first time with xmitState.headerIndex == 0.
 Returns true iff transmission is complete, otherwise call again later to continue transmission.
 */
-Blackbox::write_e BlackboxProtoflight::writeSystemInformation()
+Blackbox::write_e BlackboxProtoflight::write_system_information(const blackbox_parameter_group_t& pg)
 {
     static constexpr float RADIANS_TO_DEGREES {180.0F / 3.14159265358979323846F};
     static constexpr float gyroScale {RADIANS_TO_DEGREES * 10.0F};
@@ -39,12 +39,10 @@ Blackbox::write_e BlackboxProtoflight::writeSystemInformation()
 // See https://github.com/betaflight/blackbox-log-viewer/blob/master/src/flightlog_parser.js for parsing of fields
     //enum { PID_ROLL, PID_PITCH, PID_YAW, PID_LEVEL, PID_MAG, PID_ITEM_COUNT };
 
-    const rates_t rates = _cockpit.getRates();
+    const rates_t rates = pg.cockpit.getRates();
 
-    const MotorMixerBase& motorMixer = _flightController.getMotorMixer();
 #if defined(USE_DYNAMIC_IDLE)
-    const DynamicIdleController* dynamicIdleController = motorMixer.get_dynamic_idle_controller();
-    const DynamicIdleController::config_t* dynamicIdleControllerConfig = dynamicIdleController ? &dynamicIdleController->get_config() : nullptr;
+    const dynamic_idle_controller_config_t* dynamicIdleControllerConfig = pg.motorMixer.get_dynamic_idle_config();
 #endif
 
     struct firmware_t {
@@ -81,14 +79,14 @@ Blackbox::write_e BlackboxProtoflight::writeSystemInformation()
 // "P denom" ignored by blackbox-log-view
 //        BLACKBOX_PRINT_HEADER_LINE("P denom", "%d",                         static_cast<uint16_t>(blackboxIInterval / blackboxPInterval));
 
-        BLACKBOX_PRINT_HEADER_LINE("maxthrottle", "%d",                     motorMixer.get_motor_config().max_throttle);
+        BLACKBOX_PRINT_HEADER_LINE("maxthrottle", "%d",                     pg.motorMixer.get_motor_config().max_throttle);
 // Baseflight uses a gyroScale that gives radians per microsecond as output, whereas Cleanflight produces degrees
 // per second and leaves the conversion to radians per microsecond to the IMU. Let's just convert Cleanflight's scale to
 // match Baseflight so we can use Baseflight's IMU for both:
 // sysConfig.gyroScale * (Math.PI / 180.0) * 0.000001
         BLACKBOX_PRINT_HEADER_LINE("gyro_scale","0x%x",                     BlackboxEncoder::castFloatBytesToInt(0.000001F / gyroScale));
         BLACKBOX_PRINT_HEADER_LINE("motorOutput", "%d,%d",                  158,2047);
-        BLACKBOX_PRINT_HEADER_LINE("motor_kv", "%d",                        motorMixer.get_motor_config().kv);
+        BLACKBOX_PRINT_HEADER_LINE("motor_kv", "%d",                        pg.motorMixer.get_motor_config().kv);
         BLACKBOX_PRINT_HEADER_LINE("acc_1G", "%u",                          4096);
 
 /*
@@ -108,7 +106,7 @@ H thr_expo:0
         BLACKBOX_PRINT_HEADER_LINE("vbatref", "%u",                         112);
 
         BLACKBOX_PRINT_HEADER_LINE("currentSensor", "%d,%d",                0, 235); // current meter offset, current meter scale
-        BLACKBOX_PRINT_HEADER_LINE("looptime", "%d",                        _flightController.getTaskIntervalMicroseconds());
+        BLACKBOX_PRINT_HEADER_LINE("looptime", "%d",                        pg.flightController.get_task_interval_microseconds());
         BLACKBOX_PRINT_HEADER_LINE("gyro_sync_denom", "%d",                 1); // not sure if this is used
         BLACKBOX_PRINT_HEADER_LINE("pid_process_denom", "%d",               1); // nots sure if this is used
 
@@ -145,21 +143,21 @@ H levelPID:50,50,75
         BLACKBOX_PRINT_HEADER_LINE("rate_limits", "%d,%d,%d",               rates.rateLimits[rates_t::ROLL],
                                                                             rates.rateLimits[rates_t::PITCH],
                                                                             rates.rateLimits[rates_t::YAW]);
-        BLACKBOX_PRINT_HEADER_LINE("rollPID", "%d,%d,%d",                   _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kp,
-                                                                            _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).ki,
-                                                                            _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kd);
-        BLACKBOX_PRINT_HEADER_LINE("pitchPID", "%d,%d,%d",                  _flightController.getPID_MSP(FlightController::PITCH_RATE_DPS).kp,
-                                                                            _flightController.getPID_MSP(FlightController::PITCH_RATE_DPS).ki,
-                                                                            _flightController.getPID_MSP(FlightController::PITCH_RATE_DPS).kd);
-        BLACKBOX_PRINT_HEADER_LINE("yawPID", "%d,%d,%d",                    _flightController.getPID_MSP(FlightController::YAW_RATE_DPS).kp,
-                                                                            _flightController.getPID_MSP(FlightController::YAW_RATE_DPS).ki,
-                                                                            _flightController.getPID_MSP(FlightController::YAW_RATE_DPS).kd);
-        BLACKBOX_PRINT_HEADER_LINE("rollAnglePID", "%d,%d,%d",              _flightController.getPID_MSP(FlightController::ROLL_ANGLE_DEGREES).kp,
-                                                                            _flightController.getPID_MSP(FlightController::ROLL_ANGLE_DEGREES).ki,
-                                                                            _flightController.getPID_MSP(FlightController::ROLL_ANGLE_DEGREES).kd);
-        BLACKBOX_PRINT_HEADER_LINE("pitchAnglePID", "%d,%d,%d",             _flightController.getPID_MSP(FlightController::PITCH_ANGLE_DEGREES).kp,
-                                                                            _flightController.getPID_MSP(FlightController::PITCH_ANGLE_DEGREES).ki,
-                                                                            _flightController.getPID_MSP(FlightController::PITCH_ANGLE_DEGREES).kd);
+        BLACKBOX_PRINT_HEADER_LINE("rollPID", "%d,%d,%d",                   pg.flightController.get_pid_msp(FlightController::ROLL_RATE_DPS).kp,
+                                                                            pg.flightController.get_pid_msp(FlightController::ROLL_RATE_DPS).ki,
+                                                                            pg.flightController.get_pid_msp(FlightController::ROLL_RATE_DPS).kd);
+        BLACKBOX_PRINT_HEADER_LINE("pitchPID", "%d,%d,%d",                  pg.flightController.get_pid_msp(FlightController::PITCH_RATE_DPS).kp,
+                                                                            pg.flightController.get_pid_msp(FlightController::PITCH_RATE_DPS).ki,
+                                                                            pg.flightController.get_pid_msp(FlightController::PITCH_RATE_DPS).kd);
+        BLACKBOX_PRINT_HEADER_LINE("yawPID", "%d,%d,%d",                    pg.flightController.get_pid_msp(FlightController::YAW_RATE_DPS).kp,
+                                                                            pg.flightController.get_pid_msp(FlightController::YAW_RATE_DPS).ki,
+                                                                            pg.flightController.get_pid_msp(FlightController::YAW_RATE_DPS).kd);
+        BLACKBOX_PRINT_HEADER_LINE("rollAnglePID", "%d,%d,%d",              pg.flightController.get_pid_msp(FlightController::ROLL_ANGLE_DEGREES).kp,
+                                                                            pg.flightController.get_pid_msp(FlightController::ROLL_ANGLE_DEGREES).ki,
+                                                                            pg.flightController.get_pid_msp(FlightController::ROLL_ANGLE_DEGREES).kd);
+        BLACKBOX_PRINT_HEADER_LINE("pitchAnglePID", "%d,%d,%d",             pg.flightController.get_pid_msp(FlightController::PITCH_ANGLE_DEGREES).kp,
+                                                                            pg.flightController.get_pid_msp(FlightController::PITCH_ANGLE_DEGREES).ki,
+                                                                            pg.flightController.get_pid_msp(FlightController::PITCH_ANGLE_DEGREES).kd);
 /*
  H dterm_filter_type:0
  H dterm_lpf_hz:100
@@ -172,31 +170,31 @@ H pidAtMinThrottle:1
 H anti_gravity_threshold:350
 H anti_gravity_gain:1000
 */
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_static_hz", "%d",            _flightController.getFiltersConfig().dterm_lpf1_hz);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_static_hz", "%d",            _flightController.getFiltersConfig().dterm_lpf2_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_static_hz", "%d",            pg.flightController.getFiltersConfig().dterm_lpf1_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_static_hz", "%d",            pg.flightController.getFiltersConfig().dterm_lpf2_hz);
 #if defined(USE_DTERM_FILTERS_EXTENDED)
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_type", "%d",                 _flightController.getFiltersConfig().dterm_lpf1_type);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_type", "%d",                 _flightController.getFiltersConfig().dterm_lpf2_type);
-        //BLACKBOX_PRINT_HEADER_LINE("yaw_lowpass_hz", "%d",                  currentPidProfile.yaw_lowpass_hz);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_hz", "%d",                  _flightController.getFiltersConfig().dterm_notch_hz);
-        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_cutoff", "%d",              _flightController.getFiltersConfig().dterm_notch_cutoff);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf1_type", "%d",                 pg.flightController.getFiltersConfig().dterm_lpf1_type);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_lpf2_type", "%d",                 pg.flightController.getFiltersConfig().dterm_lpf2_type);
+        //BLACKBOX_PRINT_HEADER_LINE("yaw_lowpass_hz", "%d",                  current_pidProfile.yaw_lowpass_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_hz", "%d",                  pg.flightController.getFiltersConfig().dterm_notch_hz);
+        BLACKBOX_PRINT_HEADER_LINE("dterm_notch_cutoff", "%d",              pg.flightController.getFiltersConfig().dterm_notch_cutoff);
 #endif
-        //BLACKBOX_PRINT_HEADER_LINE("iterm_windup", "%d",                    currentPidProfile.itermWindup);
-        //BLACKBOX_PRINT_HEADER_LINE("pid_at_min_throttle", "%d",             currentPidProfile.pidAtMinThrottle);
+        //BLACKBOX_PRINT_HEADER_LINE("iterm_windup", "%d",                    current_pidProfile.itermWindup);
+        //BLACKBOX_PRINT_HEADER_LINE("pid_at_min_throttle", "%d",             current_pidProfile.pidAtMinThrottle);
 
         // Betaflight PID controller parameters
-        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",               _flightController.getAntiGravityConfig().i_gain);
-        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",          _flightController.getAntiGravityConfig().cutoff_hz);
-        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",             _flightController.getAntiGravityConfig().p_gain);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_gain", "%d",               pg.flightController.getAntiGravityConfig().i_gain);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_cutoff_hz", "%d",          pg.flightController.getAntiGravityConfig().cutoff_hz);
+        BLACKBOX_PRINT_HEADER_LINE("anti_gravity_p_gain", "%d",             pg.flightController.getAntiGravityConfig().p_gain);
 #if defined(USE_INTEGRATED_YAW_CONTROL)
-        BLACKBOX_PRINT_HEADER_LINE("use_integrated_yaw", "%d",              currentPidProfile.use_integrated_yaw);
+        BLACKBOX_PRINT_HEADER_LINE("use_integrated_yaw", "%d",              current_pidProfile.use_integrated_yaw);
 #endif
-        BLACKBOX_PRINT_HEADER_LINE("s_roll", "%d",                          _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).ks)
-        BLACKBOX_PRINT_HEADER_LINE("s_pitch", "%d",                         _flightController.getPID_MSP(FlightController::PITCH_RATE_DPS).ks)
-        BLACKBOX_PRINT_HEADER_LINE("s_yaw", "%d",                           _flightController.getPID_MSP(FlightController::YAW_RATE_DPS).ks)
-        BLACKBOX_PRINT_HEADER_LINE("ff_weight", "%d,%d,%d",                 _flightController.getPID_MSP(FlightController::ROLL_RATE_DPS).kk,
-                                                                            _flightController.getPID_MSP(FlightController::PITCH_RATE_DPS).kk,
-                                                                            _flightController.getPID_MSP(FlightController::YAW_RATE_DPS).kk);
+        BLACKBOX_PRINT_HEADER_LINE("s_roll", "%d",                          pg.flightController.get_pid_msp(FlightController::ROLL_RATE_DPS).ks)
+        BLACKBOX_PRINT_HEADER_LINE("s_pitch", "%d",                         pg.flightController.get_pid_msp(FlightController::PITCH_RATE_DPS).ks)
+        BLACKBOX_PRINT_HEADER_LINE("s_yaw", "%d",                           pg.flightController.get_pid_msp(FlightController::YAW_RATE_DPS).ks)
+        BLACKBOX_PRINT_HEADER_LINE("ff_weight", "%d,%d,%d",                 pg.flightController.get_pid_msp(FlightController::ROLL_RATE_DPS).kk,
+                                                                            pg.flightController.get_pid_msp(FlightController::PITCH_RATE_DPS).kk,
+                                                                            pg.flightController.get_pid_msp(FlightController::YAW_RATE_DPS).kk);
 
 
         // End of Betaflight controller parameters
@@ -215,10 +213,10 @@ H gyro_lowpass_hz:90
 H gyro_notch_hz:0,0
 H gyro_notch_cutoff:300,100
 */
-        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_type", "%d",                  _imuFilters.getConfig().gyro_lpf1_type);
-        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_static_hz", "%d",             _imuFilters.getConfig().gyro_lpf1_hz);
-        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_type", "%d",                  _imuFilters.getConfig().gyro_lpf2_type);
-        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_static_hz", "%d",             _imuFilters.getConfig().gyro_lpf2_hz);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_type", "%d",                  pg.imuFilters.getConfig().gyro_lpf1_type);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf1_static_hz", "%d",             pg.imuFilters.getConfig().gyro_lpf1_hz);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_type", "%d",                  pg.imuFilters.getConfig().gyro_lpf2_type);
+        BLACKBOX_PRINT_HEADER_LINE("gyro_lpf2_static_hz", "%d",             pg.imuFilters.getConfig().gyro_lpf2_hz);
         BLACKBOX_PRINT_HEADER_LINE("gyro_notch_hz", "%d,%d",                0,0);
         BLACKBOX_PRINT_HEADER_LINE("gyro_notch_cutoff", "%d,%d",            300,100);
 /*
@@ -238,14 +236,14 @@ H dshot_idle_value:550
 H debug_mode:0
 H features:541130760
 */
-        BLACKBOX_PRINT_HEADER_LINE("acc_lpf_hz", "%d",                      _imuFilters.getConfig().acc_lpf_hz);
+        BLACKBOX_PRINT_HEADER_LINE("acc_lpf_hz", "%d",                      pg.imuFilters.getConfig().acc_lpf_hz);
         BLACKBOX_PRINT_HEADER_LINE("acc_hardware", "%d",                    1);
         BLACKBOX_PRINT_HEADER_LINE("gyro_cal_on_first_arm", "%d",           0);
         BLACKBOX_PRINT_HEADER_LINE("serialrx_provider", "%d",               SERIALRX_TARGET_CUSTOM); // custom
         BLACKBOX_PRINT_HEADER_LINE("use_unsynced_pwm", "%d",                0);
         BLACKBOX_PRINT_HEADER_LINE("motor_pwm_protocol", "%d",              PWM_TYPE_BRUSHED);
         BLACKBOX_PRINT_HEADER_LINE("motor_pwm_rate", "%d",                  480);
-        BLACKBOX_PRINT_HEADER_LINE("motor_idle", "%d",                      motorMixer.get_motor_config().motor_idle);
+        BLACKBOX_PRINT_HEADER_LINE("motor_idle", "%d",                      pg.motorMixer.get_motor_config().motor_idle);
         BLACKBOX_PRINT_HEADER_LINE("debug_mode", "%d",                      getDebugMode());
         BLACKBOX_PRINT_HEADER_LINE("features", "%d",                        541130760); //0x2041'0008
 

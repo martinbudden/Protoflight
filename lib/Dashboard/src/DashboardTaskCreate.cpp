@@ -21,20 +21,20 @@
 #endif
 
 
-DashboardTask* DashboardTask::createTask(Dashboard& dashboard, uint8_t priority, uint32_t core, uint32_t taskIntervalMicroseconds)
+DashboardTask* DashboardTask::create_task(Dashboard& dashboard, dashboard_parameter_group_t& parameter_group, uint8_t priority, uint32_t core, uint32_t task_interval_microseconds)
 {
-    task_info_t taskInfo {};
-    return createTask(taskInfo, dashboard, priority, core, taskIntervalMicroseconds);
+    task_info_t task_info {};
+    return create_task(task_info, dashboard, parameter_group, priority, core, task_interval_microseconds);
 }
 
-DashboardTask* DashboardTask::createTask(task_info_t& taskInfo, Dashboard& dashboard, uint8_t priority, uint32_t core, uint32_t taskIntervalMicroseconds)
+DashboardTask* DashboardTask::create_task(task_info_t& task_info, Dashboard& dashboard, dashboard_parameter_group_t& parameter_group, uint8_t priority, uint32_t core, uint32_t task_interval_microseconds)
 {
     // Note that task parameters must not be on the stack, since they are used when the task is started, which is after this function returns.
-    static DashboardTask dashboardTask(taskIntervalMicroseconds, dashboard);
+    static DashboardTask dashboard_task(task_interval_microseconds, dashboard, parameter_group);
 
     // Note that task parameters must not be on the stack, since they are used when the task is started, which is after this function returns.
-    static TaskBase::parameters_t taskParameters { // NOLINT(misc-const-correctness) false positive
-        .task = &dashboardTask
+    static TaskBase::parameters_t task_parameters { // NOLINT(misc-const-correctness) false positive
+        .task = &dashboard_task
     };
 #if !defined(DashboardTASK_STACK_DEPTH_BYTES)
     enum { DashboardTASK_STACK_DEPTH_BYTES = 4096 };
@@ -44,66 +44,66 @@ DashboardTask* DashboardTask::createTask(task_info_t& taskInfo, Dashboard& dashb
 #else
     static std::array <StackType_t, DashboardTASK_STACK_DEPTH_BYTES / sizeof(StackType_t)> stack;
 #endif
-    taskInfo = {
-        .taskHandle = nullptr,
+    task_info = {
+        .task_handle = nullptr,
         .name = "DashboardTask",
-        .stackDepthBytes = DashboardTASK_STACK_DEPTH_BYTES,
-        .stackBuffer = reinterpret_cast<uint8_t*>(&stack[0]), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        .stack_depth_bytes = DashboardTASK_STACK_DEPTH_BYTES,
+        .stack_buffer = reinterpret_cast<uint8_t*>(&stack[0]), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         .priority = priority,
         .core = core,
-        .taskIntervalMicroseconds = taskIntervalMicroseconds,
+        .task_interval_microseconds = task_interval_microseconds,
     };
 
 #if defined(FRAMEWORK_USE_FREERTOS)
-    assert(std::strlen(taskInfo.name) < configMAX_TASK_NAME_LEN);
-    assert(taskInfo.priority < configMAX_PRIORITIES);
+    assert(std::strlen(task_info.name) < configMAX_TASK_NAME_LEN);
+    assert(task_info.priority < configMAX_PRIORITIES);
 
 #if !defined(configCHECK_FOR_STACK_OVERFLOW)
     // fill the stack so we can do our own stack overflow detection
     enum { STACK_FILLER = 0xA5 };
     stack.fill(STACK_FILLER);
 #endif
-    static StaticTask_t taskBuffer;
+    static StaticTask_t task_buffer;
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
-    taskInfo.taskHandle = xTaskCreateStaticPinnedToCore(
-        DashboardTask::Task,
-        taskInfo.name,
-        taskInfo.stackDepthBytes / sizeof(StackType_t),
-        &taskParameters,
-        taskInfo.priority,
+    task_info.task_handle = xTaskCreateStaticPinnedToCore(
+        DashboardTask::task_static,
+        task_info.name,
+        task_info.stack_depth_bytes / sizeof(StackType_t),
+        &task_parameters,
+        task_info.priority,
         &stack[0],
-        &taskBuffer,
-        taskInfo.core
+        &task_buffer,
+        task_info.core
     );
-    assert(taskInfo.taskHandle != nullptr && "Unable to create Dashboard task");
+    assert(task_info.task_handle != nullptr && "Unable to create Dashboard task");
 #elif defined(FRAMEWORK_RPI_PICO) || defined(FRAMEWORK_ARDUINO_RPI_PICO)
-    taskInfo.taskHandle = xTaskCreateStaticAffinitySet(
-        DashboardTask::Task,
-        taskInfo.name,
-        taskInfo.stackDepthBytes / sizeof(StackType_t),
-        &taskParameters,
-        taskInfo.priority,
+    task_info.task_handle = xTaskCreateStaticAffinitySet(
+        DashboardTask::task_static,
+        task_info.name,
+        task_info.stack_depth_bytes / sizeof(StackType_t),
+        &task_parameters,
+        task_info.priority,
         &stack[0],
-        &taskBuffer,
-        taskInfo.core
+        &task_buffer,
+        task_info.core
     );
-    assert(taskInfo.taskHandle != nullptr && "Unable to create Dashboard task");
+    assert(task_info.task_handle != nullptr && "Unable to create Dashboard task");
 #else
-    taskInfo.taskHandle = xTaskCreateStatic(
-        DashboardTask::Task,
-        taskInfo.name,
-        taskInfo.stackDepthBytes / sizeof(StackType_t),
-        &taskParameters,
-        taskInfo.priority,
+    task_info.task_handle = xTaskCreateStatic(
+        DashboardTask::task_static,
+        task_info.name,
+        task_info.stack_depth_bytes / sizeof(StackType_t),
+        &task_parameters,
+        task_info.priority,
         &stack[0],
-        &taskBuffer
+        &task_buffer
     );
-    assert(taskInfo.taskHandle != nullptr && "Unable to create Dashboard task");
-    // vTaskCoreAffinitySet(taskInfo.taskHandle, taskInfo.core);
+    assert(task_info.task_handle != nullptr && "Unable to create Dashboard task");
+    // vTaskCoreAffinitySet(task_info.task_handle, task_info.core);
 #endif
 #else
-    (void)taskParameters;
+    (void)task_parameters;
 #endif // FRAMEWORK_USE_FREERTOS
 
-    return &dashboardTask;
+    return &dashboard_task;
 }

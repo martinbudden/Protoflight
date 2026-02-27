@@ -51,15 +51,16 @@ CMSX::menu_t CMSX::menuFeatures {
     .entries = &menuFeaturesEntries[0],
 };
 
-static const void* saveExitMenu(CMSX& cmsx, DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+static const void* saveExitMenu(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::menu_t* menu)
 {
-    CMSX::menuChange(cmsx, displayPort, cmsx.getSaveExitMenu());
+    CMSX::menuChange(cmsx, pg, cmsx.getSaveExitMenu());
     return nullptr;
 }
 
-static const void* menuSetupPopupOnDisplayUpdate(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* selected)
+static const void* menuSetupPopupOnDisplayUpdate(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::OSD_Entry* selected)
 {
     (void)cmsx;
+    (void)pg;
 
     return nullptr;
 }
@@ -73,11 +74,11 @@ CMSX::menu_t CMSX::menuSetupPopup = {
     .entries = &menuSetupPopupEntries[0],
 };
 
-static const void* mainMenuOnEnter(CMSX& cmsx, DisplayPortBase& displayPort)
+static const void* mainMenuOnEnter(CMSX& cmsx, cms_parameter_group_t& pg)
 {
-    if (cmsx.setupPopupMenuBuild()) {
+    if (cmsx.setupPopupMenuBuild(pg)) {
         // If setup issues were found then switch to the dynamically constructed menu
-        CMSX::menuChange(cmsx, displayPort, &CMSX::menuSetupPopup);
+        CMSX::menuChange(cmsx, pg, &CMSX::menuSetupPopup);
     }
     return nullptr;
 }

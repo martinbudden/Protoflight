@@ -3,12 +3,14 @@
 #include "FlightController.h"
 #include "ScreenM5.h"
 
-#include <AHRS.h>
-#include <AHRS_MessageQueue.h>
 #include <DisplayPortBase.h>
 #include <M5Unified.h>
-#include <ReceiverAtomJoyStick.h>
-#include <SV_TelemetryData.h>
+#include <sv_telemetry_data.h>
+
+#include <ahrs.h>
+#include <ahrs_message_queue.h>
+#include <motor_mixer_base.h>
+#include <receiver_atom_joystick.h>
 
 
 enum {
@@ -31,8 +33,7 @@ enum {
 
 static constexpr float RADIANS_TO_DEGREES {180.0 / M_PI};
 
-ScreenM5::ScreenM5(const DisplayPortBase& displayPort) :
-    ScreenBase(displayPort),
+ScreenM5::ScreenM5() :
     _screenSize(screenSize()),
     _screenRotationOffset(
         (_screenSize == SIZE_80x160 || _screenSize == SIZE_135x240) ? 1 :
@@ -204,7 +205,7 @@ void ScreenM5::update128x128(const TD_AHRS::data_t& ahrsData, bool motorsIsOn) c
 
     yPos += 25;
     M5.Lcd.setCursor(0, yPos);
-    M5.Lcd.printf("x:%4.0f y:%4.0f z:%4.0f", ahrsData.gyroRPS.x*RADIANS_TO_DEGREES, ahrsData.gyroRPS.y*RADIANS_TO_DEGREES, ahrsData.gyroRPS.z*RADIANS_TO_DEGREES);
+    M5.Lcd.printf("x:%4.0f y:%4.0f z:%4.0f", ahrsData.gyro_rps.x*RADIANS_TO_DEGREES, ahrsData.gyro_rps.y*RADIANS_TO_DEGREES, ahrsData.gyro_rps.z*RADIANS_TO_DEGREES);
 
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);
@@ -271,10 +272,10 @@ void ScreenM5::updateReceivedData320x240(const ReceiverBase& receiver) const
     M5.Lcd.printf(format, controls.pitch);
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);
-    const uint32_t flipButton = receiver.get_switch(ReceiverAtomJoyStick::MOTOR_ON_OFF_SWITCH);
-    const uint32_t mode = receiver.get_switch(ReceiverAtomJoyStick::MODE_SWITCH);
-    const uint32_t altMode = receiver.get_switch(ReceiverAtomJoyStick::ALT_MODE_SWITCH);
-    M5.Lcd.printf("M%1d %s A%1d F%1d ", static_cast<int>(mode), mode == ReceiverAtomJoyStick::MODE_STABLE ? "ST" : "SP", static_cast<int>(altMode), static_cast<int>(flipButton));
+    const uint32_t flipButton = receiver.get_switch(ReceiverAtomJoystick::MOTOR_ON_OFF_SWITCH);
+    const uint32_t mode = receiver.get_switch(ReceiverAtomJoystick::MODE_SWITCH);
+    const uint32_t altMode = receiver.get_switch(ReceiverAtomJoystick::ALT_MODE_SWITCH);
+    M5.Lcd.printf("M%1d %s A%1d F%1d ", static_cast<int>(mode), mode == ReceiverAtomJoystick::MODE_STABLE ? "ST" : "SP", static_cast<int>(altMode), static_cast<int>(flipButton));
 
     M5.Lcd.setCursor(255, yPos);
     M5.Lcd.printf("%4d", static_cast<int>(receiver.get_tick_count_delta()));
@@ -288,7 +289,7 @@ void ScreenM5::update320x240(const TD_AHRS::data_t& ahrsData, bool motorsIsOn) c
 
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);
-    M5.Lcd.printf("gx:%5.0F gy:%5.0f gz:%5.0f", ahrsData.gyroRPS.x*RADIANS_TO_DEGREES, ahrsData.gyroRPS.y*RADIANS_TO_DEGREES, ahrsData.gyroRPS.z*RADIANS_TO_DEGREES);
+    M5.Lcd.printf("gx:%5.0F gy:%5.0f gz:%5.0f", ahrsData.gyro_rps.x*RADIANS_TO_DEGREES, ahrsData.gyro_rps.y*RADIANS_TO_DEGREES, ahrsData.gyro_rps.z*RADIANS_TO_DEGREES);
 
     yPos += 20;
     M5.Lcd.setCursor(0, yPos);
@@ -304,9 +305,6 @@ void ScreenM5::update320x240(const TD_AHRS::data_t& ahrsData, bool motorsIsOn) c
 
 void ScreenM5::updateTemplate(const ReceiverBase& receiver)
 {
-    if (_displayPort.isGrabbed()) {
-        return;
-    }
     M5.Lcd.fillScreen(TFT_BLACK);
 
     switch (_screenSize) {
@@ -353,10 +351,10 @@ void ScreenM5::updateAHRS_Data(const ahrs_data_t& ahrsData, bool motorsIsOn) con
         .roll = FlightController::rollAngleDegreesNED(orientation),
         .pitch = FlightController::pitchAngleDegreesNED(orientation),
         .yaw = FlightController::yawAngleDegreesNED(orientation),
-        .gyroRPS = ahrsData.accGyroRPS.gyroRPS,
-        .acc = ahrsData.accGyroRPS.acc,
-        .gyroOffset = {},
-        .accOffset = {}
+        .gyro_rps = ahrsData.acc_gyro_rps.gyro_rps,
+        .acc = ahrsData.acc_gyro_rps.acc,
+        .gyro_offset = {},
+        .acc_offset = {}
     };
     switch (_screenSize) {
     case SIZE_128x128:
@@ -379,11 +377,8 @@ void ScreenM5::updateAHRS_Data(const ahrs_data_t& ahrsData, bool motorsIsOn) con
 /*!
 Update the screen with data from the AHRS and the receiver.
 */
-void ScreenM5::update(const FlightController& flightController, const ReceiverBase& receiver)
+void ScreenM5::update(const AhrsMessageQueue& ahrsMessageQueue, const MotorMixerBase& motorMixer, const ReceiverBase& receiver)
 {
-    if (_displayPort.isGrabbed()) {
-        return;
-    }
     // update the screen with the AHRS data
     if (_screenMode != ScreenM5::MODE_QRCODE) {
         // update the screen template if it hasn't been updated
@@ -391,8 +386,8 @@ void ScreenM5::update(const FlightController& flightController, const ReceiverBa
             updateTemplate(receiver);
         }
         ahrs_data_t ahrsData;
-        flightController.getAHRS_MessageQueue().PEEK_AHRS_DATA(ahrsData);
-        const bool motorsIsOn = flightController.motorsIsOn();
+        ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
+        const bool motorsIsOn = motorMixer.motors_is_on();
         updateAHRS_Data(ahrsData, motorsIsOn);
         if (is_new_receiver_packet_available()) {
             clearnew_receiver_packet_available();

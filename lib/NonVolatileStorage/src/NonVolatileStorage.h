@@ -1,33 +1,22 @@
 #pragma once
 
 
-#include "Autopilot.h"
-#include "Cockpit.h"
-#include "FlightController.h"
-#include "IMU_Filters.h"
-#if defined(USE_OSD)
-#include "OSD.h"
-#endif
-#if defined(USE_VTX)
-#include "VTX.h"
-#endif
-#if defined(USE_GPS)
-#include "GPS.h"
-#endif
-#include <MotorMixerBase.h>
+#include "RC_Adjustments.h"
+#include "RC_Modes.h"
+//#include <motor_mixer_base.h>
 
 #if defined(USE_FLASH_KLV)
 
-#include <FlashKLV.h>
+#include <FlashKlv.h>
 
 #else
 
 // ESP32 and/or ARDUINO_ARCH_ESP32 are defined by Arduino in platform.txt
-#if defined(FRAMEWORK_ARDUINO_ESP32) || defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
-#if !defined(USE_ARDUINO_ESP32_PREFERENCES)
-#define USE_ARDUINO_ESP32_PREFERENCES
-#endif
-#endif
+//#if defined(FRAMEWORK_ARDUINO_ESP32) || defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+//#if !defined(USE_ARDUINO_ESP32_PREFERENCES)
+//#define USE_ARDUINO_ESP32_PREFERENCES
+//#endif
+//#endif
 
 #if defined(USE_ARDUINO_ESP32_PREFERENCES)
 #include <Preferences.h>
@@ -37,7 +26,44 @@
 
 #include <cstdint>
 #include <string>
+#include <vehicle_controller_base.h>
+#include <xyz_type.h>
 
+
+class Cockpit;
+class IMU_Filters;
+
+struct altitude_hold_config_t;
+struct autopilot_config_t;
+struct dynamic_notch_filter_config_t;
+struct failsafe_config_t;
+struct features_config_t;
+struct gps_config_t;
+struct gps_rescue_config_t;
+struct imu_filters_config_t;
+struct osd_config_t;
+struct osd_elements_config_t;
+struct position_hold_config_t;
+struct rates_t;
+struct rx_config_t;
+
+struct flight_controller_filters_config_t;
+struct flight_mode_config_t;
+struct tpa_config_t;
+struct anti_gravity_config_t;
+struct crash_flip_config_t;
+struct yaw_spin_recovery_config_t;
+struct crash_recovery_config_t;
+struct iterm_relax_config_t;
+struct d_max_config_t;
+struct simplified_pid_settings_t;
+
+struct vtx_config_t;
+
+struct dynamic_idle_controller_config_t;
+struct mixer_config_t;
+struct motor_config_t;
+struct rpm_filters_config_t;
 
 /*!
 */
@@ -61,145 +87,145 @@ public:
     NonVolatileStorage();
     explicit NonVolatileStorage(uint32_t flashMemorySize);
     void init();
-    static void toHexChars(char* charPtr, uint16_t value);
+    static void to_hex_chars(char* charPtr, uint16_t value);
 
     int32_t clear();
     int32_t remove(uint16_t key);
 
-    bool loadItem(uint16_t key, void* item, size_t length) const;
-    bool loadItem(uint16_t key, uint8_t pidProfileIndex, void* item, size_t length) const;
+    bool load_item(uint16_t key, void* item, size_t length) const;
+    bool load_item(uint16_t key, uint8_t pid_profile_index, void* item, size_t length) const;
 
-    int32_t storeItem(uint16_t key, const void* item, size_t length, const void* defaults);
-    int32_t storeItem(uint16_t key, uint8_t pidProfileIndex, const void* item, size_t length, const void* defaults);
+    int32_t store_item(uint16_t key, const void* item, size_t length, const void* defaults);
+    int32_t store_item(uint16_t key, uint8_t pid_profile_index, const void* item, size_t length, const void* defaults);
 
-    int32_t storeAll(const IMU_Filters& imuFilters, const FlightController& flightController, const Cockpit& cockpit, const RcModes& rc_modes);
+    int32_t store_all(const IMU_Filters& imuFilters, const FlightController& flightController, const MotorMixerBase& motorMixer, const Cockpit& cockpit, const RcModes& rc_modes);
 
-    void loadMacAddress(uint8_t* macAddress) const;
-    int32_t storeMacAddress(const uint8_t* macAddress);
+    void load_mac_address(uint8_t* mac_address) const;
+    int32_t store_mac_address(const uint8_t* mac_address);
 
-    uint8_t getCurrentPidProfileIndex() const { return _currentPidProfileIndex; }
-    void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex) { _currentPidProfileIndex = currentPidProfileIndex; }
-    uint8_t getCurrentRateProfileIndex() const { return _currentRateProfileIndex; }
-    void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex) { _currentRateProfileIndex = currentRateProfileIndex; }
+    uint8_t get_current_pid_profile_index() const { return _current_pid_profile_index; }
+    void set_current_pid_profile_index(uint8_t current_pid_profile_index) { _current_pid_profile_index = current_pid_profile_index; }
+    uint8_t get_current_rate_profile_index() const { return _current_rate_profile_index; }
+    void set_current_rate_profile_index(uint8_t current_rate_profile_index) { _current_rate_profile_index = current_rate_profile_index; }
 
-    uint8_t loadPidProfileIndex() const;
-    int32_t storePidProfileIndex(uint8_t pidProfileIndex);
+    uint8_t load_pid_profile_index() const;
+    int32_t store_pid_profile_index(uint8_t pid_profile_index);
 
-    uint8_t loadRateProfileIndex() const;
-    int32_t storeRateProfileIndex(uint8_t rateProfileIndex);
+    uint8_t load_rate_profile_index() const;
+    int32_t store_rate_profile_index(uint8_t rate_profile_index);
 
-    calibration_state_e loadAccCalibrationState() const;
-    int32_t storeAccCalibrationState(calibration_state_e calibrationState);
+    calibration_state_e load_acc_calibration_state() const;
+    int32_t store_acc_calibration_state(calibration_state_e calibration_state);
 
-    xyz_t loadAccOffset() const;
-    int32_t storeAccOffset(const xyz_t& offset);
+    xyz_t load_acc_offset() const;
+    int32_t store_acc_offset(const xyz_t& offset);
 
-    calibration_state_e loadGyroCalibrationState() const;
-    int32_t storeGyroCalibrationState(calibration_state_e calibrationState);
+    calibration_state_e load_gyro_calibration_state() const;
+    int32_t store_gyro_calibration_state(calibration_state_e calibration_state);
 
-    xyz_t loadGyroOffset() const;
-    int32_t storeGyroOffset(const xyz_t& offset);
+    xyz_t load_gyro_offset() const;
+    int32_t store_gyro_offset(const xyz_t& offset);
 
-    DynamicIdleController::config_t loadDynamicIdleControllerConfig(uint8_t pidProfileIndex) const;
-    int32_t storeDynamicIdleControllerConfig(const DynamicIdleController::config_t& config, uint8_t pidProfileIndex);
+    dynamic_idle_controller_config_t load_dynamic_idle_controller_config(uint8_t pid_profile_index) const;
+    int32_t store_dynamic_idle_controller_config(const dynamic_idle_controller_config_t& config, uint8_t pid_profile_index);
 
-    MotorMixerBase::mixer_config_t loadMotorMixerConfig() const;
-    int32_t storeMotorMixerConfig(const MotorMixerBase::mixer_config_t& config);
+    mixer_config_t load_motor_mixer_config() const;
+    int32_t store_motor_mixer_config(const mixer_config_t& config);
 
-    MotorMixerBase::motor_config_t loadMotorConfig() const;
-    int32_t storeMotorConfig(const MotorMixerBase::motor_config_t& config);
+    motor_config_t load_motor_config() const;
+    int32_t store_motor_config(const motor_config_t& config);
 
-    IMU_Filters::config_t loadIMU_FiltersConfig() const;
-    int32_t storeIMU_FiltersConfig(const IMU_Filters::config_t& config);
+    imu_filters_config_t load_imu_filters_config() const;
+    int32_t store_imu_filters_config(const imu_filters_config_t& config);
 
-    Cockpit::failsafe_config_t loadFailsafeConfig() const;
-    int32_t storeFailsafeConfig(const Cockpit::failsafe_config_t& config);
+    failsafe_config_t load_failsafe_config() const;
+    int32_t store_failsafe_config(const failsafe_config_t& config);
 
-    Features::config_t loadFeaturesConfig() const;
-    int32_t storeFeaturesConfig(const Features::config_t& config);
+    features_config_t load_features_config() const;
+    int32_t store_features_config(const features_config_t& config);
 
-    RX::config_t loadRX_Config() const;
-    int32_t storeRX_Config(const RX::config_t& config);
+    rx_config_t load_rx_config() const;
+    int32_t store_rx_config(const rx_config_t& config);
 
     rc_modes_activation_condition_array_t load_rc_mode_activation_conditions() const;
     int32_t store_rc_mode_activation_conditions(const rc_modes_activation_condition_array_t& mode_activation_conditions);
 
 #if defined(USE_RC_ADJUSTMENTS)
-    RC_Adjustments::adjustment_ranges_t loadRC_AdjustmentRanges() const;
-    int32_t storeRC_AdjustmentRanges(const RC_Adjustments::adjustment_ranges_t& adjustmentRanges);
+    rc_adjustment_ranges_t load_rc_adjustment_ranges() const;
+    int32_t store_rc_adjustment_ranges(const rc_adjustment_ranges_t& adjustmentRanges);
 #endif
-    rates_t loadRates(uint8_t rateProfileIndex) const;
-    int32_t storeRates(const rates_t& rates, uint8_t rateProfileIndex);
+    rates_t load_rates(uint8_t rate_profile_index) const;
+    int32_t store_rates(const rates_t& rates, uint8_t rate_profile_index);
 
-    VehicleControllerBase::PIDF_uint16_t loadPID(uint8_t pidIndex, uint8_t pidProfileIndex) const;
-    int32_t storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex, uint8_t pidProfileIndex);
-    int32_t storePID(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pidIndex) { return storePID(pid, pidIndex, _currentPidProfileIndex); }
-    void resetPID(uint8_t pidIndex, uint8_t pidProfileIndex);
-    void resetPID(uint8_t pidIndex) { resetPID(pidIndex, _currentPidProfileIndex); }
+    VehicleControllerBase::PIDF_uint16_t load_pid(uint8_t pid_index, uint8_t pid_profile_index) const;
+    int32_t store_pid(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pid_index, uint8_t pid_profile_index);
+    int32_t store_pid(const VehicleControllerBase::PIDF_uint16_t& pid, uint8_t pid_index) { return store_pid(pid, pid_index, _current_pid_profile_index); }
+    void reset_pid(uint8_t pid_index, uint8_t pid_profile_index);
+    void reset_pid(uint8_t pid_index) { reset_pid(pid_index, _current_pid_profile_index); }
 
-    FlightController::simplified_pid_settings_t loadSimplifiedPID_settings(uint8_t pidProfileIndex) const;
-    int32_t storeSimplifiedPID_settings(const FlightController::simplified_pid_settings_t& settings, uint8_t pidProfileIndex);
+    simplified_pid_settings_t load_simplified_pid_settings(uint8_t pid_profile_index) const;
+    int32_t store_simplified_pid_settings(const simplified_pid_settings_t& settings, uint8_t pid_profile_index);
 
-    FlightController::filters_config_t loadFlightControllerFiltersConfig(uint8_t pidProfileIndex) const;
-    int32_t storeFlightControllerFiltersConfig(const FlightController::filters_config_t& config, uint8_t pidProfileIndex);
+    flight_controller_filters_config_t load_flight_controller_filters_config(uint8_t pid_profile_index) const;
+    int32_t store_flight_controller_filters_config(const flight_controller_filters_config_t& config, uint8_t pid_profile_index);
 
-    FlightController::flight_mode_config_t loadFlightControllerFlightModeConfig(uint8_t pidProfileIndex) const;
-    int32_t storeFlightControllerFlightModeConfig(const FlightController::flight_mode_config_t& config, uint8_t pidProfileIndex);
+    flight_mode_config_t load_flight_controller_flight_mode_config(uint8_t pid_profile_index) const;
+    int32_t store_flight_controller_flight_mode_config(const flight_mode_config_t& config, uint8_t pid_profile_index);
 
-    FlightController::tpa_config_t loadFlightControllerTPA_Config(uint8_t pidProfileIndex) const;
-    int32_t storeFlightControllerTPA_Config(const FlightController::tpa_config_t& config, uint8_t pidProfileIndex);
+    tpa_config_t load_flight_controller_tpa_config(uint8_t pid_profile_index) const;
+    int32_t store_flight_controller_tpa_config(const tpa_config_t& config, uint8_t pid_profile_index);
 
-    FlightController::anti_gravity_config_t loadFlightControllerAntiGravityConfig(uint8_t pidProfileIndex) const;
-    int32_t storeFlightControllerAntiGravityConfig(const FlightController::anti_gravity_config_t& config, uint8_t pidProfileIndex);
+    anti_gravity_config_t load_flight_controller_anti_gravity_config(uint8_t pid_profile_index) const;
+    int32_t store_flight_controller_anti_gravity_config(const anti_gravity_config_t& config, uint8_t pid_profile_index);
 
-    FlightController::crash_flip_config_t loadFlightControllerCrashFlipConfig() const;
-    int32_t storeFlightControllerCrashFlipConfig(const FlightController::crash_flip_config_t& config);
+    crash_flip_config_t load_flight_controller_crash_flip_config() const;
+    int32_t store_flight_controller_crash_flip_config(const crash_flip_config_t& config);
 
 #if defined(USE_D_MAX)
-    FlightController::d_max_config_t loadFlightControllerDMaxConfig(uint8_t pidProfileIndex) const;
-    int32_t storeFlightControllerDMaxConfig(const FlightController::d_max_config_t& config, uint8_t pidProfileIndex);
+    d_max_config_t load_flight_controller_d_max_config(uint8_t pid_profile_index) const;
+    int32_t store_flight_controller_d_max_config(const d_max_config_t& config, uint8_t pid_profile_index);
 #endif
 #if defined(USE_ITERM_RELAX)
-    FlightController::iterm_relax_config_t loadFlightControllerITermRelaxConfig(uint8_t pidProfileIndex) const;
-    int32_t storeFlightControllerITermRelaxConfig(const FlightController::iterm_relax_config_t& config, uint8_t pidProfileIndex);
+    iterm_relax_config_t load_flight_controller_iterm_relax_config(uint8_t pid_profile_index) const;
+    int32_t store_flight_controller_iterm_relax_config(const iterm_relax_config_t& config, uint8_t pid_profile_index);
 #endif
 #if defined(USE_YAW_SPIN_RECOVERY)
-    FlightController::yaw_spin_recovery_config_t loadFlightControllerYawSpinRecoveryConfig(uint8_t pidProfileIndex) const;
-    int32_t storeFlightControllerYawSpinRecoveryConfig(const FlightController::yaw_spin_recovery_config_t& config, uint8_t pidProfileIndex);
+    yaw_spin_recovery_config_t load_flight_controller_yaw_spin_recovery_config(uint8_t pid_profile_index) const;
+    int32_t store_flight_controller_yaw_spin_recovery_config(const yaw_spin_recovery_config_t& config, uint8_t pid_profile_index);
 #endif
 #if defined(USE_CRASH_RECOVERY)
-    FlightController::crash_recovery_config_t loadFlightControllerCrashRecoveryConfig(uint8_t pidProfileIndex) const;
-    int32_t storeFlightControllerCrashRecoveryConfig(const FlightController::crash_recovery_config_t& config, uint8_t pidProfileIndex);
+    crash_recovery_config_t load_flight_controller_crash_recovery_config(uint8_t pid_profile_index) const;
+    int32_t store_flight_controller_crash_recovery_config(const crash_recovery_config_t& config, uint8_t pid_profile_index);
 #endif
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
-    DynamicNotchFilter::config_t loadDynamicNotchFilterConfig() const;
-    int32_t storeDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config);
+    dynamic_notch_filter_config_t load_dynamic_notch_filter_config() const;
+    int32_t store_dynamic_notch_filter_config(const dynamic_notch_filter_config_t& config);
 #endif
 #if defined(USE_RPM_FILTERS)
-    RpmFilters::config_t loadRPM_FiltersConfig() const;
-    int32_t storeRPM_FiltersConfig(const RpmFilters::config_t& config);
+    rpm_filters_config_t load_rpm_filters_config() const;
+    int32_t store_rpm_filters_config(const rpm_filters_config_t& config);
 #endif
 #if defined(USE_VTX)
-    VTX::config_t loadVTX_Config() const;
-    int32_t storeVTX_Config(const VTX::config_t& config);
+    vtx_config_t load_vtx_config() const;
+    int32_t store_vtx_config(const vtx_config_t& config);
 #endif
 #if defined(USE_OSD)
-    OSD::config_t loadOSD_Config() const;
-    int32_t storeOSD_Config(const OSD::config_t& config);
-    bool loadOSD_ElementsConfig(OSD_Elements::config_t & config) const;
-    int32_t storeOSD_ElementsConfig(const OSD_Elements::config_t& config);
+    osd_config_t load_osd_config() const;
+    int32_t store_osd_config(const osd_config_t& config);
+    bool load_osd_elements_config(osd_elements_config_t & config) const;
+    int32_t store_osd_elements_config(const osd_elements_config_t& config);
 #endif
 #if defined(USE_GPS)
-    GPS::config_t loadGPS_Config() const;
-    int32_t storeGPS_Config(const GPS::config_t& config);
+    gps_config_t load_gps_config() const;
+    int32_t store_gps_config(const gps_config_t& config);
 #endif
 #if defined(USE_ALTITUDE_HOLD)
-    Autopilot::autopilot_config_t loadAutopilotConfig() const;
-    int32_t storeAutopilotConfig(const Autopilot::autopilot_config_t& config);
-    Autopilot::position_config_t loadAutopilotPositionConfig() const;
-    int32_t storeAutopilotPositionConfig(const Autopilot::position_config_t& config);
-    Autopilot::altitude_hold_config_t loadAltitudeHoldConfig() const;
-    int32_t storeAltitudeHoldConfig(const Autopilot::altitude_hold_config_t& config);
+    autopilot_config_t load_autopilot_config() const;
+    int32_t store_autopilot_config(const autopilot_config_t& config);
+    position_hold_config_t load_autopilot_position_hold_config() const;
+    int32_t store_autopilot_position_hold_config(const position_hold_config_t& config);
+    altitude_hold_config_t load_altitude_hold_config() const;
+    int32_t store_altitude_hold_config(const altitude_hold_config_t& config);
 #endif
 
 private:
@@ -208,6 +234,6 @@ private:
 #elif defined(USE_ARDUINO_ESP32_PREFERENCES)
     mutable Preferences _preferences {};
 #endif
-    uint8_t _currentPidProfileIndex {0};
-    uint8_t _currentRateProfileIndex {0};
+    uint8_t _current_pid_profile_index {0};
+    uint8_t _current_rate_profile_index {0};
 };

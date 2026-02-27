@@ -1,12 +1,12 @@
 #include "Cockpit.h"
 #include "DisplayPortBase.h"
 #include "FormatInteger.h"
+#include "MspBox.h"
 #include "OSD.h"
+#include "RC_Modes.h"
 
-#include <AHRS_MessageQueue.h>
 //#include <HardwareSerial.h>
-#include <MspBox.h>
-#include <ReceiverBase.h>
+#include <ahrs_message_queue.h>
 #include <cstring>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
@@ -24,22 +24,17 @@
 #endif
 #endif
 
+#include <receiver_base.h>
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,cppcoreguidelines-pro-bounds-constant-array-index,hicpp-signed-bitwise)
 
-OSD::OSD(const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const RcModes& rc_modes, const AHRS_MessageQueue& ahrsMessageQueue, Debug& debug, const VTX* vtx, const GPS* gps) : // cppcheck-suppress constParameterReference
-    _elements(*this, flightController, cockpit, receiver, rc_modes, debug, vtx, gps),
-    _cockpit(cockpit),
-    _receiver(receiver),
-    _rc_modes(rc_modes),
-    _ahrsMessageQueue(ahrsMessageQueue)
+OSD::OSD() : // NOLINT(hicpp-use-equals-default,modernize-use-equals-default)
+    _elements(*this)
 {
 }
 
-void OSD::init(DisplayPortBase* displayPort)
+void OSD::init(const DisplayPortBase* displayPort)
 {
-    _displayPort = displayPort;
-
     const uint8_t rowCount = displayPort->getRowCount();
     const uint8_t columnCount = displayPort->getColumnCount();
     if (columnCount !=0  && rowCount != 0) {
@@ -48,63 +43,63 @@ void OSD::init(DisplayPortBase* displayPort)
     }
 }
 
-void OSD::drawLogoAndCompleteInitialization()
+void OSD::drawLogoAndCompleteInitialization(const osd_parameter_group_t& pg)
 {
-    uint8_t midRow = _displayPort->getRowCount() / 2;
-    uint8_t midCol = _displayPort->getColumnCount() / 2;
+    uint8_t midRow = pg.displayPort.getRowCount() / 2;
+    uint8_t midCol = pg.displayPort.getColumnCount() / 2;
 
     //resetAlarms();
 
-    _backgroundLayerSupported = _displayPort->layerSupported(DisplayPortBase::LAYER_BACKGROUND);
-    _displayPort->layerSelect(DisplayPortBase::LAYER_FOREGROUND);
+    _backgroundLayerSupported = pg.displayPort.layerSupported(DisplayPortBase::LAYER_BACKGROUND);
+    pg.displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
 
-    _displayPort->clearScreen(DISPLAY_CLEAR_WAIT);
+    pg.displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
 
     // Display betaflight logo
-    drawLogo(midCol - (LOGO_COLUMN_COUNT) / 2, midRow - 5);
+    drawLogo(pg.displayPort, midCol - (LOGO_COLUMN_COUNT) / 2, midRow - 5);
 
     std::array<char, 30> string_buffer;
     sprintf(&string_buffer[0], "V%s", "0.0.1");//FC_VERSION_STRING);
-    _displayPort->writeString(midCol + 5, midRow, &string_buffer[0]);
+    pg.displayPort.writeString(midCol + 5, midRow, &string_buffer[0]);
 #if defined(USE_CMS) || true
-    _displayPort->writeString(midCol - 8, midRow + 2, "MENU:THR MID");
-    _displayPort->writeString(midCol - 4, midRow + 3, "+ YAW LEFT");
-    _displayPort->writeString(midCol - 4, midRow + 4, "+ PITCH UP");
+    pg.displayPort.writeString(midCol - 8, midRow + 2, "MENU:THR MID");
+    pg.displayPort.writeString(midCol - 4, midRow + 3, "+ YAW LEFT");
+    pg.displayPort.writeString(midCol - 4, midRow + 4, "+ PITCH UP");
 #endif
 
 #if defined(USE_RTC_TIME)
     std::array<char, FORMATTED_DATE_TIME_BUFSIZE> dateTimeBuffer;
     if (osdFormatRtcDateTime(&dateTimeBuffer[0])) {
-        _displayPort->writeString(midCol - 10, midRow + 6, &dateTimeBuffer[]);
+        pg.displayPort.writeString(midCol - 10, midRow + 6, &dateTimeBuffer[]);
     }
 #endif
 
-    _resumeRefreshAtUs = timeUs() + 4'000'000;
+    _resumeRefreshAtUs = time_us() + 4'000'000;
 #if defined(USE_OSD_PROFILES)
     _elements.setProfile(_config.osdProfileIndex);
 #endif
 
-    _elements.init(_backgroundLayerSupported, _displayPort->getRowCount(), _displayPort->getColumnCount());
-    analyzeActiveElements();
+    _elements.init(_backgroundLayerSupported, pg.displayPort.getRowCount(), pg.displayPort.getColumnCount());
+    analyzeActiveElements(pg);
 
-    _displayPort->redraw();
+    pg.displayPort.redraw();
 
     _isReady = true;
 }
 
-void OSD::analyzeActiveElements()
+void OSD::analyzeActiveElements(const osd_parameter_group_t& pg)
 {
-    _elements.addActiveElements();
-    _elements.drawActiveElementsBackground(*_displayPort);
+    _elements.addActiveElements(pg);
+    _elements.drawActiveElementsBackground(pg);
 }
 
 
-void OSD::setConfig(const config_t& config)
+void OSD::setConfig(const osd_config_t& config)
 {
     _config = config;
 }
 
-void OSD::setStatsConfig(const statsConfig_t& statsConfig)
+void OSD::setStatsConfig(const osd_stats_config_t& statsConfig)
 {
     _statsConfig = statsConfig;
 }
@@ -144,23 +139,23 @@ void OSD::resetStats()
     _stats.min_rsnr = CRSF_SNR_MAX;
 }
 
-void OSD::displayStatisticLabel(uint8_t x, uint8_t y, const char * text, const char * value)
+void OSD::displayStatisticLabel(DisplayPortBase& displayPort, uint8_t x, uint8_t y, const char * text, const char * value)
 {
-    _displayPort->writeString(x - 13, y, text);
-    _displayPort->writeString(x + 5, y, ":");
-    _displayPort->writeString(x + 7, y, value);
+    displayPort.writeString(x - 13, y, text);
+    displayPort.writeString(x + 5, y, ":");
+    displayPort.writeString(x + 7, y, value);
 }
 
-bool OSD::displayStatistic(int statistic, uint8_t displayRow)
+bool OSD::displayStatistic(DisplayPortBase& displayPort, int statistic, uint8_t displayRow)
 {
-    const uint8_t midCol = _displayPort->getColumnCount() / 2;
+    const uint8_t midCol = displayPort.getColumnCount() / 2;
     enum { ELEMENT_BUFFER_LENGTH = 32 };
     std::array<char, ELEMENT_BUFFER_LENGTH> buf {};
 
     switch (statistic) { // NOLINT(hicpp-multiway-paths-covered)
     case STATS_TOTAL_FLIGHTS:
         ui2a(_statsConfig.total_flights, &buf[0]);
-        displayStatisticLabel(midCol, displayRow, "TOTAL FLIGHTS", &buf[0]);
+        displayStatisticLabel(displayPort, midCol, displayRow, "TOTAL FLIGHTS", &buf[0]);
         return true;
     default:
         return false;
@@ -169,16 +164,16 @@ bool OSD::displayStatistic(int statistic, uint8_t displayRow)
 /*
 Called repeatedly until it returns true which indicates that all stats have been rendered.
 */
-bool OSD::renderStatsContinue()
+bool OSD::renderStatsContinue(DisplayPortBase& displayPort)
 {
 #if defined(USE_OSD_STATS)
-    const uint8_t midCol = _displayPort->getColumnCount() / 2;
+    const uint8_t midCol = displayPort.getColumnCount() / 2;
 
     if (_statsRenderingState.row == 0) {
         bool displayLabel = false;
         // if rowCount is 0 then we're running an initial analysis of the active stats items
         if (_statsRenderingState.rowCount > 0) {
-            const uint8_t availableRows = _displayPort->getRowCount();
+            const uint8_t availableRows = displayPort.getRowCount();
             uint8_t displayRows = std::min(_statsRenderingState.rowCount, availableRows);
             if (_statsRenderingState.rowCount < availableRows) {
                 displayLabel = true;
@@ -187,7 +182,7 @@ bool OSD::renderStatsContinue()
             _statsRenderingState.row = static_cast<uint8_t>((availableRows - displayRows) / 2);  // center the stats vertically
         }
         if (displayLabel) {
-            _displayPort->writeString(midCol - static_cast<uint8_t>(strlen("--- STATS ---") / 2), _statsRenderingState.row, "--- STATS ---");
+            displayPort.writeString(midCol - static_cast<uint8_t>(strlen("--- STATS ---") / 2), _statsRenderingState.row, "--- STATS ---");
             ++_statsRenderingState.row;
             return false;
         }
@@ -199,20 +194,22 @@ bool OSD::renderStatsContinue()
         ++_statsRenderingState.index;
         // look for something to render
         if (_config.enabled_stats_flags & (1<< StatsDisplayOrder[index])) {
-            if (displayStatistic(StatsDisplayOrder[index], _statsRenderingState.row)) {
+            if (displayStatistic(displayPort, StatsDisplayOrder[index], _statsRenderingState.row)) {
                 ++_statsRenderingState.row;
                 statisticDisplayed = true;
                 break;
             }
         }
     }
-    const bool moreSpaceAvailable = _statsRenderingState.row < _displayPort->getRowCount();
+    const bool moreSpaceAvailable = _statsRenderingState.row < displayPort.getRowCount();
     if (statisticDisplayed && moreSpaceAvailable) {
         return false;
     }
     if (_statsRenderingState.rowCount == 0) {
         _statsRenderingState.rowCount = _statsRenderingState.row;
     }
+#else
+    (void)displayPort;
 #endif
     return true;
 }
@@ -221,7 +218,7 @@ bool OSD::renderStatsContinue()
 State machine to refresh statistics.
 Returns true when all iterations are complete.
 */
-bool OSD::refreshStats()
+bool OSD::refreshStats(DisplayPortBase& displayPort)
 {
     switch (_refreshStatsState) {
     default:
@@ -235,13 +232,13 @@ bool OSD::refreshStats()
         } else {
             _refreshStatsState = REFRESH_STATS_STATE_COUNT_STATS;
         }
-        _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+        displayPort.clearScreen(DISPLAY_CLEAR_NONE);
         break;
     case REFRESH_STATS_STATE_COUNT_STATS:{
         //Serial.printf("REFRESH_STATS_STATE_COUNT_STATS\r\n");
         // No stats row count has been set yet.
         // Go through the logic one time to determine how many stats are actually displayed.
-        bool count_phase_complete = renderStatsContinue();
+        bool count_phase_complete = renderStatsContinue(displayPort);
         if (count_phase_complete) { // cppcheck-suppress knownConditionTrueFalse
             _refreshStatsState = REFRESH_STATS_STATE_CLEAR_SCREEN;
         }
@@ -253,12 +250,12 @@ bool OSD::refreshStats()
         _statsRenderingState.index = 0;
         // Then clear the screen and commence with normal stats display which will
         // determine if the heading should be displayed and also center the content vertically.
-        _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+        displayPort.clearScreen(DISPLAY_CLEAR_NONE);
         _refreshStatsState = REFRESH_STATS_STATE_RENDER_STATS;
         break;
     case REFRESH_STATS_STATE_RENDER_STATS:
         //Serial.printf("REFRESH_STATS_STATE_RENDER_STATS\r\n");
-        if (renderStatsContinue()) {
+        if (renderStatsContinue(displayPort)) { // cppcheck-suppress knownConditionTrueFalse
             _refreshStatsState = REFRESH_STATS_STATE_INITIAL_CLEAR_SCREEN;
             return true;
         }
@@ -271,26 +268,27 @@ bool OSD::refreshStats()
 /*!
 Returns true if refresh stats is required.
 */
-bool OSD::processStats1(timeUs32_t currentTimeUs)
+bool OSD::processStats1(const osd_parameter_group_t& pg, time_us32_t currentTimeUs)
 {
+    (void)pg;
     (void)currentTimeUs;
     return false;
 }
 
-void OSD::processStats2(timeUs32_t currentTimeUs)
+void OSD::processStats2(const osd_parameter_group_t& pg, time_us32_t currentTimeUs)
 {
     if (_resumeRefreshAtUs) {
         if (currentTimeUs < _resumeRefreshAtUs) {
             // in timeout period, check sticks for activity or CRASH_FLIP switch to resume display.
-            if (!_cockpit.isArmed()) {
-                const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
-                if (RcModes::pwm_is_high(controls.throttle) || RcModes::pwm_is_high(controls.pitch) || _rc_modes.is_mode_active(MspBox::BOX_CRASH_FLIP)) {
+            if (!pg.cockpit.isArmed()) {
+                const receiver_controls_pwm_t controls = pg.receiver.get_controls_pwm();
+                if (RcModes::pwm_is_high(controls.throttle) || RcModes::pwm_is_high(controls.pitch) || pg.rc_modes.is_mode_active(MspBox::BOX_CRASH_FLIP)) {
                     _resumeRefreshAtUs = currentTimeUs;
                 }
             }
             return;
         }
-        _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+        pg.displayPort.clearScreen(DISPLAY_CLEAR_NONE);
         _resumeRefreshAtUs = 0;
         _statsEnabled = false;
         _stats.armed_time = 0;
@@ -303,15 +301,16 @@ void OSD::processStats2(timeUs32_t currentTimeUs)
 #endif
 }
 
-void OSD::processStats3()
+void OSD::processStats3(const osd_parameter_group_t& pg)
 {
+    (void)pg;
 }
 
 void OSD::updateAlarms()
 {
 }
 
-void OSD::syncBlink(timeUs32_t currentTimeUs)
+void OSD::syncBlink(time_us32_t currentTimeUs)
 {
     (void)currentTimeUs;
 }
@@ -331,7 +330,7 @@ bool OSD::getWarningState(uint8_t warningIndex) const
     return _config.enabled_warnings_flags & (1U << warningIndex);
 }
 
-void OSD::drawLogo(uint8_t x, uint8_t y)
+void OSD::drawLogo(DisplayPortBase& displayPort, uint8_t x, uint8_t y)
 {
     // the logo is in the font characters starting at 160
     enum { START_CHARACTER = 160 };
@@ -342,16 +341,16 @@ void OSD::drawLogo(uint8_t x, uint8_t y)
     for (uint8_t row = 0; row < LOGO_ROW_COUNT; ++row) {
         for (uint8_t column = 0; column < LOGO_COLUMN_COUNT; ++column) {
             if (characterCode < END_OF_FONT) {
-                _displayPort->writeChar(x + column, y + row, characterCode);
+                displayPort.writeChar(x + column, y + row, characterCode);
                 ++characterCode;
             }
         }
     }
 }
 
-void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta)
+void OSD::updateDisplay(const osd_parameter_group_t& pg, uint32_t time_microseconds, uint32_t time_microseconds_delta)
 {
-    if (_displayPort->isGrabbed()) {
+    if (pg.displayPort.isGrabbed()) {
         return;
     }
     if (_state == STATE_IDLE) {
@@ -363,39 +362,39 @@ void OSD::updateDisplay(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelt
 #if defined(FRAMEWORK_USE_FREERTOS)
         taskYIELD();
 #endif
-        updateDisplayIteration(timeMicroseconds, timeMicrosecondsDelta);
+        updateDisplayIteration(pg, time_microseconds, time_microseconds_delta);
     }
 }
 
-void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrosecondsDelta) // NOLINT(readability-function-cognitive-complexity)
+void OSD::updateDisplayIteration(const osd_parameter_group_t& pg, uint32_t time_microseconds, uint32_t time_microseconds_delta) // NOLINT(readability-function-cognitive-complexity)
 {
-    (void)timeMicrosecondsDelta;
+    (void)time_microseconds_delta;
 
     switch (_state) {
     case STATE_INIT:
         //Serial.printf("STATE_INIT\r\n");
-        if (!_displayPort->checkReady(false)) {
+        if (!pg.displayPort.checkReady(false)) {
             // Frsky OSD needs a display redraw after search for MAX7456 devices
-            if (_displayPort->getDeviceType() == DisplayPortBase::DEVICE_TYPE_FRSKY_OSD) {
-                _displayPort->redraw();
+            if (pg.displayPort.getDeviceType() == DisplayPortBase::DEVICE_TYPE_FRSKY_OSD) {
+                pg.displayPort.redraw();
                 return;
             }
         }
-        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
-        drawLogoAndCompleteInitialization();
+        pg.displayPort.beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
+        drawLogoAndCompleteInitialization(pg);
         _state = STATE_COMMIT;
         break;
     case STATE_CHECK:
         //Serial.printf("STATE_CHECK\r\n");
         // don't touch buffers if DMA transaction is in progress
-        if (_displayPort->isTransferInProgress()) {
+        if (pg.displayPort.isTransferInProgress()) {
             break;
         }
         _state = STATE_UPDATE_HEARTBEAT;
         break;
     case STATE_UPDATE_HEARTBEAT:
         //Serial.printf("STATE_UPDATE_HEARTBEAT\r\n");
-        if (_displayPort->heartbeat()) {
+        if (pg.displayPort.heartbeat()) {
             // Extraordinary action was taken, so return without allowing stateDurationFractionUs table to be updated
             return;
         }
@@ -404,25 +403,25 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
     case STATE_PROCESS_STATS1:
         //Serial.printf("STATE_PROCESS_STATS1\r\n");
         // transaction begins here since refreshStats draws to the screen
-        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
-        _state = processStats1(timeMicroseconds) ? STATE_REFRESH_STATS : STATE_PROCESS_STATS2; // cppcheck-suppress knownConditionTrueFalse
+        pg.displayPort.beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
+        _state = processStats1(pg, time_microseconds) ? STATE_REFRESH_STATS : STATE_PROCESS_STATS2; // cppcheck-suppress knownConditionTrueFalse
         break;
     case STATE_REFRESH_STATS:
         //Serial.printf("STATE_REFRESH_STATS\r\n");
-        if (refreshStats()) { // draws the statistics to the screen
+        if (refreshStats(pg.displayPort)) { // draws the statistics to the screen
             _state = STATE_PROCESS_STATS2;
         }
         break;
     case STATE_PROCESS_STATS2:
         //Serial.printf("STATE_PROCESS_STATS2\r\n");
-        processStats2(timeMicroseconds); // may clear screen
+        processStats2(pg, time_microseconds); // may clear screen
         _state = STATE_PROCESS_STATS3; // cppcheck-suppress redundantAssignment
         break;
     case STATE_PROCESS_STATS3:
         //Serial.printf("STATE_PROCESS_STATS3\r\n");
-        processStats3();
+        processStats3(pg);
 #if defined(USE_CMS)
-        if (_displayPort->isGrabbed()) {
+        if (pg.displayPort.isGrabbed()) {
             _state = STATE_COMMIT;
         }
 #endif
@@ -436,34 +435,34 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
         break;
     case STATE_UPDATE_CANVAS: {
         //Serial.printf("STATE_UPDATE_CANVAS\r\n");
-        if (_rc_modes.is_mode_active(MspBox::BOX_OSD)) {
+        if (pg.rc_modes.is_mode_active(MspBox::BOX_OSD)) {
             // Hide OSD when OSD SW mode is active
-            _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+            pg.displayPort.clearScreen(DISPLAY_CLEAR_NONE);
             _state = STATE_COMMIT;
             break;
         }
         if (_backgroundLayerSupported) {
             // Background layer is supported, overlay it onto the foreground
             // so that we only need to draw the active parts of the elements.
-            _displayPort->layerCopy(DisplayPortBase::LAYER_FOREGROUND, DisplayPortBase::LAYER_BACKGROUND);
+            pg.displayPort.layerCopy(DisplayPortBase::LAYER_FOREGROUND, DisplayPortBase::LAYER_BACKGROUND);
         } else {
             // Background layer not supported, just clear the foreground in preparation
             // for drawing the elements including their backgrounds.
-            _displayPort->clearScreen(DISPLAY_CLEAR_NONE);
+            pg.displayPort.clearScreen(DISPLAY_CLEAR_NONE);
         }
-        syncBlink(timeMicroseconds);
+        syncBlink(time_microseconds);
         ahrs_data_t ahrsData {};
-        _ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
-        _elements.updateAttitude(ahrsData.orientation.calculateRollDegrees(), ahrsData.orientation.calculatePitchDegrees(), ahrsData.orientation.calculateYawDegrees()); // update the AHRS data, so it is only needed to be done once for all elements that require it
+        pg.ahrs_message_queue.PEEK_AHRS_DATA(ahrsData);
+        _elements.updateAttitude(ahrsData.orientation.calculate_roll_degrees(), ahrsData.orientation.calculate_pitch_degrees(), ahrsData.orientation.calculate_yaw_degrees()); // update the AHRS data, so it is only needed to be done once for all elements that require it
         _state = STATE_DRAW_ELEMENT;
         break;
     }
     case STATE_DRAW_ELEMENT: {
         const uint8_t activeElementIndex = _elements.getActiveElementIndex();
 
-        timeUs32_t startElementTime = timeUs();
-        _moreElementsToDraw = _elements.drawNextActiveElement(*_displayPort);
-        timeUs32_t executeTimeUs = timeUs() - startElementTime;
+        time_us32_t startElementTime = time_us();
+        _moreElementsToDraw = _elements.drawNextActiveElement(pg);
+        time_us32_t executeTimeUs = time_us() - startElementTime;
         //Serial.printf("STATE_DRAW_ELEMENT ai:%d more:%d\r\n", static_cast<int>(activeElementIndex), static_cast<int>(_moreElementsToDraw));
 
         enum { OSD_EXEC_TIME_SHIFT = 5 };
@@ -480,42 +479,42 @@ void OSD::updateDisplayIteration(uint32_t timeMicroseconds, uint32_t timeMicrose
         if (_moreElementsToDraw) {
             break;
         }
-        _state = (_cockpit.isArmed() && _config.osd_show_spec_prearm) ? STATE_REFRESH_PRE_ARM : STATE_COMMIT;
+        _state = (pg.cockpit.isArmed() && _config.osd_show_spec_prearm) ? STATE_REFRESH_PRE_ARM : STATE_COMMIT;
         break;
     }
     case STATE_DISPLAY_ELEMENT: {
         //Serial.printf("STATE_DISPLAY_ELEMENT\r\n");
-        const bool moreToDisplay = _elements.displayActiveElement(*_displayPort);
+        const bool moreToDisplay = _elements.displayActiveElement(pg.displayPort);
         if (!moreToDisplay) {
             // finished displaying this element, so move on to the next one if there is one
             if (_moreElementsToDraw) {
                 _state = STATE_DRAW_ELEMENT;
             } else {
-                _state = (_cockpit.isArmed() && _config.osd_show_spec_prearm) ? STATE_REFRESH_PRE_ARM : STATE_COMMIT;
+                _state = (pg.cockpit.isArmed() && _config.osd_show_spec_prearm) ? STATE_REFRESH_PRE_ARM : STATE_COMMIT;
             }
         }
         break;
     }
     case STATE_REFRESH_PRE_ARM:
         //Serial.printf("STATE_REFRESH_PRE-ARM\r\n");
-        if (_elements.drawSpec(*_displayPort)) {
+        if (_elements.drawSpec(pg)) {
             // Rendering is complete
             _state = STATE_COMMIT;
         }
         break;
     case STATE_COMMIT:
         //Serial.printf("STATE_COMMIT\r\n");
-        _displayPort->commitTransaction();
+        pg.displayPort.commitTransaction();
         _state = _resumeRefreshAtUs ? STATE_IDLE : STATE_TRANSFER;
         break;
     case STATE_TRANSFER:
         //Serial.printf("STATE_TRANSFER\r\n");
         // Wait for any current transfer to complete
-        if (_displayPort->isTransferInProgress()) {
+        if (pg.displayPort.isTransferInProgress()) {
             break;
         }
         // Transfer may be broken into many parts
-        if (_displayPort->drawScreen()) {
+        if (pg.displayPort.drawScreen()) {
             break;
         }
         _state = STATE_IDLE;

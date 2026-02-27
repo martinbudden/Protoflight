@@ -1,40 +1,29 @@
 #include "MSP_Protoflight.h"
 #include "MSP_SerialPort.h"
 #include "Main.h"
-#include "SerialPort.h"
+#include <serial_port.h>
 
-#include <MSP_Serial.h>
-#include <MSP_Stream.h>
+#include <msp_serial.h>
+#include <msp_stream.h>
 
 
 /*!
 Statically allocate the MSP and associated objects.
 */
-MSP_Serial* Main::createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd, GPS* gps)
+MspSerial* Main::createMSP(MspBase*& msp_base)
 {
 #if defined(USE_MSP)
-    static MSP_Protoflight mspProtoflight(ahrs, flightController, cockpit, receiver, rc_modes, imuFilters, debug, nvs, blackbox, vtx, osd, gps);
-    static MSP_Stream mspStream(mspProtoflight);
+    static MSP_Protoflight mspProtoflight;
+    msp_base = & mspProtoflight;
+    static MspStream mspStream(mspProtoflight);
     enum { BAUD_RATE = 115200 };
     enum { DATA_BITS = 8, PARITY = SerialPort::PARITY_NONE, STOP_BITS = 1 }; // 8N1
     static SerialPort serialPort(SerialPort::MSP_UART_PINS, MSP_UART_INDEX, BAUD_RATE, DATA_BITS, STOP_BITS, PARITY);
     static MSP_SerialPort mspSerialPort(serialPort);
-    static MSP_Serial mspSerial(mspStream, mspSerialPort);
+    static MspSerial mspSerial(mspStream, mspSerialPort);
     return &mspSerial;
 #else
-    (void)ahrs;
-    (void)flightController;
-    (void)cockpit;
-    (void)receiver;
-    (void)rc_modes;
-    (void)imuFilters;
-    (void)debug;
-    (void)nvs;
-    (void)blackbox;
-    (void)vtx;
-    (void)osd;
-    (void)gps;
-
+    msp_base = nullptr;
     return nullptr;
 #endif
 }

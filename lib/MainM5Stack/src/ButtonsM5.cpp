@@ -4,7 +4,9 @@
 #include "ScreenM5.h"
 
 #include "FlightController.h"
+
 #include <M5Unified.h>
+#include <motor_mixer_base.h>
 
 
 ButtonsM5::ButtonsM5(ScreenBase* screen) :
@@ -21,7 +23,7 @@ Handle any button presses.
 
 1. BtnA turns the motors on or off.
 */
-void ButtonsM5::update(FlightController& flightController, const ReceiverBase& receiver)
+void ButtonsM5::update(FlightController& flightController, MotorMixerBase& motorMixer, const ReceiverBase& receiver)
 {
     M5.update();
     // M5 Atom has only BtnA so use double click of BtnA for cycling through screen modes
@@ -30,10 +32,10 @@ void ButtonsM5::update(FlightController& flightController, const ReceiverBase& r
     }
     if (M5.BtnA.wasPressed()) {
         // BtnA turns the motors on or off
-        if (flightController.motorsIsOn()) {
-            flightController.motorsSwitchOff();
+        if (motorMixer.motors_is_on()) {
+            flightController.motorsSwitchOff(motorMixer);
         } else {
-            flightController.motorsSwitchOn();
+            flightController.motorsSwitchOn(motorMixer);
         }
         M5.Lcd.setCursor(_drawPosX, _drawPosY);
         M5.Lcd.print('A');

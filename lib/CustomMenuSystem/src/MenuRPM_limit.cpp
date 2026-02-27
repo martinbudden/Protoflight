@@ -3,25 +3,30 @@
 #include "Cockpit.h"
 #include "FlightController.h"
 
-#include <MotorMixerBase.h>
+#include <motor_mixer_base.h>
 
 static bool dummy0 {};
 static uint16_t dummy1 {};
 static uint16_t dummy2 {};
 
 
-DynamicIdleController::config_t dynamicIdleControllerConfig {};
+dynamic_idle_controller_config_t dynamicIdleControllerConfig {};
 
 // cppcheck-suppress constParameterCallback
-static const void* menuRPM_limitOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+static const void* menuRPM_limitOnEnter(CMSX& cmsx, cms_parameter_group_t& pg)
 {
-    dynamicIdleControllerConfig = cmsx.getCockpit().getFlightController().getMotorMixer().get_dynamic_idle_controller()->get_config();
+    (void)cmsx;
+    const dynamic_idle_controller_config_t* dynamicIdleControllerConfigPtr = pg.motorMixer.get_dynamic_idle_config();
+    if (dynamicIdleControllerConfigPtr) {
+        dynamicIdleControllerConfig = *dynamicIdleControllerConfigPtr;
+    }
     return nullptr;
 }
 
-static const void* menuRPM_limitOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuRPM_limitOnExit(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    cmsx.getCockpitMutable().getFlightControllerMutable().getMotorMixerMutable().set_dynamic_idler_controller_config(dynamicIdleControllerConfig);
+    (void)cmsx;
+    pg.motorMixer.set_dynamic_idle_controller_config(dynamicIdleControllerConfig);
     return nullptr;
 }
 

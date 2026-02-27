@@ -1,10 +1,11 @@
 #include "AltitudeKalmanFilter.h"
 #include "AltitudeTask.h"
-#include "BarometerBase.h"
 
-#include <AHRS_MessageQueue.h>
 #include <AltitudeMessageQueue.h>
-#include <TimeMicroseconds.h>
+#include <ahrs_message_queue.h>
+#include <time_microseconds.h>
+
+#include "barometer_base.h"
 
 #if defined(FRAMEWORK_USE_FREERTOS)
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
@@ -26,30 +27,30 @@ Task function for the AHRS. Sets up and runs the task loop() function.
 [[noreturn]] void AltitudeTask::task()
 {
 #if defined(FRAMEWORK_USE_FREERTOS)
-    const uint32_t taskIntervalTicks = _taskIntervalMicroseconds < 1000 ? 1 : pdMS_TO_TICKS(_taskIntervalMicroseconds / 1000);
-    _previousWakeTimeTicks = xTaskGetTickCount();
+    const uint32_t taskIntervalTicks = _task_interval_microseconds < 1000 ? 1 : pdMS_TO_TICKS(_task_interval_microseconds / 1000);
+    _previous_wake_time_ticks = xTaskGetTickCount();
     while (true) {
         // delay until the end of the next taskIntervalTicks
 #if (tskKERNEL_VERSION_MAJOR > 10) || ((tskKERNEL_VERSION_MAJOR == 10) && (tskKERNEL_VERSION_MINOR >= 5))
-            const BaseType_t wasDelayed = xTaskDelayUntil(&_previousWakeTimeTicks, taskIntervalTicks);
-            if (wasDelayed) {
-                _wasDelayed = true;
+            const BaseType_t was_delayed = xTaskDelayUntil(&_previous_wake_time_ticks, taskIntervalTicks);
+            if (was_delayed) {
+                _was_delayed = true;
             }
 #else
-            vTaskDelayUntil(&_previousWakeTimeTicks, taskIntervalTicks);
+            vTaskDelayUntil(&_previous_wake_time_ticks, taskIntervalTicks);
 #endif
-        const TickType_t tickCount = xTaskGetTickCount();
-        _tickCountDelta = tickCount - _tickCountPrevious;
-        _tickCountPrevious = tickCount;
-        const float deltaT = static_cast<float>(_tickCountDelta) * 0.001F;
-        if (_tickCountDelta > 0) { // guard against the case of this while loop executing twice on the same tick interval
-            _barometer.readTemperatureAndPressure();
-            const float altitudeMeasurement = _barometer.calculateAltitudeMeters(_barometer.getPressurePascals(), _barometer.getPressurePascals());
+        const TickType_t tick_count = xTaskGetTickCount();
+        _tick_count_delta = tick_count - _tick_count_previous;
+        _tick_count_previous = tick_count;
+        const float deltaT = static_cast<float>(_tick_count_delta) * 0.001F;
+        if (_tick_count_delta > 0) { // guard against the case of this while loop executing twice on the same tick interval
+            _barometer.read_temperature_and_pressure();
+            const float altitudeMeasurement = _barometer.calculate_altitude_meters(_barometer.get_pressure_pascals(), _barometer.get_pressure_pascals());
 
             ahrs_data_t ahrsData {};
             _ahrsMessageQueue.PEEK_AHRS_DATA(ahrsData);
             //!!TODO: calculate vertical component of acceleration corrected for orientation
-            const float accelerationMeasurement = ahrsData.accGyroRPS.acc.z;
+            const float accelerationMeasurement = ahrsData.acc_gyro_rps.acc.z;
             const AltitudeKalmanFilter::state_t kalmanFilterState =_altitudeKalmanFilter.updateState(altitudeMeasurement, accelerationMeasurement, deltaT);
 
             const altitude_data_t altitudeData {

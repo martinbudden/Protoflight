@@ -14,8 +14,8 @@ void tearDown()
 // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,cppcoreguidelines-init-variables,cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise,readability-magic-numbers)
 void test_display()
 {
-    //BUS_SPI::spi_pins_t spiPins{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=0xFF};
-    //static DisplayPortMax7456 displayPortMax7456(BUS_SPI::BUS_INDEX_0, spiPins);
+    //BusSpi::spi_pins_t spiPins{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=0xFF};
+    //static DisplayPortMax7456 displayPortMax7456(BusSpi::BUS_INDEX_0, spiPins);
     static DisplayPortNull displayPortNull;
     (void)displayPortNull;
 

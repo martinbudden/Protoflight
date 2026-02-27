@@ -1,7 +1,7 @@
 #include "OSD.h"
 #include "OSD_Task.h"
 
-#include <TimeMicroseconds.h>
+#include <time_microseconds.h>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
@@ -22,12 +22,12 @@ loop() function for when not using FREERTOS
 */
 void OSD_Task::loop()
 {
-    const timeUs32_t timeMicroseconds = timeUs();
-    _tickCountDelta = timeMicroseconds - _timeMicrosecondsPrevious;
+    const time_us32_t time_microseconds = time_us();
+    _tick_count_delta = time_microseconds - _time_microseconds_previous;
 
-    if (_timeMicrosecondsDelta >= _taskIntervalMicroseconds) { // if _taskIntervalMicroseconds has passed, then run the update
-        _timeMicrosecondsPrevious = timeMicroseconds;
-        _osd.updateDisplay(timeMicroseconds, _timeMicrosecondsDelta);
+    if (_time_microseconds_delta >= _task_interval_microseconds) { // if _task_interval_microseconds has passed, then run the update
+        _time_microseconds_previous = time_microseconds;
+        _osd.updateDisplay(_parameter_group, time_microseconds, _time_microseconds_delta);
     }
 }
 
@@ -37,27 +37,27 @@ Task function for the AHRS. Sets up and runs the task loop() function.
 [[noreturn]] void OSD_Task::task()
 {
 #if defined(FRAMEWORK_USE_FREERTOS)
-    const uint32_t taskIntervalTicks = _taskIntervalMicroseconds < 1000 ? 1 : pdMS_TO_TICKS(_taskIntervalMicroseconds / 1000);
-    _previousWakeTimeTicks = xTaskGetTickCount();
+    const uint32_t taskIntervalTicks = _task_interval_microseconds < 1000 ? 1 : pdMS_TO_TICKS(_task_interval_microseconds / 1000);
+    _previous_wake_time_ticks = xTaskGetTickCount();
     while (true) {
         // delay until the end of the next taskIntervalTicks
 #if (tskKERNEL_VERSION_MAJOR > 10) || ((tskKERNEL_VERSION_MAJOR == 10) && (tskKERNEL_VERSION_MINOR >= 5))
-            const BaseType_t wasDelayed = xTaskDelayUntil(&_previousWakeTimeTicks, taskIntervalTicks);
-            if (wasDelayed) {
-                _wasDelayed = true;
+            const BaseType_t was_delayed = xTaskDelayUntil(&_previous_wake_time_ticks, taskIntervalTicks);
+            if (was_delayed) {
+                _was_delayed = true;
             }
 #else
-            vTaskDelayUntil(&_previousWakeTimeTicks, taskIntervalTicks);
+            vTaskDelayUntil(&_previous_wake_time_ticks, taskIntervalTicks);
 #endif
-        // record tickCounts for instrumentation. Not sure if this is useful anymore
-        const TickType_t tickCount = xTaskGetTickCount();
-        _tickCountDelta = tickCount - _tickCountPrevious;
-        _tickCountPrevious = tickCount;
-        const timeUs32_t timeMicroseconds = timeUs();
-        _timeMicrosecondsDelta = timeMicroseconds - _timeMicrosecondsPrevious;
-        _timeMicrosecondsPrevious = timeMicroseconds;
-        if (_timeMicrosecondsDelta > 0) { // guard against the case of this while loop executing twice on the same tick interval
-            _osd.updateDisplay(timeMicroseconds, _timeMicrosecondsDelta);
+        // record tick_counts for instrumentation. Not sure if this is useful anymore
+        const TickType_t tick_count = xTaskGetTickCount();
+        _tick_count_delta = tick_count - _tick_count_previous;
+        _tick_count_previous = tick_count;
+        const time_us32_t time_microseconds = time_us();
+        _time_microseconds_delta = time_microseconds - _time_microseconds_previous;
+        _time_microseconds_previous = time_microseconds;
+        if (_time_microseconds_delta > 0) { // guard against the case of this while loop executing twice on the same tick interval
+            _osd.updateDisplay(_parameter_group, time_microseconds, _time_microseconds_delta);
         }
     }
 #else

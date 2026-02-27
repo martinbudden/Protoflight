@@ -8,8 +8,9 @@
 #include <cstdint>
 
 
-class AHRS;
-class AHRS_Task;
+class Ahrs;
+class AhrsMessageQueue;
+class AhrsTask;
 class AltitudeMessageQueue;
 class AltitudeTask;
 class Autopilot;
@@ -29,17 +30,19 @@ class DisplayPortBase;
 class FlightController;
 class GPS;
 class GPS_Task;
-class IMU_Base;
+class ImuBase;
 class IMU_Filters;
-class IMU_FiltersBase;
-class MSP_Task;
-class MSP_Serial;
-class MSP_SerialBase;
+class ImuFiltersBase;
+class MspBase;
+class MspTask;
+class MspSerial;
 class MotorMixerBase;
+class MotorMixerTask;
+class MotorMixerMessageQueue;
 class NonVolatileStorage;
 class OSD;
 class OSD_Task;
-class RPM_Filters;
+class RpmFilters;
 class RcModes;
 class ReceiverBase;
 class ReceiverTask;
@@ -47,7 +50,7 @@ class ScreenBase;
 class TaskBase;
 class VTX;
 class VehicleControllerBase;
-class VehicleControllerTask;
+struct blackbox_parameter_group_t;
 
 #if !defined(DASHBOARD_TASK_INTERVAL_MICROSECONDS)
 enum { DASHBOARD_TASK_INTERVAL_MICROSECONDS = 40000 }; // 25 Hz
@@ -147,38 +150,40 @@ public:
 public:
     void setup();
 private:
-    static IMU_Base& createIMU(NonVolatileStorage& nvs);
-    static FlightController& createFlightController(float taskIntervalSeconds, Debug& debug, const NonVolatileStorage& nvs);
-    static IMU_Filters& createIMU_Filters(float taskIntervalSeconds, MotorMixerBase& motorMixer, Debug& debug, const NonVolatileStorage& nvs);
-    static AHRS& createAHRS(VehicleControllerBase& vehicleController, IMU_Base& imuSensor, IMU_FiltersBase& imuFilters);
+    static ImuBase& createIMU(NonVolatileStorage& nvs);
+    static MotorMixerBase& createMotorMixer(float taskIntervalSeconds, const NonVolatileStorage& nvs, RpmFilters*& rpmFilters);
+    static FlightController& createFlightController(float taskIntervalSeconds, const NonVolatileStorage& nvs);
+    static IMU_Filters& createIMU_Filters(float taskIntervalSeconds, RpmFilters* rpmFilters, const NonVolatileStorage& nvs);
+    static Ahrs& createAHRS(ImuBase& imuSensor);
+    static RcModes& createRcModes(NonVolatileStorage& nvs);
     static ReceiverBase& createReceiver(NonVolatileStorage& nvs);
-    static Cockpit& createCockpit(RcModes& rc_modes, FlightController& flightController, Debug& debug, IMU_Filters& imuFilters, NonVolatileStorage& nvs);
-    static DisplayPortBase& createDisplayPort(Debug& debug);
-    // optional components create function return nullptr if component not specified as part of the build
-    static Dashboard* createDashboard(const DisplayPortBase& displayPort, FlightController& flightController, const ReceiverBase& receiver);
-    static Blackbox* createBlackBox(FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const RcModes& rc_modes, const IMU_Filters& imuFilters, const Debug& debug, GPS* gps);
+    static Cockpit& createCockpit(const AhrsMessageQueue& ahrsMessageQueue, NonVolatileStorage& nvs);
+    static DisplayPortBase& createDisplayPort();
+    // optional components: create function returns nullptr if component not specified as part of the build
+    static Dashboard* createDashboard(const ReceiverBase& receiver);
+    static Blackbox* createBlackBox(uint32_t task_interval_microseconds);
     static VTX* createVTX(NonVolatileStorage& nvs);
-    static GPS* createGPS(Debug& debug);
-    static OSD* createOSD(DisplayPortBase& displayPort, const FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, const RcModes& rc_modes, Debug& debug, NonVolatileStorage& nvs, const VTX* vtx, const GPS* gps);
-    static MSP_Serial* createMSP(AHRS& ahrs, FlightController& flightController, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, const IMU_Filters& imuFilters, Debug& debug, NonVolatileStorage& nvs, Blackbox* blackbox, VTX* vtx, OSD* osd, GPS* gps);
-    static CMS* createCMS(DisplayPortBase& displayPort, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, VTX* vtx);
+    static GPS* createGPS();
+    static OSD* createOSD(DisplayPortBase& displayPort, NonVolatileStorage& nvs);
+    static MspSerial* createMSP(MspBase*& msp_base);
+    static CMS* createCMS();
     static BarometerBase* createBarometer();
-    static BackchannelBase& createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, NonVolatileStorage& nvs, const TaskBase* dashboardTask);
+    static BackchannelBase& createBackchannel(ReceiverBase& receiver);
 
-    static void testBlackbox(Blackbox& blackbox, AHRS& ahrs, ReceiverBase& receiver, const Debug& debug);
+    static void testBlackbox(Blackbox& blackbox, Ahrs& ahrs, ReceiverBase& receiver, FlightController& flightController, IMU_Filters& imuFilters, Debug& debug, const blackbox_parameter_group_t& pg);
 
-    static void checkIMU_Calibration(NonVolatileStorage& nvs, IMU_Base& imu);
-    static void calibrateIMUandSave(NonVolatileStorage& nvs, IMU_Base& imu, calibration_type_e calibrationType);
+    static void checkIMU_Calibration(NonVolatileStorage& nvs, ImuBase& imu);
+    static void calibrateIMUandSave(NonVolatileStorage& nvs, ImuBase& imu, calibration_type_e calibrationType);
 
-    static void loadPID_ProfileFromNonVolatileStorage(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t pidProfile);
+    static void load_pid_ProfileFromNonVolatileStorage(FlightController& flightController, const NonVolatileStorage& nvs, uint8_t pidProfile);
     static void print(const char* buf);
     struct tasks_t {
         DashboardTask* dashboardTask;
-        AHRS_Task* ahrsTask;
-        VehicleControllerTask* flightControllerTask;
+        AhrsTask* ahrsTask;
+        MotorMixerTask* motorMixerTask;
         ReceiverTask* receiverTask;
         BackchannelTask* backchannelTask;
-        MSP_Task* mspTask;
+        MspTask* mspTask;
         BlackboxTask* blackboxTask;
         OSD_Task* osdTask;
         CMS_Task* cmsTask;

@@ -1,26 +1,22 @@
 #include "Autopilot.h"
 #include "Cockpit.h"
 #include "FlightController.h"
+#include "RC_Modes.h"
 
-#include <Blackbox.h>
-#include <Debug.h>
-#include <MotorMixerBase.h>
-#include <MspBox.h>
-#include <ReceiverBase.h>
+#include <blackbox.h>
+#include <debug.h>
+#include <motor_mixer_base.h>
+#include <receiver_base.h>
 
 #include <cmath>
 
-Cockpit::Cockpit(RcModes& rc_modes, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, [[maybe_unused]] const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs) :
-    _rc_modes(rc_modes),
-    _flightController(flightController),
-    _autopilot(autopilot),
-    _imuFilters(imuFilters),
-    _debug(debug)
+Cockpit::Cockpit(Autopilot& autopilot, [[maybe_unused]] const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs) :
+    _autopilot(autopilot)
 #if defined(USE_RC_ADJUSTMENTS)
     ,_rcAdjustments(defaultAdjustmentConfigs)
 #endif
 {
-    flightController.setYawSpinThresholdDPS(1.25F*applyRates(rates_t::YAW, 1.0F));
+    //!!flightController.setYawSpinThresholdDPS(1.25F*applyRates(rates_t::YAW, 1.0F));
 
     _mspBox.set_active_box_id(MspBox::BOX_ARM);
     _mspBox.set_active_box_id(MspBox::BOX_PREARM);
@@ -73,27 +69,27 @@ bool Cockpit::wasEverArmed() const
     return _armingFlags & WAS_EVER_ARMED;
 }
 
-void Cockpit::setArmed(FlightController& flightController)
+void Cockpit::setArmed(FlightController& flightController, MotorMixerBase& motorMixer)
 {
     _armingFlags |= (ARMED | WAS_EVER_ARMED);
-    flightController.motorsSwitchOn();
+    flightController.motorsSwitchOn(motorMixer);
 }
 
-void Cockpit::setDisarmed(FlightController& flightController)
+void Cockpit::setDisarmed(FlightController& flightController, MotorMixerBase& motorMixer)
 {
-    flightController.motorsSwitchOff();
+    flightController.motorsSwitchOff(motorMixer);
     _armingFlags &= ~ARMED;
     _failsafe.phase = FAILSAFE_DISARMED;
 }
 
-void Cockpit::setArmingDisabledFlag(arming_disabled_flags_e flag)
+void Cockpit::setArmingDisabledFlag(uint32_t flag)
 {
-    _armingDisabledFlags |= static_cast<uint32_t>(flag);
+    _armingDisabledFlags |= flag;
 }
 
-void Cockpit::clearArmingDisabledFlag(arming_disabled_flags_e flag)
+void Cockpit::clearArmingDisabledFlag(uint32_t flag)
 {
-    _armingDisabledFlags &= ~static_cast<uint32_t>(flag);
+    _armingDisabledFlags &= ~flag;
 }
 
 uint32_t Cockpit::getFlightModeFlags() const
@@ -143,29 +139,29 @@ float Cockpit::mapThrottle(float throttle) const
     return throttle * static_cast<float>(_rates.throttleLimitPercent) / 100.0F;
 }
 
-void Cockpit::startBlackboxRecording(FlightController& flightController)
+void Cockpit::startBlackboxRecording(Blackbox* blackbox, FlightController& flightController, const MotorMixerBase& motorMixer, const Debug& debug)
 {
-    if (_blackbox) {
-        _blackbox->start(Blackbox::start_t{
-            .debugMode = static_cast<uint16_t>(_debug.getMode()),
-            .motorCount = static_cast<uint8_t>(flightController.getMotorMixer().get_motor_count()),
-            .servoCount = static_cast<uint8_t>(flightController.getMotorMixer().get_servo_count())
+    if (blackbox) {
+        blackbox->start(Blackbox::start_t{
+            .debugMode = static_cast<uint16_t>(debug.getMode()),
+            .motorCount = static_cast<uint8_t>(motorMixer.get_motor_count()),
+            .servoCount = static_cast<uint8_t>(motorMixer.get_servo_count())
         });
         flightController.setBlackboxActive(true);
     }
 }
 
-void Cockpit::stopBlackboxRecording(FlightController& flightController)
+void Cockpit::stopBlackboxRecording(Blackbox* blackbox, FlightController& flightController)
 {
-    if (_blackbox) {
-        _blackbox->finish();
+    if (blackbox && flightController.isBlackboxActive()) {
+        blackbox->finish();
         flightController.setBlackboxActive(false);
     }
 }
 
-void Cockpit::handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver, const RcModes& rc_modes)
+void Cockpit::handleArmingSwitch(FlightController& flightController, MotorMixerBase& motorMixer, Blackbox* blackbox, const ReceiverBase& receiver, const RcModes& rc_modes, const Debug& debug)
 {
-#if defined(LIBRARY_RECEIVER_USE_ESPNOW)
+#if defined(LIBRARY_RECEIVER_USE_ESPNOW) && !defined(TEST_FRAMEWORK)
     (void)rc_modes;
     if (receiver.get_switch(ReceiverBase::MOTOR_ON_OFF_SWITCH)) {
         _onOffSwitchPressed = true;
@@ -175,13 +171,13 @@ void Cockpit::handleArmingSwitch(FlightController& flightController, const Recei
             _onOffSwitchPressed = false;
             // toggle arming when the onOff switch is released
             if (isArmed()) {
-                setDisarmed(flightController);
-                stopBlackboxRecording(flightController);
+                setDisarmed(flightController, motorMixer);
+                stopBlackboxRecording(blackbox, flightController);
             } else {
                 if (_recordToBlackboxWhenArmed) {
-                    startBlackboxRecording(flightController);
+                    startBlackboxRecording(blackbox, flightController, motorMixer, debug);
                 }
-                setArmed(flightController);
+                setArmed(flightController, motorMixer);
             }
         }
     }
@@ -190,14 +186,14 @@ void Cockpit::handleArmingSwitch(FlightController& flightController, const Recei
     if (rc_modes.is_mode_active(MspBox::BOX_ARM)) {
         if (!isArmed()) {
             if (_recordToBlackboxWhenArmed) {
-                startBlackboxRecording(flightController);
+                startBlackboxRecording(blackbox, flightController, motorMixer, debug);
             }
-            setArmed(flightController);
+            setArmed(flightController, motorMixer);
         }
     } else {
         if (isArmed()) {
-            setDisarmed(flightController);
-            stopBlackboxRecording(flightController);
+            setDisarmed(flightController, motorMixer);
+            stopBlackboxRecording(blackbox, flightController);
         }
     }
 #endif
@@ -206,39 +202,37 @@ void Cockpit::handleArmingSwitch(FlightController& flightController, const Recei
 /*!
 Called from Receiver Task.
 */
-void Cockpit::update_controls(uint32_t tickCount, ReceiverBase& receiver)
+void Cockpit::update_controls(uint32_t tick_count, const ReceiverBase& receiver, receiver_parameter_group_t& pg)
 {
-    FlightController& flightController = _flightController;
     const receiver_controls_t controls = receiver.get_controls();
-    RcModes& rcModes = _rc_modes;
     // failsafe handling
     _failsafe.phase = FAILSAFE_IDLE; // we've received a packet, so exit failsafe if we were in it
-    _failsafe.tickCount = tickCount;
+    _failsafe.tick_count = tick_count;
 
     // set the RC modes according to the receiver channel values
-    rcModes.update_activated_modes(receiver);
+    pg.rc_modes.update_activated_modes(receiver);
 
-    handleArmingSwitch(flightController, receiver, rcModes);
+    handleArmingSwitch(pg.flight_controller, pg.motor_mixer, pg.blackbox, receiver, pg.rc_modes, pg.debug);
 
 #if defined(USE_RC_ADJUSTMENTS)
     // process any in-flight adjustments
-    if (!_cliMode && !(rcModes.is_mode_active(MspBox::BOX_PARALYZE) && !isArmed())) {
-        _rcAdjustments.processAdjustments(receiver, flightController, *this, _osd, true); //!!TODO: check true parameter
+    if (!_cliMode && !(pg.rc_modes.is_mode_active(MspBox::BOX_PARALYZE) && !isArmed())) {
+        _rcAdjustments.processAdjustments(receiver, pg.flight_controller, pg.blackbox, *this, pg.osd, true); //!!TODO: check true parameter
     }
 #endif
 
     _flightModeFlags.reset();
     FlightController::control_mode_e controlMode = FlightController::CONTROL_MODE_RATE;
-    if (rcModes.is_mode_active(MspBox::BOX_ANGLE)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_ANGLE)) {
         _flightModeFlags.set(ANGLE_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
-    if (rcModes.is_mode_active(MspBox::BOX_HORIZON)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_HORIZON)) {
         _flightModeFlags.set(HORIZON_MODE);
         // we don't support horizon mode, instead we use the horizon mode setting to invoke level race mode
         controlMode = FlightController::CONTROL_MODE_LEVEL_RACE;
     }
-    if (rcModes.is_mode_active(MspBox::BOX_ALTITUDE_HOLD)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_ALTITUDE_HOLD)) {
         _flightModeFlags.set(ALTITUDE_HOLD_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
         // not currently in altitude hold mode, so set the altitude hold setpoint
@@ -246,68 +240,66 @@ void Cockpit::update_controls(uint32_t tickCount, ReceiverBase& receiver)
             _autopilot.setAltitudeHoldSetpoint();
         }
     }
-    if (rcModes.is_mode_active(MspBox::BOX_POSITION_HOLD)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_POSITION_HOLD)) {
         _flightModeFlags.set(POSITION_HOLD_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
-    if (rcModes.is_mode_active(MspBox::BOX_MAG)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_MAG)) {
         _flightModeFlags.set(MAG_MODE);
     }
-    if (rcModes.is_mode_active(MspBox::BOX_HEADFREE)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_HEADFREE)) {
         _flightModeFlags.set(HEADFREE_MODE);
     }
-    if (rcModes.is_mode_active(MspBox::BOX_CHIRP)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_CHIRP)) {
         _flightModeFlags.set(CHIRP_MODE);
     }
-    if (rcModes.is_mode_active(MspBox::BOX_PASSTHRU)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_PASSTHRU)) {
         _flightModeFlags.set(PASSTHRU_MODE);
     }
-    if (rcModes.is_mode_active(MspBox::BOX_FAILSAFE)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_FAILSAFE)) {
         _flightModeFlags.set(FAILSAFE_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
-    if (rcModes.is_mode_active(MspBox::BOX_GPS_RESCUE)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_GPS_RESCUE)) {
         _flightModeFlags.set(GPS_RESCUE_MODE);
         controlMode = FlightController::CONTROL_MODE_ANGLE;
     }
-    _gpsRescueConfigured =  _failsafeConfig.procedure == FAILSAFE_PROCEDURE_GPS_RESCUE || rcModes.is_mode_activation_condition_present(MspBox::BOX_GPS_RESCUE);
+    _gpsRescueConfigured =  _failsafeConfig.procedure == FAILSAFE_PROCEDURE_GPS_RESCUE || pg.rc_modes.is_mode_activation_condition_present(MspBox::BOX_GPS_RESCUE);
 
-    if (rcModes.is_mode_active(MspBox::BOX_POSITION_HOLD) || rcModes.is_mode_active(MspBox::BOX_GPS_RESCUE)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_POSITION_HOLD) || pg.rc_modes.is_mode_active(MspBox::BOX_GPS_RESCUE)) {
         const FlightController::controls_t flightControls = _autopilot.calculateFlightControls(controls, _flightModeFlags.to_ulong());
-        flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
+        pg.flight_controller.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF, pg.debug);
         return;
     }
 
-    const float throttleStick = rcModes.is_mode_active(MspBox::BOX_ALTITUDE_HOLD) ? _autopilot.calculateThrottleForAltitudeHold(controls) : mapThrottle(controls.throttle);
+    const float throttleStick = pg.rc_modes.is_mode_active(MspBox::BOX_ALTITUDE_HOLD) ? _autopilot.calculateThrottleForAltitudeHold(controls) : mapThrottle(controls.throttle);
 
     // map the radio controls to FlightController units
     const FlightController::controls_t flightControls = {
-        .tickCount = tickCount,
+        .tick_count = tick_count,
         .throttleStick = throttleStick,
         .rollStickDPS = applyRates(rates_t::ROLL, controls.roll),
         .pitchStickDPS = applyRates(rates_t::PITCH, controls.pitch),
         .yawStickDPS = applyRates(rates_t::YAW, controls.yaw),
-        .rollStickDegrees = controls.roll * flightController.getMaxRollAngleDegrees(),
-        .pitchStickDegrees = controls.pitch * flightController.getMaxPitchAngleDegrees(),
+        .rollStickDegrees = controls.roll * pg.flight_controller.getMaxRollAngleDegrees(),
+        .pitchStickDegrees = controls.pitch * pg.flight_controller.getMaxPitchAngleDegrees(),
         .controlMode = controlMode
     };
 
-    flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF);
+    pg.flight_controller.updateSetpoints(flightControls, FlightController::FAILSAFE_OFF, pg.debug);
 }
 
-void Cockpit::check_failsafe(uint32_t tickCount)
+void Cockpit::check_failsafe(uint32_t tick_count, receiver_parameter_group_t& pg)
 {
-    FlightController& flightController = _flightController;
+    pg.flight_controller.detectCrashOrSpin();
 
-    flightController.detectCrashOrSpin();
-
-    if ((tickCount - _failsafe.tickCount > _failsafe.tickCountThreshold) && (_failsafe.phase != FAILSAFE_DISARMED)) {
-        // We've had tickCountThreshold ticks without a packet, so we seem to have lost contact with the transmitter,
-        if ((tickCount - _failsafe.tickCount < _failsafe.tickCountSwitchOffThreshold)) {
+    if ((tick_count - _failsafe.tick_count > _failsafe.tick_countThreshold) && (_failsafe.phase != FAILSAFE_DISARMED)) {
+        // We've had tick_countThreshold ticks without a packet, so we seem to have lost contact with the transmitter,
+        if ((tick_count - _failsafe.tick_count < _failsafe.tick_countSwitchOffThreshold)) {
             // failsafe detected, so zero all sticks, set throttle to its failsafe value, and switch to angle mode
             _failsafe.phase = FAILSAFE_RX_LOSS_DETECTED;
             const FlightController::controls_t flightControls = {
-                .tickCount = tickCount,
+                .tick_count = tick_count,
                 .throttleStick = (static_cast<float>(_failsafeConfig.throttle_pwm) - ReceiverBase::CHANNEL_LOW_F) / ReceiverBase::CHANNEL_RANGE_F,
                 .rollStickDPS = 0.0F,
                 .pitchStickDPS = 0.0F,
@@ -316,11 +308,11 @@ void Cockpit::check_failsafe(uint32_t tickCount)
                 .pitchStickDegrees = 0.0F,
                 .controlMode = FlightController::CONTROL_MODE_ANGLE
             };
-            flightController.updateSetpoints(flightControls, FlightController::FAILSAFE_ON);
+            pg.flight_controller.updateSetpoints(flightControls, FlightController::FAILSAFE_ON, pg.debug);
         } else {
             // we've lost contact for an extended period, so disarm.
             _failsafe.phase = FAILSAFE_DISARMED;
-            setDisarmed(flightController);
+            setDisarmed(pg.flight_controller, pg.motor_mixer);
         }
     }
 }
@@ -336,7 +328,7 @@ bool Cockpit::gpsRescueIsConfigured() const
 }
 
 
-void Cockpit::setRX_Config(const RX::config_t& rxConfig)
+void Cockpit::setRX_Config(const rx_config_t& rxConfig)
 {
     _rxConfig = rxConfig;
 }
@@ -349,17 +341,17 @@ void Cockpit::setRX_FailsafeChannelConfigs(const RX::failsafe_channel_configs_t&
 void Cockpit::setRates(const rates_t& rates) // NOLINT(readability-make-member-function-const)
 {
     _rates = rates;
-    const float maxAngleRateRollDPS = applyRates(rates_t::ROLL, 1.0F);
-    const float maxAngleRatePitchDPS = applyRates(rates_t::PITCH, 1.0F);
-    const float maxAngleRateYawDPS = applyRates(rates_t::YAW, 1.0F);
+    //const float maxAngleRateRollDPS = applyRates(rates_t::ROLL, 1.0F);
+    //const float maxAngleRatePitchDPS = applyRates(rates_t::PITCH, 1.0F);
+    //const float maxAngleRateYawDPS = applyRates(rates_t::YAW, 1.0F);
 
-    _flightController.setMaxAngleRates(maxAngleRateRollDPS, maxAngleRatePitchDPS, maxAngleRateYawDPS);
+    //!!_flightController.setMaxAngleRates(maxAngleRateRollDPS, maxAngleRatePitchDPS, maxAngleRateYawDPS);
 }
 
 /*!
 return state of given boxId box, handling ARM and FLIGHT_MODE
 */
-bool Cockpit::getBoxIdState(uint8_t boxId, const RcModes& rcModes) const
+bool Cockpit::getBoxIdState(uint8_t boxId, const RcModes& rc_modes) const
 {
     // we assume that all boxId below BOXID_FLIGHTMODE_LAST except BOXARM are mapped to flightmode
 
@@ -369,14 +361,14 @@ bool Cockpit::getBoxIdState(uint8_t boxId, const RcModes& rcModes) const
     if (boxId < MspBox::BOX_ID_FLIGHTMODE_COUNT) {
         return _flightModeFlags.test(BoxIdToFlightModeMap[boxId]); // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
     }
-    return rcModes.is_mode_active(boxId);
+    return rc_modes.is_mode_active(boxId);
 }
 
 /*!
 Pack used flightModeFlags into supplied bitset.
 returns number of bits used
 */
-size_t Cockpit::packFlightModeFlags(MspBox::bitset_t& flightModeFlags, const RcModes& rcModes) const
+size_t Cockpit::packFlightModeFlags(MspBox::bitset_t& flightModeFlags, const RcModes& rc_modes) const
 {
     // Serialize the flags in the order we delivered them, ignoring BOX NAMES and BOX INDEXES
     flightModeFlags.reset();
@@ -385,7 +377,7 @@ size_t Cockpit::packFlightModeFlags(MspBox::bitset_t& flightModeFlags, const RcM
     size_t boxIndex = 0;    // index of active boxId (matches sent permanentId and boxNames)
     for (uint8_t boxId = 0; boxId < MspBox::BOX_COUNT; ++boxId) {
         if (_mspBox.get_active_box_id(boxId)) {
-            if (getBoxIdState(boxId, rcModes)) {
+            if (getBoxIdState(boxId, rc_modes)) {
                 flightModeFlags.set(boxIndex); // box is enabled
             }
             ++boxIndex; // box is active, count it

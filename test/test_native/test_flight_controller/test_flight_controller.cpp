@@ -3,22 +3,18 @@
 #include "FlightController.h"
 #include "NonVolatileStorage.h"
 
-#include <AHRS.h>
-#include <AHRS_MessageQueue.h>
-#include <Debug.h>
-#include <IMU_FiltersBase.h>
-#include <IMU_Null.h>
-#include <ReceiverVirtual.h>
-#include <SensorFusion.h>
+#include <ahrs.h>
+#include <debug.h>
+#include <imu_filters_base.h>
+#include <imu_null.h>
+#include <motor_mixer_base.h>
+#include <receiver_virtual.h>
+#include <sensor_fusion.h>
 
 #include <string>
 
 #include <unity.h>
 
-#if !defined(OUTPUT_TO_MOTORS_DENOMINATOR)
-//enum { OUTPUT_TO_MOTORS_DENOMINATOR = 1 };
-static const uint32_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
-#endif
 
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
 enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
@@ -34,29 +30,28 @@ void tearDown() {
 void test_flight_controller()
 {
     static MadgwickFilter sensorFusionFilter;
-    static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
-    static IMU_FiltersBase imuFilters;
+    static ImuNull imu(ImuBase::XPOS_YPOS_ZPOS);
 
-    enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
-    static Debug debug;
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, &debug);
+    static constexpr uint8_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
+    static constexpr size_t MOTOR_COUNT = 4;
+    static constexpr size_t SERVO_COUNT = 0;
+    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);
     static ReceiverVirtual receiver;
-    AHRS_MessageQueue ahrsMessageQueue;
-    FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
-    static AHRS ahrs(AHRS::TIMER_DRIVEN, fc, sensorFusionFilter, imu, imuFilters);
-    TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    TEST_ASSERT_FALSE(fc.motorsIsOn());
+    FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS);
+    static Ahrs ahrs(Ahrs::TIMER_DRIVEN, sensorFusionFilter, imu);
+    //TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
+    TEST_ASSERT_FALSE(motorMixer.motors_is_on());
 
-    fc.motorsSwitchOn();
-    TEST_ASSERT_FALSE(fc.motorsIsOn());
-    ahrs.setSensorFusionInitializing(false);
-    fc.motorsSwitchOn();
-    TEST_ASSERT_TRUE(fc.motorsIsOn());
+    fc.motorsSwitchOn(motorMixer); // should not switch on, since sensor fusion filter is initializing
+    TEST_ASSERT_FALSE(motorMixer.motors_is_on());
+    fc.set_sensor_fusion_filter_is_initializing(false);
+    fc.motorsSwitchOn(motorMixer);
+    TEST_ASSERT_TRUE(motorMixer.motors_is_on());
 
-    fc.motorsSwitchOff();
-    TEST_ASSERT_FALSE(fc.motorsIsOn());
-    fc.motorsSwitchOn();
-    TEST_ASSERT_TRUE(fc.motorsIsOn());
+    fc.motorsSwitchOff(motorMixer);
+    TEST_ASSERT_FALSE(motorMixer.motors_is_on());
+    fc.motorsSwitchOn(motorMixer);
+    TEST_ASSERT_TRUE(motorMixer.motors_is_on());
 
     static const std::string pidNameSpeed = fc.getPID_Name(FlightController::ROLL_RATE_DPS);
     TEST_ASSERT_TRUE(pidNameSpeed.compare("ROLL_RATE") == 0);
@@ -73,7 +68,7 @@ void test_flight_controller()
     static const std::string pidNamePitch = fc.getPID_Name(FlightController::PITCH_ANGLE_DEGREES);
     TEST_ASSERT_TRUE(pidNamePitch.compare("PITCH_ANGLE") == 0);
 
-    FlightController::tpa_config_t tpaConfig = fc.getTPA_Config();
+    tpa_config_t tpaConfig = fc.getTPA_Config();
     TEST_ASSERT_EQUAL(0, tpaConfig.tpa_breakpoint);
     TEST_ASSERT_EQUAL(0, tpaConfig.tpa_mode);
     TEST_ASSERT_EQUAL(0, tpaConfig.tpa_rate);
@@ -81,7 +76,7 @@ void test_flight_controller()
     static NonVolatileStorage nvs;
     nvs.init();
 
-    tpaConfig = nvs.loadFlightControllerTPA_Config(NonVolatileStorage::DEFAULT_PID_PROFILE);
+    tpaConfig = nvs.load_flight_controller_tpa_config(NonVolatileStorage::DEFAULT_PID_PROFILE);
     fc.setTPA_Config(tpaConfig);
 
     tpaConfig = fc.getTPA_Config();
@@ -98,8 +93,10 @@ void test_flight_controller_pid_indexes()
     TEST_ASSERT_TRUE(static_cast<int>(FlightController::YAW_RATE_DPS) == static_cast<int>(TD_FC_PIDS::YAW_RATE_DPS));
     TEST_ASSERT_TRUE(static_cast<int>(FlightController::ROLL_ANGLE_DEGREES) == static_cast<int>(TD_FC_PIDS::ROLL_ANGLE_DEGREES));
     TEST_ASSERT_TRUE(static_cast<int>(FlightController::PITCH_ANGLE_DEGREES) == static_cast<int>(TD_FC_PIDS::PITCH_ANGLE_DEGREES));
+#if defined(USE_SIN_ANGLE_PIDS)
     TEST_ASSERT_TRUE(static_cast<int>(FlightController::ROLL_SIN_ANGLE) == static_cast<int>(TD_FC_PIDS::ROLL_SIN_ANGLE));
     TEST_ASSERT_TRUE(static_cast<int>(FlightController::PITCH_SIN_ANGLE) == static_cast<int>(TD_FC_PIDS::PITCH_SIN_ANGLE));
+#endif
 }
 
 void test_flight_controller_flight_mode_flags()

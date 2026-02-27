@@ -1,16 +1,17 @@
 # pragma once
 
-#include "FlightController.h"
-#include <VehicleControllerTask.h>
-
 #include <cstddef>
 #include <cstdint>
 
-class MSP_Base;
+class FlightController;
+class MotorMixerBase;
+class MspBase;
 class Debug;
+struct msp_parameter_group_t;
 
-size_t packTelemetryData_FC_QUADCOPTER(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, const FlightController& flightController); // NOLINT(readability-avoid-const-params-in-decls) false positive
 
-size_t packTelemetryData_Debug(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, const Debug& debug); // NOLINT(readability-avoid-const-params-in-decls)
+size_t pack_telemetry_data_fc_quadcopter(uint8_t* telemetry_data_ptr, uint32_t id, uint32_t sequence_number, const FlightController& flightController, const MotorMixerBase& motorMixer); // NOLINT(readability-avoid-const-params-in-decls) false positive
 
-size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, MSP_Base& msp, int16_t cmdMSP);
+size_t pack_telemetry_data_debug(uint8_t* telemetry_data_ptr, uint32_t id, uint32_t sequence_number, const Debug& debug); // NOLINT(readability-avoid-const-params-in-decls)
+
+size_t pack_telemetry_data_msp(uint8_t* telemetry_data_ptr, uint32_t id, uint32_t sequence_number, msp_parameter_group_t& pg, MspBase& msp, int16_t cmd_msp);

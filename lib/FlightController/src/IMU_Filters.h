@@ -3,54 +3,53 @@
 #include "DynamicNotchFilter.h"
 #include "Targets.h"
 
-#include <IMU_FiltersBase.h>
-#include <RpmFilters.h>
+#include <imu_filters_base.h>
+#include <rpm_filters.h>
 
 class Debug;
 class MotorMixerBase;
 class RpmFilters;
 
 
-class IMU_Filters : public IMU_FiltersBase {
+struct imu_filters_config_t {
+    enum { PT1 = 0, BIQUAD, PT2, PT3, NOT_SET = 0xFF }; // filter types
+    uint16_t acc_lpf_hz;
+    uint16_t gyro_lpf1_hz;
+    uint16_t gyro_lpf2_hz;
+    uint16_t gyro_notch1_hz;
+    uint16_t gyro_notch1_cutoff;
+    uint16_t gyro_notch2_hz;
+    uint16_t gyro_notch2_cutoff;
+    //uint16_t gyro_dynamic_lpf1_min_hz;
+    //uint16_t gyro_dynamic_lpf1_max_hz;
+    uint8_t gyro_lpf1_type;
+    uint8_t gyro_lpf2_type;
+    // uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
+};
+
+class IMU_Filters : public ImuFiltersBase {
 public:
     // Filter parameters choosen to be compatible with MultiWii Serial Protocol MSP_FILTER_CONFIG and MSP_SET_FILTER_CONFIG
-    struct config_t {
-        enum { PT1 = 0, BIQUAD, PT2, PT3, NOT_SET = 0xFF }; // filter types
-        uint16_t acc_lpf_hz;
-        uint16_t gyro_lpf1_hz;
-        uint16_t gyro_lpf2_hz;
-        uint16_t gyro_notch1_hz;
-        uint16_t gyro_notch1_cutoff;
-        uint16_t gyro_notch2_hz;
-        uint16_t gyro_notch2_cutoff;
-        //uint16_t gyro_dynamic_lpf1_min_hz;
-        //uint16_t gyro_dynamic_lpf1_max_hz;
-        uint8_t gyro_lpf1_type;
-        uint8_t gyro_lpf2_type;
-        // uint8_t gyro_hardware_lpf; // this ignored, this is set in the IMU driver
-    };
     enum { GYRO_LPF_MAX_HZ = 1000 }; // so little filtering above 1000Hz that to get less delay you might as well disable the filter
 public:
-    IMU_Filters(size_t motorCount, Debug& debug, float looptimeSeconds);
-    IMU_Filters(size_t motorCount, Debug& debug, uint32_t looptime) = delete; // delete this overload so it is not accidentally called
+    IMU_Filters(float looptimeSeconds);
+    IMU_Filters(uint32_t looptime) = delete; // delete this overload so it is not accidentally called
 
-    virtual void filter(xyz_t& gyroRPS, xyz_t& acc, float deltaT) override;
+    virtual void filter(xyz_t& gyro_rps, xyz_t& acc, float deltaT, Debug& debug) override;
 
     void setRPM_Filters(RpmFilters* rpmFilters) { _rpmFilters = rpmFilters; }
     const RpmFilters* getRPM_Filters() const { return _rpmFilters; }
     RpmFilters* getRPM_FiltersMutable() { return _rpmFilters; }
 
-    void setConfig(const config_t& config);
-    const config_t& getConfig() const { return _config; }
-    void setDynamicNotchFilterConfig(const DynamicNotchFilter::config_t& config);
+    void setConfig(const imu_filters_config_t& config);
+    const imu_filters_config_t& getConfig() const { return _config; }
+    void set_dynamic_notch_filter_config(const dynamic_notch_filter_config_t& config);
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
-    const DynamicNotchFilter::config_t& getDynamicNotchFilterConfig() const { return _dynamicNotchFilter.getConfig(); }
+    const dynamic_notch_filter_config_t& get_dynamic_notch_filter_config() const { return _dynamicNotchFilter.getConfig(); }
 #endif
 protected:
-    Debug& _debug;
     float _looptimeSeconds;
-    size_t _motorCount;
-    config_t _config {}; //!< configuration data is only changed in setConfig
+    imu_filters_config_t _config {}; //!< configuration data is only changed in setConfig
     bool  _useGyroNotch1 {false};
     bool  _useGyroNotch2 {false};
 

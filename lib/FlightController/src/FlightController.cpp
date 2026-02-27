@@ -1,6 +1,6 @@
 #include "FlightController.h"
 
-#include <Debug.h>
+#include <debug.h>
 
 #if !defined(FRAMEWORK_TEST)
 //#define SERIAL_OUTPUT
@@ -9,8 +9,8 @@
 #endif
 #endif
 
-#include <MotorMixerBase.h>
-#include <TimeMicroseconds.h>
+#include <motor_mixer_base.h>
+#include <time_microseconds.h>
 
 #if defined(FRAMEWORK_ARDUINO_ESP32)
 #include <esp32-hal.h>
@@ -30,19 +30,15 @@ the AHRS task function AHRS::readIMUandUpdateOrientation runs.
 
 MotorMixer::outputToMotors is called every _outputToMotorsDenominator times FlightController outputToMixer is called
 */
-FlightController::FlightController(uint32_t taskIntervalMicroseconds, uint32_t outputToMotorsDenominator, MotorMixerBase& motorMixer, AHRS_MessageQueue& ahrsMessageQueue, Debug& debug) :
-    VehicleControllerBase(AIRCRAFT, PID_COUNT, taskIntervalMicroseconds),
-    _motorMixer(motorMixer),
-    _ahrsMessageQueue(ahrsMessageQueue),
-    _debug(debug),
-    _outputToMotorsDenominator(outputToMotorsDenominator)
+FlightController::FlightController(uint32_t task_interval_microseconds) :
+    VehicleControllerBase(AIRCRAFT, PID_COUNT, task_interval_microseconds)
 {
-    _sh.antiGravityThrottleFilter.setToPassthrough();
+    _sh.antiGravityThrottleFilter.set_to_passthrough();
 
     static constexpr float outputSaturationValue = 1.0F / MIXER_OUTPUT_SCALE_FACTOR;
-    _sh.PIDS[ROLL_RATE_DPS].setOutputSaturationValue(outputSaturationValue);
-    _sh.PIDS[PITCH_RATE_DPS].setOutputSaturationValue(outputSaturationValue);
-    _sh.PIDS[YAW_RATE_DPS].setOutputSaturationValue(outputSaturationValue);
+    _sh.PIDS[ROLL_RATE_DPS].set_output_saturation_value(outputSaturationValue);
+    _sh.PIDS[PITCH_RATE_DPS].set_output_saturation_value(outputSaturationValue);
+    _sh.PIDS[YAW_RATE_DPS].set_output_saturation_value(outputSaturationValue);
 }
 
 // NOLINTBEGIN(cppcoreguidelines-macro-usage,bugprone-reserved-identifier,cert-dcl37-c,cert-dcl51-cpp)
@@ -63,47 +59,47 @@ static const std::array<std::string, FlightController::PID_COUNT> PID_NAMES = {
 #endif
 };
 
-const std::string& FlightController::getPID_Name(pid_index_e pidIndex) const
+const std::string& FlightController::getPID_Name(pid_index_e pid_index) const
 {
-    return PID_NAMES[pidIndex];
+    return PID_NAMES[pid_index];
 }
 
-VehicleControllerBase::PIDF_error_t FlightController::getPID_Error(size_t index) const
+VehicleControllerBase::PIDF_error_t FlightController::get_pid_error(size_t index) const
 {
-    const PIDF::error_t error = _sh.PIDS[index].getError();
+    const pid_error_t error = _sh.PIDS[index].get_error();
     return PIDF_error_t {
-        .P = error.P,
-        .I = error.I,
-        .D = error.D,
-        .S = error.S,
-        .K = error.K
+        .P = error.p,
+        .I = error.i,
+        .D = error.d,
+        .S = error.s,
+        .K = error.k
     };
 }
 
-float FlightController::getPID_Setpoint(size_t index) const
+float FlightController::get_pid_setpoint(size_t index) const
 {
-    return _sh.PIDS[index].getSetpoint();
+    return _sh.PIDS[index].get_setpoint();
 }
 
-//!!TODO: reconcile FlightController::getPID_MSP, FlightController::getPID_Constants and set variants
-VehicleControllerBase::PIDF_uint16_t FlightController::getPID_MSP(size_t index) const
+//!!TODO: reconcile FlightController::get_pid_msp, FlightController::get_pid_constants and set variants
+VehicleControllerBase::PIDF_uint16_t FlightController::get_pid_msp(size_t index) const
 {
     assert(index < PID_COUNT);
 
-    const auto pidIndex = static_cast<pid_index_e>(index);
+    const auto pid_index = static_cast<pid_index_e>(index);
     const PIDF_uint16_t ret = {
-        .kp = static_cast<uint16_t>(_sh.PIDS[pidIndex].getP() / _scaleFactors.kp),
-        .ki = static_cast<uint16_t>(_sh.PIDS[pidIndex].getI() / _scaleFactors.ki),
-        .kd = static_cast<uint16_t>(_sh.PIDS[pidIndex].getD() / _scaleFactors.kd),
-        .ks = static_cast<uint16_t>(_sh.PIDS[pidIndex].getS() / _scaleFactors.ks),
-        .kk = static_cast<uint16_t>(_sh.PIDS[pidIndex].getK() / _scaleFactors.kk),
+        .kp = static_cast<uint16_t>(_sh.PIDS[pid_index].get_p() / _scaleFactors.kp),
+        .ki = static_cast<uint16_t>(_sh.PIDS[pid_index].get_i() / _scaleFactors.ki),
+        .kd = static_cast<uint16_t>(_sh.PIDS[pid_index].get_d() / _scaleFactors.kd),
+        .ks = static_cast<uint16_t>(_sh.PIDS[pid_index].get_s() / _scaleFactors.ks),
+        .kk = static_cast<uint16_t>(_sh.PIDS[pid_index].get_k() / _scaleFactors.kk),
     };
     return ret;
 }
 
-VehicleControllerBase::PIDF_uint16_t FlightController::getPID_Constants(pid_index_e pidIndex) const
+VehicleControllerBase::PIDF_uint16_t FlightController::get_pid_constants(pid_index_e pid_index) const
 {
-    const PIDF::PIDF_t pid = _sh.PIDS[pidIndex].getPID();
+    const pid_constants_t pid = _sh.PIDS[pid_index].get_pid();
     const VehicleControllerBase::PIDF_uint16_t pid16 = {
         static_cast<uint16_t>(std::lroundf(pid.kp / _scaleFactors.kp)),
         static_cast<uint16_t>(std::lroundf(pid.ki / _scaleFactors.ki)),
@@ -116,13 +112,13 @@ VehicleControllerBase::PIDF_uint16_t FlightController::getPID_Constants(pid_inde
 }
 
 /*!
-Set the P, I, D, S, and K values for the PID with index pidIndex.
+Set the P, I, D, S, and K values for the PID with index pid_index.
 Integration is switched off, so that there is no integral windup before takeoff.
 */
-void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_t& pid16)
+void FlightController::set_pid_constants(pid_index_e pid_index, const PIDF_uint16_t& pid16)
 {
 
-    const PIDF::PIDF_t pid = {
+    const pid_constants_t pid = {
         static_cast<float>(pid16.kp) * _scaleFactors.kp,
         static_cast<float>(pid16.ki) * _scaleFactors.ki,
         static_cast<float>(pid16.kd) * _scaleFactors.kd,
@@ -130,52 +126,52 @@ void FlightController::setPID_Constants(pid_index_e pidIndex, const PIDF_uint16_
         static_cast<float>(pid16.kk) * _scaleFactors.kk
     };
 
-    _sh.PIDS[pidIndex].setPID(pid);
-    _sh.PIDS[pidIndex].switchIntegrationOff();
-    _sh.PIDS[pidIndex].setSetpoint(0.0F);
+    _sh.PIDS[pid_index].set_pid(pid);
+    _sh.PIDS[pid_index].switch_integration_off();
+    _sh.PIDS[pid_index].set_setpoint(0.0F);
     // keep copies of the PID constants so they can be adjusted by anti-gravity
-    _fcM.pidConstants[pidIndex] = _sh.PIDS[pidIndex].getPID();
+    _fcM.pidConstants[pid_index] = _sh.PIDS[pid_index].get_pid();
 }
 
-void FlightController::setPID_P_MSP(pid_index_e pidIndex, uint16_t kp)
+void FlightController::set_pid_p_msp(pid_index_e pid_index, uint16_t kp)
 {
-    _sh.PIDS[pidIndex].setP(kp * _scaleFactors.kp);
-    _fcM.pidConstants[pidIndex].kp = _sh.PIDS[pidIndex].getP();
+    _sh.PIDS[pid_index].set_p(kp * _scaleFactors.kp);
+    _fcM.pidConstants[pid_index].kp = _sh.PIDS[pid_index].get_p();
 }
 
-void FlightController::setPID_PD_MSP(pid_index_e pidIndex, uint16_t kp)
+void FlightController::set_pid_pd_msp(pid_index_e pid_index, uint16_t kp)
 {
-    const PIDF pid = getPID(pidIndex);
-    const float ratio = pid.getD() / pid.getP();
-    setPID_P_MSP(pidIndex, kp);
-    setPID_D_MSP(pidIndex, static_cast<uint16_t>(static_cast<float>(kp)*ratio));
+    const PidController pid = getPID(pid_index);
+    const float ratio = pid.get_d() / pid.get_p();
+    set_pid_p_msp(pid_index, kp);
+    set_pid_d_msp(pid_index, static_cast<uint16_t>(static_cast<float>(kp)*ratio));
 }
 
-void FlightController::setPID_I_MSP(pid_index_e pidIndex, uint16_t ki)
+void FlightController::set_pid_i_msp(pid_index_e pid_index, uint16_t ki)
 {
-    _sh.PIDS[pidIndex].setI(ki * _scaleFactors.ki);
-    _fcM.pidConstants[pidIndex].ki = _sh.PIDS[pidIndex].getI();
+    _sh.PIDS[pid_index].set_i(ki * _scaleFactors.ki);
+    _fcM.pidConstants[pid_index].ki = _sh.PIDS[pid_index].get_i();
 }
 
-void FlightController::setPID_D_MSP(pid_index_e pidIndex, uint16_t kd)
+void FlightController::set_pid_d_msp(pid_index_e pid_index, uint16_t kd)
 {
-    _sh.PIDS[pidIndex].setD(kd * _scaleFactors.kd);
-    _fcM.pidConstants[pidIndex].kd = _sh.PIDS[pidIndex].getD();
+    _sh.PIDS[pid_index].set_d(kd * _scaleFactors.kd);
+    _fcM.pidConstants[pid_index].kd = _sh.PIDS[pid_index].get_d();
 }
 
-void FlightController::setPID_S_MSP(pid_index_e pidIndex, uint16_t ks)
+void FlightController::set_pid_s_msp(pid_index_e pid_index, uint16_t ks)
 {
-    _sh.PIDS[pidIndex].setS(ks * _scaleFactors.ks);
-    _fcM.pidConstants[pidIndex].ks = _sh.PIDS[pidIndex].getS();
+    _sh.PIDS[pid_index].set_s(ks * _scaleFactors.ks);
+    _fcM.pidConstants[pid_index].ks = _sh.PIDS[pid_index].get_s();
 }
 
-void FlightController::setPID_K_MSP(pid_index_e pidIndex, uint16_t kk)
+void FlightController::set_pid_k_msp(pid_index_e pid_index, uint16_t kk)
 {
-    _sh.PIDS[pidIndex].setK(kk * _scaleFactors.kk);
-    _fcM.pidConstants[pidIndex].kk = _sh.PIDS[pidIndex].getK();
+    _sh.PIDS[pid_index].set_k(kk * _scaleFactors.kk);
+    _fcM.pidConstants[pid_index].kk = _sh.PIDS[pid_index].get_k();
 }
 
-const FlightController::simplified_pid_settings_t& FlightController::getSimplifiedPID_Settings() const
+const simplified_pid_settings_t& FlightController::getSimplifiedPID_Settings() const
 {
     return _fcM.simplifiedPID_Settings;
 }
@@ -195,7 +191,7 @@ void FlightController::setSimplifiedPID_Settings(const simplified_pid_settings_t
     pid16.ki = std::clamp(static_cast<uint16_t>(DefaultPIDs[ROLL_RATE_DPS].ki * masterMultiplier * piGain * iGain), uint16_t{0}, PID_GAIN_MAX);
     pid16.kd = std::clamp(static_cast<uint16_t>(DefaultPIDs[ROLL_RATE_DPS].kd * masterMultiplier * dGain), uint16_t{0}, PID_GAIN_MAX);
     pid16.kk = std::clamp(static_cast<uint16_t>(DefaultPIDs[ROLL_RATE_DPS].kk * masterMultiplier * kGain), uint16_t{0}, K_GAIN_MAX);
-    setPID_Constants(ROLL_RATE_DPS, pid16);
+    set_pid_constants(ROLL_RATE_DPS, pid16);
 
     pid16.kp = std::clamp(static_cast<uint16_t>(DefaultPIDs[PITCH_RATE_DPS].kp * masterMultiplier * piGain), uint16_t{0}, PID_GAIN_MAX);
     const float pitchPI_gain = static_cast<float>(settings.pitch_pi_gain) / 100.0F;
@@ -203,14 +199,14 @@ void FlightController::setSimplifiedPID_Settings(const simplified_pid_settings_t
     const float pitchDGain = static_cast<float>(settings.roll_pitch_ratio) / 100.0F;
     pid16.kd = std::clamp(static_cast<uint16_t>(DefaultPIDs[PITCH_RATE_DPS].kd * masterMultiplier * dGain * pitchDGain), uint16_t{0}, PID_GAIN_MAX);
     pid16.kk = std::clamp(static_cast<uint16_t>(DefaultPIDs[PITCH_RATE_DPS].kk * masterMultiplier * kGain), uint16_t{0}, K_GAIN_MAX);
-    setPID_Constants(PITCH_RATE_DPS, pid16);
+    set_pid_constants(PITCH_RATE_DPS, pid16);
 
     if (_pidTuningMode == PID_TUNING_SIMPLIFIED_RPY) {
         pid16.kp = std::clamp(static_cast<uint16_t>(DefaultPIDs[YAW_RATE_DPS].kp * masterMultiplier * piGain), uint16_t{0}, PID_GAIN_MAX);
         pid16.ki = std::clamp(static_cast<uint16_t>(DefaultPIDs[YAW_RATE_DPS].ki * masterMultiplier * piGain * iGain), uint16_t{0}, PID_GAIN_MAX);
         pid16.kd = std::clamp(static_cast<uint16_t>(DefaultPIDs[YAW_RATE_DPS].kd * masterMultiplier * dGain), uint16_t{0}, PID_GAIN_MAX);
         pid16.kk = std::clamp(static_cast<uint16_t>(DefaultPIDs[YAW_RATE_DPS].kk * masterMultiplier * kGain), uint16_t{0}, K_GAIN_MAX);
-        setPID_Constants(YAW_RATE_DPS, pid16);
+        set_pid_constants(YAW_RATE_DPS, pid16);
     }
 
 #if defined(USE_D_MAX)
@@ -222,42 +218,32 @@ void FlightController::setSimplifiedPID_Settings(const simplified_pid_settings_t
 #endif
 }
 
-uint32_t FlightController::getOutputPowerTimeMicroseconds() const
+uint32_t FlightController::get_output_power_time_microseconds() const
 {
-    //return _motorMixer.getOutputPowerTimeMicroseconds();
+    //return _motorMixer.get_output_power_time_microseconds();
     return 0;
 }
 
-void FlightController::motorsSwitchOff()
+void FlightController::motorsSwitchOff(MotorMixerBase& motorMixer)
 {
-    _motorMixer.motors_switch_off();
+    motorMixer.motors_switch_off();
     _sh.takeOffCountStart = 0;
     _sh.groundMode = true;
     switchPID_integrationOff();
 }
 
-void FlightController::motorsSwitchOn()
+void FlightController::motorsSwitchOn(MotorMixerBase& motorMixer)
 {
     // don't allow motors to be switched on if the sensor fusion has not initialized
 #if defined(FRAMEWORK_TEST)
-    if (!_sensorFusionFilterIsInitializing) { //!!TODO: fix _sensorFusionFilterIsInitializing
+    if (!_sensor_fusion_filter_is_initializing) { //!!TODO: fix _sensorFusionFilterIsInitializing
 #else
     {
 #endif
-        _motorMixer.motors_switch_on();
+        motorMixer.motors_switch_on();
         // reset the PID integral values when we switch the motors on
         switchPID_integrationOn();
     }
-}
-
-bool FlightController::motorsIsDisabled() const
-{
-    return _motorMixer.motors_is_disabled();
-}
-
-bool FlightController::motorsIsOn() const
-{
-    return _motorMixer.motors_is_on();
 }
 
 void FlightController::setBlackboxActive(bool isActive) 
@@ -265,7 +251,7 @@ void FlightController::setBlackboxActive(bool isActive)
     _sh.blackboxActive = isActive;
 }
 
-void FlightController::setPID_TuningMode(pid_tuning_mode_e pidTuningMode)
+void FlightController::set_pid_tuning_mode(pid_tuning_mode_e pidTuningMode)
 {
     _pidTuningMode = pidTuningMode;
 }
@@ -277,50 +263,50 @@ void FlightController::setMaxAngleRates(float maxRollRateDPS, float maxPitchRate
     _maxYawRateDPS = maxYawRateDPS;
 }
 
-void FlightController::setFiltersConfig(const filters_config_t& filtersConfig)
+void FlightController::setFiltersConfig(const flight_controller_filters_config_t& filtersConfig)
 {
     _filtersConfig = filtersConfig;
 
     // always used PT1 filters for DTerm filters.
 #if defined(USE_DTERM_FILTERS_EXTENDED)
-    _filtersConfig.dterm_lpf1_type = FlightController::filters_config_t::PT1;
-    _filtersConfig.dterm_lpf2_type = FlightController::filters_config_t::PT1;
+    _filtersConfig.dterm_lpf1_type = flight_controller_filters_config_t::PT1;
+    _filtersConfig.dterm_lpf2_type = flight_controller_filters_config_t::PT1;
 #endif
 
     //!!TODO: check dT value for filters config
-    const float deltaT = static_cast<float>(_taskIntervalMicroseconds) * 0.000001F;
-    //const float deltaT = (static_cast<float>(_ahrs.getTaskIntervalMicroseconds()) * 0.000001F) / static_cast<float>(_outputToMotorsDenominator);
+    const float deltaT = static_cast<float>(_task_interval_microseconds) * 0.000001F;
+    //const float deltaT = (static_cast<float>(_ahrs.get_task_interval_microseconds()) * 0.000001F) / static_cast<float>(_outputToMotorsDenominator);
 
     // DTerm filters
     if (_filtersConfig.dterm_lpf1_hz == 0) {
         for (auto& filter : _sh.dTermFilters1) {
-            filter.setToPassthrough();
+            filter.set_to_passthrough();
         }
     } else {
         // DTerm filters always use a PowerTransfer1 filter.
         for (auto& filter : _sh.dTermFilters1) {
-            filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf1_hz, deltaT);
+            filter.set_cutoff_frequency_and_reset(filtersConfig.dterm_lpf1_hz, deltaT);
         }
     }
     if (_filtersConfig.dterm_lpf2_hz == 0) {
         for (auto& filter : _sh.dTermFilters2) {
-            filter.setToPassthrough();
+            filter.set_to_passthrough();
         }
     } else {
         // DTerm filters always use a PowerTransfer1 filter.
         for (auto& filter : _sh.dTermFilters2) {
-            filter.setCutoffFrequencyAndReset(filtersConfig.dterm_lpf2_hz, deltaT);
+            filter.set_cutoff_frequency_and_reset(filtersConfig.dterm_lpf2_hz, deltaT);
         }
     }
 
     // Output filters
     if (_filtersConfig.output_lpf_hz == 0) {
-        for (auto& filter : _fcM.outputFilters) {
-            filter.setToPassthrough();
+        for (auto& filter : _sh.outputFilters) {
+            filter.set_to_passthrough();
         }
     } else {
-        for (auto& filter : _fcM.outputFilters) {
-            filter.setCutoffFrequencyAndReset(filtersConfig.output_lpf_hz, deltaT);
+        for (auto& filter : _sh.outputFilters) {
+            filter.set_cutoff_frequency_and_reset(filtersConfig.output_lpf_hz, deltaT);
         }
     }
 }
@@ -367,7 +353,7 @@ void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig) // NOLINT
     for (size_t axis = 0; axis < RPY_AXIS_COUNT; ++axis) {
 #endif
         const uint8_t dMax = dMaxConfig.d_max[axis];
-        const PIDF_uint16_t pid16 = getPID_Constants(static_cast<pid_index_e>(axis));
+        const PIDF_uint16_t pid16 = get_pid_constants(static_cast<pid_index_e>(axis));
         if (pid16.kd > 0 && dMax > pid16.kd) {
             // ratio of DMax to kd, eg if kd is 8 and DMax is 10 then dMaxPercent is 1.25
             _dMax.percent[axis] = static_cast<float>(dMax) / pid16.kd;
@@ -379,10 +365,10 @@ void FlightController::setDMaxConfig(const d_max_config_t& dMaxConfig) // NOLINT
     // lowpass included inversely in gain since stronger lowpass decreases peak effect
     _dMax.setpointGain = DMAX_SETPOINT_GAIN_FACTOR * static_cast<float>(dMaxConfig.d_max_gain * dMaxConfig.d_max_advance) / 100.0F / DMAX_LOWPASS_HZ;
     for (auto& filter : _sh.dMaxRangeFilters) {
-        filter.setToPassthrough();
+        filter.set_to_passthrough();
     }
     for (auto& filter : _sh.dMaxLowpassFilters) {
-        filter.setToPassthrough();
+        filter.set_to_passthrough();
     }
 }
 #endif
@@ -393,7 +379,7 @@ void FlightController::setITermRelaxConfig(const iterm_relax_config_t& iTermRela
     _iTermRelaxConfig = iTermRelaxConfig;
     _iTermRelax.setpointThresholdDPS = iTermRelaxConfig.iterm_relax_setpoint_threshold;
     for (auto& filter : _sh.iTermRelaxFilters) {
-        filter.setToPassthrough();
+        filter.set_to_passthrough();
     }
 }
 #endif
@@ -432,33 +418,33 @@ This is because:
    all the member data are continuous, and so a partially updated object is still meaningful to display.
 3. The overhead of a mutex is thus avoided.
 */
-flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() const
+flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData(const MotorMixerBase& motorMixer) const
 {
     flight_controller_quadcopter_telemetry_t telemetry;
 
 #if (__cplusplus >= 202002L)
-    for (auto ii : std::views::iota(size_t{0}, size_t{_motorMixer.get_motor_count()})) {
+    for (auto ii : std::views::iota(size_t{0}, size_t{motorMixer.get_motor_count()})) {
 #else
-    for (size_t ii = 0; ii < _motorMixer.get_motor_count(); ++ ii) {
+    for (size_t ii = 0; ii < motorMixer.get_motor_count(); ++ ii) {
 #endif
-        telemetry.motors[ii].power = _motorMixer.get_motor_output(ii);
-        telemetry.motors[ii].rpm = _motorMixer.get_motor_rpm(ii);
+        telemetry.motors[ii].power = motorMixer.get_motor_output(ii);
+        telemetry.motors[ii].rpm = motorMixer.get_motor_rpm(ii);
     }
-    if (motorsIsOn()) {
-        const PIDF::error_t rollRateError = _sh.PIDS[ROLL_RATE_DPS].getError();
-        telemetry.rollRateError = { rollRateError.P, rollRateError.I, rollRateError.D, rollRateError.S, rollRateError.K };
+    if (motorMixer.motors_is_on()) {
+        const pid_error_t rollRateError = _sh.PIDS[ROLL_RATE_DPS].get_error();
+        telemetry.rollRateError = { rollRateError.p, rollRateError.i, rollRateError.d, rollRateError.s, rollRateError.k };
 
-        const PIDF::error_t pitchRateError = _sh.PIDS[PITCH_RATE_DPS].getError();
-        telemetry.pitchRateError = { pitchRateError.P, pitchRateError.I, pitchRateError.D, pitchRateError.S, pitchRateError.K };
+        const pid_error_t pitchRateError = _sh.PIDS[PITCH_RATE_DPS].get_error();
+        telemetry.pitchRateError = { pitchRateError.p, pitchRateError.i, pitchRateError.d, pitchRateError.s, pitchRateError.k };
 
-        const PIDF::error_t yawRateError = _sh.PIDS[YAW_RATE_DPS].getError();
-        telemetry.yawRateError = { yawRateError.P, yawRateError.I, yawRateError.D, yawRateError.S, yawRateError.K };
+        const pid_error_t yawRateError = _sh.PIDS[YAW_RATE_DPS].get_error();
+        telemetry.yawRateError = { yawRateError.p, yawRateError.i, yawRateError.d, yawRateError.s, yawRateError.k };
 
-        const PIDF::error_t rollAngleError = _sh.PIDS[ROLL_ANGLE_DEGREES].getError();
-        telemetry.rollAngleError = { rollAngleError.P, rollAngleError.I, rollAngleError.D, rollAngleError.S, rollAngleError.K };
+        const pid_error_t rollAngleError = _sh.PIDS[ROLL_ANGLE_DEGREES].get_error();
+        telemetry.rollAngleError = { rollAngleError.p, rollAngleError.i, rollAngleError.d, rollAngleError.s, rollAngleError.k };
 
-        const PIDF::error_t pitchAngleError = _sh.PIDS[PITCH_ANGLE_DEGREES].getError();
-        telemetry.pitchAngleError = { pitchAngleError.P, pitchAngleError.I, pitchAngleError.D, pitchAngleError.S, pitchAngleError.K };
+        const pid_error_t pitchAngleError = _sh.PIDS[PITCH_ANGLE_DEGREES].get_error();
+        telemetry.pitchAngleError = { pitchAngleError.p, pitchAngleError.i, pitchAngleError.d, pitchAngleError.s, pitchAngleError.k };
     } else {
         telemetry.rollRateError =  { 0.0F, 0.0F, 0.0F, 0.0F, 0.0F };
         telemetry.pitchRateError = { 0.0F, 0.0F, 0.0F, 0.0F, 0.0F };
@@ -467,40 +453,4 @@ flight_controller_quadcopter_telemetry_t FlightController::getTelemetryData() co
         telemetry.pitchAngleError ={ 0.0F, 0.0F, 0.0F, 0.0F, 0.0F };
     }
     return telemetry;
-}
-
-/*!
-NOTE: CALLED FROM WITHIN THE FlightController TASK
-It is typically called at frequency of between 1000Hz and 8000Hz, so it has to be FAST.
-
-Called by the scheduler when the updateOutputsUsingPIDs function running in the AHRS task SIGNALs that output data is available.
-*/
-void FlightController::outputToMixer(float deltaT, uint32_t tickCount, const VehicleControllerMessageQueue::queue_item_t& queueItem)
-{
-    // Filter the output.
-    // This smooths the output, but also accumulates the output in the filter,
-    // so the values influence the output even when `outputToMotors` is not called.
-    _fcM.outputs[FD_ROLL] = _fcM.outputFilters[FD_ROLL].filter(queueItem.roll);
-    _fcM.outputs[FD_PITCH] = _fcM.outputFilters[FD_PITCH].filter(queueItem.pitch);
-    _fcM.outputs[FD_YAW] = _fcM.outputFilters[FD_YAW].filter(queueItem.yaw);
-
-    // Output to motors every _outputToMotorsDenominator times outputToMixer is called.
-    ++_fcM.outputToMixerCount;
-    if (_fcM.outputToMixerCount >= _outputToMotorsDenominator) {
-        _fcM.outputToMixerCount = 0;
-
-        motor_mixer_commands_t commands {
-            .throttle  = queueItem.throttle,
-            // scale roll, pitch, and yaw from DPS range to [-1.0F, 1.0F]
-            .roll   = _fcM.outputs[FD_ROLL] * MIXER_OUTPUT_SCALE_FACTOR,
-            .pitch  = _fcM.outputs[FD_PITCH] * MIXER_OUTPUT_SCALE_FACTOR,
-            .yaw    = _fcM.outputs[FD_YAW] * MIXER_OUTPUT_SCALE_FACTOR
-        };
-        _motorMixer.output_to_motors(commands, deltaT, tickCount);
-    }
-
-#if defined(USE_RPM_FILTERS)
-    // perform an RPM filter iteration step, even if we have not output to the motors
-    _motorMixer.rpm_filter_set_frequency_hz_iteration_step();
-#endif
 }

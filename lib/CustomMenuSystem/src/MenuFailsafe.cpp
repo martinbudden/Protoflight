@@ -4,18 +4,20 @@
 #include "LookupTables.h"
 
 
-static Cockpit::failsafe_config_t failsafeConfig {};
+static failsafe_config_t failsafeConfig {};
 
 // cppcheck-suppress constParameterCallback
-static const void* menuFailsafeOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+static const void* menuFailsafeOnEnter(CMSX& cmsx, cms_parameter_group_t& pg)
 {
-    failsafeConfig = cmsx.getCockpit().getFailsafeConfig();
+    (void)cmsx;
+    failsafeConfig = pg.cockpit.getFailsafeConfig();
     return nullptr;
 }
 
-static const void* menuFailsafeOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuFailsafeOnExit(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    cmsx.getCockpitMutable().setFailsafeConfig(failsafeConfig);
+    (void)cmsx;
+    pg.cockpit.setFailsafeConfig(failsafeConfig);
     return nullptr;
 }
 

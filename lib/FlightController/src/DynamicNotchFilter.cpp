@@ -1,7 +1,7 @@
 #include "DynamicNotchFilter.h"
 
-#include <Debug.h>
-#include <TimeMicroseconds.h>
+#include <debug.h>
+#include <time_microseconds.h>
 #if (__cplusplus >= 202002L)
 #include <ranges>
 #endif
@@ -9,8 +9,7 @@
 
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
 
-DynamicNotchFilter::DynamicNotchFilter(Debug& debug, float looptimeSeconds) :
-    _debug(debug),
+DynamicNotchFilter::DynamicNotchFilter(float looptimeSeconds) :
     _looptimeSeconds(looptimeSeconds)
 {
 }
@@ -21,7 +20,7 @@ Set and initialize.
 The upper limit of the dynamic notch is the Nyquist frequency, that is sampleRate/2.
 
 */
-void DynamicNotchFilter::setConfig(const config_t& config)
+void DynamicNotchFilter::setConfig(const dynamic_notch_filter_config_t& config)
 {
     _config = config;
 
@@ -67,7 +66,7 @@ void DynamicNotchFilter::setConfig(const config_t& config)
         for (size_t notchIndex = 0; notchIndex < _notchCount; ++notchIndex) {
             // any init value is fine, but evenly spreading center frequencies across frequency range makes notches stick to peaks quicker
             _centerFrequencyHz[axis][notchIndex] =  _minHz + (static_cast<float>(notchIndex) + 0.5F) * (_maxHz - _minHz) / static_cast<float>(_notchCount);
-            _notchFilters[axis][notchIndex].initNotch(_centerFrequencyHz[axis][notchIndex], _looptimeSeconds, _q);
+            _notchFilters[axis][notchIndex].init_notch(_centerFrequencyHz[axis][notchIndex], _looptimeSeconds, _q);
         }
     }
 }
@@ -107,11 +106,11 @@ so each filter has its frequency set every 12 calls of this function
 At 8kHz AHRS loop rate this gives 8kHz/12 = 666Hz, that is frequency update every 1.5ms.
 At 4kHz AHRS loop rate this gives 4kHz/12 = 333Hz, that is frequency update every 3ms.
 */
-void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function-cognitive-complexity)
+void DynamicNotchFilter::updateNotchFrequencies(Debug& debug) // NOLINT(readability-function-cognitive-complexity)
 {
-    const uint32_t startTimeUs = (_debug.getMode() == DEBUG_FFT_TIME) ? timeUs() : 0;
+    const uint32_t startTimeUs = (debug.getMode() == DEBUG_FFT_TIME) ? time_us() : 0;
 
-    _debug.set(DEBUG_FFT_TIME, 0, _state.step);
+    debug.set(DEBUG_FFT_TIME, 0, _state.step);
 
     // run an iteration of the state machine
     switch (_state.step) {
@@ -122,7 +121,7 @@ void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function
         for (size_t bin = _startBin; bin <= _endBin; ++bin) {
             _noiseThreshold += _sdftData[bin];
         }
-        _debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(timeUs() - startTimeUs));
+        debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(time_us() - startTimeUs));
         break;
     case STEP_DETECT_PEAKS:
         // Get memory ready for new peak data on current axis
@@ -157,7 +156,7 @@ void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function
                 }
             }
         }
-        _debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(timeUs() - startTimeUs));
+        debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(time_us() - startTimeUs));
         break;
     case STEP_CALCULATE_FREQUENCIES:
         // calculate _noiseThreshold (= average power spectral density in dynamic notch range, excluding peaks)
@@ -197,7 +196,7 @@ void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function
                 if (_config.dyn_notch_smoothing) {
                     static constexpr float DYN_NOTCH_SMOOTH_HZ = 4.0F;
                     // calculate center frequency as filtered value of new and old values
-                    const float gain = PowerTransferFilter1::gainFromFrequency(DYN_NOTCH_SMOOTH_HZ * cutoffMultiplier, _filterLooptimeSeconds);
+                    const float gain = PowerTransferFilter1::gain_from_frequency(DYN_NOTCH_SMOOTH_HZ * cutoffMultiplier, _filterLooptimeSeconds);
                     //Equivalently
                     //const float omega = 2.0F * PI_F*DYN_NOTCH_SMOOTH_HZ * cutoffMultiplier * _filterLooptimeSeconds;
                     //const float gain =  omega/(omega + 1.0F);
@@ -215,7 +214,7 @@ void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function
                 _maxCenterFrequencyHz = std::fmaxf(_maxCenterFrequencyHz, _centerFrequencyHz[_state.axis][notchIndex]);
             }
         }
-        _debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(timeUs() - startTimeUs));
+        debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(time_us() - startTimeUs));
         break;
     case STEP_UPDATE_FILTERS:
 #if (__cplusplus >= 202002L)
@@ -225,14 +224,14 @@ void DynamicNotchFilter::updateNotchFrequencies() // NOLINT(readability-function
 #endif
             // Only update notch filter coefficients if the corresponding peak got its center frequency updated in the previous step
             if (_peaks[notchIndex].bin != 0 && _peaks[notchIndex].value > _noiseThreshold) {
-                // setNotchFrequency is a reasonably expensive function involving calculation of sin and cos
-                _notchFilters[_state.axis][notchIndex].setNotchFrequency(_centerFrequencyHz[_state.axis][notchIndex]);
+                // set_notch_frequency is a reasonably expensive function involving calculation of sin and cos
+                _notchFilters[_state.axis][notchIndex].set_notch_frequency(_centerFrequencyHz[_state.axis][notchIndex]);
             }
         }
         // we have done all 4 steps for the current axis, so advance to the next axis
         if (_state.axis == AXIS_LAST) { _state.axis = AXIS_FIRST; } else { ++_state.axis; }
 
-        _debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(timeUs() - startTimeUs));
+        debug.set(DEBUG_FFT_TIME, 1, static_cast<int16_t>(time_us() - startTimeUs));
         break;
     }
 

@@ -1,16 +1,16 @@
 #pragma once
 
-#include <PIDF.h>
-
 #include <array>
 #include <cstdint>
 
+#include <pid_controller.h>
+
 struct flight_controller_quadcopter_telemetry_t {
-    PIDF::error_t rollRateError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
-    PIDF::error_t pitchRateError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
-    PIDF::error_t yawRateError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
-    PIDF::error_t rollAngleError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
-    PIDF::error_t pitchAngleError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
+    pid_error_t rollRateError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
+    pid_error_t pitchRateError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
+    pid_error_t yawRateError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
+    pid_error_t rollAngleError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
+    pid_error_t pitchAngleError {0, 0, 0, 0, 0}; //!< PID errors calculated in pitch PID update
 
     enum { MOTOR_COUNT = 4 };
     struct power_rpm_t {

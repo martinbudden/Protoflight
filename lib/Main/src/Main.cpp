@@ -2,30 +2,45 @@
 
 #include "AltitudeKalmanFilter.h"
 #include "AltitudeTask.h"
+#include "Autopilot.h"
+#include "BackchannelFlightController.h"
+#include "BlackboxCallbacks.h"
+#include "CMSX.h"
 #include "CMS_Task.h"
+#include "Cockpit.h"
+#include "Dashboard.h"
 #include "DashboardTask.h"
 #include "FlightController.h"
+#include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
+#include "OSD.h"
 #include "OSD_Task.h"
 #include "version.h"
 
-#include <AHRS_MessageQueue.h>
-#include <AHRS_Task.h>
-#include <BackchannelTask.h>
-#include <BlackboxTask.h>
-#include <Debug.h>
+#include <backchannel_task.h>
 #if defined(M5_UNIFIED)
 #include <M5Unified.h>
 #endif
 #include <IMU_Base.h>
 #include <MSP_Task.h>
-#include <ReceiverTask.h>
-#include <VehicleControllerTask.h>
+#include <receiver_task.h>
+//#include <VehicleControllerTask.h>
+
+#if defined(FRAMEWORK_ARDUINO_ESP32)
+#include <HardwareSerial.h>
+#endif
+
+#include <ahrs_message_queue.h>
+#include <ahrs_task.h>
+#include <blackbox_task.h>
 #include <ctime>
+#include <debug.h>
+#include <motor_mixer_message_queue.h>
+#include <motor_mixer_task.h>
 
 
-static void printTaskInfo(TaskBase::task_info_t& taskInfo);
+static void printTaskInfo(TaskBase::task_info_t& task_info);
 
 
 /*!
@@ -43,8 +58,8 @@ void Main::setup()
 #endif
 
 #if !defined(FRAMEWORK_RPI_PICO) && !defined(FRAMEWORK_ESPIDF) && !defined(FRAMEWORK_STM32_CUBE) && !defined(FRAMEWORK_ARDUINO_STM32) && !defined(FRAMEWORK_TEST)
-    Serial.begin(115200);
-    delay(500); // Allow serial port to initialize
+    //Serial.begin(115200);
+    //delay(500); // Allow serial port to initialize
 #endif
     //
     // Statically allocate all the Protoflight objects
@@ -59,41 +74,43 @@ void Main::setup()
         nvs.clear();
     }
 #endif
-    nvs.setCurrentPidProfileIndex(nvs.loadPidProfileIndex());
-    nvs.setCurrentRateProfileIndex(nvs.loadRateProfileIndex());
+    nvs.set_current_pid_profile_index(nvs.load_pid_profile_index());
+    nvs.set_current_rate_profile_index(nvs.load_rate_profile_index());
 
-    // create the IMU and get its sample rate
-    static IMU_Base& imuSensor = createIMU(nvs);
-    const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(imuSensor.getGyroSampleRateHz());
+    // create the AHRS and and get the IMU sample rate
+    Ahrs& ahrs = createAHRS(createIMU(nvs));
+    const float AHRS_taskIntervalSeconds = 1.0F / static_cast<float>(ahrs.get_imu().get_gyro_sample_rate_hz());
 
-    static Debug debug;
+    RpmFilters* rpmFilters = nullptr;
+    MotorMixerBase& motorMixer = createMotorMixer(AHRS_taskIntervalSeconds, nvs, rpmFilters);
 
-    FlightController& flightController = createFlightController(AHRS_taskIntervalSeconds, debug, nvs);
+    FlightController& flightController = createFlightController(AHRS_taskIntervalSeconds, nvs);
 
-    IMU_Filters& imuFilters = createIMU_Filters(AHRS_taskIntervalSeconds, flightController.getMotorMixerMutable(), debug, nvs);
-
-    AHRS& ahrs = createAHRS(flightController, imuSensor, imuFilters);
+    IMU_Filters& imuFilters = createIMU_Filters(AHRS_taskIntervalSeconds, rpmFilters, nvs); // cppcheck-suppress constVariableReference
 
     ReceiverBase& receiver = createReceiver(nvs);
 
-    static RcModes rc_modes; // !!for now, to be owned by receiver task
-    Cockpit& cockpit = createCockpit(rc_modes, flightController, debug, imuFilters, nvs);
+    RcModes& rc_modes = createRcModes(nvs);
+
+    Blackbox* blackbox = createBlackBox(flightController.get_task_interval_microseconds());
+
+    DisplayPortBase& displayPort = createDisplayPort();
+
+    OSD* osd = createOSD(displayPort, nvs);
+
+    static AhrsMessageQueue ahrsMessageQueue;
+    Cockpit& cockpit = createCockpit(ahrsMessageQueue, nvs);
 
     // create the optional components according to build flags
-    DisplayPortBase& displayPort = createDisplayPort(debug);
-    VTX* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
-    GPS* gps = createGPS(debug);
-    OSD* osd = createOSD(displayPort, flightController, cockpit, receiver, rc_modes, debug, nvs, vtx, gps);
-    [[maybe_unused]] CMS* cms = createCMS(displayPort, cockpit, receiver, rc_modes, imuFilters, imuSensor, nvs, vtx);
-    Blackbox* blackbox = createBlackBox(flightController, cockpit, receiver, rc_modes, imuFilters, debug, gps);
-    [[maybe_unused]] MSP_Serial* mspSerial = createMSP(ahrs, flightController, cockpit, receiver, rc_modes, imuFilters, debug, nvs, blackbox, vtx, osd, gps);
-    [[maybe_unused]] Dashboard* dashboard = createDashboard(displayPort, flightController, receiver);
-#if defined(USE_BLACKBOX_TEST)
-    testBlackbox(blackbox, ahrs, receiver, debug);
-#endif
+    [[maybe_unused]] VTX* vtx = createVTX(nvs); // VTX settings may be changed by MSP or the CMS (also by CLI when it gets implemented).
+    [[maybe_unused]] GPS* gps = createGPS();
+    [[maybe_unused]] CMS* cms = createCMS();
+    MspBase* msp_base {};
+    [[maybe_unused]] MspSerial* mspSerial = createMSP(msp_base);
+    [[maybe_unused]] Dashboard* dashboard = createDashboard(receiver);
 
 #if defined(FRAMEWORK_ARDUINO_ESP32)
-    Serial.printf("\r\n\r\n%s %d.%d.%d\r\n", FC_FIRMWARE_NAME, FC_VERSION_MAJOR, FC_VERSION_MINOR, FC_VERSION_PATCH_LEVEL);
+    //Serial.printf("\r\n\r\n%s %d.%d.%d\r\n", FC_FIRMWARE_NAME, FC_VERSION_MAJOR, FC_VERSION_MINOR, FC_VERSION_PATCH_LEVEL);
     //Serial.printf("Build Time:%d\r\n", buildTimeUnix);
 
     //const std::time_t timestamp = buildTimeUnix;
@@ -108,51 +125,135 @@ void Main::setup()
     //
 
 
-    TaskBase::task_info_t taskInfo {};
+    static Debug debug;
+    TaskBase::task_info_t task_info {};
 
+    static MotorMixerMessageQueue motor_mixer_message_queue;
+
+    struct ahrs_parameter_group_t ahrs_parameter_group = {
+        .ahrs = ahrs,
+        .ahrs_message_queue = ahrsMessageQueue,
+        .imu_filters = imuFilters,
+        .vehicle_controller = flightController,
+        .motor_mixer_message_queue = motor_mixer_message_queue,
+        .debug = debug
+    };
 #if defined(AHRS_TASK_IS_TIMER_DRIVEN)
-    const auto AHRS_taskIntervalMicroseconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
-    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_taskIntervalMicroseconds);
+    const auto AHRS_task_interval_microseconds = static_cast<uint32_t>(AHRS_taskIntervalSeconds*1000000.0F);
+    _tasks.ahrsTask = AhrsTask::create_task(task_info, ahrs_parameter_group, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, AHRS_task_interval_microseconds);
 #else
-    _tasks.ahrsTask = AHRS_Task::createTask(taskInfo, ahrs, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, 0);
+    _tasks.ahrsTask = AhrsTask::create_task(task_info, ahrs_parameter_group, AHRS_TASK_PRIORITY, AHRS_TASK_CORE, 0);
 #endif
-    printTaskInfo(taskInfo);
+    printTaskInfo(task_info);
 
-    _tasks.flightControllerTask = VehicleControllerTask::createTask(taskInfo, flightController, FC_TASK_PRIORITY, FC_TASK_CORE);
-    printTaskInfo(taskInfo);
+    static motor_mixer_parameter_group_t motor_mixer_parameter_group = {
+        .motor_mixer_message_queue = motor_mixer_message_queue,
+        .motor_mixer = motorMixer,
+        .rpm_filters = rpmFilters,
+        .debug = debug
+    };
+    _tasks.motorMixerTask = MotorMixerTask::create_task(task_info, motor_mixer_parameter_group, FC_TASK_PRIORITY, FC_TASK_CORE);
+    printTaskInfo(task_info);
 
-    _tasks.receiverTask = ReceiverTask::createTask(taskInfo, receiver, cockpit, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo);
+    static receiver_parameter_group_t receiver_parameter_group = {
+        .rc_modes = rc_modes,
+        .flight_controller = flightController,
+        .motor_mixer = motorMixer,
+        .debug = debug,
+        .blackbox = blackbox,
+        .osd = osd
+    };
+    _tasks.receiverTask = ReceiverTask::create_task(task_info, receiver, cockpit, receiver_parameter_group, RECEIVER_TASK_PRIORITY, RECEIVER_TASK_CORE, RECEIVER_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(task_info);
 #if defined(USE_DASHBOARD)
+    static dashboard_parameter_group_t dashboard_parameter_group = {
+        .displayPort = displayPort,
+        .flightController = flightController,
+        .ahrsMessageQueue = ahrsMessageQueue,
+        .motorMixer = motorMixer,
+        .receiver = receiver
+    };
     assert(dashboard != nullptr);
-    _tasks.dashboardTask = DashboardTask::createTask(taskInfo, *dashboard, DASHBOARD_TASK_PRIORITY, DASHBOARD_TASK_CORE, DASHBOARD_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo);
+    _tasks.dashboardTask = DashboardTask::create_task(task_info, *dashboard, dashboard_parameter_group, DASHBOARD_TASK_PRIORITY, DASHBOARD_TASK_CORE, DASHBOARD_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(task_info);
 #endif
 #if defined(USE_MSP)
-    assert(mspSerial != nullptr);
-    _tasks.mspTask = MSP_Task::createTask(taskInfo, *mspSerial, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo);
+    static msp_parameter_group_t msp_parameter_group = {
+        .ahrs = ahrs,
+        .flightController = flightController,
+        .ahrsMessageQueue = ahrsMessageQueue,
+        .motorMixer = motorMixer,
+        .cockpit = cockpit,
+        .receiver = receiver,
+        .rc_modes = rc_modes,
+        .imuFilters = imuFilters,
+        .debug = debug,
+        .nonVolatileStorage = nvs,
+        .blackbox = blackbox,
+        .vtx = vtx,
+        .osd = osd,
+        .gps = gps
+    };
+    _tasks.mspTask = MspTask::create_task(task_info, *mspSerial, msp_parameter_group, MSP_TASK_PRIORITY, MSP_TASK_CORE, MSP_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(task_info);
 #endif
 #if defined(USE_BLACKBOX)
     assert(blackbox != nullptr);
-    _tasks.blackboxTask = BlackboxTask::createTask(taskInfo, *blackbox, flightController.getAHRS_MessageQueue(), BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo);
+    blackbox_parameter_group_t blackbox_parameter_group = {
+        .ahrs_message_queue = ahrsMessageQueue,
+        .flightController = flightController,
+        .imuFilters = imuFilters,
+        .motorMixer = motorMixer,
+        .cockpit = cockpit,
+        .receiver = receiver,
+        .rc_modes = rc_modes,
+        .debug = debug,
+        .gps = gps
+    };
+#if defined(USE_BLACKBOX_TEST)
+    testBlackbox(blackbox, ahrs, receiver, flightController, imuFilters, debug, blackbox_parameter_group);
+#endif
+    _tasks.blackboxTask = BlackboxTask::create_task(task_info, *blackbox, ahrsMessageQueue, blackbox_parameter_group, BLACKBOX_TASK_PRIORITY, BLACKBOX_TASK_CORE, BLACKBOX_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(task_info);
 #endif
 #if defined(USE_OSD)
     const uint32_t osdTaskIntervalMicroseconds = 1'000'000 / osd->getConfig().framerate_hz;
     assert(osd != nullptr);
-    _tasks.osdTask = OSD_Task::createTask(taskInfo, *osd, OSD_TASK_PRIORITY, OSD_TASK_CORE, osdTaskIntervalMicroseconds);
-    printTaskInfo(taskInfo);
+    static osd_parameter_group_t osd_parameter_group = {
+        .displayPort = displayPort,
+        .ahrs_message_queue = ahrsMessageQueue,
+        .flightController = flightController,
+        .cockpit = cockpit,
+        .receiver = receiver,
+        .rc_modes = rc_modes,
+        .debug = debug,
+        .vtx = vtx,
+        .gps = gps
+    };
+    _tasks.osdTask = OSD_Task::create_task(task_info, *osd, osd_parameter_group, OSD_TASK_PRIORITY, OSD_TASK_CORE, osdTaskIntervalMicroseconds);
+    printTaskInfo(task_info);
 #endif
 #if defined(USE_CMS)
     assert(cms != nullptr);
-    _tasks.cmsTask = CMS_Task::createTask(taskInfo, *cms, CMS_TASK_PRIORITY, CMS_TASK_CORE, CMS_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo);
+    static cms_parameter_group_t cms_parameter_group = {
+        .displayPort = displayPort,
+        .flightController = flightController,
+        .motorMixer = motorMixer,
+        .cockpit = cockpit,
+        .imuFilters = imuFilters,
+        .imu = ahrs.get_imu_mutable(),
+        .rc_modes = rc_modes,
+        .receiver = receiver,
+        .nvs = nvs,
+        .vtx = vtx
+    };
+    _tasks.cmsTask = CMS_Task::create_task(task_info, *cms, cms_parameter_group, CMS_TASK_PRIORITY, CMS_TASK_CORE, CMS_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(task_info);
 #endif
 #if defined(USE_GPS) && false
     assert(gps != nullptr);
-    _tasks.gpsTask = GPS_Task::createTask(taskInfo, *gps, GPS_TASK_PRIORITY, GPS_TASK_CORE, GPS_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo);
+    _tasks.gpsTask = GPS_Task::create_task(task_info, *gps, GPS_TASK_PRIORITY, GPS_TASK_CORE, GPS_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(task_info);
 #endif
 #if defined(USE_BAROMETER) || defined(USE_GPS) || defined(USE_RANGEFINDER)
     static AltitudeKalmanFilter altitudeKalmanFilter;
@@ -161,43 +262,60 @@ void Main::setup()
         assert(cockpit.getAutopilotMutable().getAltitudeMessageQueue() != nullptr && "AltitudeMessageQueue not created");
         const AltitudeTask::parameters_t parameters {
             .altitudeKalmanFilter = altitudeKalmanFilter,
-            .ahrsMessageQueue = flightController.getAHRS_MessageQueue(),
-            .altitudeMessageQueue = *cockpit.getAutopilotMutable().getAltitudeMessageQueue(),
+            .ahrsMessageQueue = ahrsMessageQueue,
+            .altitudeMessageQueue = *cockpit.getAutopilotMutable().getAltitudeMessageQueueMutable(),
             .barometer = *barometer
         };
-        _tasks.altitudeTask = AltitudeTask::createTask(taskInfo, parameters, ALTITUDE_TASK_PRIORITY, ALTITUDE_TASK_CORE, ALTITUDE_TASK_INTERVAL_MICROSECONDS);
-        printTaskInfo(taskInfo);
+        _tasks.altitudeTask = AltitudeTask::create_task(task_info, parameters, ALTITUDE_TASK_PRIORITY, ALTITUDE_TASK_CORE, ALTITUDE_TASK_INTERVAL_MICROSECONDS);
+        printTaskInfo(task_info);
     }
 #endif
 #if defined(USE_BACKCHANNEL) && defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-    BackchannelBase& backchannel = createBackchannel(flightController, ahrs, receiver, nvs, _tasks.dashboardTask);
-    _tasks.backchannelTask = BackchannelTask::createTask(taskInfo, backchannel, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
-    printTaskInfo(taskInfo);
+    static backchannel_parameter_group_t backchannel_parameter_group = {
+        .ahrs = ahrs,
+        .ahrs_message_queue = ahrsMessageQueue,
+        .flight_controller = flightController,
+        .motor_mixer = motorMixer,
+        .receiver = receiver,
+        .main_task = _tasks.dashboardTask,
+        .msp = msp_base,
+#if defined(USE_MSP)
+        .msp_parameter_group = &msp_parameter_group,
+#else
+        .msp_parameter_group = nullptr,
+#endif
+        .debug = debug,
+        .nvs = nvs
+    };
+
+    BackchannelBase& backchannel = createBackchannel(receiver);
+    _tasks.backchannelTask = BackchannelTask::create_task(task_info, backchannel, backchannel_parameter_group, BACKCHANNEL_TASK_PRIORITY, BACKCHANNEL_TASK_CORE, BACKCHANNEL_TASK_INTERVAL_MICROSECONDS);
+    printTaskInfo(task_info);
 #endif
 }
 
 
-void printTaskInfo(TaskBase::task_info_t& taskInfo)
+void printTaskInfo(TaskBase::task_info_t& task_info)
 {
 #if defined(FRAMEWORK_ARDUINO_ESP32)
-    Serial.printf("**** %s, %.*s core:%d, priority:%d, ", taskInfo.name, 18 - strlen(taskInfo.name), "                ", static_cast<int>(taskInfo.core), static_cast<int>(taskInfo.priority));
-    if (taskInfo.taskIntervalMicroseconds == 0) {
+    Serial.printf("**** %s, %.*s core:%d, priority:%d, ", task_info.name, 18 - strlen(task_info.name), "                ", static_cast<int>(task_info.core), static_cast<int>(task_info.priority));
+    if (task_info.task_interval_microseconds == 0) {
         Serial.printf("interrupt driven\r\n");
     } else {
-        if (taskInfo.taskIntervalMicroseconds / 1000 == 0) {
-            Serial.printf("task interval:%4uus\r\n", static_cast<unsigned int>(taskInfo.taskIntervalMicroseconds));
+        if (task_info.task_interval_microseconds / 1000 == 0) {
+            Serial.printf("task interval:%4uus\r\n", static_cast<unsigned int>(task_info.task_interval_microseconds));
         } else {
-            Serial.printf("task interval:%3ums\r\n", static_cast<unsigned int>(taskInfo.taskIntervalMicroseconds / 1000));
+            Serial.printf("task interval:%3ums\r\n", static_cast<unsigned int>(task_info.task_interval_microseconds / 1000));
         }
     }
 #else
     std::array<char, 128> buf;
-    sprintf(&buf[0], "**** %s, %.*s core:%d, priority:%d, ", taskInfo.name, static_cast<int>(18 - strlen(taskInfo.name)), "                ", static_cast<int>(taskInfo.core), static_cast<int>(taskInfo.priority));
+    sprintf(&buf[0], "**** %s, %.*s core:%d, priority:%d, ", task_info.name, static_cast<int>(18 - strlen(task_info.name)), "                ", static_cast<int>(task_info.core), static_cast<int>(task_info.priority));
     printf(&buf[0]);
-    if (taskInfo.taskIntervalMicroseconds == 0) {
+    if (task_info.task_interval_microseconds == 0) {
         printf("interrupt driven\r\n");
     } else {
-        sprintf(&buf[0], "task interval:%ums\r\n", static_cast<unsigned int>(taskInfo.taskIntervalMicroseconds / 1000));
+        sprintf(&buf[0], "task interval:%ums\r\n", static_cast<unsigned int>(task_info.task_interval_microseconds / 1000));
         printf(&buf[0]);
     }
 #endif

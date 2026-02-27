@@ -2,20 +2,34 @@
 
 #include "Targets.h"
 
-#include <TimeMicroseconds.h>
 #include <array>
 #include <bitset>
 #include <cstdint>
+#include <time_microseconds.h>
 
+class DisplayPortBase;
+class OSD;
+class AhrsMessageQueue;
 class Cockpit;
 class Debug;
-class DisplayPortBase;
 class FlightController;
 class GPS;
 class OSD;
 class RcModes;
 class ReceiverBase;
 class VTX;
+
+struct osd_parameter_group_t {
+    DisplayPortBase& displayPort;
+    const AhrsMessageQueue& ahrs_message_queue;
+    const FlightController& flightController;
+    const Cockpit& cockpit;
+    const ReceiverBase& receiver;
+    const RcModes& rc_modes;
+    const Debug& debug;
+    const VTX* vtx;
+    const GPS* gps;
+};
 
 
 enum  osd_elements_e {
@@ -144,6 +158,10 @@ enum  osd_elements_e {
     OSD_ELEMENT_COUNT // MUST BE LAST
 };
 
+struct osd_elements_config_t {
+    std::array<uint16_t, OSD_ELEMENT_COUNT> element_pos; // 2 bits for type, 2 bits for profile, 6 bits for y, 6 bits for x
+};
+
 /*!
 How to add a new OSD element:
 
@@ -156,7 +174,7 @@ How to add a new OSD element:
 */
 class OSD_Elements {
 public:
-    OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& _receiver, const RcModes& rc_modes, const Debug& debug, const VTX* vtx, const GPS* gps);
+    OSD_Elements(const OSD& osd);
     void init(bool backgroundLayerFlag, uint8_t rowCount, uint8_t columnCount);
     void initDrawFunctions();
 public:
@@ -167,9 +185,6 @@ public:
         OSD_ELEMENT_TYPE_4
     };
     enum { STICK_OVERLAY_WIDTH = 7, STICK_OVERLAY_HEIGHT = 5 };
-    struct config_t {
-        std::array<uint16_t, OSD_ELEMENT_COUNT> element_pos; // 2 bits for type, 2 bits for profile, 6 bits for y, 6 bits for x
-    };
     struct element_t {
         enum { ELEMENT_BUFFER_LENGTH = 32 };
         std::array<char, ELEMENT_BUFFER_LENGTH> buf;
@@ -183,7 +198,7 @@ public:
         bool rendered;
         bool drawElement;
     };
-    typedef void (OSD_Elements::*elementDrawFnPtr)(DisplayPortBase& displayPort);
+    typedef void (OSD_Elements::*elementDrawFnPtr)(const osd_parameter_group_t& pg);
 
 public:
 #if defined(USE_OSD_HD)
@@ -192,9 +207,9 @@ public:
     bool isSysOSD_Element(uint8_t index) { (void)index; return false; }
 #endif
 
-    const config_t& getConfig() const { return _config; }
-    config_t& getConfig() { return _config; }
-    void setConfig(const config_t& config);
+    const osd_elements_config_t& getConfig() const { return _config; }
+    osd_elements_config_t& getConfig() { return _config; }
+    void setConfig(const osd_elements_config_t& config);
     void setDefaultConfig(uint8_t rowCount, uint8_t columnCount);
 
     static constexpr uint16_t ELEMENT_BITS_POS = 14;
@@ -222,20 +237,20 @@ public:
     uint8_t getProfile() const { return _profile; }
 
     void addActiveElement(osd_elements_e element);
-    void addActiveElements();
+    void addActiveElements(const osd_parameter_group_t& pg);
     bool isRenderPending() const;
     uint8_t getActiveElementIndex() const { return _activeElementIndex; }
     uint8_t getActiveElementCount() const { return _activeElementCount; }
 
     void updateAttitude(float rollAngleDegrees, float pitchAngleDegrees, float yawAngleDegrees);
-    bool drawNextActiveElement(DisplayPortBase& displayPort);
+    bool drawNextActiveElement(const osd_parameter_group_t& pg);
     bool displayActiveElement(DisplayPortBase& displayPort);
-    void drawActiveElementsBackground(DisplayPortBase& displayPort);
+    void drawActiveElementsBackground(const osd_parameter_group_t& pg);
 
-    bool drawSpec(DisplayPortBase& displayPort);
+    bool drawSpec(const osd_parameter_group_t& pg);
 
-    bool drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex);
-    bool drawSingleElementBackground(DisplayPortBase& displayPort, uint8_t elementIndex);
+    bool drawSingleElement(const osd_parameter_group_t& pg, uint8_t elementIndex);
+    bool drawSingleElementBackground(const osd_parameter_group_t& pg, uint8_t elementIndex);
 
     uint32_t displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, const char* s, uint8_t attr);
     uint32_t displayWrite(DisplayPortBase& displayPort, const element_t& element, uint8_t x, uint8_t y, uint8_t c, uint8_t attr);
@@ -243,89 +258,83 @@ public:
 // element drawing functions
     void formatDistanceString(char* buf, float distance, char leadingSymbol);
     static int printFloat(char* buffer, char leadingSymbol, float value, unsigned decimalPlaces, bool round, char trailingSymbol);
-    void formatPID(char* buf, const char* label, uint8_t axis);
+    void formatPID(const osd_parameter_group_t& pg, char* buf, const char* label, uint8_t axis);
     // no need to qualify functions with #if defined(USE_...) since linker will remove unused functions
-    void draw_RSSI_VALUE(DisplayPortBase& displayPort);
-    void draw_MAIN_BATTERY_VOLTAGE(DisplayPortBase& displayPort);
-    void draw_CROSSHAIRS(DisplayPortBase& displayPort); // only has background, but needs to be over other elements (like artificial horizon)
-    void draw_ARTIFICIAL_HORIZON(DisplayPortBase& displayPort);
-    void draw_ITEM_TIMER(DisplayPortBase& displayPort);
-    void draw_FLYMODE(DisplayPortBase& displayPort);
-    void draw_THROTTLE_POS(DisplayPortBase& displayPort);
-    void draw_VTX_CHANNEL(DisplayPortBase& displayPort);
-    void draw_CURRENT_DRAW(DisplayPortBase& displayPort);
-    void draw_MAH_DRAWN(DisplayPortBase& displayPort);
-    void draw_GPS_SPEED(DisplayPortBase& displayPort);
-    void draw_GPS_SATS(DisplayPortBase& displayPort);
-    void draw_ALTITUDE(DisplayPortBase& displayPort);
-    void draw_ROLL_PIDS(DisplayPortBase& displayPort);
-    void draw_PITCH_PIDS(DisplayPortBase& displayPort);
-    void draw_YAW_PIDS(DisplayPortBase& displayPort);
-    void draw_POWER(DisplayPortBase& displayPort);
-    void draw_PID_RATE_PROFILE(DisplayPortBase& displayPort);
-    void draw_WARNINGS(DisplayPortBase& displayPort);
-    void draw_AVG_CELL_VOLTAGE(DisplayPortBase& displayPort);
-    void draw_GPS_LAT_LONG(DisplayPortBase& displayPort);
-    void draw_DEBUG(DisplayPortBase& displayPort);
-    void draw_PITCH_ANGLE(DisplayPortBase& displayPort);
-    void draw_ROLL_ANGLE(DisplayPortBase& displayPort);
-    void draw_MAIN_BATTERY_USAGE(DisplayPortBase& displayPort);
-    void draw_DISARMED(DisplayPortBase& displayPort);
-    void draw_HOME_DIRECTION(DisplayPortBase& displayPort);
-    void draw_HOME_DISTANCE(DisplayPortBase& displayPort);
-    void draw_NUMERICAL_HEADING(DisplayPortBase& displayPort);
-    void draw_NUMERICAL_VARIO(DisplayPortBase& displayPort);
-    void draw_COMPASS_BAR(DisplayPortBase& displayPort);
-    void draw_ESC_TEMPERATURE(DisplayPortBase& displayPort);
-    void draw_ESC_RPM(DisplayPortBase& displayPort);
-    void draw_REMAINING_TIME_ESTIMATE(DisplayPortBase& displayPort);
-    void draw_RTC_DATETIME(DisplayPortBase& displayPort);
-    void draw_ADJUSTMENT_RANGE(DisplayPortBase& displayPort);
-    void draw_CORE_TEMPERATURE(DisplayPortBase& displayPort);
-    void draw_ANTI_GRAVITY(DisplayPortBase& displayPort);
-    void draw_G_FORCE(DisplayPortBase& displayPort);
-    void draw_MOTOR_DIAGNOSTICS(DisplayPortBase& displayPort);
-    void draw_LOG_STATUS(DisplayPortBase& displayPort);
-    void draw_FLIP_ARROW(DisplayPortBase& displayPort);
-    void draw_LINK_QUALITY(DisplayPortBase& displayPort);
-    void draw_FLIGHT_DISTANCE(DisplayPortBase& displayPort);
-    void draw_STICK_OVERLAY(DisplayPortBase& displayPort);
-    void draw_PILOT_NAME(DisplayPortBase& displayPort);
-    void draw_ESC_RPM_FREQUENCY(DisplayPortBase& displayPort);
-    void draw_RATE_PROFILE_NAME(DisplayPortBase& displayPort);
-    void draw_PID_PROFILE_NAME(DisplayPortBase& displayPort);
-    void draw_PROFILE_NAME(DisplayPortBase& displayPort);
-    void draw_RSSI_DBM_VALUE(DisplayPortBase& displayPort);
-    void draw_RC_CHANNELS(DisplayPortBase& displayPort);
-    void draw_EFFICIENCY(DisplayPortBase& displayPort);
-    void draw_TOTAL_FLIGHTS(DisplayPortBase& displayPort);
-    void draw_UP_DOWN_REFERENCE(DisplayPortBase& displayPort);
-    void draw_TX_UPLINK_POWER(DisplayPortBase& displayPort);
-    void draw_WATT_HOURS_DRAWN(DisplayPortBase& displayPort);
-    void draw_AUX_VALUE(DisplayPortBase& displayPort);
-    void draw_READY_MODE(DisplayPortBase& displayPort);
-    void draw_RSNR_VALUE(DisplayPortBase& displayPort);
-    void draw_SYS(DisplayPortBase& displayPort);
-    void draw_GPS_LAP_TIME_CURRENT(DisplayPortBase& displayPort);
-    void draw_GPS_LAP_TIME_PREVIOUS(DisplayPortBase& displayPort);
-    void draw_GPS_LAP_TIME_BEST3(DisplayPortBase& displayPort);
-    void draw_DEBUG2(DisplayPortBase& displayPort);
-    void draw_CUSTOM_MSG(DisplayPortBase& displayPort);
-    void draw_LIDAR_DISTANCE(DisplayPortBase& displayPort);
+    void draw_RSSI_VALUE(const osd_parameter_group_t& pg);
+    void draw_MAIN_BATTERY_VOLTAGE(const osd_parameter_group_t& pg);
+    void draw_CROSSHAIRS(const osd_parameter_group_t& pg); // only has background, but needs to be over other elements (like artificial horizon)
+    void draw_ARTIFICIAL_HORIZON(const osd_parameter_group_t& pg);
+    void draw_ITEM_TIMER(const osd_parameter_group_t& pg);
+    void draw_FLYMODE(const osd_parameter_group_t& pg);
+    void draw_THROTTLE_POS(const osd_parameter_group_t& pg);
+    void draw_VTX_CHANNEL(const osd_parameter_group_t& pg);
+    void draw_CURRENT_DRAW(const osd_parameter_group_t& pg);
+    void draw_MAH_DRAWN(const osd_parameter_group_t& pg);
+    void draw_GPS_SPEED(const osd_parameter_group_t& pg);
+    void draw_GPS_SATS(const osd_parameter_group_t& pg);
+    void draw_ALTITUDE(const osd_parameter_group_t& pg);
+    void draw_ROLL_PIDS(const osd_parameter_group_t& pg);
+    void draw_PITCH_PIDS(const osd_parameter_group_t& pg);
+    void draw_YAW_PIDS(const osd_parameter_group_t& pg);
+    void draw_POWER(const osd_parameter_group_t& pg);
+    void draw_PID_RATE_PROFILE(const osd_parameter_group_t& pg);
+    void draw_WARNINGS(const osd_parameter_group_t& pg);
+    void draw_AVG_CELL_VOLTAGE(const osd_parameter_group_t& pg);
+    void draw_GPS_LAT_LONG(const osd_parameter_group_t& pg);
+    void draw_DEBUG(const osd_parameter_group_t& pg);
+    void draw_PITCH_ANGLE(const osd_parameter_group_t& pg);
+    void draw_ROLL_ANGLE(const osd_parameter_group_t& pg);
+    void draw_MAIN_BATTERY_USAGE(const osd_parameter_group_t& pg);
+    void draw_DISARMED(const osd_parameter_group_t& pg);
+    void draw_HOME_DIRECTION(const osd_parameter_group_t& pg);
+    void draw_HOME_DISTANCE(const osd_parameter_group_t& pg);
+    void draw_NUMERICAL_HEADING(const osd_parameter_group_t& pg);
+    void draw_NUMERICAL_VARIO(const osd_parameter_group_t& pg);
+    void draw_COMPASS_BAR(const osd_parameter_group_t& pg);
+    void draw_ESC_TEMPERATURE(const osd_parameter_group_t& pg);
+    void draw_ESC_RPM(const osd_parameter_group_t& pg);
+    void draw_REMAINING_TIME_ESTIMATE(const osd_parameter_group_t& pg);
+    void draw_RTC_DATETIME(const osd_parameter_group_t& pg);
+    void draw_ADJUSTMENT_RANGE(const osd_parameter_group_t& pg);
+    void draw_CORE_TEMPERATURE(const osd_parameter_group_t& pg);
+    void draw_ANTI_GRAVITY(const osd_parameter_group_t& pg);
+    void draw_G_FORCE(const osd_parameter_group_t& pg);
+    void draw_MOTOR_DIAGNOSTICS(const osd_parameter_group_t& pg);
+    void draw_LOG_STATUS(const osd_parameter_group_t& pg);
+    void draw_FLIP_ARROW(const osd_parameter_group_t& pg);
+    void draw_LINK_QUALITY(const osd_parameter_group_t& pg);
+    void draw_FLIGHT_DISTANCE(const osd_parameter_group_t& pg);
+    void draw_STICK_OVERLAY(const osd_parameter_group_t& pg);
+    void draw_PILOT_NAME(const osd_parameter_group_t& pg);
+    void draw_ESC_RPM_FREQUENCY(const osd_parameter_group_t& pg);
+    void draw_RATE_PROFILE_NAME(const osd_parameter_group_t& pg);
+    void draw_PID_PROFILE_NAME(const osd_parameter_group_t& pg);
+    void draw_PROFILE_NAME(const osd_parameter_group_t& pg);
+    void draw_RSSI_DBM_VALUE(const osd_parameter_group_t& pg);
+    void draw_RC_CHANNELS(const osd_parameter_group_t& pg);
+    void draw_EFFICIENCY(const osd_parameter_group_t& pg);
+    void draw_TOTAL_FLIGHTS(const osd_parameter_group_t& pg);
+    void draw_UP_DOWN_REFERENCE(const osd_parameter_group_t& pg);
+    void draw_TX_UPLINK_POWER(const osd_parameter_group_t& pg);
+    void draw_WATT_HOURS_DRAWN(const osd_parameter_group_t& pg);
+    void draw_AUX_VALUE(const osd_parameter_group_t& pg);
+    void draw_READY_MODE(const osd_parameter_group_t& pg);
+    void draw_RSNR_VALUE(const osd_parameter_group_t& pg);
+    void draw_SYS(const osd_parameter_group_t& pg);
+    void draw_GPS_LAP_TIME_CURRENT(const osd_parameter_group_t& pg);
+    void draw_GPS_LAP_TIME_PREVIOUS(const osd_parameter_group_t& pg);
+    void draw_GPS_LAP_TIME_BEST3(const osd_parameter_group_t& pg);
+    void draw_DEBUG2(const osd_parameter_group_t& pg);
+    void draw_CUSTOM_MSG(const osd_parameter_group_t& pg);
+    void draw_LIDAR_DISTANCE(const osd_parameter_group_t& pg);
 // element background drawing functions
-    void drawBackground_HORIZON_SIDEBARS(DisplayPortBase& displayPort);
-    void drawBackground_CRAFT_NAME(DisplayPortBase& displayPort);
-    void drawBackground_STICK_OVERLAY(DisplayPortBase& displayPort);
-    void drawBackground_PILOT_NAME(DisplayPortBase& displayPort);
-    void drawBackground_CAMERA_FRAME(DisplayPortBase& displayPort);
+    void drawBackground_HORIZON_SIDEBARS(const osd_parameter_group_t& pg);
+    void drawBackground_CRAFT_NAME(const osd_parameter_group_t& pg);
+    void drawBackground_STICK_OVERLAY(const osd_parameter_group_t& pg);
+    void drawBackground_PILOT_NAME(const osd_parameter_group_t& pg);
+    void drawBackground_CAMERA_FRAME(const osd_parameter_group_t& pg);
 private:
     const OSD& _osd;
-    const FlightController& _flightController;
-    const Cockpit& _cockpit;
-    const ReceiverBase& _receiver;
-    const RcModes& _rc_modes;
-    const Debug& _debug;
-    const VTX* _vtx;
     float _rollAngleDegrees {};
     float _pitchAngleDegrees {};
     float _yawAngleDegrees {};
@@ -347,10 +356,9 @@ private:
     enum {VERTICAL, HORIZONTAL} _STICK_OVERLAY_RenderPhase {VERTICAL};
     uint8_t _STICK_OVERLAY_Y {0};
 
-    config_t _config {};
+    osd_elements_config_t _config {};
     std::array<uint8_t, OSD_ELEMENT_COUNT> _activeElements;
     std::bitset<OSD_ELEMENT_COUNT> _blinkBits {};
-    const GPS* _gps {};
 private:
     // drawing functions
     static std::array<OSD_Elements::elementDrawFnPtr, OSD_ELEMENT_COUNT> DrawFunctions;

@@ -2,16 +2,13 @@
 #include "Cockpit.h"
 #include "Defaults.h"
 #include "FlightController.h"
-#include "IMU_Filters.h"
 
-#include <AHRS.h>
-#include <AHRS_MessageQueue.h>
-#include <Debug.h>
-#include <IMU_Null.h>
-#include <MotorMixerBase.h>
 #include <RC_Modes.h>
-#include <ReceiverVirtual.h>
-#include <SensorFusion.h>
+
+#include <ahrs.h>
+#include <ahrs_message_queue.h>
+#include <receiver_virtual.h>
+#include <sensor_fusion.h>
 
 
 #include <unity.h>
@@ -22,18 +19,11 @@
 enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 #endif
 
-static MadgwickFilter sensorFusionFilter;
-static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
-enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
-static Debug debug;
-static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, &debug);
-static AHRS_MessageQueue ahrsMessageQueue;
-static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, 1, motorMixer, ahrsMessageQueue, debug);
-static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
+static AhrsMessageQueue ahrsMessageQueue;
+static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS);
 static Autopilot autopilot(ahrsMessageQueue);
-static RcModes rc_modes;
 static ReceiverVirtual receiver;
+static Blackbox* blackbox =  nullptr;
 
 
 static const rates_t cockpitRates {
@@ -56,7 +46,7 @@ void tearDown() {
 
 void test_cockpit()
 {
-    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
+    static Cockpit cockpit(autopilot, nullptr);
     cockpit.setRates(cockpitRates);
 
     rates_t rates = cockpit.getRates();
@@ -98,7 +88,7 @@ void test_cockpit()
 
 void test_cockpit_passthrough()
 {
-    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
+    static Cockpit cockpit(autopilot, nullptr);
 
     float roll = cockpit.applyRates(rates_t::ROLL, 0.0F);
     TEST_ASSERT_EQUAL_FLOAT(0.0F, roll);
@@ -114,7 +104,7 @@ void test_cockpit_passthrough()
 
 void test_cockpit_set_passthrough()
 {
-    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
+    static Cockpit cockpit(autopilot, nullptr);
 
     cockpit.setRatesToPassThrough();
 
@@ -132,7 +122,7 @@ void test_cockpit_set_passthrough()
 
 void test_cockpit_defaults()
 {
-    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
+    static Cockpit cockpit(autopilot, nullptr);
     cockpit.setRates(cockpitRates);
 
     const rates_t rates = cockpit.getRates();
@@ -169,7 +159,7 @@ void test_cockpit_defaults()
 
 void test_cockpit_constrain()
 {
-    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
+    static Cockpit cockpit(autopilot, nullptr);
     cockpit.setRates(cockpitRates);
 
     rates_t rates = cockpit.getRates(); // NOLINT(misc-const-correctness)
@@ -190,7 +180,7 @@ void test_cockpit_constrain()
 
 void test_cockpit_throttle()
 {
-    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
+    static Cockpit cockpit(autopilot, nullptr);
     cockpit.setRates(cockpitRates);
 
     float throttle = cockpit.mapThrottle(0.0F);
@@ -253,8 +243,8 @@ void test_rc_modes()
     mac.mode_id = box->id;
     TEST_ASSERT_EQUAL(MspBox::BOX_HORIZON, mac.mode_id);
     mac.auxiliary_channel_index = AUXILIARY_CHANNEL_HORIZON;
-    mac.range.start_step = RcModes::channel_value_to_step(1250);
-    mac.range.end_step = RcModes::channel_value_to_step(1450);
+    mac.range_start = RcModes::channel_value_to_step(1250);
+    mac.range_end = RcModes::channel_value_to_step(1450);
 
     rcModes.set_mode_activation_condition(macIndex, mac);
     rcModes.analyze_mode_activation_conditions();
@@ -269,8 +259,8 @@ void test_rc_modes()
     mac.mode_id = box->id;
     TEST_ASSERT_EQUAL(MspBox::BOX_GPS_RESCUE, mac.mode_id);
     mac.auxiliary_channel_index = AUXILIARY_CHANNEL_GPS_RESCUE;
-    mac.range.start_step = RcModes::channel_value_to_step(1750);
-    mac.range.end_step = RcModes::channel_value_to_step(1850);
+    mac.range_start = RcModes::channel_value_to_step(1750);
+    mac.range_end = RcModes::channel_value_to_step(1850);
 
     rcModes.set_mode_activation_condition(macIndex, mac);
     rcModes.analyze_mode_activation_conditions();
@@ -314,8 +304,8 @@ void test_rc_modes_init()
     macArm.mode_id = boxArm->id;
     TEST_ASSERT_EQUAL(MspBox::BOX_ARM, macArm.mode_id);
     macArm.auxiliary_channel_index = AUXILIARY_CHANNEL_ARM;
-    macArm.range.start_step = ReceiverBase::RANGE_STEP_MID;
-    macArm.range.end_step = ReceiverBase::RANGE_STEP_MAX;
+    macArm.range_start = ReceiverBase::RANGE_STEP_MID;
+    macArm.range_end = ReceiverBase::RANGE_STEP_MAX;
     rcModes.set_mode_activation_condition(MAC_INDEX_ARM, macArm);
 
     rc_modes_activation_condition_t macAngle = rcModes.get_mode_activation_condition(MAC_INDEX_ANGLE);
@@ -324,8 +314,8 @@ void test_rc_modes_init()
     macAngle.mode_id = boxAngle->id;
     TEST_ASSERT_EQUAL(MspBox::BOX_ANGLE, macAngle.mode_id);
     macAngle.auxiliary_channel_index = AUXILIARY_CHANNEL_ANGLE_MODE;
-    macAngle.range.start_step = ReceiverBase::RANGE_STEP_MID;
-    macAngle.range.end_step = ReceiverBase::RANGE_STEP_MAX;
+    macAngle.range_start = ReceiverBase::RANGE_STEP_MID;
+    macAngle.range_end = ReceiverBase::RANGE_STEP_MAX;
     rcModes.set_mode_activation_condition(MAC_INDEX_ANGLE, macAngle);
 
     rc_modes_activation_condition_t macAltitudeHold = rcModes.get_mode_activation_condition(MAC_INDEX_ALTHOLD);
@@ -334,8 +324,8 @@ void test_rc_modes_init()
     macAltitudeHold.mode_id = boxAltitudeHold->id;
     TEST_ASSERT_EQUAL(MspBox::BOX_ALTITUDE_HOLD, macAltitudeHold.mode_id);
     macAltitudeHold.auxiliary_channel_index = AUXILIARY_CHANNEL_ALTITUDE_HOLD;
-    macAltitudeHold.range.start_step = ReceiverBase::RANGE_STEP_MID;
-    macAltitudeHold.range.end_step = ReceiverBase::RANGE_STEP_MAX;
+    macAltitudeHold.range_start = ReceiverBase::RANGE_STEP_MID;
+    macAltitudeHold.range_end = ReceiverBase::RANGE_STEP_MAX;
     rcModes.set_mode_activation_condition(MAC_INDEX_ALTHOLD, macAltitudeHold);
 
     rcModes.analyze_mode_activation_conditions();
@@ -387,21 +377,21 @@ void test_rc_adjustments()
     rates_t rates = cockpitRates;
     TEST_ASSERT_EQUAL(7, rates.rcRates[rates_t::ROLL]);
 
-    rcAdjustments.applyStepAdjustment(flightController, rates, ADJUSTMENT_ROLL_RC_RATE, 1);
+    rcAdjustments.applyStepAdjustment(flightController, blackbox, rates, ADJUSTMENT_ROLL_RC_RATE, 1);
     TEST_ASSERT_EQUAL(8, rates.rcRates[rates_t::ROLL]);
 
-    rcAdjustments.applyAbsoluteAdjustment(flightController, rates, ADJUSTMENT_ROLL_RC_RATE, 3);
+    rcAdjustments.applyAbsoluteAdjustment(flightController, blackbox, rates, ADJUSTMENT_ROLL_RC_RATE, 3);
     TEST_ASSERT_EQUAL(3, rates.rcRates[rates_t::ROLL]);
 
-    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
-    //TEST_ASSERT_EQUAL(0, cockpit.getCurrentRateProfileIndex());
-    //rcAdjustments.applySelectAdjustment(flightController, cockpit, nullptr, ADJUSTMENT_RATE_PROFILE, 1);
-    //TEST_ASSERT_EQUAL(1, cockpit.getCurrentRateProfileIndex());
+    static Cockpit cockpit(autopilot, nullptr);
+    //TEST_ASSERT_EQUAL(0, cockpit.get_current_rate_profile_index());
+    //rcAdjustments.applySelectAdjustment(flightController, cockpit, nullptr, nullptr, ADJUSTMENT_RATE_PROFILE, 1);
+    //TEST_ASSERT_EQUAL(1, cockpit.get_current_rate_profile_index());
 }
 
 void test_flightmode_flags()
 {
-    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
+    static Cockpit cockpit(autopilot, nullptr);
 
     TEST_ASSERT_EQUAL(0, cockpit.getFlightModeFlags());
     cockpit.setFlightModeFlag(Cockpit::LOG2_HORIZON_MODE);

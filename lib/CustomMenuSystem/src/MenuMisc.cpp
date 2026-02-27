@@ -2,8 +2,8 @@
 #include "CMS_Types.h"
 #include "Cockpit.h"
 #include "FlightController.h"
-#include "MotorMixerBase.h"
-#include <ReceiverBase.h>
+#include <motor_mixer_base.h>
+#include <receiver_base.h>
 
 
 static std::array<uint16_t, 8> rcData;
@@ -12,7 +12,7 @@ static uint8_t fpvCamAngleDegrees;
 static uint8_t crashFlipRate;
 
 #if false
-static const void* menuRcConfirmBack(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuRcConfirmBack(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
     (void)cmsx;
     if (self && ((self->flags & OME_TYPE_MASK) == OME_BACK)) {
@@ -23,9 +23,10 @@ static const void* menuRcConfirmBack(CMSX& cmsx, [[maybe_unused]] DisplayPortBas
 #endif
 
 // cppcheck-suppress constParameterCallback
-static const void* menuRcOnDisplayUpdate(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuRcOnDisplayUpdate(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    const ReceiverBase& receiver = cmsx.getCMS().getReceiver();
+    (void)cmsx;
+    const ReceiverBase& receiver = pg.receiver;
     size_t ii = 0;
     for (auto& rc : rcData) {
         rc = receiver.get_channel_pwm(ii);
@@ -71,9 +72,10 @@ CMSX::menu_t CMSX::menuRcPreview {
 };
 
 // cppcheck-suppress constParameterCallback
-static const void* menuMiscOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+static const void* menuMiscOnEnter(CMSX& cmsx, cms_parameter_group_t& pg)
 {
-    const MotorMixerBase& motorMixer = cmsx.getCockpit().getFlightController().getMotorMixer();
+    (void)cmsx;
+    const MotorMixerBase& motorMixer = pg.motorMixer;
     motorIdle = motorMixer.get_motor_config().motor_idle;
     fpvCamAngleDegrees = 0;
     crashFlipRate = 0;
@@ -81,10 +83,11 @@ static const void* menuMiscOnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase&
     return nullptr;
 }
 
-static const void* menuMiscOnExit(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuMiscOnExit(CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::OSD_Entry* self)
 {
-    MotorMixerBase& motorMixer = cmsx.getCockpitMutable().getFlightControllerMutable().getMotorMixerMutable();
-    MotorMixerBase::motor_config_t motorConfig =  motorMixer.get_motor_config();
+    (void)cmsx;
+    MotorMixerBase& motorMixer = pg.motorMixer;
+    motor_config_t motorConfig =  motorMixer.get_motor_config();
     motorConfig.motor_idle = motorIdle;
     motorMixer.set_motor_config(motorConfig);
 

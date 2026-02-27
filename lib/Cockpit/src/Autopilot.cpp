@@ -1,11 +1,12 @@
 #include "Autopilot.h"
-#include <AHRS.h>
-#include <AHRS_MessageQueue.h>
+#include "barometer_base.h"
+
 #include <AltitudeMessageQueue.h>
-#include <BarometerBase.h>
+#include <ahrs.h>
+#include <ahrs_message_queue.h>
 
 
-void Autopilot::setAutopilotConfig(const autopilot_config_t& autopilotConfig)
+void Autopilot::set_autopilot_config(const autopilot_config_t& autopilotConfig)
 {
     _autopilotConfig = autopilotConfig;
     _altitude.hoverThrottle = static_cast<float>(_autopilotConfig.throttle_hover_pwm - 1000) * 0.001F;
@@ -15,29 +16,29 @@ void Autopilot::setAutopilotConfig(const autopilot_config_t& autopilotConfig)
     static constexpr float ALTITUDE_D_SCALE  = 0.01F;
     static constexpr float ALTITUDE_S_SCALE  = 0.01F;
     static constexpr float ALTITUDE_F_SCALE  = 0.01F;
-    const PIDF::PIDF_t altitudePID = {
+    const pid_constants_t altitudePID = {
         static_cast<float>(_autopilotConfig.altitudePID.kp) * ALTITUDE_P_SCALE,
         static_cast<float>(_autopilotConfig.altitudePID.ki) * ALTITUDE_I_SCALE,
         static_cast<float>(_autopilotConfig.altitudePID.kd) * ALTITUDE_D_SCALE,
         static_cast<float>(_autopilotConfig.altitudePID.ks) * ALTITUDE_S_SCALE,
         static_cast<float>(_autopilotConfig.altitudePID.kk) * ALTITUDE_F_SCALE,
     };
-    _altitude.pid.setPID(altitudePID);
-    _altitude.pid.setSetpoint(std::numeric_limits<float>::lowest());
+    _altitude.pid.set_pid(altitudePID);
+    _altitude.pid.set_setpoint(std::numeric_limits<float>::lowest());
 
     static constexpr float POSITION_P_SCALE  = 0.0012F;
     static constexpr float POSITION_I_SCALE  = 0.0001F;
     static constexpr float POSITION_D_SCALE  = 0.0015F;
     static constexpr float POSITION_S_SCALE  = 0.0015F;
     static constexpr float POSITION_F_SCALE  = 0.0008F;
-    const PIDF::PIDF_t positionPID = {
+    const pid_constants_t positionPID = {
         static_cast<float>(_autopilotConfig.positionPID.kp) * POSITION_P_SCALE,
         static_cast<float>(_autopilotConfig.positionPID.ki) * POSITION_I_SCALE,
         static_cast<float>(_autopilotConfig.positionPID.kd) * POSITION_D_SCALE,
         static_cast<float>(_autopilotConfig.positionPID.ks) * POSITION_S_SCALE,
         static_cast<float>(_autopilotConfig.positionPID.kk) * POSITION_F_SCALE,
     };
-    _altitude.pid.setPID(positionPID);
+    _altitude.pid.set_pid(positionPID);
 }
 
 #if defined(USE_GPS_RESCUE)
@@ -47,19 +48,19 @@ void Autopilot::setGPS_RescueConfig(const gps_rescue_config_t& gpsRescueConfig)
 }
 #endif
 
-void Autopilot::setPositionConfig(const position_config_t& positionConfig)
+void Autopilot::setPositionHoldConfig(const position_hold_config_t& positionHoldConfig)
 {
-    _positionConfig = positionConfig;
+    _positionHoldConfig = positionHoldConfig;
 }
 
-void Autopilot::setAltitudeHoldConfig(const altitude_hold_config_t& altitudeHoldConfig)
+void Autopilot::set_altitude_hold_config(const altitude_hold_config_t& altitudeHoldConfig)
 {
     _altitudeHoldConfig = altitudeHoldConfig;
 }
 
 bool Autopilot::isAltitudeHoldSetpointSet() const
 {
-    return (_altitude.pid.getSetpoint() == std::numeric_limits<float>::lowest()) ? false : true;
+    return (_altitude.pid.get_setpoint() == std::numeric_limits<float>::lowest()) ? false : true;
 }
 
 bool Autopilot::setAltitudeHoldSetpoint()
@@ -71,7 +72,7 @@ bool Autopilot::setAltitudeHoldSetpoint()
 
     altitude_data_t altitudeData {};
     _altitudeMessageQueue->PEEK_ALTITUDE_DATA(altitudeData);
-    _altitude.pid.setSetpoint(altitudeData.altitudeMeters);
+    _altitude.pid.set_setpoint(altitudeData.altitudeMeters);
     return true;
 }
 
@@ -89,8 +90,8 @@ float Autopilot::calculateThrottleForAltitudeHold(const receiver_controls_t& con
     const float cosTiltAngle = 1.0F; //!!TODO:get from AHRS
     const float deltaT = 0.001F; //!!TODO:set in startup
 
-    const float altitudeDeltaFilteredMeters = _altitude.dTermLPF.filter(altitudeData.altitudeMeters - _altitude.pid.getPreviousMeasurement());
-    float throttle = _altitude.pid.updateDelta(altitudeData.altitudeMeters, altitudeDeltaFilteredMeters, deltaT);
+    const float altitudeDeltaFilteredMeters = _altitude.dTermLPF.filter(altitudeData.altitudeMeters - _altitude.pid.get_previous_measurement());
+    float throttle = _altitude.pid.update_delta(altitudeData.altitudeMeters, altitudeDeltaFilteredMeters, deltaT);
 
     throttle += _altitude.hoverThrottle;
 
@@ -110,7 +111,7 @@ FlightController::controls_t Autopilot::calculateFlightControls(const receiver_c
     const float throttle = calculateThrottleForAltitudeHold(controls);
 
     const FlightController::controls_t flightControls = {
-        .tickCount = 0, //tickCount,
+        .tick_count = 0, //tick_count,
         .throttleStick = throttle,
         .rollStickDPS = 0,
         .pitchStickDPS = 0,

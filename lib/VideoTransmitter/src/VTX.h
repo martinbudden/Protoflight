@@ -1,7 +1,17 @@
 #pragma once
 
-#include <TimeMicroseconds.h>
 #include <array>
+#include <time_microseconds.h>
+
+struct vtx_config_t {
+    uint16_t frequencyMHz;          // sets freq in MHz if band=0
+    uint16_t pitModeFrequencyMHz;   // sets out-of-range pit mode frequency
+    uint8_t band;           // 1=A, 2=B, 3=E, 4=F(Airwaves/Fatshark), 5=Raceband
+    uint8_t channel;        // 1-8
+    uint8_t power;          // 0 = lowest
+    uint8_t lowPowerDisarm; // min power while disarmed, from vtxLowerPowerDisarm_e
+    uint8_t softserialAlt;  // prepend 0xff before sending frame even with SOFTSERIAL
+};
 
 
 class VTX
@@ -67,20 +77,11 @@ public:
         LOW_POWER_DISARM_ALWAYS,
         LOW_POWER_DISARM_UNTIL_FIRST_ARM, // Set low power until arming for the first time
     };
-    struct config_t {
-        uint16_t frequencyMHz;          // sets freq in MHz if band=0
-        uint16_t pitModeFrequencyMHz;   // sets out-of-range pit mode frequency
-        uint8_t band;           // 1=A, 2=B, 3=E, 4=F(Airwaves/Fatshark), 5=Raceband
-        uint8_t channel;        // 1-8
-        uint8_t power;          // 0 = lowest
-        uint8_t lowPowerDisarm; // min power while disarmed, from vtxLowerPowerDisarm_e
-        uint8_t softserialAlt;  // prepend 0xff before sending frame even with SOFTSERIAL
-    };
 public:
-    const config_t& getConfig() const { return _config; }
-    void setConfig(const config_t& config);
+    const vtx_config_t& getConfig() const { return _config; }
+    void setConfig(const vtx_config_t& config);
 
-    virtual void process(timeUs32_t currentTimeUs) { (void)currentTimeUs; }
+    virtual void process(time_us32_t currentTimeUs) { (void)currentTimeUs; }
     type_e getDeviceType() const { return _type; }
     virtual bool isReady() const { return true; }
 
@@ -107,7 +108,7 @@ public:
     const char* lookupPowerName(uint8_t power) const;
 protected:
     type_e _type;
-    config_t _config;
+    vtx_config_t _config;
     uint16_t _powerValue {};
     bool _configChanged {false};
     uint8_t _powerLevelCount {};

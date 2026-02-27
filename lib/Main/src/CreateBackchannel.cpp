@@ -2,34 +2,28 @@
 
 #include <BackchannelFlightController.h>
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
-#include <BackchannelTransceiverESPNOW.h>
+#include <backchannel_transceiver_espnow.h>
 #endif
-#include <ReceiverAtomJoyStick.h>
+#include <receiver_atom_joystick.h>
 
 
 #if defined(BACKCHANNEL_MAC_ADDRESS) && defined(LIBRARY_RECEIVER_USE_ESPNOW)
-BackchannelBase& Main::createBackchannel(FlightController& flightController, AHRS& ahrs, ReceiverBase& receiver, NonVolatileStorage& nvs, const TaskBase* dashboardTask)
+BackchannelBase& Main::createBackchannel(ReceiverBase& receiver)
 {
     // Statically allocate the backchannel.
-    static constexpr uint8_t backchannelMacAddress[ESP_NOW_ETH_ALEN] BACKCHANNEL_MAC_ADDRESS;
-    auto& receiverAtomJoyStick = static_cast<ReceiverAtomJoyStick&>(receiver); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
-    static BackchannelTransceiverESPNOW backchannelTransceiverESPNOW(receiverAtomJoyStick.get_espnow_transceiver(), &backchannelMacAddress[0]);
+    static constexpr uint8_t backchannel_mac_address[ESP_NOW_ETH_ALEN] BACKCHANNEL_MAC_ADDRESS;
+    auto& receiver_atom_joystick = static_cast<ReceiverAtomJoystick&>(receiver); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    static BackchannelTransceiverEspnow backchannel_transceiver_espnow(receiver_atom_joystick.get_espnow_transceiver(), &backchannel_mac_address[0]);
 
-
-    const ReceiverBase::EUI_48_t myEUI = receiver.get_my_eui();
-    const std::array<uint8_t, 6> myMacAddress = {
-        myEUI.octets[0], myEUI.octets[1], myEUI.octets[2], myEUI.octets[3], myEUI.octets[4], myEUI.octets[5]
+    const ReceiverBase::EUI_48_t my_eui = receiver.get_my_eui();
+    const std::array<uint8_t, 6> my_mac_address = {
+        my_eui.octets[0], my_eui.octets[1], my_eui.octets[2], my_eui.octets[3], my_eui.octets[4], my_eui.octets[5]
     };
 
     static BackchannelFlightController backchannel(
-        backchannelTransceiverESPNOW,
-        &backchannelMacAddress[0],
-        &myMacAddress[0],
-        flightController,
-        ahrs,
-        receiver,
-        dashboardTask,
-        nvs
+        backchannel_transceiver_espnow,
+        &backchannel_mac_address[0],
+        &my_mac_address[0]
     );
 
     return backchannel;

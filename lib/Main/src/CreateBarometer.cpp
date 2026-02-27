@@ -1,5 +1,5 @@
 #include "Main.h"
-#include <BarometerBMP280.h>
+#include <barometer_bmp280.h>
 
 
 /*!
@@ -9,7 +9,7 @@ BarometerBase* Main::createBarometer()
 {
 #if defined(USE_BAROMETER)
 #if defined(USE_BAROMETER_BMP280)
-    static BarometerBMP280 bmp280(BUS_BASE::BAROMETER_I2C_INDEX , BUS_I2C::BAROMETER_I2C_PINS, BarometerBMP280::I2C_ADDRESS);
+    static BarometerBmp280 bmp280(BusBase::BAROMETER_I2C_INDEX , BusI2c::BAROMETER_I2C_PINS, BarometerBmp280::I2C_ADDRESS);
     return &bmp280;
 #else
     return nullptr;

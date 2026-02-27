@@ -1,23 +1,22 @@
 #pragma once
 
 #include "ReceiverWatcher.h"
-#include <ReceiverBase.h>
+#include <receiver_base.h>
 
-class AHRS;
+class Ahrs;
+class AhrsMessageQueue;
 class DisplayPortBase;
 class FlightController;
+class MotorMixerBase;
 
 
 class ScreenBase : public ReceiverWatcher {
 public:
     virtual ~ScreenBase() = default;
-    ScreenBase(const DisplayPortBase& displayPort) :
-        _displayPort(displayPort)
-    {
-    }
+    ScreenBase() = default;
 public:
     virtual void nextScreenMode() = 0;
-    virtual void update(const FlightController& flightController, const ReceiverBase& receiver) = 0;
+    virtual void update(const AhrsMessageQueue& ahrsMessageQueue, const MotorMixerBase& motorMixer, const ReceiverBase& receiver) = 0;
     virtual void updateTemplate(const ReceiverBase& receiver) = 0;
     inline int getScreenSizeX() const { return _screenSizeX; }
     inline int getScreenSizeY() const { return _screenSizeY; }
@@ -31,7 +30,6 @@ protected:
     inline void clearnew_receiver_packet_available() { _new_receiver_packet_available = false; }
     inline bool is_new_receiver_packet_available() const { return _new_receiver_packet_available; }
 protected:
-    const DisplayPortBase& _displayPort;
     int _screenSizeX {};
     int _screenSizeY {};
     int _new_receiver_packet_available {};

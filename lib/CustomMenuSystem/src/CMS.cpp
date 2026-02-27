@@ -3,21 +3,17 @@
 #include "CMS_Types.h"
 #include "Cockpit.h"
 #include "DisplayPortBase.h"
-
-#include <MspBox.h>
-#include <ReceiverBase.h>
+#include "MspBox.h"
+#include "RC_Modes.h"
+#include <receiver_base.h>
 
 #if (__cplusplus >= 202002L)
 #include <ranges>
 #endif
 
 
-CMS::CMS(DisplayPortBase* displayPort, Cockpit& cockpit, const ReceiverBase& receiver, RcModes& rc_modes, IMU_Filters& imuFilters, IMU_Base& imu, NonVolatileStorage& nvs, VTX* vtx) :
-    _displayPort(displayPort),
-    _cmsx(*this, cockpit, imuFilters, imu, rc_modes, nvs, vtx),
-    _cockpit(cockpit),
-    _receiver(receiver),
-    _rc_modes(rc_modes)
+CMS::CMS() : // NOLINT(hicpp-use-equals-default,modernize-use-equals-default)
+    _cmsx(*this)
 {
 }
 
@@ -33,46 +29,47 @@ void CMS::setConfig(const config_t& config)
     _config = config;
 }
 
-void CMS::updateCMS(uint32_t currentTimeUs, uint32_t timeMicrosecondsDelta) // NOLINT(readability-function-cognitive-complexity)
+void CMS::updateCMS(cms_parameter_group_t& pg, uint32_t currentTimeUs, uint32_t time_microseconds_delta) // NOLINT(readability-function-cognitive-complexity)
 {
-    (void)timeMicrosecondsDelta;
+    (void)pg;
+    (void)time_microseconds_delta;
 
-    if (_rc_modes.is_mode_active(MspBox::BOX_PARALYZE)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_PARALYZE)) {
         return;
     }
 
     const uint32_t currentTimeMs = currentTimeUs / 1000;
 
-    const receiver_controls_pwm_t controls = _receiver.get_controls_pwm();
-    const bool isArmed = _cockpit.isArmed();
+    const receiver_controls_pwm_t controls = pg.receiver.get_controls_pwm();
+    const bool isArmed = pg.cockpit.isArmed();
     if (_cmsx.isInMenu()) {
-        if (scanKeys(static_cast<int32_t>(currentTimeMs - _lastCalledMs), controls, isArmed)) {
-            _cmsx.drawMenu(*_displayPort, currentTimeUs);
-            _displayPort->commitTransaction();
+        if (scanKeys(pg, static_cast<int32_t>(currentTimeMs - _lastCalledMs), controls, isArmed)) {
+            _cmsx.drawMenu(pg, currentTimeUs);
+            pg.displayPort.commitTransaction();
         }
         if (currentTimeMs > _lastHeartbeatTimeMs + HEARTBEAT_INTERVAL_MS) {
             // Heart beat for external CMS display device @500ms, timeout @1000ms
-            _displayPort->heartbeat();
+            pg.displayPort.heartbeat();
             _lastHeartbeatTimeMs = currentTimeMs;
         }
     } else {
         // Detect menu invocation
-        if (!isArmed && !_rc_modes.is_mode_active(MspBox::BOX_STICK_COMMAND_DISABLE)) {
+        if (!isArmed && !pg.rc_modes.is_mode_active(MspBox::BOX_STICK_COMMAND_DISABLE)) {
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW )
             if (RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch)) {
 #else
             if (RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch) && RcModes::pwm_is_mid(controls.throttle)) {
 #endif
-                _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
-                _cmsx.menuOpen(*_displayPort);
-                _cmsx.drawMenu(*_displayPort, currentTimeUs);
-                _displayPort->commitTransaction();
+                pg.displayPort.beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
+                _cmsx.menuOpen(pg);
+                _cmsx.drawMenu(pg, currentTimeUs);
+                pg.displayPort.commitTransaction();
                 _keyDelayMs = CMSX::BUTTON_PAUSE_MS; // Tends to overshoot if BUTTON_TIME_MS used
             }
         }
     }
     // Some commands, notably flash erase, take a long time, so currentTimeMs is not an accurate value for _lastCalledMs
-    _lastCalledMs = timeMs();
+    _lastCalledMs = time_ms();
 }
 
 void CMS::setExternKey(CMSX::key_e externKey)
@@ -82,7 +79,7 @@ void CMS::setExternKey(CMSX::key_e externKey)
     }
 }
 
-uint16_t CMS::handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount)
+uint16_t CMS::handleKeyWithRepeat(cms_parameter_group_t& pg, CMSX::key_e key, size_t repeatCount)
 {
     uint16_t ret = 0;
 #if (__cplusplus >= 202002L)
@@ -90,17 +87,17 @@ uint16_t CMS::handleKeyWithRepeat(CMSX::key_e key, size_t repeatCount)
 #else
     for (size_t ii = 0; ii < repeatCount ; ++ii) {
 #endif
-        ret = _cmsx.handleKey(*_displayPort, key);
+        ret = _cmsx.handleKey(pg, key);
     }
     return ret;
 }
 
-bool CMS::scanKeys(int32_t timeDelta, const receiver_controls_pwm_t& controls, bool isArmed) // NOLINT(readability-function-cognitive-complexity)
+bool CMS::scanKeys(cms_parameter_group_t& pg, int32_t timeDelta, const receiver_controls_pwm_t& controls, bool isArmed) // NOLINT(readability-function-cognitive-complexity)
 {
     if (_externKey != CMSX::KEY_NONE) {
-        _keyDelayMs = _cmsx.handleKey(*_displayPort, _externKey);
+        _keyDelayMs = _cmsx.handleKey(pg, _externKey);
         _externKey = CMSX::KEY_NONE;
-        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
+        pg.displayPort.beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
         return true;
     }
 
@@ -134,8 +131,8 @@ bool CMS::scanKeys(int32_t timeDelta, const receiver_controls_pwm_t& controls, b
         return false;
     }
     if (key) {
-        _displayPort->beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
-        _keyDelayMs = handleKeyWithRepeat(key, _repeatCount);
+        pg.displayPort.beginTransaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
+        _keyDelayMs = handleKeyWithRepeat(pg, key, _repeatCount);
         // Key repeat effect is implemented in two phases.
         // First phase is to decrease keyDelayMs reciprocal to hold time.
         // When keyDelayMs reached a certain limit (scheduling interval),
@@ -165,6 +162,7 @@ bool CMS::scanKeys(int32_t timeDelta, const receiver_controls_pwm_t& controls, b
     return false;
 }
 
+#if false
 DisplayPortBase* CMS::displayPortSelectNext()
 {
     if (_deviceCount == 0) {
@@ -190,3 +188,4 @@ bool CMS::displayPortSelect(const DisplayPortBase* displayPort)
     }
     return false;
 }
+#endif

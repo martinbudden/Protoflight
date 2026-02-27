@@ -5,13 +5,15 @@
 #if defined(M5_UNIFIED)
 #include <M5Unified.h>
 #endif
-#include <ReceiverAtomJoyStick.h>
-#include <ReceiverCrsf.h>
-#include <ReceiverIbus.h>
-#include <ReceiverSbus.h>
+#include <receiver_atom_joystick.h>
+#include <receiver_crsf.h>
+#include <receiver_ibus.h>
+#include <receiver_sbus.h>
 #if defined(LIBRARY_RECEIVER_USE_ESPNOW)
 #include <WiFi.h>
 #endif
+
+#include <cassert>
 
 
 ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
@@ -24,12 +26,12 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
     // Disconnect from Access Point if it was previously connected
     WiFi.disconnect();
     // get my MAC address
-    std::array<uint8_t, ESP_NOW_ETH_ALEN> myMacAddress {};
-    Network.macAddress(&myMacAddress[0]);
+    std::array<uint8_t, ESP_NOW_ETH_ALEN> my_mac_address {};
+    Network.macAddress(&my_mac_address[0]);
 #if !defined(RECEIVER_CHANNEL)
     enum { RECEIVER_CHANNEL = 3 };
 #endif
-    static ReceiverAtomJoyStick receiver(&myMacAddress[0], RECEIVER_CHANNEL);
+    static ReceiverAtomJoystick receiver(&my_mac_address[0], RECEIVER_CHANNEL);
     receiver.set_positive_half_throttle(true);
     const esp_err_t espErr = receiver.init();
     Serial.printf("\r\n\r\n**** ESP-NOW Ready:%X\r\n\r\n", espErr);
@@ -66,7 +68,7 @@ ReceiverBase& Main::createReceiver(NonVolatileStorage& nvs)
 
 #else
 
-    const RX::config_t& rxConfig = nvs.loadRX_Config();
+    const rx_config_t& rxConfig = nvs.load_rx_config();
     auto rxType = static_cast<RX::serial_type_e>(rxConfig.serial_rx_provider);
 
     uint32_t baudrate = ReceiverCrsf::BAUD_RATE;

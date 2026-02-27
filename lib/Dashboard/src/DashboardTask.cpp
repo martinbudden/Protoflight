@@ -1,7 +1,7 @@
 #include "Dashboard.h"
 #include "DashboardTask.h"
 
-#include <TimeMicroseconds.h>
+#include <time_microseconds.h>
 
 #if defined(FRAMEWORK_USE_FREERTOS)
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
@@ -22,12 +22,12 @@ loop() function for when not using FREERTOS
 */
 void DashboardTask::loop()
 {
-    const timeUs32_t timeMicroseconds = timeUs();
-    _tickCountDelta = timeMicroseconds - _timeMicrosecondsPrevious;
+    const time_us32_t time_microseconds = time_us();
+    _tick_count_delta = time_microseconds - _time_microseconds_previous;
 
-    if (_timeMicrosecondsDelta >= _taskIntervalMicroseconds) { // if _taskIntervalMicroseconds has passed, then run the update
-        _timeMicrosecondsPrevious = timeMicroseconds;
-        _dashboard.updateDashboard();
+    if (_time_microseconds_delta >= _task_interval_microseconds) { // if _task_interval_microseconds has passed, then run the update
+        _time_microseconds_previous = time_microseconds;
+        _dashboard.updateDashboard(_parameter_group);
     }
 }
 
@@ -37,19 +37,19 @@ Task function for the AHRS. Sets up and runs the task loop() function.
 [[noreturn]] void DashboardTask::task()
 {
 #if defined(FRAMEWORK_USE_FREERTOS)
-    const uint32_t taskIntervalTicks = _taskIntervalMicroseconds < 1000 ? 1 : pdMS_TO_TICKS(_taskIntervalMicroseconds / 1000);
-    _previousWakeTimeTicks = xTaskGetTickCount();
+    const uint32_t taskIntervalTicks = _task_interval_microseconds < 1000 ? 1 : pdMS_TO_TICKS(_task_interval_microseconds / 1000);
+    _previous_wake_time_ticks = xTaskGetTickCount();
     while (true) {
         // delay until the end of the next taskIntervalTicks
 #if (tskKERNEL_VERSION_MAJOR > 10) || ((tskKERNEL_VERSION_MAJOR == 10) && (tskKERNEL_VERSION_MINOR >= 5))
-            const BaseType_t wasDelayed = xTaskDelayUntil(&_previousWakeTimeTicks, taskIntervalTicks);
-            if (wasDelayed) {
-                _wasDelayed = true;
+            const BaseType_t was_delayed = xTaskDelayUntil(&_previous_wake_time_ticks, taskIntervalTicks);
+            if (was_delayed) {
+                _was_delayed = true;
             }
 #else
-            vTaskDelayUntil(&_previousWakeTimeTicks, taskIntervalTicks);
+            vTaskDelayUntil(&_previous_wake_time_ticks, taskIntervalTicks);
 #endif
-        _dashboard.updateDashboard();
+        _dashboard.updateDashboard(_parameter_group);
     }
 #else
     while (true) {}
@@ -59,7 +59,7 @@ Task function for the AHRS. Sets up and runs the task loop() function.
 /*!
 Wrapper function for AHRS::Task with the correct signature to be used in xTaskCreate.
 */
-[[noreturn]] void DashboardTask::Task(void* arg)
+[[noreturn]] void DashboardTask::task_static(void* arg)
 {
     const TaskBase::parameters_t* parameters = static_cast<TaskBase::parameters_t*>(arg);
 

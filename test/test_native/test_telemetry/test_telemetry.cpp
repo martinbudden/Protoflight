@@ -1,27 +1,36 @@
+#include "Autopilot.h"
 #include "Cockpit.h"
-#include "FC_TelemetryData.h"
+#include "FlightController.h"
 #include "IMU_Filters.h"
 #include "MSP_Protoflight.h"
 #include "NonVolatileStorage.h"
 
-#include <AHRS.h>
-#include <AHRS_MessageQueue.h>
-#include <Debug.h>
 #include <FC_Telemetry.h>
-#include <IMU_Null.h>
+#include <FC_TelemetryData.h>
 #include <MSP_Protocol.h>
-#include <MotorMixerBase.h>
-#include <ReceiverVirtual.h>
-#include <SV_TelemetryData.h>
-#include <SensorFusion.h>
+#include <MSP_Serial.h>
+#include <MSP_Stream.h>
+#include <RC_Modes.h>
+
+#include <ahrs.h>
+#include <ahrs_message_queue.h>
+#include <debug.h>
+#include <imu_null.h>
+#include <motor_mixer_base.h>
+#include <receiver_virtual.h>
+#include <sensor_fusion.h>
 
 #include <string>
 
 #include <unity.h>
 
-#if !defined(OUTPUT_TO_MOTORS_DENOMINATOR)
-enum { OUTPUT_TO_MOTORS_DENOMINATOR = 2 };
-#endif
+void setUp() {
+}
+
+void tearDown() {
+}
+
+// NOLINTBEGIN(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
 
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
 enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
@@ -39,38 +48,46 @@ static const rates_t cockpitRates {
     //.ratesType = rates_t::RATES_TYPE_ACTUAL
 };
 
-void setUp() {
-}
+static NonVolatileStorage nvs;
+static MadgwickFilter sensorFusionFilter;
+static ImuNull imu;
+static Debug debug;
+static constexpr uint8_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
+static constexpr size_t MOTOR_COUNT = 4;
+static constexpr size_t SERVO_COUNT = 0;
+static IMU_Filters imuFilters(0.0F);
+static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);
+static ReceiverVirtual receiver;
+static RcModes rc_modes;
+static AhrsMessageQueue ahrsMessageQueue;
+static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS);
+static Ahrs ahrs(Ahrs::TIMER_DRIVEN, sensorFusionFilter, imu);
+static Autopilot autopilot(ahrsMessageQueue);
+static Cockpit cockpit(autopilot, nullptr);
+static msp_parameter_group_t pg = {
+    .ahrs = ahrs,
+    .flightController = fc,
+    .ahrsMessageQueue = ahrsMessageQueue,
+    .motorMixer = motorMixer,
+    .cockpit = cockpit,
+    .receiver = receiver,
+    .rc_modes = rc_modes,
+    .imuFilters = imuFilters,
+    .debug = debug,
+    .nonVolatileStorage = nvs,
+    .blackbox = nullptr,
+    .vtx = nullptr,
+    .osd = nullptr,
+    .gps = nullptr
+};
 
-void tearDown() {
-}
-
-// NOLINTBEGIN(misc-const-correctness)
 void test_telemetry_msp()
 {
-    static MadgwickFilter sensorFusionFilter;
-    static IMU_Null imu(IMU_Base::XPOS_YPOS_ZPOS);
-    static NonVolatileStorage nvs;
-
-    enum { MOTOR_COUNT = 4, SERVO_COUNT = 0 };
-    static Debug debug;
-    static IMU_Filters imuFilters(MOTOR_COUNT, debug, 0.0F);
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, MOTOR_COUNT, SERVO_COUNT, &debug);
-    static ReceiverVirtual receiver;
-    static RcModes rc_modes;
-    static AHRS_MessageQueue ahrsMessageQueue;
-    static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS, OUTPUT_TO_MOTORS_DENOMINATOR, motorMixer, ahrsMessageQueue, debug);
-    static AHRS ahrs(AHRS::TIMER_DRIVEN, flightController, sensorFusionFilter, imu, imuFilters);
-    static Autopilot autopilot(ahrsMessageQueue);
-    TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    static Cockpit cockpit(rc_modes, flightController, autopilot, imuFilters, debug, nullptr);
-
     // statically allocate an MSP object
-    static MSP_Protoflight msp(ahrs, flightController, cockpit, receiver, rc_modes, imuFilters, debug, nvs, nullptr, nullptr, nullptr, nullptr);
-//size_t packTelemetryData_MSP(uint8_t* telemetryDataPtr, uint32_t id, uint32_t sequenceNumber, MSP_Base& msp, int16_t cmdMSP)
+    static MSP_Protoflight msp;
     static std::array<uint8_t, 256> buf;
     enum { ID = 0x11223344 };
-    packTelemetryData_MSP(&buf[0], ID, 0, msp, MSP_API_VERSION); // 0, 1, 47
+    pack_telemetry_data_msp(&buf[0], ID, 0, pg, msp, MSP_API_VERSION); // 0, 1, 47
     TEST_ASSERT_EQUAL(0x44, buf[0]);
     TEST_ASSERT_EQUAL(0x33, buf[1]);
     TEST_ASSERT_EQUAL(0x22, buf[2]);
@@ -95,7 +112,7 @@ void test_flight_controller_pid_indexes()
     TEST_ASSERT_TRUE(static_cast<int>(FlightController::ROLL_ANGLE_DEGREES) == static_cast<int>(TD_FC_PIDS::ROLL_ANGLE_DEGREES));
     TEST_ASSERT_TRUE(static_cast<int>(FlightController::PITCH_ANGLE_DEGREES) == static_cast<int>(TD_FC_PIDS::PITCH_ANGLE_DEGREES));
 }
-// NOLINTEND(misc-const-correctness)
+// NOLINTEND(cert-err58-cpp,fuchsia-statically-constructed-objects,misc-const-correctness)
 
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)

@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Features.h"
+#include "MspBox.h"
 #include "RC_Adjustments.h"
-#include "RC_Modes.h"
 #include "RX.h"
 #include "Rates.h"
 #include "Targets.h"
 
-#include <CockpitBase.h>
+#include <cockpit_base.h>
 
 #include <cassert>
 
@@ -16,60 +16,79 @@ class Debug;
 class Blackbox;
 class FlightController;
 class IMU_Filters;
-class ReceiverBase;
+class OSD;
+class MotorMixerBase;
+class RcModes;
 
-enum arming_disabled_flags_e {
-    ARMING_DISABLED_NO_GYRO         = (1U << 0U),
-    ARMING_DISABLED_FAILSAFE        = (1U << 1U),
-    ARMING_DISABLED_RX_FAILSAFE     = (1U << 2U),
-    ARMING_DISABLED_NOT_DISARMED    = (1U << 3U),
-    ARMING_DISABLED_BOXFAILSAFE     = (1U << 4U),
-    ARMING_DISABLED_RUNAWAY_TAKEOFF = (1U << 5U),
-    ARMING_DISABLED_CRASH_DETECTED  = (1U << 6U),
-    ARMING_DISABLED_THROTTLE        = (1U << 7U),
-    ARMING_DISABLED_ANGLE           = (1U << 8U),
-    ARMING_DISABLED_BOOT_GRACE_TIME = (1U << 9U),
-    ARMING_DISABLED_NOPREARM        = (1U << 10U),
-    ARMING_DISABLED_LOAD            = (1U << 11U),
-    ARMING_DISABLED_CALIBRATING     = (1U << 12U),
-    ARMING_DISABLED_CLI             = (1U << 13U),
-    ARMING_DISABLED_CMS_MENU        = (1U << 14U),
-    ARMING_DISABLED_BST             = (1U << 15U),
-    ARMING_DISABLED_MSP             = (1U << 16U),
-    ARMING_DISABLED_PARALYZE        = (1U << 17U),
-    ARMING_DISABLED_GPS             = (1U << 18U),
-    ARMING_DISABLED_RESC            = (1U << 19U),
-    ARMING_DISABLED_DSHOT_TELEM     = (1U << 20U),
-    ARMING_DISABLED_REBOOT_REQUIRED = (1U << 21U),
-    ARMING_DISABLED_DSHOT_BITBANG   = (1U << 22U),
-    ARMING_DISABLED_ACC_CALIBRATION = (1U << 23U),
-    ARMING_DISABLED_MOTOR_PROTOCOL  = (1U << 24U),
-    ARMING_DISABLED_CRASHFLIP       = (1U << 25U),
-    ARMING_DISABLED_ARM_SWITCH      = (1U << 26U), // Needs to be the last element, since it's always activated if one of the others is active when arming
+struct receiver_parameter_group_t {
+    RcModes& rc_modes;
+    FlightController& flight_controller;
+    MotorMixerBase& motor_mixer;
+    Debug& debug;
+    Blackbox* blackbox;
+    OSD* osd;
 };
 
-enum { ARMING_DISABLE_FLAGS_COUNT = 27 };
 
+static constexpr uint32_t ARMING_DISABLED_NO_GYRO         = (1U << 0U);
+static constexpr uint32_t  ARMING_DISABLED_FAILSAFE        = (1U << 1U);
+static constexpr uint32_t  ARMING_DISABLED_RX_FAILSAFE     = (1U << 2U);
+static constexpr uint32_t  ARMING_DISABLED_NOT_DISARMED    = (1U << 3U);
+static constexpr uint32_t  ARMING_DISABLED_BOXFAILSAFE     = (1U << 4U);
+static constexpr uint32_t  ARMING_DISABLED_RUNAWAY_TAKEOFF = (1U << 5U);
+static constexpr uint32_t  ARMING_DISABLED_CRASH_DETECTED  = (1U << 6U);
+static constexpr uint32_t  ARMING_DISABLED_THROTTLE        = (1U << 7U);
+static constexpr uint32_t  ARMING_DISABLED_ANGLE           = (1U << 8U);
+static constexpr uint32_t  ARMING_DISABLED_BOOT_GRACE_TIME = (1U << 9U);
+static constexpr uint32_t  ARMING_DISABLED_NOPREARM        = (1U << 10U);
+static constexpr uint32_t  ARMING_DISABLED_LOAD            = (1U << 11U);
+static constexpr uint32_t  ARMING_DISABLED_CALIBRATING     = (1U << 12U);
+static constexpr uint32_t  ARMING_DISABLED_CLI             = (1U << 13U);
+static constexpr uint32_t  ARMING_DISABLED_CMS_MENU        = (1U << 14U);
+static constexpr uint32_t  ARMING_DISABLED_BST             = (1U << 15U);
+static constexpr uint32_t  ARMING_DISABLED_MSP             = (1U << 16U);
+static constexpr uint32_t  ARMING_DISABLED_PARALYZE        = (1U << 17U);
+static constexpr uint32_t  ARMING_DISABLED_GPS             = (1U << 18U);
+static constexpr uint32_t  ARMING_DISABLED_RESC            = (1U << 19U);
+static constexpr uint32_t  ARMING_DISABLED_DSHOT_TELEM     = (1U << 20U);
+static constexpr uint32_t  ARMING_DISABLED_REBOOT_REQUIRED = (1U << 21U);
+static constexpr uint32_t  ARMING_DISABLED_DSHOT_BITBANG   = (1U << 22U);
+static constexpr uint32_t  ARMING_DISABLED_ACC_CALIBRATION = (1U << 23U);
+static constexpr uint32_t  ARMING_DISABLED_MOTOR_PROTOCOL  = (1U << 24U);
+static constexpr uint32_t  ARMING_DISABLED_CRASHFLIP       = (1U << 25U);
+static constexpr uint32_t  ARMING_DISABLED_ARM_SWITCH      = (1U << 26U); // Needs to be the last element, since it's always activated if one of the others is active when arming
+
+static constexpr uint32_t  ARMING_DISABLE_FLAGS_COUNT = 27;
+
+// MSP compatible failsafe parameters
+struct failsafe_config_t {
+    uint16_t throttle_pwm;
+    uint16_t throttle_low_delay_deciseconds;
+    uint16_t recovery_delay_deciseconds; // time of valid rx data needed to allow recovery from failsafe and re-arming
+    uint8_t delay_deciseconds;
+    uint8_t landing_time_seconds; // time allowed in landing phase before disarm
+    uint8_t procedure;
+    uint8_t switch_mode;
+    uint8_t stick_threshold_percent; // Stick deflection percentage to exit GPS Rescue procedure
+};
 
 class Cockpit : public CockpitBase {
 public:
-    Cockpit(RcModes& rc_modes, FlightController& flightController, Autopilot& autopilot, IMU_Filters& imuFilters, Debug& debug, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs);
+    Cockpit(Autopilot& autopilot, const RC_Adjustments::adjustment_configs_t* defaultAdjustmentConfigs);
 public:
-    enum failsafe_phase_e {
-        FAILSAFE_DISARMED = 0,
-        FAILSAFE_IDLE,
-        FAILSAFE_RX_LOSS_DETECTED,
-        FAILSAFE_RX_LOSS_MONITORING,
-        FAILSAFE_RX_LOSS_RECOVERED,
-        FAILSAFE_LANDING,
-        FAILSAFE_LANDED,
-        FAILSAFE_GPS_RESCUE
-    };
+    static constexpr uint8_t FAILSAFE_DISARMED = 0;
+    static constexpr uint8_t FAILSAFE_IDLE = 1;
+    static constexpr uint8_t FAILSAFE_RX_LOSS_DETECTED = 2;
+    static constexpr uint8_t FAILSAFE_RX_LOSS_MONITORING = 3;
+    static constexpr uint8_t FAILSAFE_RX_LOSS_RECOVERED = 4;
+    static constexpr uint8_t FAILSAFE_LANDING = 5;
+    static constexpr uint8_t FAILSAFE_LANDED = 6;
+    static constexpr uint8_t FAILSAFE_GPS_RESCUE = 7;
     struct failsafe_t {
-        failsafe_phase_e phase;
-        uint32_t tickCount; //<! failsafe counter, so the vehicle doesn't fly away if it looses contact with the transmitter (for example by going out of range)
-        uint32_t tickCountThreshold;
-        uint32_t tickCountSwitchOffThreshold;
+        uint32_t tick_count; //<! failsafe counter, so the vehicle doesn't fly away if it looses contact with the transmitter (for example by going out of range)
+        uint32_t tick_countThreshold;
+        uint32_t tick_countSwitchOffThreshold;
+        uint8_t phase;
     };
     enum failsafe_procedure_e {
         FAILSAFE_PROCEDURE_DROP_IT = 0,
@@ -81,17 +100,6 @@ public:
         FAILSAFE_SWITCH_MODE_STAGE1 = 0,
         FAILSAFE_SWITCH_MODE_STAGE2,
         FAILSAFE_SWITCH_MODE_KILL,
-    };
-    // MSP compatible failsafe parameters
-    struct failsafe_config_t {
-        uint16_t throttle_pwm;
-        uint16_t throttle_low_delay_deciseconds;
-        uint16_t recovery_delay_deciseconds; // time of valid rx data needed to allow recovery from failsafe and re-arming
-        uint8_t delay_deciseconds;
-        uint8_t landing_time_seconds; // time allowed in landing phase before disarm
-        uint8_t procedure;
-        uint8_t switch_mode;
-        uint8_t stick_threshold_percent; // Stick deflection percentage to exit GPS Rescue procedure
     };
     // arming flags
     static constexpr uint32_t ARMED = 0x01;
@@ -126,41 +134,37 @@ public:
     static constexpr uint32_t FAILSAFE_MODE   = 1U << LOG2_FAILSAFE_MODE;
     static constexpr uint32_t GPS_RESCUE_MODE = 1U << LOG2_GPS_RESCUE_MODE;
 public:
-    void setBlackbox(Blackbox& blackbox) { _blackbox = &blackbox; }
-    void setOSD(OSD& osd) { _osd = &osd; }
+    virtual void update_controls(uint32_t tick_count, const ReceiverBase& receiver, receiver_parameter_group_t& pg) override;
+    virtual void check_failsafe(uint32_t tick_count, receiver_parameter_group_t& pg) override;
 
     const Autopilot& getAutopilot() const { return _autopilot; }
     Autopilot& getAutopilotMutable() { return _autopilot; }
-    const FlightController& getFlightController() const { return _flightController; }
-    FlightController& getFlightControllerMutable() { return _flightController; }
 
-    void handleArmingSwitch(FlightController& flightController, const ReceiverBase& receiver, const RcModes& rc_modes);
-    virtual void update_controls(uint32_t tickCount, ReceiverBase& receiver) override;
+    void handleArmingSwitch(FlightController& flightController, MotorMixerBase& motorMixer, Blackbox* blackbox, const ReceiverBase& receiver, const RcModes& rc_modes, const Debug& debug);
 
     bool featureIsEnabled(uint32_t mask) const { return _features.isEnabled(mask); }
     uint32_t enabledFeatures() const { return _features.enabledFeatures(); }
     void setFeatures(uint32_t features) { _features.set(features); }
-    Features::config_t getFeaturesConfig() const { return Features::config_t { .enabledFeatures = enabledFeatures() }; }
+    features_config_t get_features_config() const { return features_config_t { .enabledFeatures = enabledFeatures() }; }
 
     bool isArmed() const;
     bool wasEverArmed() const;
-    void setArmed(FlightController& flightController);
-    void setDisarmed(FlightController& flightController);
-    void setArmingDisabledFlag(arming_disabled_flags_e flag);
-    void clearArmingDisabledFlag(arming_disabled_flags_e flag);
+    void setArmed(FlightController& flightController, MotorMixerBase& motorMixer);
+    void setDisarmed(FlightController& flightController, MotorMixerBase& motorMixer);
+    void setArmingDisabledFlag(uint32_t flag);
+    void clearArmingDisabledFlag(uint32_t flag);
     uint32_t getArmingDisableFlags() const { return _armingDisabledFlags; }
     uint32_t getFlightModeFlags() const;
     void setFlightModeFlag(uint8_t flag) { if (flag < FLIGHT_MODE_FLAG_COUNT) { _flightModeFlags.set(flag); } } // for testing
 
-    virtual void check_failsafe(uint32_t tickCount) override;
-    failsafe_phase_e getFailsafePhase() const { return _failsafe.phase; }
+    uint8_t getFailsafePhase() const { return _failsafe.phase; }
 
     const failsafe_config_t& getFailsafeConfig() const { return _failsafeConfig; }
     void setFailsafeConfig(const failsafe_config_t& failsafeConfig);
     bool gpsRescueIsConfigured() const;
 
-    const RX::config_t& getRX_Config() const { return _rxConfig; }
-    void setRX_Config(const RX::config_t& rxConfig);
+    const rx_config_t& getRX_Config() const { return _rxConfig; }
+    void setRX_Config(const rx_config_t& rxConfig);
     const RX::failsafe_channel_configs_t& getRX_FailsafeChannelConfigs() const { return _rxFailsafeChannelConfigs; }
     void setRX_FailsafeChannelConfigs(const RX::failsafe_channel_configs_t& rxFailsafeChannelConfigs);
 
@@ -177,21 +181,17 @@ public:
 #endif
 
     void setRecordToBlackboxWhenArmed(bool recordToBlackboxWhenArmed) { _recordToBlackboxWhenArmed = recordToBlackboxWhenArmed; }
-    void startBlackboxRecording(FlightController& flightController);
-    void stopBlackboxRecording(FlightController& flightController);
+    void startBlackboxRecording(Blackbox* blackbox, FlightController& flightController, const MotorMixerBase& motorMixer, const Debug& debug);
+    void stopBlackboxRecording(Blackbox* blackbox, FlightController& flightController);
 
-    bool getBoxIdState(uint8_t boxId, const RcModes& rcModes) const;
-    size_t packFlightModeFlags(MspBox::bitset_t& flightModeFlags, const RcModes& rcModes) const;
+    bool getBoxIdState(uint8_t boxId, const RcModes& rc_modes) const;
+    size_t packFlightModeFlags(MspBox::bitset_t& flightModeFlags, const RcModes& rc_modes) const;
     void serialize_box_reply_box_name(StreamBufWriter& dst, size_t page) const { _mspBox.serialize_box_reply_box_name(dst, page); }
     void serialize_box_reply_permanent_id(StreamBufWriter& dst, size_t page) const { _mspBox.serialize_box_reply_permanent_id(dst, page); }
 private:
     MspBox _mspBox;
-    RcModes& _rc_modes;
     Features _features {};
-    FlightController& _flightController;
     Autopilot& _autopilot;
-    IMU_Filters& _imuFilters;
-    Debug& _debug;
     rates_t _rates {
         .rateLimits = { rates_t::LIMIT_MAX, rates_t::LIMIT_MAX, rates_t::LIMIT_MAX },
         .rcRates = { 100, 100, 100 },
@@ -202,22 +202,20 @@ private:
         .throttleLimitType = rates_t::THROTTLE_LIMIT_TYPE_OFF,
         .throttleLimitPercent = 100
     };
-    Blackbox* _blackbox {nullptr};
-    OSD* _osd {nullptr};
     uint32_t _armingFlags {};
     uint32_t _armingDisabledFlags {};
     std::bitset<FLIGHT_MODE_FLAG_COUNT> _flightModeFlags {};
     failsafe_config_t _failsafeConfig {};
-    RX::config_t _rxConfig {};
+    rx_config_t _rxConfig {};
     RX::failsafe_channel_configs_t _rxFailsafeChannelConfigs {};
     // failsafe handling
     failsafe_t _failsafe {
-        .phase = FAILSAFE_DISARMED,
-        .tickCount = 0,
-        .tickCountThreshold = 1500,
-        .tickCountSwitchOffThreshold = 5000
+        .tick_count = 0,
+        .tick_countThreshold = 1500,
+        .tick_countSwitchOffThreshold = 5000,
+        .phase = FAILSAFE_DISARMED
     };
-    bool _recordToBlackboxWhenArmed { false };
+    bool _recordToBlackboxWhenArmed {false};
     bool _rebootRequired {false};
     bool _onOffSwitchPressed {false}; // on/off switch debouncing
     bool _cliMode {false};

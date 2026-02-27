@@ -1,7 +1,7 @@
 #pragma once
 
-#include <SV_TelemetryData.h>
 #include <ScreenBase.h>
+#include <sv_telemetry_data.h>
 
 struct ahrs_data_t;
 
@@ -18,7 +18,7 @@ public:
     };
     enum mode_e { MODE_NORMAL = 1, MODE_INVERTED = 3, MODE_QRCODE = 5 };
 public:
-    ScreenM5(const DisplayPortBase& displayPort);
+    ScreenM5();
 private:
     // ScreenM5 is not copyable or moveable
     ScreenM5(const ScreenM5&) = delete;
@@ -29,7 +29,7 @@ public:
     inline screen_size_e getScreenSize() const { return _screenSize; }
 
     virtual void nextScreenMode() override;
-    virtual void update(const FlightController& flightController, const ReceiverBase& receiver) override;
+    virtual void update(const AhrsMessageQueue& ahrsMessageQueue, const MotorMixerBase& motorMixer, const ReceiverBase& receiver) override;
     virtual void updateTemplate(const ReceiverBase& receiver) override;
 private:
     void setScreenMode(mode_e screenMode);

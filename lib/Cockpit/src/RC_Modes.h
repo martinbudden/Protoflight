@@ -1,13 +1,12 @@
 #pragma once
 
-#include <MspBox.h>
-#include <ReceiverBase.h>
+#include "MspBox.h"
 
-#include <algorithm>
-
+class ReceiverBase;
 
 struct rc_modes_activation_condition_t {
-    receiver_channel_range_t range;
+    uint8_t range_start;
+    uint8_t range_end;
     uint8_t mode_id;
     uint8_t auxiliary_channel_index;
     uint8_t mode_logic;
@@ -31,8 +30,23 @@ private:
     RcModes& operator=(RcModes&&) = delete;
 public:
 
-    static uint16_t mode_step_to_channel_value(uint8_t step) { return (ReceiverBase::CHANNEL_RANGE_MIN + static_cast<uint16_t>(25 * step)); }
-    static uint8_t channel_value_to_step(uint16_t channel_value) { return static_cast<uint8_t>((std::clamp(channel_value, ReceiverBase::CHANNEL_RANGE_MIN, ReceiverBase::CHANNEL_RANGE_MAX) - ReceiverBase::CHANNEL_RANGE_MIN) / ReceiverBase::CHANNEL_RANGE_STEP); }
+    /*! 
+    Steps are 25 apart
+        a value of 0 corresponds to a channel value of 900 or less
+        a value of 48 corresponds to a channel value of 2100 or more
+    48 steps between 900 and 2100
+    */
+    static constexpr uint16_t CHANNEL_RANGE_MIN = 900;
+    static constexpr uint16_t CHANNEL_RANGE_MID = 1500;
+    static constexpr uint16_t CHANNEL_RANGE_MAX = 2100;
+
+    static constexpr uint16_t CHANNEL_RANGE_STEP = 25;
+    static constexpr uint16_t RANGE_STEP_MIN = 0;
+    static constexpr uint16_t RANGE_STEP_MID = ((CHANNEL_RANGE_MID - CHANNEL_RANGE_MIN) / CHANNEL_RANGE_STEP);
+    static constexpr uint16_t RANGE_STEP_MAX = ((CHANNEL_RANGE_MAX - CHANNEL_RANGE_MIN) / CHANNEL_RANGE_STEP);
+
+    static uint16_t mode_step_to_channel_value(uint8_t step);
+    static uint8_t channel_value_to_step(uint16_t channel_value);
 
     static bool pwm_is_high(uint16_t x) { return x > 1750; }
     static bool pwm_is_low(uint16_t x) { return x < 1250; }
@@ -53,12 +67,13 @@ private:
     bool is_mode_activation_condition_linked(uint8_t mode_id) const;
     //void remove_mode_activation_condition(uint8_t mode_id);
     bool is_mode_activation_condition_configured(const rc_modes_activation_condition_t& mac, const rc_modes_activation_condition_t& empty_mac) const;
-    static bool is_range_usable(const receiver_channel_range_t& range) { return range.start_step < range.end_step; }
+    static bool is_range_usable(uint8_t range_start, uint8_t range_end);
+    static bool is_range_active(uint16_t channel_value, uint8_t range_start, uint8_t range_end);
     void update_masks_for_mac(const rc_modes_activation_condition_t& mac, MspBox::bitset_t& and_bitset, MspBox::bitset_t& new_bitsets, bool range_active);
     void update_masks_for_sticky_modes(const rc_modes_activation_condition_t& mac, MspBox::bitset_t& and_bitset, MspBox::bitset_t& new_bitset, bool range_active);
 private:
     size_t _active_mac_count = 0;
-    size_t __active_linked_mac_count = 0;
+    size_t _active_linked_mac_count = 0;
     MspBox::bitset_t _rc_mode_activation_bitset {};
     MspBox::bitset_t _sticky_modes_ever_disabled_bitset {};
     std::array<uint8_t, RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT> _active_mac_array {};

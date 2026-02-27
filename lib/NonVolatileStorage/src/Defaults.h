@@ -7,8 +7,9 @@
 #endif
 #include "FlightController.h"
 #include "IMU_Filters.h"
-#include <MotorMixerBase.h>
-#include <ReceiverBase.h>
+#include "RC_Modes.h"
+#include <motor_mixer_base.h>
+#include <receiver_base.h>
 
 #if defined(USE_GPS)
 #include <GPS.h>
@@ -22,16 +23,16 @@
 
 namespace DEFAULTS {
 
-static constexpr Features::config_t featuresConfig {
+static constexpr features_config_t FEATURES_CONFIG {
     .enabledFeatures = Features::FEATURE_RX_SERIAL | Features::FEATURE_ANTI_GRAVITY | Features::FEATURE_AIRMODE
 };
 
-static constexpr MotorMixerBase::mixer_config_t motorMixerConfig {
+static constexpr mixer_config_t MOTOR_MIXER_CONFIG {
     .type = MotorMixerBase::QUAD_X,
     .yaw_motors_reversed = true,
 };
 
-static constexpr DynamicIdleController::config_t dynamicIdleControllerConfig = {
+static constexpr dynamic_idle_controller_config_t DYNAMIC_IDLE_CONTROLLER_CONFIG = {
     .dyn_idle_min_rpm_100 = 0,
     .dyn_idle_p_gain = 50,
     .dyn_idle_i_gain = 50,
@@ -39,8 +40,7 @@ static constexpr DynamicIdleController::config_t dynamicIdleControllerConfig = {
     .dyn_idle_max_increase = 150,
 };
 
-
-static constexpr MotorMixerBase::motor_config_t motorConfig = {
+static constexpr motor_config_t MOTOR_CONFIG = {
     .device = {
         .motor_pwm_rate = 480, // 16000 for brushed
         .motor_protocol = MotorMixerBase::MOTOR_PROTOCOL_DSHOT300,
@@ -57,9 +57,9 @@ static constexpr MotorMixerBase::motor_config_t motorConfig = {
     .motor_pole_count = 14,
 };
 
-static constexpr FlightController::default_pids_t& flightControllerPIDs = FlightController::DefaultPIDs;
+static constexpr FlightController::default_pids_t& FLIGHT_CONTROLLER_PIDS = FlightController::DefaultPIDs;
 
-static constexpr FlightController::simplified_pid_settings_t flightControllerSimplifiedPID_settings = {
+static constexpr simplified_pid_settings_t FLIGHT_CONTROLLER_SIMPLIFIED_PID_SETTINGS = {
     .multiplier = 100,
     .roll_pitch_ratio = 100,
     .i_gain = 100,
@@ -70,7 +70,7 @@ static constexpr FlightController::simplified_pid_settings_t flightControllerSim
     .k_gain = 100,
 };
 
-static constexpr FlightController::filters_config_t flightControllerFiltersConfig = {
+static constexpr flight_controller_filters_config_t FLIGHT_CONTROLLER_FILTERS_CONFIG = {
     .dterm_lpf1_hz = 75,
     .dterm_lpf2_hz = 150,
 #if defined(USE_DTERM_FILTERS_EXTENDED)
@@ -78,19 +78,19 @@ static constexpr FlightController::filters_config_t flightControllerFiltersConfi
     .dterm_notch_cutoff = 160,
     .dterm_dynamic_lpf1_min_hz = 75,
     .dterm_dynamic_lpf1_max_hz = 150,
-    .dterm_lpf1_type = FlightController::filters_config_t::PT1,
-    .dterm_lpf2_type = FlightController::filters_config_t::PT1,
+    .dterm_lpf1_type = flight_controller_filters_config_t::PT1,
+    .dterm_lpf2_type = flight_controller_filters_config_t::PT1,
 #endif
     .yaw_lpf_hz = 100,
     .output_lpf_hz = 500,
     .rc_smoothing_feedforward_cutoff = 0,
 };
 
-static constexpr FlightController::flight_mode_config_t flightControllerFlightModeConfig = {
+static constexpr flight_mode_config_t FLIGHT_CONTROLLER_FLIGHT_MODE_CONFIG = {
     .level_race_mode = false,
 };
 
-static constexpr FlightController::tpa_config_t flightControllerTPA_Config = {
+static constexpr tpa_config_t FLIGHT_CONTROLLER_TPA__CONFIG = {
     .tpa_mode = FlightController::TPA_MODE_D,
     .tpa_rate = 65,
     .tpa_breakpoint = 1350,
@@ -99,20 +99,20 @@ static constexpr FlightController::tpa_config_t flightControllerTPA_Config = {
     .tpa_low_breakpoint = 1050,
 };
 
-static constexpr FlightController::anti_gravity_config_t flightControllerAntiGravityConfig = {
+static constexpr anti_gravity_config_t FLIGHT_CONTROLLER_ANTI_GRAVITY_CONFIG = {
     .cutoff_hz = 5,
     .p_gain = 100,
     .i_gain = 80,
 };
 
-static constexpr FlightController::crash_flip_config_t flightControllerCrashFlipConfig = {
+static constexpr crash_flip_config_t FLIGHT_CONTROLLER_CRASH_FLIP_CONFIG = {
     .motor_percent = 0,
     .rate = 0,
     .auto_rearm = false,
 };
 
 #if defined(USE_D_MAX)
-static constexpr FlightController::d_max_config_t flightControllerDMaxConfig = {
+static constexpr d_max_config_t FLIGHT_CONTROLLER_D_MAX_CONFIG = {
     .d_max = { 40, 46 },
     .d_max_gain = 37,
     .d_max_advance = 20,
@@ -120,7 +120,7 @@ static constexpr FlightController::d_max_config_t flightControllerDMaxConfig = {
 #endif
 
 #if defined(USE_ITERM_RELAX)
-static constexpr FlightController::iterm_relax_config_t flightControllerITermRelaxConfig = {
+static constexpr iterm_relax_config_t FLIGHT_CONTROLLER_ITERM_RELAX_CONFIG = {
     .iterm_relax_type = 0,
     .iterm_relax = FlightController::ITERM_RELAX_ON,
     .iterm_relax_setpoint_threshold = 40, // degrees per second
@@ -129,14 +129,14 @@ static constexpr FlightController::iterm_relax_config_t flightControllerITermRel
 #endif
 
 #if defined(USE_YAW_SPIN_RECOVERY)
-static constexpr FlightController::yaw_spin_recovery_config_t flightControllerYawSpinRecoveryConfig = {
+static constexpr yaw_spin_recovery_config_t FLIGHT_CONTROLLER_YAW_SPIN_RECOVERY_CONFIG = {
     .yaw_spin_threshold = 1950,
     .yaw_spin_recovery = FlightController::YAW_SPIN_RECOVERY_OFF,
 };
 #endif
 
 #if defined(USE_CRASH_RECOVERY)
-static constexpr FlightController::crash_recovery_config_t flightControllerCrashRecoveryConfig = {
+static constexpr crash_recovery_config_t FLIGHT_CONTROLLER_CRASH_RECOVERY_CONFIG = {
     .crash_dthreshold = 50,
     .crash_gthreshold = 400,
     .crash_setpoint_threshold = 350,
@@ -150,7 +150,7 @@ static constexpr FlightController::crash_recovery_config_t flightControllerCrash
 #endif
 
 #if defined(USE_DYNAMIC_NOTCH_FILTER)
-static constexpr DynamicNotchFilter::config_t dynamicNotchFilterConfig = {
+static constexpr dynamic_notch_filter_config_t DYNAMIC_NOTCH_FILTER_CONFIG = {
     .dyn_notch_min_hz = 100,
     .dyn_notch_max_hz = 600,
     .dyn_notch_q = 300,
@@ -159,7 +159,7 @@ static constexpr DynamicNotchFilter::config_t dynamicNotchFilterConfig = {
 };
 #endif
 
-static constexpr IMU_Filters::config_t imuFiltersConfig = {
+static constexpr imu_filters_config_t IMU_FILTERS_CONFIG = {
     .acc_lpf_hz = 100,
     .gyro_lpf1_hz = 0, // switched off
     .gyro_lpf2_hz = 250, // this is an anti-alias filter and shouldn't be disabled
@@ -170,11 +170,11 @@ static constexpr IMU_Filters::config_t imuFiltersConfig = {
     //.gyro_dynamic_lpf1_min_hz = 0,
     //.gyro_dynamic_lpf1_max_hz = 0,
     .gyro_lpf1_type = 0,
-    .gyro_lpf2_type = IMU_Filters::config_t::PT1,
+    .gyro_lpf2_type = imu_filters_config_t::PT1,
 };
 
 #if defined(USE_RPM_FILTERS)
-static constexpr RpmFilters::config_t rpmFiltersConfig = {
+static constexpr rpm_filters_config_t RPM_FILTERS_CONFIG = {
     .rpm_filter_fade_range_hz = 50,
     .rpm_filter_q = 500,
     .rpm_filter_lpf_hz = 150,
@@ -184,7 +184,7 @@ static constexpr RpmFilters::config_t rpmFiltersConfig = {
 };
 #endif
 
-static constexpr rates_t cockpitRates = {
+static constexpr rates_t COCKPIT_RATES = {
     .rateLimits = { rates_t::LIMIT_MAX, rates_t::LIMIT_MAX, rates_t::LIMIT_MAX},
     .rcRates = { 7, 7, 7 },
     .rcExpos = { 0, 0, 0 },
@@ -196,7 +196,7 @@ static constexpr rates_t cockpitRates = {
     //.ratesType = rates_t::RATES_TYPE_ACTUAL
 };
 
-static constexpr Cockpit::failsafe_config_t cockpitFailSafeConfig = {
+static constexpr failsafe_config_t COCKPIT_FAILSAFE_CONFIG = {
     .throttle_pwm = 1000, // throttle off
     .throttle_low_delay_deciseconds = 100,
     .recovery_delay_deciseconds = 5,
@@ -207,7 +207,7 @@ static constexpr Cockpit::failsafe_config_t cockpitFailSafeConfig = {
     .stick_threshold_percent = 30,
 };
 
-static constexpr RX::config_t RX_Config = {
+static constexpr rx_config_t RX_CONFIG = {
     // .rc_map = {},
     .serial_rx_provider = RX::SERIAL_CRSF,
     .serial_rx_inverted = 0,
@@ -233,28 +233,22 @@ By default AUX1 is for arming, AUX2 for angle mode, and AUX3 for altitude hold.
 */
 static constexpr rc_modes_activation_condition_array_t RC_MODE_ACTIVATION_CONDITIONS = {{
     {
-        .range = {
-            .start_step = ReceiverBase::RANGE_STEP_MID,
-            .end_step = ReceiverBase::RANGE_STEP_MAX
-        },
+        .range_start = RcModes::RANGE_STEP_MID,
+        .range_end = RcModes::RANGE_STEP_MAX,
         .mode_id = MspBox::BOX_ARM,
         .auxiliary_channel_index = ReceiverBase::AUX1 - ReceiverBase::AUX1, // NOLINT(misc-redundant-expression)
         .mode_logic = {},
         .linked_to = {}
     }, {
-        .range = {
-            .start_step = ReceiverBase::RANGE_STEP_MID,
-            .end_step = ReceiverBase::RANGE_STEP_MAX
-        },
+        .range_start = RcModes::RANGE_STEP_MID,
+        .range_end = RcModes::RANGE_STEP_MAX,
         .mode_id = MspBox::BOX_ANGLE,
         .auxiliary_channel_index = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .mode_logic = {},
         .linked_to = {}
     }, {
-        .range = {
-            .start_step = ReceiverBase::RANGE_STEP_MID,
-            .end_step = ReceiverBase::RANGE_STEP_MAX
-        },
+        .range_start = RcModes::RANGE_STEP_MID,
+        .range_end = RcModes::RANGE_STEP_MAX,
         .mode_id = MspBox::BOX_ALTITUDE_HOLD,
         .auxiliary_channel_index = ReceiverBase::AUX2 - ReceiverBase::AUX1,
         .mode_logic = {},
@@ -263,9 +257,9 @@ static constexpr rc_modes_activation_condition_array_t RC_MODE_ACTIVATION_CONDIT
     {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
 }};
 
-static constexpr RC_Adjustments::adjustment_ranges_t RC_AdjustmentRanges = {};
+static constexpr rc_adjustment_ranges_t RC_ADJUSTMENT_RANGES = {};
 
-static constexpr RC_Adjustments::adjustment_configs_t RC_AdjustmentConfigs = {{
+static constexpr RC_Adjustments::adjustment_configs_t RC_ADJUSTMENT_CONFIGS = {{
     {
         .adjustment = ADJUSTMENT_RC_RATE,
         .mode = RC_Adjustments::ADJUSTMENT_MODE_STEP,
@@ -400,7 +394,7 @@ static constexpr RC_Adjustments::adjustment_configs_t RC_AdjustmentConfigs = {{
 }};
 
 #if defined(USE_ALTITUDE_HOLD)
-static constexpr Autopilot::autopilot_config_t autopilotConfig = {
+static constexpr autopilot_config_t AUTOPILOT_CONFIG = {
     .altitudePID = { 15, 15, 15, 0, 15 },
     .positionPID = { 30, 30, 30, 0, 30 },
     .landingAltitudeMeters = 4,
@@ -411,21 +405,21 @@ static constexpr Autopilot::autopilot_config_t autopilotConfig = {
     .maxAngle = 50,
 };
 
-static constexpr Autopilot::position_config_t autopilotPositionConfig = {
+static constexpr position_hold_config_t AUTOPILOT_POSITION_HOLD_CONFIG = {
     .altitude_lpf_hz100 = 300,          // lowpass cutoff Hz*100 for altitude smoothing
     .altitude_dterm_lpf_hz100 = 100,    // lowpass cutoff Hz*100 for altitude derivative smoothing
     .altitude_source = Autopilot::DEFAULT_SOURCE,
     .altitude_prefer_baro = 100,        // percentage trust of barometer data
 };
 
-static constexpr Autopilot::altitude_hold_config_t autopilotAltitudeHoldConfig = {
+static constexpr altitude_hold_config_t AUTOPILOT_ALTITUDE_HOLD_CONFIG = {
     .climbRate = 50,    // max vertical velocity change at full/zero throttle. 50 means 5 m/s
     .deadband = 20,     // throttle deadband in percent of stick travel
 };
 #endif
 
 #if defined(USE_OSD)
-static constexpr OSD::config_t osdConfig = {
+static constexpr osd_config_t OSD_CONFIG = {
     .profile = {},
     .rcChannels = { -1, -1, -1, -1 },
     .timers = {},
@@ -524,12 +518,12 @@ static constexpr OSD::config_t osdConfig = {
     .osd_show_spec_prearm = 0,
 };
 
-static constexpr OSD_Elements::config_t osdElementsConfig = {};
+static constexpr osd_elements_config_t OSD_ELEMENTS_CONFIG = {};
 
 #endif
 
 #if defined(USE_VTX)
-static constexpr VTX::config_t vtxConfig = {
+static constexpr vtx_config_t VTX_CONFIG = {
     .frequencyMHz = 5740,
     .pitModeFrequencyMHz = 0,
     .band =4,
@@ -541,14 +535,14 @@ static constexpr VTX::config_t vtxConfig = {
 #endif
 
 #if defined(USE_GPS)
-static constexpr GPS::config_t gpsConfig = {
+static constexpr gps_config_t GPS_CONFIG = {
 #if defined(USE_VIRTUAL_GPS)
     .provider = GPS_VIRTUAL,
 #else
     .provider = GPS::GPS_UBLOX,
 #endif
     .sbasMode = GPS::SBAS_NONE,
-    .autoConfig = GPS::AUTO_CONFIG_ON,
+    .auto_CONFIG = GPS::AUTO_CONFIG_ON,
     .autoBaud = GPS::AUTO_BAUD_OFF,
     .gps_ublox_acquire_model = GPS::MODEL_STATIONARY,
     .gps_ublox_flight_model = GPS::MODEL_AIRBORNE_4G,

@@ -9,15 +9,8 @@
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,hicpp-signed-bitwise)
 
 
-OSD_Elements::OSD_Elements(const OSD& osd, const FlightController& flightController, const Cockpit& cockpit, const ReceiverBase& receiver, const RcModes& rc_modes, const Debug& debug, const VTX* vtx, const GPS* gps) :
-    _osd(osd),
-    _flightController(flightController),
-    _cockpit(cockpit),
-    _receiver(receiver),
-    _rc_modes(rc_modes),
-    _debug(debug),
-    _vtx(vtx),
-    _gps(gps)
+OSD_Elements::OSD_Elements(const OSD& osd) :
+    _osd(osd)
 {
 }
 
@@ -55,7 +48,7 @@ void OSD_Elements::setProfile(uint8_t profile)
     _profile = profile;
 }
 
-void OSD_Elements::setConfig(const config_t& config)
+void OSD_Elements::setConfig(const osd_elements_config_t& config)
 {
     _config = config;
 }
@@ -126,8 +119,10 @@ void OSD_Elements::addActiveElement(osd_elements_e element)
     }
 }
 
-void OSD_Elements::addActiveElements()
+void OSD_Elements::addActiveElements(const osd_parameter_group_t& pg)
 {
+    (void)pg;
+
     addActiveElement(OSD_ARTIFICIAL_HORIZON);
     addActiveElement(OSD_G_FORCE);
     addActiveElement(OSD_UP_DOWN_REFERENCE);
@@ -255,7 +250,7 @@ void OSD_Elements::addActiveElements()
     //}
 #endif
 #if defined(USE_DSHOT)
-    if (_cockpit.featureIsEnabled(Features::FEATURE_ESC_SENSOR)) {
+    if (pg.cockpit.featureIsEnabled(Features::FEATURE_ESC_SENSOR)) {
         addActiveElement(OSD_ESC_TEMPERATURE);
         addActiveElement(OSD_ESC_RPM);
         addActiveElement(OSD_ESC_RPM_FREQUENCY);
@@ -278,7 +273,7 @@ void OSD_Elements::updateAttitude(float rollAngleDegrees, float pitchAngleDegree
     _yawAngleDegrees = yawAngleDegrees;
 }
 
-bool OSD_Elements::drawNextActiveElement(DisplayPortBase& displayPort)
+bool OSD_Elements::drawNextActiveElement(const osd_parameter_group_t& pg)
 {
     //Serial.printf("drawNextActiveElement: idx:%d cnt:%d\r\n", _activeElementIndex, _activeElementCount);
     if (_activeElementIndex >= _activeElementCount) {
@@ -291,12 +286,12 @@ bool OSD_Elements::drawNextActiveElement(DisplayPortBase& displayPort)
     if (!_backgroundLayerSupported && DrawBackgroundFunctions[element] && !_backgroundRendered) {
         // If the background layer isn't supported then we
         // have to draw the element's static layer as well.
-        _backgroundRendered = drawSingleElementBackground(displayPort, element);
+        _backgroundRendered = drawSingleElementBackground(pg, element);
         // After the background always come back to check for foreground
         return true;
     }
 
-    if (drawSingleElement(displayPort, element)) {
+    if (drawSingleElement(pg, element)) {
         // If rendering is complete then advance to the next element
         // Prepare to render the background of the next element
         _backgroundRendered = false;
@@ -332,7 +327,7 @@ bool OSD_Elements::displayActiveElement(DisplayPortBase& displayPort)
     return false;
 }
 
-bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t elementIndex) // cppcheck-suppress constParameterReference
+bool OSD_Elements::drawSingleElement(const osd_parameter_group_t& pg, uint8_t elementIndex) // cppcheck-suppress constParameterReference
 {
     //Serial.printf("drawSingleElement:%d\r\n", elementIndex);
     // By default mark the element as rendered in case it's in the off blink state
@@ -343,7 +338,7 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
         // Element has no drawing function
         return true;
     }
-    if (!displayPort.getUseDeviceBlink() && _blinkBits[elementIndex]) {
+    if (!pg.displayPort.getUseDeviceBlink() && _blinkBits[elementIndex]) {
         return true;
     }
 
@@ -363,7 +358,7 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
 #endif
     } else {
         //Serial.print("calling draw fn\r\n");
-        (this->*DrawFunctions[elementIndex])(displayPort);
+        (this->*DrawFunctions[elementIndex])(pg);
         if (_activeElement.drawElement) {
             _displayPendingForeground = true;
         }
@@ -373,10 +368,8 @@ bool OSD_Elements::drawSingleElement(DisplayPortBase& displayPort, uint8_t eleme
     return _activeElement.rendered;
 }
 
-bool OSD_Elements::drawSingleElementBackground(DisplayPortBase& displayPort, uint8_t elementIndex)
+bool OSD_Elements::drawSingleElementBackground(const osd_parameter_group_t& pg, uint8_t elementIndex)
 {
-    (void)displayPort;
-
      // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     if (!DrawBackgroundFunctions[elementIndex]) {
         return true;
@@ -390,7 +383,7 @@ bool OSD_Elements::drawSingleElementBackground(DisplayPortBase& displayPort, uin
     _activeElement.offsetY = 0;
     _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
 
-    (this->*DrawBackgroundFunctions[elementIndex])(displayPort);
+    (this->*DrawBackgroundFunctions[elementIndex])(pg);
     if (_activeElement.drawElement) {
         _displayPendingBackground = true;
     }
@@ -399,21 +392,21 @@ bool OSD_Elements::drawSingleElementBackground(DisplayPortBase& displayPort, uin
     return _activeElement.rendered;
 }
 
-void OSD_Elements::drawActiveElementsBackground(DisplayPortBase& displayPort) // NOLINT(readability-make-member-function-const)
+void OSD_Elements::drawActiveElementsBackground(const osd_parameter_group_t& pg) // NOLINT(readability-make-member-function-const)
 {
     if (_backgroundLayerSupported) {
-        displayPort.layerSelect(DisplayPortBase::LAYER_BACKGROUND);
-        displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
+        pg.displayPort.layerSelect(DisplayPortBase::LAYER_BACKGROUND);
+        pg.displayPort.clearScreen(DISPLAY_CLEAR_WAIT);
         for (size_t ii = 0; ii < _activeElementCount; ++ii) {
-            while (!drawSingleElementBackground(displayPort, _activeElements[ii])) {};
+            while (!drawSingleElementBackground(pg, _activeElements[ii])) {};
         }
-        displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
+        pg.displayPort.layerSelect(DisplayPortBase::LAYER_FOREGROUND);
     }
 }
 
-bool OSD_Elements::drawSpec(DisplayPortBase& displayPort)
+bool OSD_Elements::drawSpec(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
     return true;
 }
 

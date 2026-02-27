@@ -2,7 +2,7 @@
 
 #include "GPS_MessageData.h"
 
-#include <SerialPort.h>
+#include <serial_port.h>
 
 #include <array>
 #include <cstdint>
@@ -11,13 +11,27 @@ class Debug;
 class GPS_MessageQueue;
 class UBLOX;
 
+struct gps_config_t {
+    uint8_t provider;
+    uint8_t sbasMode;
+    uint8_t autoConfig;
+    uint8_t autoBaud;
+    uint8_t gps_ublox_acquire_model;
+    uint8_t gps_ublox_flight_model;
+    uint8_t gps_update_rate_hz;
+    bool gps_ublox_use_galileo;
+    bool gps_set_home_point_once;
+    bool gps_use_3d_speed;
+    bool sbas_integrity;
+    uint8_t gps_ublox_utc_standard;
+};
 
 /*!
 */
 class GPS {
 public:
     virtual ~GPS() = default;
-    GPS(SerialPort& serialPort, GPS_MessageQueue& gpsMessageQueue, Debug& debug) : _serialPort(serialPort), _gpsMessageQueue(gpsMessageQueue), _debug(debug) {}
+    GPS(SerialPort& serialPort, GPS_MessageQueue& gpsMessageQueue) : _serialPort(serialPort), _gpsMessageQueue(gpsMessageQueue) {}
     void init();
     GPS_MessageQueue& getGPS_MessageQueue() { return _gpsMessageQueue; }
     const GPS_MessageQueue& getGPS_MessageQueue() const { return _gpsMessageQueue; }
@@ -72,26 +86,11 @@ public:
         GPS_MSP,
         GPS_VIRTUAL,
     };
-    struct config_t {
-        uint8_t provider;
-        uint8_t sbasMode;
-        uint8_t autoConfig;
-        uint8_t autoBaud;
-        uint8_t gps_ublox_acquire_model;
-        uint8_t gps_ublox_flight_model;
-        uint8_t gps_update_rate_hz;
-        bool gps_ublox_use_galileo;
-        bool gps_set_home_point_once;
-        bool gps_use_3d_speed;
-        bool sbas_integrity;
-        uint8_t gps_ublox_utc_standard;
-    };
 public:
-    void setConfig(const config_t& config) { _config = config; }
-    const config_t& getConfig() const { return _config; }
+    void setConfig(const gps_config_t& config) { _config = config; }
+    const gps_config_t& getConfig() const { return _config; }
 private:
     SerialPort& _serialPort;
     GPS_MessageQueue& _gpsMessageQueue;
-    Debug& _debug;
-    config_t _config {};
+    gps_config_t _config {};
 };

@@ -1,25 +1,25 @@
 #include "DisplayPortMSP.h"
-#include <MSP_Stream.h>
 #include <array>
 #include <cassert>
 #include <cstring>
+#include <msp_stream.h>
 
 
-DisplayPortMSP::DisplayPortMSP(MSP_Stream& mspStream) :
+DisplayPortMSP::DisplayPortMSP(MspStream& mspStream) :
     _mspStream(mspStream)
 {
 }
 
-uint32_t DisplayPortMSP::output(uint8_t subCommand)
+uint32_t DisplayPortMSP::output(uint8_t sub_command)
 {
-    const std::array<uint8_t, 1> buf { subCommand };
-    _mspStream.serialEncodeMSPv1(MSP_DISPLAYPORT, &buf[0], sizeof(buf));
+    const std::array<uint8_t, 1> buf { sub_command };
+    _mspStream.serial_encode_msp_v1(MSP_DISPLAYPORT, &buf[0], sizeof(buf));
     return 0;
 }
 
 uint32_t DisplayPortMSP::output(const uint8_t* buf, uint8_t len)
 {
-    _mspStream.serialEncodeMSPv1(MSP_DISPLAYPORT, buf, len);
+    _mspStream.serial_encode_msp_v1(MSP_DISPLAYPORT, buf, len);
     return 0;
 }
 

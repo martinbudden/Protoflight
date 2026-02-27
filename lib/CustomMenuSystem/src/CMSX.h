@@ -8,17 +8,31 @@
 class CMS;
 class Cockpit;
 class DisplayPortBase;
-class IMU_Base;
+class FlightController;
 class IMU_Filters;
+class ImuBase;
+class MotorMixerBase;
 class NonVolatileStorage;
 class ReceiverBase;
 class RcModes;
 class VTX;
 
+struct cms_parameter_group_t {
+    DisplayPortBase& displayPort;
+    FlightController& flightController;
+    MotorMixerBase& motorMixer;
+    Cockpit& cockpit;
+    IMU_Filters& imuFilters;
+    ImuBase& imu; // needed for IMU calibration
+    RcModes& rc_modes;
+    ReceiverBase& receiver;
+    NonVolatileStorage& nvs;
+    VTX* vtx;
+};
 
 class CMSX {
 public:
-    CMSX(CMS& cms, Cockpit& cockpit, IMU_Filters& imuFilters, IMU_Base& imu, RcModes& rc_modes, NonVolatileStorage& nvs, VTX* vtx);
+    CMSX(CMS& cms);
 private:
     // CMS is not copyable or moveable
     CMSX(const CMSX&) = delete;
@@ -58,16 +72,16 @@ public:
     };
 public:
     struct menu_t;
-    typedef const void* (*entryFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu);
+    typedef const void* (*entryFnPtr)(CMSX& cmsx, cms_parameter_group_t& pg, const menu_t* menu);
     struct OSD_Entry {
         const char* text;
         uint16_t flags;
         entryFnPtr fnPtr;
         const void* data;
     };
-    typedef const void* (*menuOnEnterFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort);
-    typedef const void* (*menuOnExitFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort, const OSD_Entry* self);
-    typedef const void* (*menuOnDisplayUpdateFnPtr)(CMSX& cmsx, DisplayPortBase& displayPort, const OSD_Entry* selected);
+    typedef const void* (*menuOnEnterFnPtr)(CMSX& cmsx, cms_parameter_group_t& pg);
+    typedef const void* (*menuOnExitFnPtr)(CMSX& cmsx, cms_parameter_group_t& pg, const OSD_Entry* self);
+    typedef const void* (*menuOnDisplayUpdateFnPtr)(CMSX& cmsx, cms_parameter_group_t& pg, const OSD_Entry* selected);
     struct menu_t {
         menuOnEnterFnPtr onEnter;
         menuOnExitFnPtr onExit;
@@ -85,32 +99,23 @@ public:
     };
 public:
     bool isInMenu() const { return _inMenu; }
-    void menuOpen(DisplayPortBase& displayPort);
-    void drawMenu(DisplayPortBase& displayPort, uint32_t currentTimeUs);
-    bool setupPopupMenuBuild();
+    void menuOpen(cms_parameter_group_t& pg);
+    void drawMenu(cms_parameter_group_t& pg, uint32_t currentTimeUs);
+    bool setupPopupMenuBuild(cms_parameter_group_t& pg);
     menu_t* getSaveExitMenu() const;
-    void inhibitSaveMenu() { _saveMenuInhibited = true; }
-    uint16_t handleKey(DisplayPortBase& displayPort, key_e key);
-    uint16_t handleKey(DisplayPortBase& displayPort, key_e key, const OSD_Entry* entry, uint16_t& entryFlags);
-    void saveConfigAndNotify();
+    static const void* inhibitSaveMenu(CMSX& cmsx, cms_parameter_group_t& pg) { cmsx.setSaveMenuInhibited(); (void)pg; return nullptr; }
+    void setSaveMenuInhibited() { _saveMenuInhibited = true; }
+    uint16_t handleKey(cms_parameter_group_t& pg, key_e key);
+    uint16_t handleKey(cms_parameter_group_t& pg, key_e key, const OSD_Entry* entry, uint16_t& entryFlags);
+    void saveConfigAndNotify(cms_parameter_group_t& pg);
 
-    void setArmingDisabled();
-    void clearArmingDisabled();
+    void setArmingDisabled(cms_parameter_group_t& pg);
+    void clearArmingDisabled(cms_parameter_group_t& pg);
 
-    uint8_t getCurrentPidProfileIndex() const;
-    void setCurrentPidProfileIndex(uint8_t currentPidProfileIndex);
-    uint8_t getCurrentRateProfileIndex() const;
-    void setCurrentRateProfileIndex(uint8_t currentRateProfileIndex);
-
-    const CMS& getCMS() const { return _cms; }
-    CMS& getCMS_Mutable() { return _cms; }
-    Cockpit& getCockpitMutable();
-    const Cockpit& getCockpit() const;
-    IMU_Filters& getIMU_Filters() { return _imuFilters; };
-    const IMU_Base& getIMU() const { return _imu; }
-    IMU_Base& getIMU() { return _imu; }
-    VTX* getVTX() { return _vtx; }
-
+    uint8_t get_current_pid_profile_index(cms_parameter_group_t& pg) const;
+    void set_current_pid_profile_index(cms_parameter_group_t& pg, uint8_t current_pid_profile_index);
+    uint8_t get_current_rate_profile_index(cms_parameter_group_t& pg) const;
+    void set_current_rate_profile_index(cms_parameter_group_t& pg, uint8_t current_rate_profile_index);
 private:
     void setRebootRequired();
     bool getRebootRequired() const;
@@ -124,7 +129,7 @@ private:
     uint32_t drawMenuItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize);
     uint32_t drawMenuTableItemValue(DisplayPortBase& displayPort, uint8_t row, uint8_t maxSize);
     uint32_t drawMenuTableEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
-    uint32_t drawMenuEntry(DisplayPortBase& displayPort, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
+    uint32_t drawMenuEntry(cms_parameter_group_t& pg, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
 
     enum { MAX_MENU_STACK_DEPTH = 10 };
     enum menu_stack_e { MENU_STACK_NOTHING_TO_POP, MENU_STACK_NO_ROOM_TO_PUSH, MENU_STACK_OK };
@@ -141,17 +146,17 @@ private:
     static void clearFlag(uint16_t& value, uint16_t flag) { value &= static_cast<uint16_t>(~flag); }
 
 public:
-    const void* menuChange(DisplayPortBase& displayPort, const menu_t* menu);
-    const void* menuBack(DisplayPortBase& displayPort, const menu_t* menu);
-    const void* menuExit(DisplayPortBase& displayPort, const  menu_t* menu);
+    const void* menuChange(cms_parameter_group_t& pg, const menu_t* menu);
+    const void* menuBack(cms_parameter_group_t& pg, const menu_t* menu);
+    const void* menuExit(cms_parameter_group_t& pg, const  menu_t* menu);
 // static functions with entryFnPtr signature for use by menu system
-    static const void* menuChange(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu) { return cmsx.menuChange(displayPort, menu); }
-    static const void* menuBack(CMSX& cmsx, DisplayPortBase& displayPort, const menu_t* menu) { return cmsx.menuBack(displayPort, menu); }
-    static const void* menuExit(CMSX& cmsx, DisplayPortBase& displayPort, const  menu_t* menu) { return cmsx.menuExit(displayPort, menu); }
-    static const void* menuCalibrateGyro(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
-    static const void* menuCalibrateAcc(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
-    static const void* menuCalibrateBaro(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu);
-    static const void* inhibitSaveMenu(CMSX& cmsx, DisplayPortBase& displayPort) { (void)displayPort; cmsx.inhibitSaveMenu(); return nullptr; }
+    static const void* menuChange(CMSX& cmsx, cms_parameter_group_t& pg, const menu_t* menu) { return cmsx.menuChange(pg, menu); }
+    static const void* menuBack(CMSX& cmsx, cms_parameter_group_t& pg, const menu_t* menu) { return cmsx.menuBack(pg, menu); }
+    static const void* menuExit(CMSX& cmsx, cms_parameter_group_t& pg, const  menu_t* menu) { return cmsx.menuExit(pg, menu); }
+    static const void* menuCalibrateGyro(CMSX& cmsx, cms_parameter_group_t& pg, const  menu_t* menu);
+    static const void* menuCalibrateAcc(CMSX& cmsx, cms_parameter_group_t& pg, const  menu_t* menu);
+    static const void* menuCalibrateBaro(CMSX& cmsx, cms_parameter_group_t& pg, const  menu_t* menu);
+    //static const void* inhibitSaveMenu(cms_parameter_group_t& pg) { (void)displayPort; cmsx.inhibitSaveMenu(); return nullptr; }
     enum { CALIBRATION_STATUS_MAX_LENGTH = 6 };
     static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> GyroCalibrationStatus;
     static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> AccCalibrationStatus;
@@ -161,12 +166,6 @@ public:
 
 private:
     CMS& _cms;
-    Cockpit& _cockpit;
-    IMU_Filters& _imuFilters;
-    IMU_Base& _imu;
-    RcModes& _rc_modes;
-    NonVolatileStorage& _nvs;
-    VTX* _vtx;
     menu_t& _menuMain;
     menu_context_t _currentMenuContext {};
     std::array<menu_context_t, MAX_MENU_STACK_DEPTH> _menuStack {};

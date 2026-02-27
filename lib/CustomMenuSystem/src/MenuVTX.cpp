@@ -14,11 +14,11 @@ struct data_t {
 static data_t data {};
 
 
-static const void* menuConfirm(CMSX& cmsx, DisplayPortBase& displayPort, const CMSX::menu_t* menu)
+static const void* menuConfirm(CMSX& cmsx, cms_parameter_group_t& pg, const CMSX::menu_t* menu)
 {
     // save VTX settings here
-    cmsx.saveConfigAndNotify();
-    cmsx.menuExit(displayPort, menu);
+    cmsx.saveConfigAndNotify(pg);
+    cmsx.menuExit(pg, menu);
 
     return CMSX::MENU_BACK;
 }
@@ -60,26 +60,30 @@ enum { VTX_PIT_MODE_COUNT = 3 };
 const std::array<const char * const, VTX_PIT_MODE_COUNT> pitModeNames { "---", "OFF", "ON " };
 
 
-static const void* pitModeChange([[maybe_unused]] CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+static const void* pitModeChange([[maybe_unused]] CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::menu_t* menu)
 {
+    (void)pg;
     data.pitMode = 0;
     return nullptr;
 }
 
-static const void* bandChange([[maybe_unused]] CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+static const void* bandChange([[maybe_unused]] CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::menu_t* menu)
 {
+    (void)pg;
     data.band = 0;
     return nullptr;
 }
 
-static const void* channelChange([[maybe_unused]] CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+static const void* channelChange([[maybe_unused]] CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::menu_t* menu)
 {
+    (void)pg;
     data.channel = 0;
     return nullptr;
 }
 
-static const void* powerChange([[maybe_unused]] CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort, [[maybe_unused]] const CMSX::menu_t* menu)
+static const void* powerChange([[maybe_unused]] CMSX& cmsx, cms_parameter_group_t& pg, [[maybe_unused]] const CMSX::menu_t* menu)
 {
+    (void)pg;
     data.powerIndex = 0;
     return nullptr;
 }
@@ -97,9 +101,9 @@ static std::array<char, 31> statusString = { "- -- ---- ----" };
 //                                            m bc ffff tppp
 //                                            01234567890123
 
-static const void* menuVTX_OnEnter(CMSX& cmsx, [[maybe_unused]] DisplayPortBase& displayPort)
+static const void* menuVTX_OnEnter([[maybe_unused]] CMSX& cmsx, cms_parameter_group_t& pg) // cppcheck-suppress constParameterCallback
 {
-    VTX* vtx = cmsx.getVTX();
+    VTX* vtx = pg.vtx;
     if (vtx) {
         vtx->getBandAndChannel(data.band, data.channel);
         vtx->getPowerIndex(data.powerIndex);

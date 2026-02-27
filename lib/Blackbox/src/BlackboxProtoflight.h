@@ -1,26 +1,18 @@
 #pragma once
 
-#include <Blackbox.h>
+#include <blackbox.h>
 
-class Cockpit;
-class FlightController;
-class IMU_Filters;
+struct blackbox_parameter_group_t;
+
 
 /*!
 Class to write out the Blackbox header, written in blackboxWriteSysinfo()
 */
 class BlackboxProtoflight : public Blackbox {
 public:
-    BlackboxProtoflight(uint32_t pidLooptimeUs, BlackboxCallbacksBase& callbacks, BlackboxSerialDevice& serialDevice, const FlightController& flightController, const Cockpit& cockpit, const IMU_Filters& imuFilters) :
-        Blackbox(pidLooptimeUs, callbacks, serialDevice),
-        _flightController(flightController),
-        _cockpit(cockpit),
-        _imuFilters(imuFilters)
+    BlackboxProtoflight(uint32_t pidLooptimeUs, BlackboxCallbacksBase& callbacks, BlackboxSerialDevice& serialDevice) :
+        Blackbox(pidLooptimeUs, callbacks, serialDevice)
         {}
 public:
-    virtual Blackbox::write_e writeSystemInformation() override;
-private:
-    const FlightController& _flightController;
-    const Cockpit& _cockpit;
-    const IMU_Filters& _imuFilters;
+    virtual Blackbox::write_e write_system_information(const blackbox_parameter_group_t& pg) override;
 };

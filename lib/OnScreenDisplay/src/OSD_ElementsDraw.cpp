@@ -4,15 +4,17 @@
 #include "FlightController.h"
 #include "OSD.h"
 #include "OSD_Symbols.h"
+#include "RC_Modes.h"
 #include "VTX.h"
 
-#include <AHRS_MessageQueue.h>
-#include <Debug.h>
 #include <GPS.h>
 #include <GPS_MessageQueue.h>
-#include <ReceiverBase.h>
 
+#include <ahrs_message_queue.h>
 #include <cstdio>
+#include <debug.h>
+#include <receiver_base.h>
+
 
 
 //
@@ -192,9 +194,9 @@ void OSD_Elements::formatDistanceString(char* buf, float distance, char leadingS
     printFloat(buf, leadingSymbol, displayDistance, decimalPlaces, false, displaySymbol);
 }
 
-void OSD_Elements::formatPID(char* buf, const char* label, uint8_t axis) // NOLINT(readability-non-const-parameter)
+void OSD_Elements::formatPID(const osd_parameter_group_t& pg, char* buf, const char* label, uint8_t axis) // NOLINT(readability-non-const-parameter)
 {
-    const FlightController::PIDF_uint16_t pid = _flightController.getPID_MSP(axis);
+    const FlightController::PIDF_uint16_t pid = pg.flightController.get_pid_msp(axis);
     sprintf(buf, "%s %3d %3d %3d %3d", label,
         pid.kp,
         pid.ki,
@@ -204,7 +206,7 @@ void OSD_Elements::formatPID(char* buf, const char* label, uint8_t axis) // NOLI
     );
 }
 
-void OSD_Elements::drawBackground_HORIZON_SIDEBARS(DisplayPortBase& displayPort)
+void OSD_Elements::drawBackground_HORIZON_SIDEBARS(const osd_parameter_group_t& pg)
 {
     // Draw AH sides
     const int8_t width = AH_SIDEBAR_WIDTH_POS;
@@ -212,12 +214,12 @@ void OSD_Elements::drawBackground_HORIZON_SIDEBARS(DisplayPortBase& displayPort)
 
     if (_HORIZON_SIDEBARS_RenderLevel) {
         // AH level indicators
-        displayPort.writeChar(_activeElement.posX - width + 1, _activeElement.posY, SYM_AH_LEFT);
-        displayPort.writeChar(_activeElement.posX + width - 1, _activeElement.posY, SYM_AH_RIGHT);
+        pg.displayPort.writeChar(_activeElement.posX - width + 1, _activeElement.posY, SYM_AH_LEFT);
+        pg.displayPort.writeChar(_activeElement.posX + width - 1, _activeElement.posY, SYM_AH_RIGHT);
         _HORIZON_SIDEBARS_RenderLevel = false;
     } else {
-        displayPort.writeChar(_activeElement.posX - width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), SYM_AH_DECORATION);
-        displayPort.writeChar(_activeElement.posX + width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), SYM_AH_DECORATION);
+        pg.displayPort.writeChar(_activeElement.posX - width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), SYM_AH_DECORATION);
+        pg.displayPort.writeChar(_activeElement.posX + width, _activeElement.posY + static_cast<uint8_t>(_HORIZON_SIDEBARS_PosY), SYM_AH_DECORATION);
         if (_HORIZON_SIDEBARS_PosY == height) {
             // Rendering is complete, so prepare to start again
             _HORIZON_SIDEBARS_PosY = -height;
@@ -232,14 +234,14 @@ void OSD_Elements::drawBackground_HORIZON_SIDEBARS(DisplayPortBase& displayPort)
     _activeElement.drawElement = false;  // element already drawn
 }
 
-void OSD_Elements::drawBackground_CRAFT_NAME(DisplayPortBase& displayPort)
+void OSD_Elements::drawBackground_CRAFT_NAME(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::drawBackground_STICK_OVERLAY(DisplayPortBase& displayPort)
+void OSD_Elements::drawBackground_STICK_OVERLAY(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 
     if (_STICK_OVERLAY_RenderPhase == VERTICAL) {
         sprintf(&_activeElement.buf[0], "%c", SYM_STICK_OVERLAY_VERTICAL);
@@ -272,38 +274,38 @@ void OSD_Elements::drawBackground_STICK_OVERLAY(DisplayPortBase& displayPort)
     }
 }
 
-void OSD_Elements::drawBackground_PILOT_NAME(DisplayPortBase& displayPort)
+void OSD_Elements::drawBackground_PILOT_NAME(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::drawBackground_CAMERA_FRAME(DisplayPortBase& displayPort)
+void OSD_Elements::drawBackground_CAMERA_FRAME(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_RSSI_VALUE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_RSSI_VALUE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_MAIN_BATTERY_VOLTAGE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_MAIN_BATTERY_VOLTAGE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_CROSSHAIRS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_CROSSHAIRS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
     _activeElement.buf[0] = SYM_AH_CENTER_LINE;
     _activeElement.buf[1] = SYM_AH_CENTER;
     _activeElement.buf[2] = SYM_AH_CENTER_LINE_RIGHT;
     _activeElement.buf[3] = 0;
 }
 
-void OSD_Elements::draw_ARTIFICIAL_HORIZON(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ARTIFICIAL_HORIZON(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 
     enum { AH_SYMBOL_COUNT = 9 };
     enum { AH_SYMBOL_SIDE_COUNT = 4 };
@@ -345,47 +347,47 @@ void OSD_Elements::draw_ARTIFICIAL_HORIZON(DisplayPortBase& displayPort)
     }
 }
 
-void OSD_Elements::draw_ITEM_TIMER(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ITEM_TIMER(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_FLYMODE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_FLYMODE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_THROTTLE_POS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_THROTTLE_POS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_VTX_CHANNEL(DisplayPortBase& displayPort)
+void OSD_Elements::draw_VTX_CHANNEL(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 
-    if (_vtx == nullptr) {
+    if (pg.vtx == nullptr) {
         return;
     }
-    const VTX::config_t vtxConfig = _vtx->getConfig();
+    const vtx_config_t vtxConfig = pg.vtx->getConfig();
     uint8_t band = vtxConfig.band;
     uint8_t channel = vtxConfig.channel;
     if (band == 0) {
         // Direct frequency set is used
-        _vtx->lookupBandChannel(band, channel, vtxConfig.frequencyMHz);
+        pg.vtx->lookupBandChannel(band, channel, vtxConfig.frequencyMHz);
     }
     const char vtxBandLetter = VTX::lookupBandLetter(band);
     const char* vtxChannelName = VTX::lookupChannelName(channel);
     uint32_t vtxStatus = 0;
-    _vtx->getStatus(vtxStatus);
+    pg.vtx->getStatus(vtxStatus);
 
     uint8_t vtxPower = vtxConfig.power;
     if (vtxConfig.lowPowerDisarm) {
-        _vtx->getPowerIndex(vtxPower);
+        pg.vtx->getPowerIndex(vtxPower);
     }
-    const char* vtxPowerLabel = _vtx->lookupPowerName(vtxPower);
+    const char* vtxPowerLabel = pg.vtx->lookupPowerName(vtxPower);
     char vtxStatusIndicator = '\0';
-    if (_rc_modes.is_mode_active(MspBox::BOX_VTX_CONTROL_DISABLE)) {
+    if (pg.rc_modes.is_mode_active(MspBox::BOX_VTX_CONTROL_DISABLE)) {
         vtxStatusIndicator = 'D';
     } else if (vtxStatus & VTX::STATUS_PIT_MODE) {
         vtxStatusIndicator = 'P';
@@ -408,19 +410,19 @@ void OSD_Elements::draw_VTX_CHANNEL(DisplayPortBase& displayPort)
     }
 }
 
-void OSD_Elements::draw_CURRENT_DRAW(DisplayPortBase& displayPort)
+void OSD_Elements::draw_CURRENT_DRAW(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_MAH_DRAWN(DisplayPortBase& displayPort)
+void OSD_Elements::draw_MAH_DRAWN(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_GPS_SPEED(DisplayPortBase& displayPort)
+void OSD_Elements::draw_GPS_SPEED(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 #if defined(USE_GPS)
     static constexpr float CMPS_TO_KMPH = 36.0F / 1000.0F;
     static constexpr float CMPS_TO_MPH = 10000.0F / 5080.0F / 88.0F;
@@ -432,10 +434,10 @@ void OSD_Elements::draw_GPS_SPEED(DisplayPortBase& displayPort)
         speedConversionFactor = CMPS_TO_MPH;
     }
     gps_message_data_t gpsMessageData {};
-    _gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
+    pg.gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
     if (gpsMessageData.fix & gps_message_data_t::FIX) {
-        //speed = gpsConfig()->gps_use_3d_speed ? gpsSol.speed3d : gpsSol.groundSpeed)
-        const int speed = static_cast<int>(static_cast<float>(gpsMessageData.groundSpeed_cmps) * speedConversionFactor);
+        //speed = gpsConfig()->gps_use_3d_speed ? gpsSol.speed3d : gpsSol.ground_speed)
+        const int speed = static_cast<int>(static_cast<float>(gpsMessageData.ground_speed_cmps) * speedConversionFactor);
         sprintf(&_activeElement.buf[0], "%c%3d%c", SYM_SPEED, speed, speedSymbol);
     } else {
         sprintf(&_activeElement.buf[0], "%c%c%c", SYM_SPEED, SYM_HYPHEN, speedSymbol);
@@ -443,22 +445,22 @@ void OSD_Elements::draw_GPS_SPEED(DisplayPortBase& displayPort)
 #endif
 }
 
-void OSD_Elements::draw_GPS_SATS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_GPS_SATS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 #if defined(USE_GPS)
-    if (_gps == nullptr) {
+    if (pg.gps == nullptr) {
         return;
     }
     gps_message_data_t gpsMessageData {};
-    _gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
-    [[maybe_unused]] const Autopilot::gps_rescue_config_t& gpsRescueConfig = _cockpit.getAutopilot().getGPS_RescueConfig();
+    pg.gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
+    [[maybe_unused]] const gps_rescue_config_t& gpsRescueConfig = pg.cockpit.getAutopilot().getGPS_RescueConfig();
     enum { GPS_SATELLITE_COUNT_CRITICAL =  4 };
-    if ((gpsMessageData.fix == 0) || (gpsMessageData.satelliteCount < GPS_SATELLITE_COUNT_CRITICAL) ) {
+    if ((gpsMessageData.fix == 0) || (gpsMessageData.satellite_count < GPS_SATELLITE_COUNT_CRITICAL) ) {
         _activeElement.attr = DisplayPortBase::SEVERITY_CRITICAL;
     }
 #if defined(USE_GPS_RESCUE)
-    else if ((gpsMessageData.satelliteCount < gpsRescueConfig.minSats) && _cockpit.gpsRescueIsConfigured()) {
+    else if ((gpsMessageData.satellite_count < gpsRescueConfig.minSats) && pg.cockpit.gpsRescueIsConfigured()) {
         _activeElement.attr = DisplayPortBase::SEVERITY_WARNING;
     }
 #endif
@@ -466,11 +468,11 @@ void OSD_Elements::draw_GPS_SATS(DisplayPortBase& displayPort)
         _activeElement.attr = DisplayPortBase::SEVERITY_NORMAL;
     }
 
-    if (gpsMessageData.isHealthy) {
-        const size_t pos = static_cast<size_t>(printf(&_activeElement.buf[0], "%c%c%2u", SYM_SAT_L, SYM_SAT_R, gpsMessageData.satelliteCount));
+    if (gpsMessageData.is_healthy) {
+        const size_t pos = static_cast<size_t>(printf(&_activeElement.buf[0], "%c%c%2u", SYM_SAT_L, SYM_SAT_R, gpsMessageData.satellite_count));
         if (_osd.getConfig().gps_sats_show_pdop) { // add on the GPS module PDOP estimate
             _activeElement.buf[pos] = ' ';
-            printFloat(&_activeElement.buf[pos + 1], SYM_NONE, gpsMessageData.dilutionOfPrecisionPositional / 100.0F, 1, true, SYM_NONE);
+            printFloat(&_activeElement.buf[pos + 1], SYM_NONE, gpsMessageData.dilution_of_precision_positional / 100.0F, 1, true, SYM_NONE);
         }
     } else {
         sprintf(&_activeElement.buf[0], "%c%cNC", SYM_SAT_L, SYM_SAT_R);
@@ -478,69 +480,69 @@ void OSD_Elements::draw_GPS_SATS(DisplayPortBase& displayPort)
 #endif
 }
 
-void OSD_Elements::draw_ALTITUDE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ALTITUDE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_ROLL_PIDS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ROLL_PIDS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
-    formatPID(&_activeElement.buf[0], "PIDR", FlightController::ROLL_RATE_DPS);
+    (void)pg;
+    formatPID(pg, &_activeElement.buf[0], "PIDR", FlightController::ROLL_RATE_DPS);
 }
 
-void OSD_Elements::draw_PITCH_PIDS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_PITCH_PIDS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
-    formatPID(&_activeElement.buf[0], "PIDP", FlightController::PITCH_RATE_DPS);
+    (void)pg;
+    formatPID(pg, &_activeElement.buf[0], "PIDP", FlightController::PITCH_RATE_DPS);
 }
 
-void OSD_Elements::draw_YAW_PIDS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_YAW_PIDS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
-    formatPID(&_activeElement.buf[0], "PIDY", FlightController::YAW_RATE_DPS);
+    (void)pg;
+    formatPID(pg, &_activeElement.buf[0], "PIDY", FlightController::YAW_RATE_DPS);
 }
 
-void OSD_Elements::draw_POWER(DisplayPortBase& displayPort)
+void OSD_Elements::draw_POWER(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_PID_RATE_PROFILE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_PID_RATE_PROFILE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_WARNINGS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_WARNINGS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_AVG_CELL_VOLTAGE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_AVG_CELL_VOLTAGE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_GPS_LAT_LONG(DisplayPortBase& displayPort)
+void OSD_Elements::draw_GPS_LAT_LONG(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_DEBUG(DisplayPortBase& displayPort)
+void OSD_Elements::draw_DEBUG(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
-    sprintf(&_activeElement.buf[0], "DBG %5d %5d %5d %5d", _debug.get(0), _debug.get(1),_debug.get(2),_debug.get(3));
+    (void)pg;
+    sprintf(&_activeElement.buf[0], "DBG %5d %5d %5d %5d", pg.debug.get(0), pg.debug.get(1),pg.debug.get(2),pg.debug.get(3));
 }
 
-void OSD_Elements::draw_DEBUG2(DisplayPortBase& displayPort)
+void OSD_Elements::draw_DEBUG2(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
-    sprintf(&_activeElement.buf[0], "DBG %5d %5d %5d %5d", _debug.get(4), _debug.get(5),_debug.get(6),_debug.get(7));
+    (void)pg;
+    sprintf(&_activeElement.buf[0], "DBG %5d %5d %5d %5d", pg.debug.get(4), pg.debug.get(5),pg.debug.get(6),pg.debug.get(7));
 }
 
-void OSD_Elements::draw_PITCH_ANGLE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_PITCH_ANGLE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 #if defined(M5_UNIFIED)
     sprintf(&_activeElement.buf[0], "p:%4d", static_cast<int>(_pitchAngleDegrees));
 #else
@@ -548,9 +550,9 @@ void OSD_Elements::draw_PITCH_ANGLE(DisplayPortBase& displayPort)
 #endif
 }
 
-void OSD_Elements::draw_ROLL_ANGLE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ROLL_ANGLE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 #if defined(M5_UNIFIED)
     sprintf(&_activeElement.buf[0], "r:%4d", static_cast<int>(_rollAngleDegrees));
 #else
@@ -558,30 +560,30 @@ void OSD_Elements::draw_ROLL_ANGLE(DisplayPortBase& displayPort)
 #endif
 }
 
-void OSD_Elements::draw_MAIN_BATTERY_USAGE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_MAIN_BATTERY_USAGE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_DISARMED(DisplayPortBase& displayPort)
+void OSD_Elements::draw_DISARMED(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
-    sprintf(&_activeElement.buf[0], _cockpit.isArmed()? "ARMED" : "DISARMED");
+    (void)pg;
+    sprintf(&_activeElement.buf[0], pg.cockpit.isArmed()? "ARMED" : "DISARMED");
 }
 
-void OSD_Elements::draw_HOME_DIRECTION(DisplayPortBase& displayPort)
+void OSD_Elements::draw_HOME_DIRECTION(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;(void)pg;
 }
 
-void OSD_Elements::draw_HOME_DISTANCE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_HOME_DISTANCE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;(void)pg;
 }
 
-void OSD_Elements::draw_NUMERICAL_HEADING(DisplayPortBase& displayPort)
+void OSD_Elements::draw_NUMERICAL_HEADING(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;(void)pg;
 #if defined(M5_UNIFIED)
     sprintf(&_activeElement.buf[0], "y:%4d", static_cast<int>(_yawAngleDegrees));
 #else
@@ -589,88 +591,88 @@ void OSD_Elements::draw_NUMERICAL_HEADING(DisplayPortBase& displayPort)
 #endif
 }
 
-void OSD_Elements::draw_NUMERICAL_VARIO(DisplayPortBase& displayPort)
+void OSD_Elements::draw_NUMERICAL_VARIO(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_COMPASS_BAR(DisplayPortBase& displayPort)
+void OSD_Elements::draw_COMPASS_BAR(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_ESC_TEMPERATURE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ESC_TEMPERATURE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_ESC_RPM(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ESC_RPM(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_REMAINING_TIME_ESTIMATE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_REMAINING_TIME_ESTIMATE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_RTC_DATETIME(DisplayPortBase& displayPort)
+void OSD_Elements::draw_RTC_DATETIME(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_ADJUSTMENT_RANGE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ADJUSTMENT_RANGE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_CORE_TEMPERATURE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_CORE_TEMPERATURE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_ANTI_GRAVITY(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ANTI_GRAVITY(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_G_FORCE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_G_FORCE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
     //OSD::printFloat(&_activeElement.buf[0], SYM_NONE, osdGForce, 1, true, 'G');
 }
 
-void OSD_Elements::draw_MOTOR_DIAGNOSTICS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_MOTOR_DIAGNOSTICS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_LOG_STATUS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_LOG_STATUS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_FLIP_ARROW(DisplayPortBase& displayPort)
+void OSD_Elements::draw_FLIP_ARROW(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_LINK_QUALITY(DisplayPortBase& displayPort)
+void OSD_Elements::draw_LINK_QUALITY(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_FLIGHT_DISTANCE(DisplayPortBase& displayPort) // NOLINT(readability-make-member-function-const)
+void OSD_Elements::draw_FLIGHT_DISTANCE(const osd_parameter_group_t& pg) // NOLINT(readability-make-member-function-const)
 {
-    (void)displayPort;
+    (void)pg;
 #if defined(USE_GPS)
-    if (_gps == nullptr) {
+    if (pg.gps == nullptr) {
         return;
     }
     gps_message_data_t gpsMessageData {};
-    _gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
+    pg.gps->getGPS_MessageQueue().PEEK_GPS_DATA(gpsMessageData);
     if ((gpsMessageData.fix & gps_message_data_t::FIX) && (gpsMessageData.fix & gps_message_data_t::FIX_HOME)) {
-        formatDistanceString(&_activeElement.buf[0], gpsMessageData.distanceFlownMeters, SYM_TOTAL_DISTANCE);
+        formatDistanceString(&_activeElement.buf[0], gpsMessageData.distance_flown_meters, SYM_TOTAL_DISTANCE);
     } else {
         // We use this symbol when we don't have a FIX
         sprintf(&_activeElement.buf[0], "%c%c", SYM_TOTAL_DISTANCE, SYM_HYPHEN);
@@ -678,46 +680,46 @@ void OSD_Elements::draw_FLIGHT_DISTANCE(DisplayPortBase& displayPort) // NOLINT(
 #endif
 }
 
-void OSD_Elements::draw_STICK_OVERLAY(DisplayPortBase& displayPort)
+void OSD_Elements::draw_STICK_OVERLAY(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_PILOT_NAME(DisplayPortBase& displayPort)
+void OSD_Elements::draw_PILOT_NAME(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_ESC_RPM_FREQUENCY(DisplayPortBase& displayPort)
+void OSD_Elements::draw_ESC_RPM_FREQUENCY(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_RATE_PROFILE_NAME(DisplayPortBase& displayPort)
+void OSD_Elements::draw_RATE_PROFILE_NAME(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_PID_PROFILE_NAME(DisplayPortBase& displayPort)
+void OSD_Elements::draw_PID_PROFILE_NAME(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_PROFILE_NAME(DisplayPortBase& displayPort)
+void OSD_Elements::draw_PROFILE_NAME(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_RSSI_DBM_VALUE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_RSSI_DBM_VALUE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_RC_CHANNELS(DisplayPortBase& displayPort) // cppcheck-suppress constParameterCallback
+void OSD_Elements::draw_RC_CHANNELS(const osd_parameter_group_t& pg) // cppcheck-suppress constParameterCallback
 {
-    (void)displayPort;
+    (void)pg;
 
-    const receiver_controls_pwm_t controls_pwm = _receiver.get_controls_pwm();
+    const receiver_controls_pwm_t controls_pwm = pg.receiver.get_controls_pwm();
     switch (_RC_CHANNELS_channel) {
     case 0:
         sprintf(&_activeElement.buf[0], "T:%5d", controls_pwm.throttle);
@@ -726,12 +728,12 @@ void OSD_Elements::draw_RC_CHANNELS(DisplayPortBase& displayPort) // cppcheck-su
         break;
     case 1:
         sprintf(&_activeElement.buf[0], "R:%5d", controls_pwm.roll);
-        _activeElement.offsetX = displayPort.getColumnCount()/2;
+        _activeElement.offsetX = pg.displayPort.getColumnCount()/2;
         _activeElement.offsetY = 0;
         break;
     case 2:
         sprintf(&_activeElement.buf[0], "P:%5d", controls_pwm.pitch);
-        _activeElement.offsetX = displayPort.getColumnCount()/2;
+        _activeElement.offsetX = pg.displayPort.getColumnCount()/2;
         _activeElement.offsetY = 1;
         break;
     default:
@@ -750,74 +752,74 @@ void OSD_Elements::draw_RC_CHANNELS(DisplayPortBase& displayPort) // cppcheck-su
     }
 }
 
-void OSD_Elements::draw_EFFICIENCY(DisplayPortBase& displayPort)
+void OSD_Elements::draw_EFFICIENCY(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_TOTAL_FLIGHTS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_TOTAL_FLIGHTS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_UP_DOWN_REFERENCE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_UP_DOWN_REFERENCE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_TX_UPLINK_POWER(DisplayPortBase& displayPort)
+void OSD_Elements::draw_TX_UPLINK_POWER(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_WATT_HOURS_DRAWN(DisplayPortBase& displayPort)
+void OSD_Elements::draw_WATT_HOURS_DRAWN(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_AUX_VALUE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_AUX_VALUE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_READY_MODE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_READY_MODE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_RSNR_VALUE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_RSNR_VALUE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_SYS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_SYS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_GPS_LAP_TIME_CURRENT(DisplayPortBase& displayPort)
+void OSD_Elements::draw_GPS_LAP_TIME_CURRENT(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_GPS_LAP_TIME_PREVIOUS(DisplayPortBase& displayPort)
+void OSD_Elements::draw_GPS_LAP_TIME_PREVIOUS(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_GPS_LAP_TIME_BEST3(DisplayPortBase& displayPort)
+void OSD_Elements::draw_GPS_LAP_TIME_BEST3(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_CUSTOM_MSG(DisplayPortBase& displayPort)
+void OSD_Elements::draw_CUSTOM_MSG(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
-void OSD_Elements::draw_LIDAR_DISTANCE(DisplayPortBase& displayPort)
+void OSD_Elements::draw_LIDAR_DISTANCE(const osd_parameter_group_t& pg)
 {
-    (void)displayPort;
+    (void)pg;
 }
 
 int OSD_Elements::printFloat(char* buffer, char leadingSymbol, float value, unsigned decimalPlaces, bool round, char trailingSymbol)

@@ -1,12 +1,35 @@
 #include "RC_Modes.h"
 #include "RX.h"
 
-#include <TimeMicroseconds.h>
-
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <receiver_base.h>
+#include <time_microseconds.h>
 
+
+
+uint16_t RcModes::mode_step_to_channel_value(uint8_t step)
+{
+    return (ReceiverBase::CHANNEL_RANGE_MIN + static_cast<uint16_t>(ReceiverBase::CHANNEL_RANGE_STEP * step));
+}
+
+uint8_t RcModes::channel_value_to_step(uint16_t channel_value)
+{
+    return static_cast<uint8_t>((std::clamp(channel_value, ReceiverBase::CHANNEL_RANGE_MIN, ReceiverBase::CHANNEL_RANGE_MAX) - ReceiverBase::CHANNEL_RANGE_MIN) / CHANNEL_RANGE_STEP);
+}
+
+bool RcModes::is_range_usable(uint8_t range_start, uint8_t range_end)
+{
+    return range_start < range_end;
+}
+
+bool RcModes::is_range_active(uint16_t channel_value, uint8_t range_start, uint8_t range_end) {
+    if (range_start >= range_end) {
+        return false;
+    }
+    return (channel_value >= ReceiverBase::CHANNEL_RANGE_MIN + (range_start*CHANNEL_RANGE_STEP) && channel_value < ReceiverBase::CHANNEL_RANGE_MIN + (range_end*CHANNEL_RANGE_STEP));
+}
 
 void RcModes::set_mode_activation_conditions(const rc_modes_activation_condition_array_t& mode_activation_conditions)
 {
@@ -45,14 +68,14 @@ bool RcModes::is_mode_activation_condition_present(uint8_t mode_id) const
 {
 #if false
     for (const auto& mac : _mode_activation_conditions) {
-        if (mac.mode_id == mode_id && (is_range_usable(mac.range) || mac.linked_to)) {
+        if (mac.mode_id == mode_id && (is_range_usable(mac.range_start, mac.range_end) || mac.linked_to)) {
             return true;
         }
     }
     return false;
 #else
     return std::any_of(_mode_activation_conditions.begin(), _mode_activation_conditions.end(),
-        [mode_id](const auto& mac) { return mac.mode_id == mode_id && (is_range_usable(mac.range) || mac.linked_to); }
+        [mode_id](const auto& mac) { return mac.mode_id == mode_id && (is_range_usable(mac.range_start, mac.range_end) || mac.linked_to); }
     );
 #endif
 }
@@ -107,13 +130,13 @@ void RcModes::analyze_mode_activation_conditions()
     rc_modes_activation_condition_t empty_mac {};
 
     _active_mac_count = 0;
-    __active_linked_mac_count = 0;
+    _active_linked_mac_count = 0;
 
     uint8_t ii = 0;
     for (const auto& mode_activation_condition : _mode_activation_conditions) {
         if (mode_activation_condition.linked_to) {
-            _active_linked_mac_array[__active_linked_mac_count] = ii;
-            ++__active_linked_mac_count;
+            _active_linked_mac_array[_active_linked_mac_count] = ii;
+            ++_active_linked_mac_count;
         } else if (is_mode_activation_condition_configured(mode_activation_condition, empty_mac)) {
             _active_mac_array[_active_mac_count] = ii;
             ++_active_mac_count;
@@ -161,7 +184,7 @@ void RcModes::update_masks_for_sticky_modes(const rc_modes_activation_condition_
         if (_sticky_modes_ever_disabled_bitset.test(mac.mode_id)) {
             update_masks_for_mac(mac, and_bitset, new_bitset, range_active);
         } else {
-            if (timeUs() >= STICKY_MODE_BOOT_DELAY_US && !range_active) { // cppcheck-suppress knownConditionTrueFalse
+            if (time_us() >= STICKY_MODE_BOOT_DELAY_US && !range_active) { // cppcheck-suppress knownConditionTrueFalse
                 _sticky_modes_ever_disabled_bitset.set(mac.mode_id);
             }
         }
@@ -179,10 +202,12 @@ void RcModes::update_activated_modes(const ReceiverBase& receiver)
     size_t ii = 0;
     for (const auto& mode_activation_condition : _mode_activation_conditions) {
         if (stickyModes.test(mode_activation_condition.mode_id)) {
-            const bool range_active = receiver.is_range_active(mode_activation_condition.auxiliary_channel_index, mode_activation_condition.range);
+            const uint16_t channel_value = receiver.get_auxiliary_channel(mode_activation_condition.auxiliary_channel_index);
+            const bool range_active = is_range_active(channel_value, mode_activation_condition.range_start, mode_activation_condition.range_end);
             update_masks_for_sticky_modes(mode_activation_condition, and_bitset, new_bitset, range_active);
         } else if (mode_activation_condition.mode_id < MspBox::BOX_COUNT) {
-            const bool range_active = receiver.is_range_active(mode_activation_condition.auxiliary_channel_index, mode_activation_condition.range);
+            const uint16_t channel_value = receiver.get_auxiliary_channel(mode_activation_condition.auxiliary_channel_index);
+            const bool range_active = is_range_active(channel_value, mode_activation_condition.range_start, mode_activation_condition.range_end);
             update_masks_for_mac(mode_activation_condition, and_bitset, new_bitset, range_active);
         }
         ++ii;
@@ -197,7 +222,7 @@ void RcModes::update_activated_modes(const ReceiverBase& receiver)
         const bool range_active = and_bitset.test(mode_activation_condition.linked_to) != new_bitset.test(mode_activation_condition.linked_to);
         update_masks_for_mac(mode_activation_condition, and_bitset, new_bitset, range_active);
         ++ii;
-        if (ii == __active_linked_mac_count) {
+        if (ii == _active_linked_mac_count) {
             break;
         }
     }

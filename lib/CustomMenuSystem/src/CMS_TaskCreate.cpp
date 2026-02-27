@@ -21,20 +21,20 @@
 #endif
 
 
-CMS_Task* CMS_Task::createTask(CMS& cms, uint8_t priority, uint32_t core, uint32_t taskIntervalMicroseconds)
+CMS_Task* CMS_Task::create_task(CMS& cms, cms_parameter_group_t& parameter_group, uint8_t priority, uint32_t core, uint32_t task_interval_microseconds)
 {
-    task_info_t taskInfo {};
-    return createTask(taskInfo, cms, priority, core, taskIntervalMicroseconds);
+    task_info_t task_info {};
+    return create_task(task_info, cms, parameter_group, priority, core, task_interval_microseconds);
 }
 
-CMS_Task* CMS_Task::createTask(task_info_t& taskInfo, CMS& cms, uint8_t priority, uint32_t core, uint32_t taskIntervalMicroseconds)
+CMS_Task* CMS_Task::create_task(task_info_t& task_info, CMS& cms, cms_parameter_group_t& parameter_group, uint8_t priority, uint32_t core, uint32_t task_interval_microseconds)
 {
     // Note that task parameters must not be on the stack, since they are used when the task is started, which is after this function returns.
-    static CMS_Task cmsTask(taskIntervalMicroseconds, cms);
+    static CMS_Task cms_task(task_interval_microseconds, cms, parameter_group);
 
     // Note that task parameters must not be on the stack, since they are used when the task is started, which is after this function returns.
-    static TaskBase::parameters_t taskParameters { // NOLINT(misc-const-correctness) false positive
-        .task = &cmsTask
+    static TaskBase::parameters_t task_parameters { // NOLINT(misc-const-correctness) false positive
+        .task = &cms_task
     };
 #if !defined(CMS_TASK_STACK_DEPTH_BYTES)
     enum { CMS_TASK_STACK_DEPTH_BYTES = 4096 };
@@ -44,66 +44,66 @@ CMS_Task* CMS_Task::createTask(task_info_t& taskInfo, CMS& cms, uint8_t priority
 #else
     static std::array <StackType_t, CMS_TASK_STACK_DEPTH_BYTES / sizeof(StackType_t)> stack;
 #endif
-    taskInfo = {
-        .taskHandle = nullptr,
+    task_info = {
+        .task_handle = nullptr,
         .name = "CMS_Task",
-        .stackDepthBytes = CMS_TASK_STACK_DEPTH_BYTES,
-        .stackBuffer = reinterpret_cast<uint8_t*>(&stack[0]), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        .stack_depth_bytes = CMS_TASK_STACK_DEPTH_BYTES,
+        .stack_buffer = reinterpret_cast<uint8_t*>(&stack[0]), // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         .priority = priority,
         .core = core,
-        .taskIntervalMicroseconds = taskIntervalMicroseconds,
+        .task_interval_microseconds = task_interval_microseconds,
     };
 
 #if defined(FRAMEWORK_USE_FREERTOS)
-    assert(std::strlen(taskInfo.name) < configMAX_TASK_NAME_LEN);
-    assert(taskInfo.priority < configMAX_PRIORITIES);
+    assert(std::strlen(task_info.name) < configMAX_TASK_NAME_LEN);
+    assert(task_info.priority < configMAX_PRIORITIES);
 
 #if !defined(configCHECK_FOR_STACK_OVERFLOW)
     // fill the stack so we can do our own stack overflow detection
     enum { STACK_FILLER = 0xA5 };
     stack.fill(STACK_FILLER);
 #endif
-    static StaticTask_t taskBuffer;
+    static StaticTask_t task_buffer;
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
-    taskInfo.taskHandle = xTaskCreateStaticPinnedToCore(
-        CMS_Task::Task,
-        taskInfo.name,
-        taskInfo.stackDepthBytes / sizeof(StackType_t),
-        &taskParameters,
-        taskInfo.priority,
+    task_info.task_handle = xTaskCreateStaticPinnedToCore(
+        CMS_Task::task_static,
+        task_info.name,
+        task_info.stack_depth_bytes / sizeof(StackType_t),
+        &task_parameters,
+        task_info.priority,
         &stack[0],
-        &taskBuffer,
-        taskInfo.core
+        &task_buffer,
+        task_info.core
     );
-    assert(taskInfo.taskHandle != nullptr && "Unable to create CMS task");
+    assert(task_info.task_handle != nullptr && "Unable to create CMS task");
 #elif defined(FRAMEWORK_RPI_PICO) || defined(FRAMEWORK_ARDUINO_RPI_PICO)
-    taskInfo.taskHandle = xTaskCreateStaticAffinitySet(
-        CMS_Task::Task,
-        taskInfo.name,
-        taskInfo.stackDepthBytes / sizeof(StackType_t),
-        &taskParameters,
-        taskInfo.priority,
+    task_info.task_handle = xTaskCreateStaticAffinitySet(
+        CMS_Task::task_static,
+        task_info.name,
+        task_info.stack_depth_bytes / sizeof(StackType_t),
+        &task_parameters,
+        task_info.priority,
         &stack[0],
-        &taskBuffer,
-        taskInfo.core
+        &task_buffer,
+        task_info.core
     );
-    assert(taskInfo.taskHandle != nullptr && "Unable to create CMS task");
+    assert(task_info.task_handle != nullptr && "Unable to create CMS task");
 #else
-    taskInfo.taskHandle = xTaskCreateStatic(
-        CMS_Task::Task,
-        taskInfo.name,
-        taskInfo.stackDepthBytes / sizeof(StackType_t),
-        &taskParameters,
-        taskInfo.priority,
+    task_info.task_handle = xTaskCreateStatic(
+        CMS_Task::task_static,
+        task_info.name,
+        task_info.stack_depth_bytes / sizeof(StackType_t),
+        &task_parameters,
+        task_info.priority,
         &stack[0],
-        &taskBuffer
+        &task_buffer
     );
-    assert(taskInfo.taskHandle != nullptr && "Unable to create CMS task");
-    // vTaskCoreAffinitySet(taskInfo.taskHandle, taskInfo.core);
+    assert(task_info.task_handle != nullptr && "Unable to create CMS task");
+    // vTaskCoreAffinitySet(task_info.task_handle, task_info.core);
 #endif
 #else
-    (void)taskParameters;
+    (void)task_parameters;
 #endif // FRAMEWORK_USE_FREERTOS
 
-    return &cmsTask;
+    return &cms_task;
 }

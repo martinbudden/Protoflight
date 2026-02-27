@@ -1,6 +1,8 @@
-#include <Debug.h>
 #include <DynamicNotchFilter.h>
 #include <SDFT.h>
+
+#include <debug.h>
+
 #include <unity.h>
 
 
@@ -12,7 +14,7 @@ void tearDown()
 {
 }
 
-static constexpr DynamicNotchFilter::config_t config = {
+static constexpr dynamic_notch_filter_config_t config = {
     .dyn_notch_min_hz = 100,
     .dyn_notch_max_hz = 600,
     .dyn_notch_q = 300,
@@ -128,7 +130,7 @@ void test_dynamic_notch_filter()
     const float looptimeSeconds = 125.0F / 1000000.0F;
 
     static Debug debug;
-    static DynamicNotchFilter dynamicNotchFilter(debug, looptimeSeconds);
+    static DynamicNotchFilter dynamicNotchFilter(looptimeSeconds);
 
     dynamicNotchFilter.setConfig(config);
 
@@ -156,7 +158,7 @@ void test_dynamic_notch_filter()
     std::copy_n(testSdftData.begin(), testSdftData.size(), sdftData.begin());
 
     dynamicNotchFilter.setState({DynamicNotchFilter::STEP_DETECT_PEAKS, DynamicNotchFilter::X});
-    dynamicNotchFilter.updateNotchFrequencies();
+    dynamicNotchFilter.updateNotchFrequencies(debug);
     DynamicNotchFilter::state_t state = dynamicNotchFilter.getState();
     TEST_ASSERT_EQUAL(DynamicNotchFilter::STEP_CALCULATE_FREQUENCIES, state.step);
     TEST_ASSERT_EQUAL(DynamicNotchFilter::X, state.axis);
@@ -175,7 +177,7 @@ void test_dynamic_notch_filter()
     TEST_ASSERT_EQUAL_FLOAT(0.0F, peaks[4].value);
     TEST_ASSERT_EQUAL(0, peaks[4].bin);
 
-    dynamicNotchFilter.updateNotchFrequencies();
+    dynamicNotchFilter.updateNotchFrequencies(debug);
     state = dynamicNotchFilter.getState();
     TEST_ASSERT_EQUAL(DynamicNotchFilter::STEP_UPDATE_FILTERS, state.step);
     TEST_ASSERT_EQUAL(DynamicNotchFilter::X, state.axis);
