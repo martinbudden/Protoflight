@@ -1,7 +1,7 @@
-#include "Cockpit.h"
-#include "FC_TelemetryData.h"
-#include "FlightController.h"
-#include "NonVolatileStorage.h"
+#include "cockpit.h"
+#include "fc_telemetry_data.h"
+#include "flight_controller.h"
+#include "non_volatile_storage.h"
 
 #include <ahrs.h>
 #include <debug.h>
@@ -35,55 +35,55 @@ void test_flight_controller()
     static constexpr uint8_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
     static constexpr size_t MOTOR_COUNT = 4;
     static constexpr size_t SERVO_COUNT = 0;
-    static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);
+    static MotorMixerBase motor_mixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);
     static ReceiverVirtual receiver;
     FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS);
     static Ahrs ahrs(Ahrs::TIMER_DRIVEN, sensorFusionFilter, imu);
     //TEST_ASSERT_TRUE(ahrs.sensorFusionFilterIsInitializing());
-    TEST_ASSERT_FALSE(motorMixer.motors_is_on());
+    TEST_ASSERT_FALSE(motor_mixer.motors_is_on());
 
-    fc.motorsSwitchOn(motorMixer); // should not switch on, since sensor fusion filter is initializing
-    TEST_ASSERT_FALSE(motorMixer.motors_is_on());
+    fc.motors_switch_on(motor_mixer); // should not switch on, since sensor fusion filter is initializing
+    TEST_ASSERT_FALSE(motor_mixer.motors_is_on());
     fc.set_sensor_fusion_filter_is_initializing(false);
-    fc.motorsSwitchOn(motorMixer);
-    TEST_ASSERT_TRUE(motorMixer.motors_is_on());
+    fc.motors_switch_on(motor_mixer);
+    TEST_ASSERT_TRUE(motor_mixer.motors_is_on());
 
-    fc.motorsSwitchOff(motorMixer);
-    TEST_ASSERT_FALSE(motorMixer.motors_is_on());
-    fc.motorsSwitchOn(motorMixer);
-    TEST_ASSERT_TRUE(motorMixer.motors_is_on());
+    fc.motors_switch_off(motor_mixer);
+    TEST_ASSERT_FALSE(motor_mixer.motors_is_on());
+    fc.motors_switch_on(motor_mixer);
+    TEST_ASSERT_TRUE(motor_mixer.motors_is_on());
 
-    static const std::string pidNameSpeed = fc.getPID_Name(FlightController::ROLL_RATE_DPS);
+    static const std::string pidNameSpeed = fc.get_pid_name(FlightController::ROLL_RATE_DPS);
     TEST_ASSERT_TRUE(pidNameSpeed.compare("ROLL_RATE") == 0);
 
-    static const std::string pidNamePosition = fc.getPID_Name(FlightController::PITCH_RATE_DPS);
+    static const std::string pidNamePosition = fc.get_pid_name(FlightController::PITCH_RATE_DPS);
     TEST_ASSERT_TRUE(pidNamePosition.compare("PITCH_RATE") == 0);
 
-    static const std::string pidNameYaw = fc.getPID_Name(FlightController::YAW_RATE_DPS);
+    static const std::string pidNameYaw = fc.get_pid_name(FlightController::YAW_RATE_DPS);
     TEST_ASSERT_TRUE(pidNameYaw.compare("YAW_RATE") == 0);
 
-    static const std::string pidNameRoll = fc.getPID_Name(FlightController::ROLL_ANGLE_DEGREES);
+    static const std::string pidNameRoll = fc.get_pid_name(FlightController::ROLL_ANGLE_DEGREES);
     TEST_ASSERT_TRUE(pidNameRoll.compare("ROLL_ANGLE") == 0);
 
-    static const std::string pidNamePitch = fc.getPID_Name(FlightController::PITCH_ANGLE_DEGREES);
+    static const std::string pidNamePitch = fc.get_pid_name(FlightController::PITCH_ANGLE_DEGREES);
     TEST_ASSERT_TRUE(pidNamePitch.compare("PITCH_ANGLE") == 0);
 
-    tpa_config_t tpaConfig = fc.getTPA_Config();
-    TEST_ASSERT_EQUAL(0, tpaConfig.tpa_breakpoint);
-    TEST_ASSERT_EQUAL(0, tpaConfig.tpa_mode);
-    TEST_ASSERT_EQUAL(0, tpaConfig.tpa_rate);
+    tpa_config_t tpa_config = fc.get_tpa_config();
+    TEST_ASSERT_EQUAL(0, tpa_config.tpa_breakpoint);
+    TEST_ASSERT_EQUAL(0, tpa_config.tpa_mode);
+    TEST_ASSERT_EQUAL(0, tpa_config.tpa_rate);
 
     static NonVolatileStorage nvs;
     nvs.init();
 
-    tpaConfig = nvs.load_flight_controller_tpa_config(NonVolatileStorage::DEFAULT_PID_PROFILE);
-    fc.setTPA_Config(tpaConfig);
+    tpa_config = nvs.load_flight_controller_tpa_config(NonVolatileStorage::DEFAULT_PID_PROFILE);
+    fc.set_tpa_config(tpa_config);
 
-    tpaConfig = fc.getTPA_Config();
+    tpa_config = fc.get_tpa_config();
 
-    TEST_ASSERT_EQUAL(1350, tpaConfig.tpa_breakpoint);
-    TEST_ASSERT_EQUAL(FlightController::TPA_MODE_D, tpaConfig.tpa_mode);
-    TEST_ASSERT_EQUAL(65, tpaConfig.tpa_rate);
+    TEST_ASSERT_EQUAL(1350, tpa_config.tpa_breakpoint);
+    TEST_ASSERT_EQUAL(FlightController::TPA_MODE_D, tpa_config.tpa_mode);
+    TEST_ASSERT_EQUAL(65, tpa_config.tpa_rate);
 }
 
 void test_flight_controller_pid_indexes()

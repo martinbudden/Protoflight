@@ -1,16 +1,16 @@
-#include "Autopilot.h"
-#include "Cockpit.h"
-#include "FlightController.h"
-#include "IMU_Filters.h"
-#include "MSP_Protoflight.h"
-#include "NonVolatileStorage.h"
+#include "autopilot.h"
+#include "cockpit.h"
+#include "flight_controller.h"
+#include "imu_filters.h"
+#include "msp_protoflight.h"
+#include "non_volatile_storage.h"
 
-#include <FC_Telemetry.h>
-#include <FC_TelemetryData.h>
-#include <MSP_Protocol.h>
-#include <MSP_Serial.h>
-#include <MSP_Stream.h>
-#include <RC_Modes.h>
+#include <fc_telemetry.h>
+#include <fc_telemetry_data.h>
+#include <msp_protocol.h>
+#include <msp_serial.h>
+#include <msp_stream.h>
+#include <rc_modes.h>
 
 #include <ahrs.h>
 #include <ahrs_message_queue.h>
@@ -37,14 +37,14 @@ enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 #endif
 
 static const rates_t cockpitRates {
-    .rateLimits = { rates_t::LIMIT_MAX, rates_t::LIMIT_MAX, rates_t::LIMIT_MAX},
-    .rcRates = { 7, 7, 7 },
-    .rcExpos = { 0, 0, 0 },
+    .rate_limits = { rates_t::LIMIT_MAX, rates_t::LIMIT_MAX, rates_t::LIMIT_MAX},
+    .rc_rates = { 7, 7, 7 },
+    .rc_expos = { 0, 0, 0 },
     .rates = { 67, 67, 67 },
-    .throttleMidpoint = 50,
-    .throttleExpo = 0,
-    .throttleLimitType = rates_t::THROTTLE_LIMIT_TYPE_OFF,
-    .throttleLimitPercent = 100,
+    .throttle_midpoint = 50,
+    .throttle_expo = 0,
+    .throttle_limit_type = rates_t::THROTTLE_LIMIT_TYPE_OFF,
+    .throttle_limit_percent = 100,
     //.ratesType = rates_t::RATES_TYPE_ACTUAL
 };
 
@@ -55,26 +55,26 @@ static Debug debug;
 static constexpr uint8_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
 static constexpr size_t MOTOR_COUNT = 4;
 static constexpr size_t SERVO_COUNT = 0;
-static IMU_Filters imuFilters(0.0F);
-static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);
+static ImuFilters imu_filters(0.0F);
+static MotorMixerBase motor_mixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);
 static ReceiverVirtual receiver;
 static RcModes rc_modes;
-static AhrsMessageQueue ahrsMessageQueue;
+static AhrsMessageQueue ahrs_message_queue;
 static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS);
 static Ahrs ahrs(Ahrs::TIMER_DRIVEN, sensorFusionFilter, imu);
-static Autopilot autopilot(ahrsMessageQueue);
+static Autopilot autopilot(ahrs_message_queue);
 static Cockpit cockpit(autopilot, nullptr);
-static msp_parameter_group_t pg = {
+static msp_context_t ctx = {
     .ahrs = ahrs,
-    .flightController = fc,
-    .ahrsMessageQueue = ahrsMessageQueue,
-    .motorMixer = motorMixer,
+    .flight_controller = fc,
+    .ahrs_message_queue = ahrs_message_queue,
+    .motor_mixer = motor_mixer,
     .cockpit = cockpit,
     .receiver = receiver,
     .rc_modes = rc_modes,
-    .imuFilters = imuFilters,
+    .imu_filters = imu_filters,
     .debug = debug,
-    .nonVolatileStorage = nvs,
+    .nvs = nvs,
     .blackbox = nullptr,
     .vtx = nullptr,
     .osd = nullptr,
@@ -87,7 +87,7 @@ void test_telemetry_msp()
     static MSP_Protoflight msp;
     static std::array<uint8_t, 256> buf;
     enum { ID = 0x11223344 };
-    pack_telemetry_data_msp(&buf[0], ID, 0, pg, msp, MSP_API_VERSION); // 0, 1, 47
+    pack_telemetry_data_msp(&buf[0], ID, 0, ctx, msp, MSP_API_VERSION); // 0, 1, 47
     TEST_ASSERT_EQUAL(0x44, buf[0]);
     TEST_ASSERT_EQUAL(0x33, buf[1]);
     TEST_ASSERT_EQUAL(0x22, buf[2]);

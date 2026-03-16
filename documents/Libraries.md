@@ -14,7 +14,7 @@
 | Receiver               | yes       | 0.0.1   | yes        | no      |  1       | yes       |
 | Backchannel            | yes       | 0.1.14  | yes        | no      | 25       | yes       |
 | MultiWiiSerialProtocol | yes       | 0.0.17  | yes        | no      | 17       | yes       |
-| Blackbox               | yes       | 0.0.25  | yes        | no      | 25       | no        |
+| Blackbox               | yes       | 0.0.25  | yes        | no      | 25       | partial   |
 | FlashKLV               | yes       | 0.0.3   | yes        | no      |  3       | no        |
 
 |                        |           |                     |            |         |          |
@@ -102,7 +102,7 @@ To add a library to platformio, type `pio pkg publish`, once logged into platfor
 
 ```text
 lib_deps =
-    martinbudden/Filters@^0.9.4
+    martinbudden/_filters@^0.9.4
     martinbudden/PIDF@^0.4.1
     martinbudden/VectorQuaternionMatrix@^0.4.5
     martinbudden/SensorFusion@^0.2.8

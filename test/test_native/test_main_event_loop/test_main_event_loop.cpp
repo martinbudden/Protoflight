@@ -1,12 +1,12 @@
-#include "Autopilot.h"
-#include "FC_TelemetryData.h"
-#include "FlightController.h"
-#include "IMU_Filters.h"
-#include "MSP_Protoflight.h"
-#include "NonVolatileStorage.h"
+#include "autopilot.h"
+#include "fc_telemetry_data.h"
+#include "flight_controller.h"
+#include "imu_filters.h"
+#include "msp_protoflight.h"
+#include "non_volatile_storage.h"
 
-#include <Cockpit.h>
-#include <RC_Modes.h>
+#include <cockpit.h>
+#include <rc_modes.h>
 
 #include <ahrs.h>
 #include <ahrs_message_queue.h>
@@ -38,17 +38,17 @@ static Debug debug;
 static constexpr uint8_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
 static constexpr size_t MOTOR_COUNT = 4;
 static constexpr size_t SERVO_COUNT = 0;
-static IMU_Filters imuFilters(0.0F);
+static ImuFilters imu_filters(0.0F);
 static MotorMixerBase motor_mixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);
 static ReceiverVirtual receiver;
 static RcModes rc_modes;
-static AhrsMessageQueue ahrsMessageQueue;
-static FlightController flightController(AHRS_TASK_INTERVAL_MICROSECONDS);
+static AhrsMessageQueue ahrs_message_queue;
+static FlightController flight_controller(AHRS_TASK_INTERVAL_MICROSECONDS);
 static Ahrs ahrs(Ahrs::TIMER_DRIVEN, sensorFusionFilter, imu);
-static Autopilot autopilot(ahrsMessageQueue);
+static Autopilot autopilot(ahrs_message_queue);
 static Cockpit cockpit(autopilot, nullptr);
 static const float looptime_seconds = 0.001F;
-static RpmFilters rpm_filters(MOTOR_COUNT, looptime_seconds);;
+static RpmFilters rpm_filters(MOTOR_COUNT, looptime_seconds);
 static MotorMixerMessageQueue motor_mixer_message_queue {};
 static motor_mixer_message_queue_item_t motor_mixer_message_queue_item {};
 
@@ -61,21 +61,21 @@ void test_main_control_loop()
     const uint32_t tick_count = 1;
     const uint32_t tick_count_delta = 1;
 
-    // Receiver task loop, update rc_modes and flightController setpoints with data from receiver
+    // Receiver task loop, update rc_modes and flight_controller setpoints with data from receiver
     receiver.update(tick_count_delta);
-    static receiver_parameter_group_t receiver_parameter_group = {
+    static receiver_context_t receiver_context = {
         .rc_modes = rc_modes,
-        .flight_controller = flightController,
+        .flight_controller = flight_controller,
         .motor_mixer = motor_mixer,
         .debug = debug,
         .blackbox = nullptr,
         .osd = nullptr
     };
-    cockpit.update_controls(tick_count, receiver, receiver_parameter_group); // this errors
-    cockpit.check_failsafe(tick_count, receiver_parameter_group);
+    cockpit.update_controls(tick_count, receiver, receiver_context); // this errors
+    cockpit.check_failsafe(tick_count, receiver_context);
 
-    const ahrs_data_t& ahrsData = ahrs.read_imu_and_update_orientation(time_microseconds, time_microseconds_delta, imuFilters, flightController, debug);
-    flightController.update_outputs_using_pids(ahrsData, ahrsMessageQueue, motor_mixer_message_queue, debug);
+    const ahrs_data_t& ahrs_data = ahrs.read_imu_and_update_orientation(time_microseconds, time_microseconds_delta, imu_filters, flight_controller, debug);
+    flight_controller.update_outputs_using_pids(ahrs_data, ahrs_message_queue, motor_mixer_message_queue, debug);
 
     motor_mixer_message_queue.WAIT(motor_mixer_message_queue_item);
     motor_mixer.output_to_motors(motor_mixer_message_queue_item, &rpm_filters, delta_t, tick_count, debug);

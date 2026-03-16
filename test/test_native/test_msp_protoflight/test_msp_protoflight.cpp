@@ -1,21 +1,20 @@
-#include "Autopilot.h"
-#include "Cockpit.h"
-#include "FC_TelemetryData.h"
-#include "FlightController.h"
-#include "IMU_Filters.h"
-#include "MSP_Protoflight.h"
-#include "NonVolatileStorage.h"
-
-#include <MSP_Protocol.h>
-#include <MSP_Serial.h>
-#include <MSP_Stream.h>
-#include <RC_Modes.h>
+#include "autopilot.h"
+#include "cockpit.h"
+#include "fc_telemetry_data.h"
+#include "flight_controller.h"
+#include "imu_filters.h"
+#include "msp_protoflight.h"
+#include "non_volatile_storage.h"
 
 #include <ahrs.h>
 #include <ahrs_message_queue.h>
 #include <debug.h>
 #include <imu_null.h>
 #include <motor_mixer_base.h>
+#include <msp_protocol.h>
+#include <msp_serial.h>
+#include <msp_stream.h>
+#include <rc_modes.h>
 #include <receiver_virtual.h>
 #include <sensor_fusion.h>
 
@@ -40,38 +39,38 @@ static Debug debug;
 static constexpr uint8_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
 static constexpr size_t MOTOR_COUNT = 4;
 static constexpr size_t SERVO_COUNT = 0;
-static IMU_Filters imuFilters(0.0F);
-static MotorMixerBase motorMixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);
+static ImuFilters imu_filters(0.0F);
+static MotorMixerBase motor_mixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);
 static ReceiverVirtual receiver;
 static RcModes rc_modes;
-static AhrsMessageQueue ahrsMessageQueue;
+static AhrsMessageQueue ahrs_message_queue;
 static FlightController fc(AHRS_TASK_INTERVAL_MICROSECONDS);
 static Ahrs ahrs(Ahrs::TIMER_DRIVEN, sensorFusionFilter, imu);
-static Autopilot autopilot(ahrsMessageQueue);
+static Autopilot autopilot(ahrs_message_queue);
 static Cockpit cockpit(autopilot, nullptr);
-static msp_parameter_group_t pg = {
+static msp_context_t ctx = {
     .ahrs = ahrs,
-    .flightController = fc,
-    .ahrsMessageQueue = ahrsMessageQueue,
-    .motorMixer = motorMixer,
+    .flight_controller = fc,
+    .ahrs_message_queue = ahrs_message_queue,
+    .motor_mixer = motor_mixer,
     .cockpit = cockpit,
     .receiver = receiver,
     .rc_modes = rc_modes,
-    .imuFilters = imuFilters,
+    .imu_filters = imu_filters,
     .debug = debug,
-    .nonVolatileStorage = nvs,
+    .nvs = nvs,
     .blackbox = nullptr,
     .vtx = nullptr,
     .osd = nullptr,
     .gps = nullptr
 };
 static MSP_Protoflight msp;
-static MspStream mspStream(msp);
+static MspStream msp_stream(msp);
 
 
 void test_msp_set_failsafe_config()
 {
-    mspStream.set_packet_state(MSP_IDLE);
+    msp_stream.set_packet_state(MSP_IDLE);
 
     msp_stream_packet_with_header_t pwh;
 
@@ -102,13 +101,13 @@ void test_msp_set_failsafe_config()
 
     // simulate reading from serial port
     for (uint8_t inChar : inStream) {
-        const bool eof = mspStream.put_char(pg, inChar, &pwh);
+        const bool eof = msp_stream.put_char(ctx, inChar, &pwh);
         if (eof) {
             break;
         }
     }
-    TEST_ASSERT_EQUAL(checksum, mspStream.get_checksum1());
-    TEST_ASSERT_EQUAL(MSP_IDLE, mspStream.get_packet_state()); // put_char sets from MSP_COMMAND_RECEIVED to MSP_IDLE
+    TEST_ASSERT_EQUAL(checksum, msp_stream.get_checksum1());
+    TEST_ASSERT_EQUAL(MSP_IDLE, msp_stream.get_packet_state()); // put_char sets from MSP_COMMAND_RECEIVED to MSP_IDLE
 
     TEST_ASSERT_EQUAL('$', pwh.hdr_buf[0]);
     TEST_ASSERT_EQUAL('M', pwh.hdr_buf[1]);
@@ -117,7 +116,7 @@ void test_msp_set_failsafe_config()
     TEST_ASSERT_EQUAL(76, pwh.checksum);
     TEST_ASSERT_EQUAL(0, pwh.data_len);
 
-    const failsafe_config_t fsOut = cockpit.getFailsafeConfig();
+    const failsafe_config_t fsOut = cockpit.get_failsafe_config();
     TEST_ASSERT_EQUAL(fsIn.throttle_pwm, fsOut.throttle_pwm);
     TEST_ASSERT_EQUAL(fsIn.throttle_low_delay_deciseconds, fsOut.throttle_low_delay_deciseconds);
     TEST_ASSERT_EQUAL(fsIn.delay_deciseconds, fsOut.delay_deciseconds);
@@ -135,13 +134,13 @@ void test_msp_pid_in()
     }
     sbuf.reset();
     StreamBufReader sbufReader(sbuf);
-    msp.process_set_command(pg, MSP_SET_PID, sbufReader);
+    msp.process_read_command(ctx, MSP_SET_PID, sbufReader);
 
-    FlightController::PIDF_uint16_t pid16 = fc.get_pid_msp(FlightController::ROLL_RATE_DPS);
+    pid_constants_uint16_t pid16 = fc.get_pid_msp(FlightController::ROLL_RATE_DPS);
     TEST_ASSERT_EQUAL(0, pid16.kp);
     TEST_ASSERT_EQUAL(1, pid16.ki);
     TEST_ASSERT_EQUAL(2, pid16.kd);
-    VehicleControllerBase::PIDF_uint16_t pid = fc.get_pid_constants(FlightController::ROLL_RATE_DPS);
+    pid_constants_uint16_t pid = fc.get_pid_constants(FlightController::ROLL_RATE_DPS);
     TEST_ASSERT_EQUAL(0, pid.kp);
     TEST_ASSERT_EQUAL(1, pid.ki);
     TEST_ASSERT_EQUAL(2, pid.kd);
@@ -160,11 +159,11 @@ void test_msp_features()
 {
     std::array<uint8_t, 128> buf;
     StreamBufWriter sbuf(&buf[0], sizeof(buf));
-    msp.process_get_command(pg, MSP_FEATURE_CONFIG, sbuf);
+    msp.process_get_command(ctx, MSP_FEATURE_CONFIG, sbuf);
     sbuf.reset();
     const uint32_t featuresRead = sbuf.read_u32();
 
-    TEST_ASSERT_EQUAL(cockpit.enabledFeatures(), featuresRead);
+    TEST_ASSERT_EQUAL(cockpit.enabled_features(), featuresRead);
 }
 
 void test_msp_raw_imu()
@@ -172,36 +171,36 @@ void test_msp_raw_imu()
     imu.set_acc_raw({3, 5, 7});
     imu.set_gyro_raw({11, 13, 17});
 
-    mspStream.set_packet_state(MSP_IDLE);
+    msp_stream.set_packet_state(MSP_IDLE);
 
-    mspStream.process_received_packet_data('M');
-    TEST_ASSERT_EQUAL(MSP_HEADER_M, mspStream.get_packet_state());
-    TEST_ASSERT_EQUAL(0, mspStream.get_checksum1());
+    msp_stream.process_received_packet_data('M');
+    TEST_ASSERT_EQUAL(MSP_HEADER_M, msp_stream.get_packet_state());
+    TEST_ASSERT_EQUAL(0, msp_stream.get_checksum1());
 
-    mspStream.process_received_packet_data('<'); // command packet
-    TEST_ASSERT_EQUAL(MSP_HEADER_V1, mspStream.get_packet_state());
-    TEST_ASSERT_EQUAL(MSP_PACKET_COMMAND, mspStream.get_packet_type());
-    TEST_ASSERT_EQUAL(0, mspStream.get_checksum1());
+    msp_stream.process_received_packet_data('<'); // command packet
+    TEST_ASSERT_EQUAL(MSP_HEADER_V1, msp_stream.get_packet_state());
+    TEST_ASSERT_EQUAL(MSP_PACKET_COMMAND, msp_stream.get_packet_type());
+    TEST_ASSERT_EQUAL(0, msp_stream.get_checksum1());
 
-    mspStream.process_received_packet_data(1); // size
-    TEST_ASSERT_EQUAL(MSP_HEADER_V1, mspStream.get_packet_state());
-    TEST_ASSERT_EQUAL(1, mspStream.get_checksum1());
+    msp_stream.process_received_packet_data(1); // size
+    TEST_ASSERT_EQUAL(MSP_HEADER_V1, msp_stream.get_packet_state());
+    TEST_ASSERT_EQUAL(1, msp_stream.get_checksum1());
 
-    mspStream.process_received_packet_data(MSP_RAW_IMU); // command
-    TEST_ASSERT_EQUAL(MSP_PAYLOAD_V1, mspStream.get_packet_state());
-    TEST_ASSERT_EQUAL(103, mspStream.get_checksum1());
+    msp_stream.process_received_packet_data(MSP_RAW_IMU); // command
+    TEST_ASSERT_EQUAL(MSP_PAYLOAD_V1, msp_stream.get_packet_state());
+    TEST_ASSERT_EQUAL(103, msp_stream.get_checksum1());
 
     // checksum
-    mspStream.process_received_packet_data(103);
-    TEST_ASSERT_EQUAL(MSP_CHECKSUM_V1, mspStream.get_packet_state());
-    TEST_ASSERT_EQUAL(0, mspStream.get_checksum1());
+    msp_stream.process_received_packet_data(103);
+    TEST_ASSERT_EQUAL(MSP_CHECKSUM_V1, msp_stream.get_packet_state());
+    TEST_ASSERT_EQUAL(0, msp_stream.get_checksum1());
 
     // any character after the checksum completes the command
-    mspStream.process_received_packet_data(0);
-    TEST_ASSERT_EQUAL(MSP_COMMAND_RECEIVED, mspStream.get_packet_state());
-    TEST_ASSERT_EQUAL(0, mspStream.get_checksum1());
+    msp_stream.process_received_packet_data(0);
+    TEST_ASSERT_EQUAL(MSP_COMMAND_RECEIVED, msp_stream.get_packet_state());
+    TEST_ASSERT_EQUAL(0, msp_stream.get_checksum1());
 
-    msp_const_packet_t reply = mspStream.process_in_buf(pg);
+    msp_const_packet_t reply = msp_stream.process_in_buf(ctx);
 
     TEST_ASSERT_EQUAL(MSP_RAW_IMU, reply.cmd);
     const uint16_t accX = reply.payload.read_u16();
@@ -224,7 +223,7 @@ void test_msp_raw_imu()
     TEST_ASSERT_EQUAL(0, magZ);
 
     reply.payload.switch_to_reader(); // change StreamBufWriter direction
-    const msp_stream_packet_with_header_t pwh = mspStream.serial_encode(reply, MSP_V1); // encode with MSP version 1
+    const msp_stream_packet_with_header_t pwh = msp_stream.serial_encode(reply, MSP_V1); // encode with MSP version 1
 
     TEST_ASSERT_EQUAL('$', pwh.hdr_buf[0]);
     TEST_ASSERT_EQUAL('M', pwh.hdr_buf[1]);

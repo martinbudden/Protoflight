@@ -1,6 +1,6 @@
-#include <DisplayPortNull.h>
-#include <FormatInteger.h>
 #include <array>
+#include <display_port_null.h>
+#include <format_integer.h>
 #include <unity.h>
 
 void setUp()
@@ -15,9 +15,9 @@ void tearDown()
 void test_display()
 {
     //BusSpi::spi_pins_t spiPins{.cs=46,.sck=44,.cipo=43,.copi=14,.irq=0xFF};
-    //static DisplayPortMax7456 displayPortMax7456(BusSpi::BUS_INDEX_0, spiPins);
-    static DisplayPortNull displayPortNull;
-    (void)displayPortNull;
+    //static DisplayPortMax7456 display_portMax7456(BusSpi::BUS_INDEX_0, spiPins);
+    static DisplayPortNull display_portNull;
+    (void)display_portNull;
 
 }
 void test_format()

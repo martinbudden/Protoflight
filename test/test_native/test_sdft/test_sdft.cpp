@@ -1,5 +1,5 @@
-#include <DynamicNotchFilter.h>
-#include <SDFT.h>
+#include <dynamic_notch_filter.h>
+#include <sdft.h>
 
 #include <debug.h>
 
@@ -26,125 +26,125 @@ static constexpr dynamic_notch_filter_config_t config = {
 void test_sdft()
 {
     enum { SDFT_SAMPLE_COUNT = 72, SDFT_BIN_COUNT = SDFT_SAMPLE_COUNT/2 };
-    SDFT<SDFT_SAMPLE_COUNT> sdft;
+    Sdft<SDFT_SAMPLE_COUNT> sdft;
 
     constexpr float R = 0.9999F;
     const float m = static_cast<float>(M_PI) / static_cast<float>(SDFT_BIN_COUNT);
-    TEST_ASSERT_EQUAL_FLOAT(R*cosf(12.0F*m), sdft.getTwiddle(12).real());
-    TEST_ASSERT_EQUAL_FLOAT(R*sinf(12.0F*m), sdft.getTwiddle(12).imag());
+    TEST_ASSERT_EQUAL_FLOAT(R*cosf(12.0F*m), sdft.get_twiddle(12).real());
+    TEST_ASSERT_EQUAL_FLOAT(R*sinf(12.0F*m), sdft.get_twiddle(12).imag());
 
     const uint32_t looptimeUs = 125;
 
-    const float looptimeSeconds = static_cast<float>(looptimeUs) * 1E-6F;
-    const float looprateHz = 1.0F / looptimeSeconds;
-    TEST_ASSERT_EQUAL_FLOAT(8000.0F, looprateHz);
+    const float looptime_seconds = static_cast<float>(looptimeUs) * 1E-6F;
+    const float looprate_hz = 1.0F / looptime_seconds;
+    TEST_ASSERT_EQUAL_FLOAT(8000.0F, looprate_hz);
 
-    const float nyquistFrequencyHz = looprateHz / 2.0F;
-    const float minHz = config.dyn_notch_min_hz;
-    float maxHz = std::fmaxf(minHz, config.dyn_notch_max_hz);
+    const float nyquist_frequency_hz = looprate_hz / 2.0F;
+    const float min_hz = config.dyn_notch_min_hz;
+    float max_hz = std::fmaxf(min_hz, config.dyn_notch_max_hz);
 
-    maxHz = std::fminf(maxHz, nyquistFrequencyHz); // Ensure to not go above the nyquist limit
-    TEST_ASSERT_EQUAL(600, maxHz);
+    max_hz = std::fminf(max_hz, nyquist_frequency_hz); // Ensure to not go above the nyquist limit
+    TEST_ASSERT_EQUAL(600, max_hz);
 
-    const size_t sampleCount = std::max(1, static_cast<int>(nyquistFrequencyHz / maxHz)); // maxHz = 600 & looprateHz = 8000 -> sampleCount = 6
-    TEST_ASSERT_EQUAL(6, sampleCount);
+    const size_t sample_count = std::max(1, static_cast<int>(nyquist_frequency_hz / max_hz)); // max_hz = 600 & looprate_hz = 8000 -> sample_count = 6
+    TEST_ASSERT_EQUAL(6, sample_count);
 
-    const float sampleCountReciprocal = 1.0F / static_cast<float>(sampleCount);
-    const float sampleRateHz = looprateHz * sampleCountReciprocal;
-    const float resolutionHz = sampleRateHz / static_cast<float>(SDFT_SAMPLE_COUNT); // 18.5hz per bin at 8k and 600Hz maxHz
+    const float sample_count_reciprocal = 1.0F / static_cast<float>(sample_count);
+    const float sample_rate_hz = looprate_hz * sample_count_reciprocal;
+    const float resolutionHz = sample_rate_hz / static_cast<float>(SDFT_SAMPLE_COUNT); // 18.5hz per bin at 8k and 600Hz max_hz
 
-    const size_t startBin = lrintf(minHz / resolutionHz);
-    TEST_ASSERT_EQUAL(5, startBin);
+    const size_t start_bin = lrintf(min_hz / resolutionHz);
+    TEST_ASSERT_EQUAL(5, start_bin);
 
-    const size_t endBin = lrintf(maxHz / resolutionHz);
-    TEST_ASSERT_EQUAL(32, endBin);
+    const size_t end_bin = lrintf(max_hz / resolutionHz);
+    TEST_ASSERT_EQUAL(32, end_bin);
 
-    sdft.init(startBin, endBin, sampleCount);
-    TEST_ASSERT_EQUAL(4, sdft.getBatchSize());
-    TEST_ASSERT_EQUAL(6, sdft.getBatchCount());
-    TEST_ASSERT_EQUAL(0, sdft.getIndex());
+    sdft.init(start_bin, end_bin, sample_count);
+    TEST_ASSERT_EQUAL(4, sdft.get_batch_size());
+    TEST_ASSERT_EQUAL(6, sdft.get_batch_count());
+    TEST_ASSERT_EQUAL(0, sdft.get_index());
 
     sdft.push(1000, 0);
-    TEST_ASSERT_EQUAL(0, sdft.getIndex());
+    TEST_ASSERT_EQUAL(0, sdft.get_index());
     sdft.push(1002, 2);
-    TEST_ASSERT_EQUAL(0, sdft.getIndex());
+    TEST_ASSERT_EQUAL(0, sdft.get_index());
     sdft.push(1003, 3);
-    TEST_ASSERT_EQUAL(0, sdft.getIndex());
+    TEST_ASSERT_EQUAL(0, sdft.get_index());
     sdft.push(1004, 4);
-    TEST_ASSERT_EQUAL(0, sdft.getIndex());
+    TEST_ASSERT_EQUAL(0, sdft.get_index());
     sdft.push(1005, 5);
-    TEST_ASSERT_EQUAL(1, sdft.getIndex());
+    TEST_ASSERT_EQUAL(1, sdft.get_index());
     sdft.push(1006, 6);
-    TEST_ASSERT_EQUAL(1, sdft.getIndex());
+    TEST_ASSERT_EQUAL(1, sdft.get_index());
     sdft.push(1007, 7);
-    TEST_ASSERT_EQUAL(1, sdft.getIndex());
+    TEST_ASSERT_EQUAL(1, sdft.get_index());
     sdft.push(1008, 8);
-    TEST_ASSERT_EQUAL(1, sdft.getIndex());
+    TEST_ASSERT_EQUAL(1, sdft.get_index());
 
 
     // 100Hz to 600Hz
-    sdft.init(startBin, endBin, sampleCount);
+    sdft.init(start_bin, end_bin, sample_count);
 
     const float signalFrequency = 140.0F;
     static constexpr auto M_PI_F = static_cast<float>(M_PI);
 
     static std::array<float, SDFT_SAMPLE_COUNT> samples;
 
-    const float ratio = 2.0F * M_PI_F * signalFrequency / looprateHz; // Fraction of a complete cycle stored at each sample (in radians)
+    const float ratio = 2.0F * M_PI_F * signalFrequency / looprate_hz; // Fraction of a complete cycle stored at each sample (in radians)
     for (int ii = 0; ii < SDFT_SAMPLE_COUNT; ++ii) {
         const float x = static_cast<float>(ii) * ratio;
         samples[ii] = 2*sinf(x) + 2*sinf(2*x) + 2*sinf(3*x) + 0*sinf(4*x);
     }
 
-    size_t sampleIndex = 0;
+    size_t sample_index = 0;
     for (int ii = 0; ii < SDFT_SAMPLE_COUNT; ++ii) {
-        sdft.push(samples[ii], sampleIndex);
-        ++sampleIndex;
-        if (sampleIndex == sampleCount) {
-            sampleIndex = 0;
+        sdft.push(samples[ii], sample_index);
+        ++sample_index;
+        if (sample_index == sample_count) {
+            sample_index = 0;
         }
     }
-    static std::array<float, SDFT_BIN_COUNT> sdftData;
-    sdftData.fill(0.0F);
-    sdft.calculateWindowSquared(&sdftData[0]);
+    static std::array<float, SDFT_BIN_COUNT> sdft_data;
+    sdft_data.fill(0.0F);
+    sdft.calculate_window_squared(&sdft_data[0]);
 
 
 #if false
     std::array<char, 256> buf;
     for (int ii = 0; ii < 36; ++ii) {
-        sprintf(&buf[0], "%2d=%3.1f, ", ii, static_cast<double>(sdftData[ii])); UnityPrint(&buf[0]);
+        sprintf(&buf[0], "%2d=%3.1f, ", ii, static_cast<double>(sdft_data[ii])); UnityPrint(&buf[0]);
     }
 #endif
-    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[0]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[1]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[2]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[3]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[4]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[33]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[34]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdftData[35]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdft_data[0]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdft_data[1]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdft_data[2]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdft_data[3]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdft_data[4]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdft_data[33]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdft_data[34]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, sdft_data[35]);
 }
 
 void test_dynamic_notch_filter()
 {
-    const float looptimeSeconds = 125.0F / 1000000.0F;
+    const float looptime_seconds = 125.0F / 1000000.0F;
 
     static Debug debug;
-    static DynamicNotchFilter dynamicNotchFilter(looptimeSeconds);
+    static DynamicNotchFilter dynamic_notch_filter(looptime_seconds);
 
-    dynamicNotchFilter.setConfig(config);
+    dynamic_notch_filter.set_config(config);
 
-    TEST_ASSERT_EQUAL(6, dynamicNotchFilter.getSampleCount());
-    TEST_ASSERT_EQUAL(5, dynamicNotchFilter.getStartBin());
-    TEST_ASSERT_EQUAL(32, dynamicNotchFilter.getEndBin());
-    TEST_ASSERT_EQUAL_FLOAT(18.51852F, dynamicNotchFilter.getResolutionHz());
+    TEST_ASSERT_EQUAL(6, dynamic_notch_filter.get_sample_count());
+    TEST_ASSERT_EQUAL(5, dynamic_notch_filter.get_start_bin());
+    TEST_ASSERT_EQUAL(32, dynamic_notch_filter.get_end_bin());
+    TEST_ASSERT_EQUAL_FLOAT(18.51852F, dynamic_notch_filter.get_resolution_hz());
 
-    // after setConfig notch frequencies are evenly distributed in the range [100, 600]
-    const float* centerFrequencyHz = dynamicNotchFilter.getCenterFrequencyHzX();
-    TEST_ASSERT_EQUAL_FLOAT(183.3333F, centerFrequencyHz[0]);
-    TEST_ASSERT_EQUAL_FLOAT(350.0F, centerFrequencyHz[1]);
-    TEST_ASSERT_EQUAL_FLOAT(516.6666F, centerFrequencyHz[2]);
-    TEST_ASSERT_EQUAL_FLOAT(0.0F, centerFrequencyHz[3]);
+    // after set_config notch frequencies are evenly distributed in the range [100, 600]
+    const float* center_frequency_hz = dynamic_notch_filter.getCenter_frequency_hzX();
+    TEST_ASSERT_EQUAL_FLOAT(183.3333F, center_frequency_hz[0]);
+    TEST_ASSERT_EQUAL_FLOAT(350.0F, center_frequency_hz[1]);
+    TEST_ASSERT_EQUAL_FLOAT(516.6666F, center_frequency_hz[2]);
+    TEST_ASSERT_EQUAL_FLOAT(0.0F, center_frequency_hz[3]);
 
     std::array<float, DynamicNotchFilter::SDFT_BIN_COUNT> testSdftData = {
         // peaks at 6(5.0F), 11(8.0F), 15(0.5F), 23(2.0F)
@@ -154,18 +154,18 @@ void test_dynamic_notch_filter()
         0.0F, 0.0F, 1.0F, 2.0F, 1.5F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
         0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
     };
-    auto& sdftData = dynamicNotchFilter.getSdftData();
-    std::copy_n(testSdftData.begin(), testSdftData.size(), sdftData.begin());
+    auto& sdft_data = dynamic_notch_filter.getSdftData();
+    std::copy_n(testSdftData.begin(), testSdftData.size(), sdft_data.begin());
 
-    dynamicNotchFilter.setState({DynamicNotchFilter::STEP_DETECT_PEAKS, DynamicNotchFilter::X});
-    dynamicNotchFilter.updateNotchFrequencies(debug);
-    DynamicNotchFilter::state_t state = dynamicNotchFilter.getState();
+    dynamic_notch_filter.set_state({DynamicNotchFilter::STEP_DETECT_PEAKS, DynamicNotchFilter::X});
+    dynamic_notch_filter.update_notch_frequencies(debug);
+    DynamicNotchFilter::state_t state = dynamic_notch_filter.get_state();
     TEST_ASSERT_EQUAL(DynamicNotchFilter::STEP_CALCULATE_FREQUENCIES, state.step);
     TEST_ASSERT_EQUAL(DynamicNotchFilter::X, state.axis);
 
     // Check that peaks are sorted into ascending BIN order
     // dyn_notch_count = 3, so 4th peak should be ignored
-    auto peaks = dynamicNotchFilter.getPeaks();
+    auto peaks = dynamic_notch_filter.get_peaks();
     TEST_ASSERT_EQUAL_FLOAT(5.0F, peaks[0].value);
     TEST_ASSERT_EQUAL(6, peaks[0].bin);
     TEST_ASSERT_EQUAL_FLOAT(8.0F, peaks[1].value);
@@ -177,21 +177,21 @@ void test_dynamic_notch_filter()
     TEST_ASSERT_EQUAL_FLOAT(0.0F, peaks[4].value);
     TEST_ASSERT_EQUAL(0, peaks[4].bin);
 
-    dynamicNotchFilter.updateNotchFrequencies(debug);
-    state = dynamicNotchFilter.getState();
+    dynamic_notch_filter.update_notch_frequencies(debug);
+    state = dynamic_notch_filter.get_state();
     TEST_ASSERT_EQUAL(DynamicNotchFilter::STEP_UPDATE_FILTERS, state.step);
     TEST_ASSERT_EQUAL(DynamicNotchFilter::X, state.axis);
 
     if (config.dyn_notch_smoothing) {
-        TEST_ASSERT_EQUAL_FLOAT(180.6423F, centerFrequencyHz[0]); // bin 6
-        TEST_ASSERT_EQUAL_FLOAT(344.6851F, centerFrequencyHz[1]); // bin 11
-        TEST_ASSERT_EQUAL_FLOAT(513.4822F, centerFrequencyHz[2]); // bin 23
-        TEST_ASSERT_EQUAL_FLOAT(0.0F, centerFrequencyHz[3]);
+        TEST_ASSERT_EQUAL_FLOAT(180.6423F, center_frequency_hz[0]); // bin 6
+        TEST_ASSERT_EQUAL_FLOAT(344.6851F, center_frequency_hz[1]); // bin 11
+        TEST_ASSERT_EQUAL_FLOAT(513.4822F, center_frequency_hz[2]); // bin 23
+        TEST_ASSERT_EQUAL_FLOAT(0.0F, center_frequency_hz[3]);
     } else {
-        TEST_ASSERT_EQUAL_FLOAT(109.2592F, centerFrequencyHz[0]); // bin 6 =  5.89   * 18.51852, peak skewed to bin 5
-        TEST_ASSERT_EQUAL_FLOAT(203.7037F, centerFrequencyHz[1]); // bin 11 = 11     * 18.51852, peak centered on bin 11
-        TEST_ASSERT_EQUAL_FLOAT(429.0123F, centerFrequencyHz[2]); // bin 23 = 23.166 * 18.51852, peak skewed to bin 24
-        TEST_ASSERT_EQUAL_FLOAT(0.0F, centerFrequencyHz[3]);
+        TEST_ASSERT_EQUAL_FLOAT(109.2592F, center_frequency_hz[0]); // bin 6 =  5.89   * 18.51852, peak skewed to bin 5
+        TEST_ASSERT_EQUAL_FLOAT(203.7037F, center_frequency_hz[1]); // bin 11 = 11     * 18.51852, peak centered on bin 11
+        TEST_ASSERT_EQUAL_FLOAT(429.0123F, center_frequency_hz[2]); // bin 23 = 23.166 * 18.51852, peak skewed to bin 24
+        TEST_ASSERT_EQUAL_FLOAT(0.0F, center_frequency_hz[3]);
     }
 
 }

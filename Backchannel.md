@@ -28,12 +28,12 @@ classDiagram
         <<abstract>>
         WAIT_FOR_DATA_RECEIVED() int32_t *
         update() bool *
-        getStickValues() *
+        get_stickValues() *
         getAuxiliaryChannel() uint32_t *
     }
-    ReceiverBase <|-- ReceiverAtomJoyStick
-    class ReceiverAtomJoyStick
-    ReceiverAtomJoyStick *-- ESPNOW_Transceiver
+    ReceiverBase <|-- ReceiverAtomJoy_stick
+    class ReceiverAtomJoy_stick
+    ReceiverAtomJoy_stick *-- ESPNOW_Transceiver
 
     BackchannelBase <|-- BackchannelStabilizedVehicle
     class BackchannelStabilizedVehicle {

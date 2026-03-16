@@ -1,4 +1,4 @@
-#include "Main.h"
+#include "main.h"
 
 #if defined(FRAMEWORK_USE_FREERTOS)
 #if defined(FRAMEWORK_ESPIDF) || defined(FRAMEWORK_ARDUINO_ESP32)
