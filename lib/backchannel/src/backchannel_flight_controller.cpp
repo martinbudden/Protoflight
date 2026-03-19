@@ -14,6 +14,7 @@
 #endif
 #include <backchannel_transceiver_base.h>
 #include <debug.h>
+#include <imu_base.h>
 #include <motor_mixer_base.h>
 #include <receiver_base.h>
 #include <receiver_telemetry.h>
@@ -34,8 +35,8 @@ BackchannelFlightController::BackchannelFlightController(BackchannelTransceiverB
 
 bool BackchannelFlightController::packet_set_offset(backchannel_context_t& ctx, const CommandPacketSetOffset& packet)
 {
-    xyz_t gyro_offset = ctx.ahrs.get_gyro_offset_mapped();
-    xyz_t acc_offset = ctx.ahrs.get_acc_offset_mapped();
+    xyz_t gyro_offset = ctx.ahrs.get_imu().get_gyro_offset_mapped();
+    xyz_t acc_offset = ctx.ahrs.get_imu().get_acc_offset_mapped();
 
 #if defined(USE_DEBUG_PRINTF_BACKCHANNEL)
     //Serial.printf("    packet_set_offset itype:%d, len:%d value:%d, type:%d\r\n", packet.type, packet.len, packet.value, packet.type);
@@ -43,34 +44,34 @@ bool BackchannelFlightController::packet_set_offset(backchannel_context_t& ctx, 
     switch (packet.set_type) {
     case CommandPacketSetOffset::SET_GYRO_OFFSET_X:
         gyro_offset.x = packet.value;
-        ctx.ahrs.set_gyro_offset_mapped(gyro_offset);
+        ctx.ahrs.get_imu_mutable().set_gyro_offset_mapped(gyro_offset);
         break;
     case CommandPacketSetOffset::SET_GYRO_OFFSET_Y:
         gyro_offset.y = packet.value;
-        ctx.ahrs.set_gyro_offset_mapped(gyro_offset);
+        ctx.ahrs.get_imu_mutable().set_gyro_offset_mapped(gyro_offset);
         break;
     case CommandPacketSetOffset::SET_GYRO_OFFSET_Z:
         gyro_offset.z = packet.value;
-        ctx.ahrs.set_gyro_offset_mapped(gyro_offset);
+        ctx.ahrs.get_imu_mutable().set_gyro_offset_mapped(gyro_offset);
         break;
     case CommandPacketSetOffset::SET_ACC_OFFSET_X:
         acc_offset.x = packet.value;
-        ctx.ahrs.set_acc_offset_mapped(acc_offset);
+        ctx.ahrs.get_imu_mutable().set_acc_offset_mapped(acc_offset);
         break;
     case CommandPacketSetOffset::SET_ACC_OFFSET_Y:
         acc_offset.y = packet.value;
-        ctx.ahrs.set_acc_offset_mapped(acc_offset);
+        ctx.ahrs.get_imu_mutable().set_acc_offset_mapped(acc_offset);
         break;
     case CommandPacketSetOffset::SET_ACC_OFFSET_Z:
         acc_offset.z = packet.value;
-        ctx.ahrs.set_acc_offset_mapped(acc_offset);
+        ctx.ahrs.get_imu_mutable().set_acc_offset_mapped(acc_offset);
         break;
     case CommandPacketSetOffset::SAVE_GYRO_OFFSET: {
-        ctx.nvs.store_gyro_offset(ctx.ahrs.get_gyro_offset());
+        ctx.nvs.store_gyro_offset(ctx.ahrs.get_imu().get_gyro_offset());
         break;
     }
     case CommandPacketSetOffset::SAVE_ACC_OFFSET: {
-        ctx.nvs.store_acc_offset(ctx.ahrs.get_acc_offset());
+        ctx.nvs.store_acc_offset(ctx.ahrs.get_imu().get_acc_offset());
         break;
     }
     default:
