@@ -33,7 +33,7 @@ Backchannel for Flight Controller.
 class BackchannelFlightController : public BackchannelBase {
 public:
     BackchannelFlightController(
-        BackchannelTransceiverBase& backchannelTransceiver,
+        BackchannelTransceiverBase& backchannel_transceiver,
         const uint8_t* backchannel_mac_address,
         const uint8_t* my_mac_address
     );

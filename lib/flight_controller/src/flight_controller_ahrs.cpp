@@ -323,7 +323,7 @@ void FlightController::update_outputs_using_pids(const ahrs_data_t& ahrs_data, A
     //
     const float pitch_rate_dps = pitch_rate_ned_dps(ahrs_data.acc_gyro_rps.gyro_rps);
     // filter the DTerm twice
-    float pitch_rate_delta_filtered_dps = _sh.dterm_filters1[PITCH_RATE_DPS].filter(roll_rate_dps - _sh.PIDS[PITCH_RATE_DPS].get_previous_measurement());
+    float pitch_rate_delta_filtered_dps = _sh.dterm_filters1[PITCH_RATE_DPS].filter(pitch_rate_dps - _sh.PIDS[PITCH_RATE_DPS].get_previous_measurement());
     pitch_rate_delta_filtered_dps = _sh.dterm_filters2[PITCH_RATE_DPS].filter(pitch_rate_delta_filtered_dps);
     outputs.pitch_dps = _sh.PIDS[PITCH_RATE_DPS].update_delta_iterm(
                                                     pitch_rate_dps,

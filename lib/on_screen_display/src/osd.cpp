@@ -50,7 +50,7 @@ void OSD::draw_logo_and_complete_initialization(const osd_context_t& ctx)
 
     //resetAlarms();
 
-    _background_layer_supported = ctx.display_port.layer_supported(DisplayPortBase::LAYER_BACKGROUND);
+    _background_is_layer_supported = ctx.display_port.is_layer_supported(DisplayPortBase::LAYER_BACKGROUND);
     ctx.display_port.layer_select(DisplayPortBase::LAYER_FOREGROUND);
 
     ctx.display_port.clear_screen(DISPLAY_CLEAR_WAIT);
@@ -60,17 +60,17 @@ void OSD::draw_logo_and_complete_initialization(const osd_context_t& ctx)
 
     std::array<char, 30> string_buffer;
     sprintf(&string_buffer[0], "V%s", "0.0.1");//FC_VERSION_STRING);
-    ctx.display_port.write_string(midCol + 5, midRow, &string_buffer[0]);
+    ctx.display_port.write_string_normal(midCol + 5, midRow, &string_buffer[0]);
 #if defined(USE_CMS) || true
-    ctx.display_port.write_string(midCol - 8, midRow + 2, "MENU:THR MID");
-    ctx.display_port.write_string(midCol - 4, midRow + 3, "+ YAW LEFT");
-    ctx.display_port.write_string(midCol - 4, midRow + 4, "+ PITCH UP");
+    ctx.display_port.write_string_normal(midCol - 8, midRow + 2, "MENU:THR MID");
+    ctx.display_port.write_string_normal(midCol - 4, midRow + 3, "+ YAW LEFT");
+    ctx.display_port.write_string_normal(midCol - 4, midRow + 4, "+ PITCH UP");
 #endif
 
 #if defined(USE_RTC_TIME)
     std::array<char, FORMATTED_DATE_TIME_BUFSIZE> dateTimeBuffer;
     if (osdFormatRtcDateTime(&dateTimeBuffer[0])) {
-        ctx.display_port.write_string(midCol - 10, midRow + 6, &dateTimeBuffer[]);
+        ctx.display_port.write_string_normal(midCol - 10, midRow + 6, &dateTimeBuffer[]);
     }
 #endif
 
@@ -79,7 +79,7 @@ void OSD::draw_logo_and_complete_initialization(const osd_context_t& ctx)
     _elements.set_profile(_config.osd_profile_index);
 #endif
 
-    _elements.init(_background_layer_supported, ctx.display_port.get_row_count(), ctx.display_port.get_column_count());
+    _elements.init(_background_is_layer_supported, ctx.display_port.get_row_count(), ctx.display_port.get_column_count());
     analyze_active_elements(ctx);
 
     ctx.display_port.redraw();
@@ -141,9 +141,9 @@ void OSD::reset_stats()
 
 void OSD::display_statistic_label(DisplayPortBase& display_port, uint8_t x, uint8_t y, const char * text, const char * value)
 {
-    display_port.write_string(x - 13, y, text);
-    display_port.write_string(x + 5, y, ":");
-    display_port.write_string(x + 7, y, value);
+    display_port.write_string_normal(x - 13, y, text);
+    display_port.write_string_normal(x + 5, y, ":");
+    display_port.write_string_normal(x + 7, y, value);
 }
 
 bool OSD::display_statistic(DisplayPortBase& display_port, int statistic, uint8_t display_row)
@@ -182,7 +182,7 @@ bool OSD::render_stats_continue(DisplayPortBase& display_port)
             _stats_rendering_state.row = static_cast<uint8_t>((availableRows - display_rows) / 2);  // center the stats vertically
         }
         if (displayLabel) {
-            display_port.write_string(midCol - static_cast<uint8_t>(strlen("--- STATS ---") / 2), _stats_rendering_state.row, "--- STATS ---");
+            display_port.write_string_normal(midCol - static_cast<uint8_t>(strlen("--- STATS ---") / 2), _stats_rendering_state.row, "--- STATS ---");
             ++_stats_rendering_state.row;
             return false;
         }
@@ -218,7 +218,7 @@ bool OSD::render_stats_continue(DisplayPortBase& display_port)
 State machine to refresh statistics.
 Returns true when all iterations are complete.
 */
-bool OSD::refreshStats(DisplayPortBase& display_port)
+bool OSD::refresh_stats(DisplayPortBase& display_port)
 {
     switch (_refresh_stats_state) {
     default:
@@ -341,7 +341,7 @@ void OSD::draw_logo(DisplayPortBase& display_port, uint8_t x, uint8_t y)
     for (uint8_t row = 0; row < LOGO_ROW_COUNT; ++row) {
         for (uint8_t column = 0; column < LOGO_COLUMN_COUNT; ++column) {
             if (characterCode < END_OF_FONT) {
-                display_port.write_char(x + column, y + row, characterCode);
+                display_port.write_char_normal(x + column, y + row, characterCode);
                 ++characterCode;
             }
         }
@@ -402,13 +402,13 @@ void OSD::update_display_iteration(const osd_context_t& ctx, uint32_t time_micro
         break;
     case STATE_PROCESS_STATS1:
         //Serial.printf("STATE_PROCESS_STATS1\r\n");
-        // transaction begins here since refreshStats draws to the screen
+        // transaction begins here since refresh_stats draws to the screen
         ctx.display_port.begin_transaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
         _state = process_stats1(ctx, time_microseconds) ? STATE_REFRESH_STATS : STATE_PROCESS_STATS2; // cppcheck-suppress knownConditionTrueFalse
         break;
     case STATE_REFRESH_STATS:
         //Serial.printf("STATE_REFRESH_STATS\r\n");
-        if (refreshStats(ctx.display_port)) { // draws the statistics to the screen
+        if (refresh_stats(ctx.display_port)) { // draws the statistics to the screen
             _state = STATE_PROCESS_STATS2;
         }
         break;
@@ -441,7 +441,7 @@ void OSD::update_display_iteration(const osd_context_t& ctx, uint32_t time_micro
             _state = STATE_COMMIT;
             break;
         }
-        if (_background_layer_supported) {
+        if (_background_is_layer_supported) {
             // Background layer is supported, overlay it onto the foreground
             // so that we only need to draw the active parts of the elements.
             ctx.display_port.layer_copy(DisplayPortBase::LAYER_FOREGROUND, DisplayPortBase::LAYER_BACKGROUND);

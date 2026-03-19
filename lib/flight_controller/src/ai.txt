@@ -1,0 +1,2108 @@
+Skip to main contentAccessibility help
+Accessibility feedback
+St. Patrick's Day 2026
+AI Mode
+All
+Short videos
+Images
+Forums
+More
+Sign in
+
+
+what would be a good name for a trait that represents an IMU in rust
+The "best" name depends on whether your trait defines the hardware device itself or the capability of providing motion data. Here are a few solid options:
+1. The Direct Approach (Noun-based)
+If the trait represents the physical object or a driver:
+Imu: Simple, standard, and clear.
+InertialSensor: More formal and descriptive; good if you want to distinguish it from GPS or other sensors.
+MotionSensor: High-level and easy to understand for users who don't care about the "inertial" terminology.
+2. The Functional Approach (Adjective-based)
+In Rust, traits are often named after what they do (like Read, Write, or Clone): 
+Inertial: Short and fits the "is-a" pattern (e.g., impl Inertial for Mpu6050).
+SensesMotion: Very explicit about the capability.
+ProvidesOrientation: Specific to the data being returned.
+3. The "Embedded-HAL" Style
+If you are following the patterns found in the embedded-hal ecosystem:
+Accelerometer / Gyroscope: Often, it’s better to split an IMU into two traits. A device can then implement both.
+ReadInertialData: Focuses on the action of fetching the telemetry.
+Recommendation
+Go with Imu if you want a concise name for a "catch-all" trait, or split it into Accelerometer and Gyroscope traits if you want to keep your code modular and generic.
+Would you like to see a code snippet of how to structure the trait and its associated types?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+
+1 site
+The Common Rust Traits - Rustifications
+8 Sept 2018 — I/O: Read and Write. The types std::fs::File and std::io::Stdin are very distinct. Rust does not hack stdin as a kind-of file. Wha...
+
+GitHub Pages documentation
+I also want to have and Imu struct, so how what would be good choices for the trait and the struct names
+In Rust, naming both a trait and a struct with the same name (e.g., trait Imu and struct Imu) can cause name collisions that make your code difficult to use, as you often need both in the same scope. 
+The Rust Programming Language Forum
+The Rust Programming Language Forum
+Here are three idiomatic ways to structure these names:
+1. The "Provider" Pattern (Action-Based)
+Use a noun for the data structure and an "agent noun" (ending in -er or -or) for the trait. This is a common pattern in the Rust standard library (like Read vs Reader). 
+GitHub
+GitHub
+ +1
+Trait: Imu (represents the interface)
+Struct: ImuDevice, ImuDriver, or a specific hardware name like Mpu6050.
+Why: It clearly distinguishes the capability from the concrete implementation. 
+Reddit
+Reddit
+ +1
+2. The "Capability" Pattern (Adjective-Based)
+If the trait describes what a type can do, use an adjective for the trait and a noun for the struct. 
+Trait: Inertial or MotionSensing
+Struct: Imu
+Why: This allows you to have a generic Imu struct that can wrap any type implementing Inertial. 
+CodeSignal
+CodeSignal
+ +1
+3. The Namespacing Strategy
+If you really want both to be named Imu, you can separate them into different modules to avoid direct collisions.
+Pathing: sensors::Imu (Trait) and drivers::Imu (Struct).
+Usage: You would refer to them as sensors::Imu or use an alias like use drivers::Imu as ImuDriver;. 
+The Rust Programming Language Forum
+The Rust Programming Language Forum
+Comparison Table
+Style	Trait Name	Struct Name	Best For...
+Agent	Imu	ImuDriver	Writing a library where others implement your trait.
+Capability	Inertial	Imu	High-level apps where you just want "an IMU".
+Specific	Imu	Bno055	Drivers for specific hardware chips.
+Pro Tip: In the Embedded Rust ecosystem, it is very common to split an IMU into smaller traits like Accelerometer and Gyroscope. This allows a device that only has one of those sensors to still be compatible with your code. 
+Embedded Rust
+Embedded Rust
+These Rust community resources discuss conventions for naming traits and structs, focusing on avoiding naming conflicts:
+What to do when type and trait share same logical name?
+Jan 13, 2025 — Making the trait's name be a verb and the type's name a noun: works well, but can't always be done. Naming them after synonymous n...
+
+The Rust Programming Language Forum
+Discuss naming conventions for traits · rust-lang api-guidelines
+May 26, 2020 — Collaborator. ... Go has one pretty clear convention for interfaces: By convention, one-method interfaces are named by the method ...
+
+GitHub
+
+Portability - The Embedded Rust Book
+Some of the defined traits in embedded-hal are: * GPIO (input and output pins) * Serial communication. * I2C. * SPI. * Timers/Coun...
+
+Embedded Rust
+Meaningful Naming in Rust | CodeSignal Learn
+In this lesson, we'll cover the following naming guidelines: * Reveal Intent Through Names: Ensure names clearly convey the role a...
+
+CodeSignal
+
+Naming Traits : r/rust - Reddit
+Feb 16, 2024 — andreicodes. • 2y ago. Single-method traits should always match the name of the method they add: AsRef adds as_ref , Deref adds De...
+
+Reddit
+Do you plan on supporting multiple different IMU chips, or is this for a single specific project?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+undefined
+undefined
+undefined
+7 sites
+Naming Traits : r/rust - Reddit
+16 Feb 2024 — andreicodes. • 2y ago. Single-method traits should always match the name of the method they add: AsRef adds as_ref , Deref adds De...
+
+Reddit
+Meaningful Naming in Rust | CodeSignal Learn
+In this lesson, we'll cover the following naming guidelines: * Reveal Intent Through Names: Ensure names clearly convey the role a...
+
+CodeSignal
+
+Portability - The Embedded Rust Book
+Some of the defined traits in embedded-hal are: * GPIO (input and output pins) * Serial communication. * I2C. * SPI. * Timers/Coun...
+
+Embedded Rust
+Show all
+I plan on supporting multiple different IMU chips
+Since you’re supporting multiple chips, the Provider Pattern is your best bet. It allows you to write generic code that works with any hardware "driver" that fits the trait.
+Here is a recommended naming scheme and structure:
+1. The "Interface" Trait: Imu
+Keep the trait name simple. It represents the idea of an IMU.
+Why: When you write a function, it looks clean: fn calibrate<T: Imu>(device: &mut T).
+2. The "Concrete" Structs: [ChipName]
+Name your structs after the actual hardware (e.g., Mpu6050, Bno055, Lsm6ds3).
+Why: Users need to know which specific chip they are initializing (since pins and addresses vary), but once it's initialized, they can treat it as a generic Imu.
+3. The "Wrapper" Struct (Optional): ImuDevice
+If you want a single, high-level struct that holds any chip, use a wrapper with a generic type.
+Naming: struct ImuDevice<T: Imu> { driver: T }
+Example Implementation
+rust
+// The Trait (The Interface)
+pub trait Imu {
+    fn read_accel(&mut self) -> [f32; 3];
+    fn read_gyro(&mut self) -> [f32; 3];
+}
+
+// Concrete Struct 1
+pub struct Mpu6050 { /* hardware specific fields */ }
+impl Imu for Mpu6050 {
+    fn read_accel(&mut self) -> [f32; 3] { [0.0, 0.0, 9.8] }
+    fn read_gyro(&mut self) -> [f32; 3] { [0.0, 0.0, 0.0] }
+}
+
+// Concrete Struct 2
+pub struct Bno055 { /* hardware specific fields */ }
+impl Imu for Bno055 {
+    // ... implementation for BNO055
+}
+Use code with caution.
+
+Why this works:
+No Name Collisions: Imu (trait) and Mpu6050 (struct) are distinct.
+Scalability: Adding a new chip just requires a new struct and an impl Imu.
+Interchangeability: You can swap an Mpu6050 for a Bno055 in your main logic without changing anything other than the initialization line.
+Do you want to see how to handle asynchronous reads or error handling within this trait?
+AI responses may include mistakes. Learn more
+
+
+
+
+The different chips share some data members, so I'd like a struct to contain these (like a base class in c++), what is the recommended way to do this
+In Rust, there is no struct inheritance, so you can't have a "base class." Instead, the idiomatic way to share data is through Composition.
+Here is the best way to structure this:
+1. The Common Data Struct
+Put all your shared fields (calibration offsets, scale factors, latest readings) into a dedicated struct.
+Name Idea: ImuState or ImuMetadata.
+2. The Hardware Structs
+Each specific chip struct "owns" an instance of that common data.
+3. The Trait for Behavior
+The trait provides the interface, and you can add a method to the trait that gives access to the common state.
+Example Pattern
+rust
+// 1. Shared data members
+pub struct ImuState {
+    pub accel_offset: [f32; 3],
+    pub gyro_offset: [f32; 3],
+    pub scale_factor: f32,
+}
+
+// 2. The Trait
+pub trait Imu {
+    // Shared behavior: access the common state
+    fn state(&self) -> &ImuState;
+    fn state_mut(&mut self) -> &mut ImuState;
+
+    // Unique behavior: how each chip actually talks to hardware
+    fn read_raw(&mut self) -> [f32; 6];
+}
+
+// 3. Concrete Implementation
+pub struct Mpu6050<I2C> {
+    i2c: I2C,            // Hardware-specific
+    state: ImuState,     // Shared data
+}
+
+impl<I2C> Imu for Mpu6050<I2C> {
+    fn state(&self) -> &ImuState { &self.state }
+    fn state_mut(&mut self) -> &mut ImuState { &mut self.state }
+
+    fn read_raw(&mut self) -> [f32; 6] {
+        // Specific I2C logic for MPU6050
+        [0.0; 6]
+    }
+}
+Use code with caution.
+
+Why this is better than C++ inheritance:
+Explicit over Implicit: You always know exactly where the data lives (self.state).
+Default Implementations: You can write default methods in the trait that use state() to perform calculations (like applying offsets) so you don't have to rewrite calibration logic for every chip.
+Refined Naming Suggestion:
+Trait: Imu
+Common Struct: ImuState
+Chip Structs: Mpu6050, Lsm6ds3, etc.
+Do you want to see how to use trait default methods to handle the shared calibration logic automatically?
+AI responses may include mistakes. Learn more
+
+
+
+
+I also wish to be able to use either I2C or SPI for each chip
+To handle different communication protocols in Rust, the idiomatic approach is Generics. You define your chip struct with a generic type C (for Connection or Comm) and constrain that type using traits from the embedded-hal crate.
+Here is the cleanest way to structure this:
+1. The Generic Chip Struct
+Instead of making separate structs for Mpu6050I2c and Mpu6050Spi, create one struct that is generic over its interface.
+Struct: Mpu6050<C>
+Trait: Imu (defines the high-level API)
+2. The Implementation Pattern
+You can then implement your Imu trait for the struct, but keep the hardware-specific communication logic tucked away.
+rust
+use embedded_hal::blocking::i2c;
+use embedded_hal::blocking::spi;
+
+// The common data we discussed earlier
+pub struct ImuState {
+    pub scale: f32,
+}
+
+// The generic chip struct
+pub struct Mpu6050<C> {
+    pub comm: C,      // This could be I2C or SPI
+    pub state: ImuState,
+}
+
+// Implementation for I2C
+impl<I2C, E> Mpu6050<I2C> 
+where 
+    I2C: i2c::WriteRead<Error = E> + i2c::Write<Error = E> 
+{
+    pub fn new_i2c(i2c: I2C) -> Self {
+        Self { comm: i2c, state: ImuState { scale: 1.0 } }
+    }
+}
+
+// Implementation for SPI
+impl<SPI, E> Mpu6050<SPI> 
+where 
+    SPI: spi::Transfer<u8, Error = E> + spi::Write<u8, Error = E> 
+{
+    pub fn new_spi(spi: SPI) -> Self {
+        Self { comm: spi, state: ImuState { scale: 1.0 } }
+    }
+}
+
+// Finally, implement the high-level Trait for BOTH
+impl<C> Imu for Mpu6050<C> {
+    fn read_accel(&mut self) -> [f32; 3] {
+        // Use self.comm here (you'll need a way to abstract the read)
+        [0.0, 0.0, 0.0]
+    }
+}
+Use code with caution.
+
+Pro-Tip: The "Interface" Abstraction
+To avoid messy if/else logic inside your read_accel method, many driver authors create a private internal trait (often called RegisterAccess) that handles the literal byte-swapping for I2C vs SPI.
+Define trait RegisterAccess.
+Implement it for your I2C wrapper and your SPI wrapper.
+Implement Imu for Mpu6050<T: RegisterAccess>.
+Summary of Names:
+Trait: Imu
+Common Data: ImuState
+Chip Struct: Mpu6050<C>
+Protocol Traits: embedded_hal::blocking::i2c::... and spi::...
+Are you using the embedded-hal crate, or are you writing the low-level register access from scratch?
+AI responses may include mistakes. Learn more
+
+
+
+
+Could this also be done using an associated type for the Imu trait
+Yes, using an associated type is actually the preferred "Pro" way to do this in Rust. It allows the Imu trait to define what a connection must be able to do without caring how (I2C vs SPI) it does it.
+In this pattern, you create a internal "Communication" trait that handles the byte-level work, and the Imu trait uses that as an associated type.
+The "Associated Interface" Pattern
+rust
+// 1. Define what any connection (I2C or SPI) must do for THIS chip
+pub trait ImuBus {
+    type Error;
+    fn read_register(&mut self, reg: u8) -> Result<u8, Self::Error>;
+    fn read_registers(&mut self, reg: u8, data: &mut [u8]) -> Result<(), Self::Error>;
+}
+
+// 2. The Main Trait uses that Bus as an associated type
+pub trait Imu {
+    type Bus: ImuBus;
+    
+    fn bus(&mut self) -> &mut Self::Bus;
+    fn state(&self) -> &ImuState;
+
+    // Default implementation: works for ANY chip + ANY bus!
+    fn read_accel_x(&mut self) -> f32 {
+        let mut bytes = [0u8; 2];
+        self.bus().read_registers(0x3B, &mut bytes).ok();
+        // logic to convert bytes using self.state() scale factors...
+        0.0 
+    }
+}
+
+// 3. Your generic struct
+pub struct Mpu6050<B: ImuBus> {
+    pub bus: B,
+    pub state: ImuState,
+}
+
+impl<B: ImuBus> Imu for Mpu6050<B> {
+    type Bus = B;
+    fn bus(&mut self) -> &mut Self::Bus { &mut self.bus }
+    fn state(&self) -> &ImuState { &self.state }
+}
+Use code with caution.
+
+Why this is the "Golden Standard" for Rust Drivers:
+Zero-Cost Abstraction: The compiler resolves the I2C vs SPI calls at compile time. No if/else checks or virtual tables (vtable) required.
+Cleaner Trait Bounds: Instead of every function needing where I2C: Write + Read, you just need where T: Imu.
+Testability: You can create a MockBus struct that implements ImuBus, allowing you to unit test your calibration and math logic on your PC without real hardware.
+Naming Recommendation:
+Trait: Imu
+Associated Type: type Bus
+Connection Trait: ImuBus or RegisterAccess
+Shared Data: ImuState
+Would you like to see how to implement the ImuBus trait for a standard I2C handle from embedded-hal?
+AI responses may include mistakes. Learn more
+
+
+
+
+Yes please
+To bridge the gap between the high-level Imu logic and the low-level hardware, you implement ImuBus for a wrapper struct that holds your I2C or SPI handle.
+In Rust, we often use a Newtype (a simple wrapper struct) to implement our own traits on types we don't own (like I2c).
+1. The Wrapper Structs
+These structs "wrap" the embedded-hal handles and translate your ImuBus calls into I2C or SPI transactions.
+rust
+use embedded_hal::blocking::i2c;
+
+// A wrapper for I2C
+pub struct I2cInterface<I2C> {
+    pub i2c: I2C,
+    pub address: u8,
+}
+
+// A wrapper for SPI (if you need it later)
+pub struct SpiInterface<SPI, CS> {
+    pub spi: SPI,
+    pub cs: CS,
+}
+Use code with caution.
+
+2. Implementing ImuBus for I2C
+This is where the "magic" happens. You define how to read/write registers using the I2C protocol.
+rust
+pub trait ImuBus {
+    type Error;
+    fn read_register(&mut self, reg: u8) -> Result<u8, Self::Error>;
+    fn read_registers(&mut self, reg: u8, data: &mut [u8]) -> Result<(), Self::Error>;
+}
+
+impl<I2C, E> ImuBus for I2cInterface<I2C>
+where
+    I2C: i2c::WriteRead<Error = E> + i2c::Write<Error = E>,
+{
+    type Error = E;
+
+    fn read_register(&mut self, reg: u8) -> Result<u8, Self::Error> {
+        let mut buffer = [0u8; 1];
+        self.i2c.write_read(self.address, &[reg], &mut buffer)?;
+        Ok(buffer[0])
+    }
+
+    fn read_registers(&mut self, reg: u8, data: &mut [u8]) -> Result<(), Self::Error> {
+        self.i2c.write_read(self.address, &[reg], data)
+    }
+}
+Use code with caution.
+
+3. Putting it All Together
+Now, your Mpu6050 can be created using an I2cInterface.
+rust
+// The Generic Struct
+pub struct Mpu6050<B: ImuBus> {
+    bus: B,
+    state: ImuState,
+}
+
+// A helper to make a new I2C-based MPU6050
+impl<I2C> Mpu6050<I2cInterface<I2C>> {
+    pub fn new_i2c(i2c: I2C, address: u8) -> Self {
+        Self {
+            bus: I2cInterface { i2c, address },
+            state: ImuState::default(),
+        }
+    }
+}
+Use code with caution.
+
+Why this structure is great:
+Separation of Concerns: The Mpu6050 logic only knows about read_register. It doesn't care if it's I2C, SPI, or a Mock for testing.
+Error Handling: The type Error associated type allows the error to bubble up from the hardware driver (like an I2C NACK) all the way to your main application.
+Flexible Addressing: The I2cInterface stores the address, so the rest of your code doesn't have to keep track of it.
+Final Naming Check:
+Trait: Imu
+Interface Trait: ImuBus
+Implementations: I2cInterface, SpiInterface
+Concrete Chip: Mpu6050<B: ImuBus>
+Would you like to see how to handle endianness (Big Endian vs Little Endian) when reading the 16-bit sensor values from the bus?
+AI responses may include mistakes. Learn more
+
+
+
+
+yes please
+To handle endianness efficiently in Rust, you should use the built-in from_be_bytes (Big Endian) or from_le_bytes (Little Endian) methods on numeric types. These are highly optimized and often compile down to a single CPU instruction.
+Since different IMU chips use different byte orders (e.g., MPU6050 is Big Endian, while many Bosch sensors are Little Endian), you should put this logic in your Trait default methods or a Helper struct.
+1. The "Endian-Aware" Trait
+You can add a method to your Imu trait that handles the conversion automatically based on a chip's specific requirements.
+rust
+pub trait Imu {
+    type Bus: ImuBus;
+    
+    // Most IMUs use 16-bit integers for raw data
+    fn read_raw_u16(&mut self, reg: u8) -> u16 {
+        let mut bytes = [0u8; 2];
+        self.bus().read_registers(reg, &mut bytes).ok();
+        
+        // Use the chip's specific endianness
+        if self.is_big_endian() {
+            u16::from_be_bytes(bytes)
+        } else {
+            u16::from_le_bytes(bytes)
+        }
+    }
+
+    fn is_big_endian(&self) -> bool; // Each chip implementation defines this
+}
+Use code with caution.
+
+2. The "Refined" Approach (Zero-Cost)
+A cleaner "Rust-way" is to handle the conversion immediately after the bus read using the byteorder pattern. This keeps your high-level math logic completely separate from the "wire format."
+rust
+impl<B: ImuBus> Imu for Mpu6050<B> {
+    type Bus = B;
+    
+    fn read_accel_x(&mut self) -> f32 {
+        let mut buffer = [0u8; 2];
+        self.bus.read_registers(0x3B, &mut buffer).unwrap();
+        
+        // MPU6050 is Big Endian
+        let raw = i16::from_be_bytes(buffer); 
+        
+        // Convert to Gs using the shared state's scale factor
+        (raw as f32) * self.state.accel_scale
+    }
+}
+Use code with caution.
+
+3. Handling Sign Extension
+IMUs almost always return signed integers (i16).
+Important: Always convert to i16 before converting to f32. If you convert the raw u16 to f32 first, negative acceleration values will appear as massive positive numbers (e.g., -1 becomes 65535).
+Summary of Naming for Data Flow:
+Raw Bytes: [u8; 2]
+Parsed Integer: i16 (using from_be_bytes or from_le_bytes)
+Processed Data: f32 (after applying state.scale_factor)
+Recommended Procedural Step:
+Would you like to see how to implement a Calibration routine that lives in the Imu trait and updates the ImuState automatically for any chip?
+AI responses may include mistakes. Learn more
+
+
+
+
+can this be used in the embassy framework
+Yes, this pattern is perfectly suited for the Embassy framework. In fact, the Embassy ecosystem and the embedded-hal-async crate are designed specifically to support these kinds of generic, trait-based driver architectures. 
+Docs.rs
+Docs.rs
+ +1
+To adapt the previous pattern for Embassy, you primarily need to switch your traits to use async fn.
+1. Defining the Async Trait
+Since Rust 1.75, you can use async fn directly in traits. This allows your IMU driver to "yield" while waiting for hardware, letting other tasks run. 
+GitHub
+GitHub
+ +1
+rust
+// The Async Bus Interface
+pub trait ImuBus {
+    type Error;
+    // Note the 'async' keyword
+    async fn read_registers(&mut self, reg: u8, data: &mut [u8]) -> Result<(), Self::Error>;
+}
+
+// The Main Async IMU Trait
+pub trait Imu {
+    type Bus: ImuBus;
+    fn bus(&mut self) -> &mut Self::Bus;
+
+    async fn read_accel(&mut self) -> [f32; 3] {
+        let mut buf = [0u8; 6];
+        // .await here allows Embassy to switch tasks during the I2C/SPI transfer
+        self.bus().read_registers(0x3B, &mut buf).await.ok();
+        // ... conversion logic ...
+        [0.0, 0.0, 0.0]
+    }
+}
+Use code with caution.
+
+2. Implementation for Embassy Drivers
+Embassy provides its own I2c and Spi drivers that implement embedded_hal_async. You wrap these just like we did before. 
+GitHub
+GitHub
+ +2
+rust
+use embedded_hal_async::i2c::I2c;
+
+pub struct I2cInterface<T: I2c> {
+    pub i2c: T,
+    pub address: u8,
+}
+
+impl<T: I2c> ImuBus for I2cInterface<T> {
+    type Error = T::Error;
+
+    async fn read_registers(&mut self, reg: u8, data: &mut [u8]) -> Result<(), Self::Error> {
+        // Embassy's i2c.write_read is async
+        self.i2c.write_read(self.address, &[reg], data).await
+    }
+}
+Use code with caution.
+
+3. Key Benefits in Embassy
+Non-blocking: While the IMU is being read over the bus, the CPU is free to handle other Embassy tasks (like networking or UI).
+Shared Buses: Embassy's I2cDevice and SpiDevice allow multiple drivers to safely share the same physical pins using an Embassy Mutex.
+Power Efficiency: The Embassy executor will automatically put the chip into a low-power sleep mode while waiting for the hardware transfer to complete. 
+Hacker News
+Hacker News
+ +3
+Recommended Naming for Embassy
+Trait: Imu (High-level async interface)
+Struct: Mpu6050<B> (Generic driver)
+Bus Wrapper: I2cBus or SpiBus (Implementing ImuBus)
+Would you like to see how to wrap this in an Embassy Task so the IMU data can be streamed to a Channel?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+undefined
+undefined
+undefined
+9 sites
+Embedded Rust Development Tips with Embassy
+17 Feb 2025 — Sharing I2C can be problematic in embedded Rust. For that, I normally suggest using the embedded-hal shared_bus traits and sharing...
+
+acalustra.com
+Embassy: Modern embedded framework, using Rust and async
+9 Jan 2026 — I am a big fan of the embassy project and it's a great example of why async Rust is so great: Because this is possible. It works w...
+
+Hacker News
+embassy-rs/embassy: Modern embedded framework, using ... - GitHub
+Time that Just Works - No more messing with hardware timers. embassy_time provides Instant, Duration, and Timer types that are glo...
+
+GitHub
+
+Show all
+yes please
+In Embassy, you use embassy_sync::channel::Channel to stream data between tasks. This allows your IMU-reading task to run independently while other parts of your app (like a logger or a PID controller) "listen" for new data. 
+embassy_executor
+embassy_executor
+ +3
+1. Define your Data Message
+First, define a struct to hold the processed IMU data you want to send through the channel.
+rust
+#[derive(Debug, Clone, Copy)]
+pub struct ImuReading {
+    pub accel: [f32; 3],
+    pub gyro: [f32; 3],
+}
+Use code with caution.
+
+2. Set up the Static Channel
+In Embassy, channels are typically declared as static so they can be accessed across different tasks safely. 
+embassy_executor
+embassy_executor
+ +2
+rust
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::channel::Channel;
+
+// A channel that can hold up to 8 readings at a time
+static IMU_CH: Channel<CriticalSectionRawMutex, ImuReading, 8> = Channel::new();
+Use code with caution.
+
+3. Create the IMU Reading Task
+This task will own the IMU hardware, poll it at a specific interval, and send the results into the channel. 
+The Rust Programming Language Forum
+The Rust Programming Language Forum
+ +1
+rust
+#[embassy_executor::task]
+pub async fn imu_task(mut imu: Mpu6050<I2cInterface<I2c<'static, I2C1, DMA1_CH3, DMA1_CH2>>>) {
+    let sender = IMU_CH.sender();
+    let mut ticker = embassy_time::Ticker::after(embassy_time::Duration::from_hz(100)); // 100Hz
+
+    loop {
+        // Read data using our async Imu trait
+        let reading = ImuReading {
+            accel: imu.read_accel().await,
+            gyro: imu.read_gyro().await,
+        };
+
+        // Send to channel (awaits if the channel is full)
+        sender.send(reading).await;
+
+        // Wait for next tick
+        ticker.next().await;
+    }
+}
+Use code with caution.
+
+4. Consume the Data in Another Task 
+You can now have multiple "receivers" or a single main task that processes the stream. 
+embassy_executor
+embassy_executor
+ +1
+rust
+#[embassy_executor::main]
+async fn main(spawner: Spawner) {
+    let p = embassy_stm32::init(Default::default());
+    
+    // ... initialize I2C and IMU ...
+    let imu = Mpu6050::new_i2c(i2c, 0x68);
+
+    // Start the background task
+    spawner.spawn(imu_task(imu)).unwrap();
+
+    let receiver = IMU_CH.receiver();
+    loop {
+        // This will yield until the imu_task sends new data
+        let data = receiver.receive().await;
+        defmt::info!("Accel: {:?}", data.accel);
+    }
+}
+Use code with caution.
+
+Why this is powerful:
+Decoupling: Your main logic doesn't need to know how the IMU is read; it just waits for a Message on the channel.
+Backpressure: If your main task gets bogged down and the channel fills up, the imu_task will automatically pause at sender.send().await until there is room, preventing data overflow.
+Concurrency: You can easily spawn a third task (like a wireless transmitter) that also takes a receiver() to send the data over Wi-Fi/Bluetooth without touching the sensor code. 
+Reddit
+Reddit
+ +4
+Do you want to see how to use a PubSubChannel if you need multiple different tasks to receive the exact same IMU reading simultaneously?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+undefined
+undefined
+undefined
+10 sites
+Embedded Rust Development Tips with Embassy
+17 Feb 2025 — Juggling Events: Async Select to the Rescue. When using Embassy, the async phase is more important than anything. When reading mul...
+
+acalustra.com
+How Rust & Embassy Shine on Embedded Devices (Part 2)
+25 Feb 2025 — Here's how adding an Embassy task to our device abstraction helps us meet our goals: * State: Surprisingly, the Display struct doe...
+
+Medium
+
+embassy_sync::channel - Rust
+Example: Message passing between task and interrupt handler. use embassy_sync::channel::Channel; use embassy_sync::blocking_mutex:
+
+embassy_executor
+Show all
+I have another task that receives setpoints from a radio connection. I'd like a task that takes the Imu readings and the setpoints from the radio and uses them as inputs to a PID controller
+To handle two different data streams (IMU and Radio) in a single control task, you can use embassy_sync::select. This allows your task to "race" multiple receivers and react immediately to whichever one has new data.
+Here is how you can structure the control loop:
+1. Define the Setpoint Type
+rust
+#[derive(Debug, Clone, Copy)]
+pub struct Setpoint {
+    pub target_pitch: f32,
+    pub target_roll: f32,
+}
+
+static RADIO_CH: Channel<CriticalSectionRawMutex, Setpoint, 2> = Channel::new();
+Use code with caution.
+
+2. The PID Control Task
+This task listens to both the IMU Channel and the Radio Channel. When a new IMU reading arrives, it runs the PID calculation using the last known setpoint.
+rust
+use embassy_sync::select::{select, Either};
+
+#[embassy_executor::task]
+pub async fn controller_task() {
+    let imu_rx = IMU_CH.receiver();
+    let radio_rx = RADIO_CH.receiver();
+    
+    // Initial state
+    let mut current_setpoint = Setpoint { target_pitch: 0.0, target_roll: 0.0 };
+    let mut pid = MyPidController::new(1.0, 0.1, 0.01); // Kp, Ki, Kd
+
+    loop {
+        // Wait for EITHER the IMU or the Radio
+        match select(imu_rx.receive(), radio_rx.receive()).await {
+            // Case A: New Radio Setpoint arrived
+            Either::Second(new_setpoint) => {
+                current_setpoint = new_setpoint;
+                defmt::info!("New target: {}", current_setpoint.target_pitch);
+            }
+            
+            // Case B: New IMU data arrived (The "Heartbeat" of the PID)
+            Either::First(imu_data) => {
+                let output = pid.update(
+                    current_setpoint.target_pitch, 
+                    imu_data.accel[0] // example: pitch axis
+                );
+                
+                // apply_to_motors(output);
+            }
+        }
+    }
+}
+Use code with caution.
+
+Why this works:
+Asynchronous "Select": The select function is the magic. It suspends the task until at least one future completes. If both happen at once, it picks one (usually the first) and the next loop iteration handles the other.
+State Management: By keeping current_setpoint as a local variable, your PID loop always has access to the most recent command from the radio, even if the radio only sends updates once per second while the IMU runs at 100Hz.
+Timing: Your PID loop is "clocked" by the IMU task. Every time the IMU sends a message, the controller wakes up, ensuring your control output is always based on the freshest sensor data.
+Refined Naming Strategy:
+Channel names: IMU_CH and SETPOINT_CH.
+Task names: imu_worker, radio_worker, and flight_controller.
+Would you like to see how to implement the MyPidController struct using a FixedPoint math library to avoid floating-point overhead on small MCUs?
+AI responses may include mistakes. Learn more
+
+
+
+
+I have a dual core processor and the I want the imu task and the radio task to run on separate cores
+To run tasks on separate cores in Embassy, you must initialize a separate Executor for each core. While one core typically runs the main executor, you manually start the second core and give it its own event loop. 
+Stack Overflow
+Stack Overflow
+ +3
+1. Multi-Core Architecture
+You will need two executors. One runs on Core 0 (boot core), and the other is manually started on Core 1. 
+The Rust Programming Language Forum
+The Rust Programming Language Forum
+ +2
+Executor 0 (Core 0): Runs high-level logic like your PID Controller and the Radio Task.
+Executor 1 (Core 1): Dedicated to the IMU Task to ensure consistent, low-jitter sensor polling. 
+Reddit
+Reddit
+ +1
+2. Implementation Pattern
+Here is how to set up the second core and spawn the IMU task onto it.
+rust
+use embassy_executor::Executor;
+use static_cell::StaticCell;
+
+// 1. Declare static executors for both cores
+static EXECUTOR_K0: StaticCell<Executor> = StaticCell::new();
+static EXECUTOR_K1: StaticCell<Executor> = StaticCell::new();
+
+// 2. Define a stack for the second core
+static mut CORE1_STACK: embassy_rp::multicore::Stack<4096> = embassy_rp::multicore::Stack::new();
+
+#[cortex_m_rt::entry]
+fn main() -> ! {
+    let p = embassy_rp::init(Default::default());
+
+    // 3. Start Core 1 and its executor
+    embassy_rp::multicore::spawn_core1(
+        p.CORE1, 
+        unsafe { &mut CORE1_STACK }, 
+        move || {
+            let executor = EXECUTOR_K1.init(Executor::new());
+            executor.run(|spawner| {
+                // Spawn IMU task on Core 1
+                spawner.spawn(imu_task(p.I2C0, p.DMA_CH0, p.DMA_CH1)).unwrap();
+            });
+        }
+    );
+
+    // 4. Start Core 0 executor for everything else
+    let executor = EXECUTOR_K0.init(Executor::new());
+    executor.run(|spawner| {
+        spawner.spawn(radio_task(p.SPI0)).unwrap();
+        spawner.spawn(controller_task()).unwrap();
+    });
+}
+Use code with caution.
+
+3. Cross-Core Communication
+Even though the tasks are on different cores, Embassy's Channel is designed to be thread-safe across executors as long as you use a Critical Section mutex. 
+embassy_executor
+embassy_executor
+ +2
+Sharing Data: The IMU_CH we created earlier will work perfectly. The IMU task on Core 1 calls sender.send().await, and the Controller task on Core 0 calls receiver.receive().await.
+Safety: Ensure the critical-section-impl feature is enabled in your HAL crate (like embassy-rp) to allow the CriticalSectionRawMutex to safely lock across cores. 
+embassy_executor
+embassy_executor
+ +2
+Why this is effective:
+Parallelism: Your IMU can process math and bus transactions on Core 1 without being interrupted by a heavy radio stack or complex PID calculations on Core 0.
+No Mutex Contention: Using a Channel is better than a shared Mutex<ImuData> because it uses message passing, which naturally synchronizes the two cores without they themselves having to poll a shared memory flag. 
+Reddit
+Reddit
+ +3
+Do you need help configuring the DMA channels to ensure the IMU and Radio don't fight for the same hardware resources?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+undefined
+undefined
+undefined
+11 sites
+embassy_rp::multicore - Rust
+Module multicore. Source. Multicore support. This module handles setup of the 2nd cpu core on the rp2040, which we refer to as cor...
+
+embassy_executor
+Embedded Rust Support for Dual-Core Chips - Reddit
+3 Mar 2024 — Hard real-time beyond what interrupts can provide? I know Embassy hasn't been carefully vetted for this but if the real-time requi...
+
+Reddit
+A quick deep dive into asynchronous programming in an ...
+10 Nov 2023 — all right so another day another quick stream. um so today I'm going to be talking. or rather my idea was to look at uh something ...
+
+
+YouTube
+·
+regionaltantrums
+
+12m
+Show all
+I'd like the PID controller task to "signal" a motor task when it has new values to output to the motors
+To pass the PID output to a motor task without creating a "wait loop," the most efficient tool in Embassy is a Signal.
+While a Channel is great for a stream of data (like sensor readings), a Signal is optimized for "latest-value" updates. It acts like a single-slot mailbox: if the PID task sends a new value before the Motor task has finished the old one, the old one is simply overwritten. This is perfect for motor control where you only ever care about the most recent command. 
+1. Define the Signal
+Use Signal from embassy_sync. It requires a RawMutex (just like the Channel) to be safe across cores.
+rust
+use embassy_sync::signal::Signal;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+
+// The data we want to send to the motors
+#[derive(Clone, Copy)]
+pub struct MotorCommand {
+    pub throttle: [f32; 4], // e.g., for a quadcopter
+}
+
+// Global signal for motor updates
+static MOTOR_SIG: Signal<CriticalSectionRawMutex, MotorCommand> = Signal::new();
+Use code with caution.
+
+2. Update the Controller Task 
+The controller task "signals" the motor task as the final step of its loop.
+rust
+#[embassy_executor::task]
+pub async fn controller_task() {
+    let imu_rx = IMU_CH.receiver();
+    // ... PID setup ...
+
+    loop {
+        let imu_data = imu_rx.receive().await;
+        
+        // 1. Calculate PID
+        let output = pid.update(setpoint, imu_data.accel);
+        
+        // 2. "Signal" the motor task with new values
+        MOTOR_SIG.signal(MotorCommand { 
+            throttle: [output, output, output, output] 
+        });
+    }
+}
+Use code with caution.
+
+3. The Motor Task
+This task stays suspended (consuming 0% CPU) until MOTOR_SIG.wait() is triggered.
+rust
+#[embassy_executor::task]
+pub async fn motor_task(mut pwm_driver: MyPwmDriver) {
+    loop {
+        // This yields until controller_task calls .signal()
+        let cmd = MOTOR_SIG.wait().await;
+        
+        // Apply the values to the physical hardware (PWM pins)
+        pwm_driver.set_throttles(cmd.throttle);
+    }
+}
+Use code with caution.
+
+Why a Signal is better than a Channel here:
+Freshness: If the motor task is slightly slower than the PID loop, a Channel would build up a "backlog" of old commands. A Signal ensures the motor task always gets the freshest data immediately upon waking up.
+Simplicity: You don't need to define a buffer size. It is literally just "the latest value."
+Multi-Core Note:
+Since your Controller is on Core 0 and your Motors might be on either core, the Signal handles the cross-core "wake up" automatically using the hardware's internal event system (SEV/WFE on ARM).
+Would you like to see how to implement the MyPwmDriver using Embassy’s Pwm abstractions for your specific chip?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+
+
+2 sites
+Particle Swarm Optimization (PSO) Tuning of PID Control on DC Motor
+Motor control is needed to get the movement of the rotational speed [8][9] or motor position [10] to match a predetermined value. ...
+
+Association for Scientific Computing Electronics and Engineering (ASCEE)
+
+pid package - go.einride.tech/pid
+3 Nov 2025 — func (*Controller) Update ¶ Update the controller state.
+
+Go Packages
+yes please
+In Embassy, you typically use a SimplePwm (on STM32) or Pwm (on RP2040) driver. To keep your motor task clean and hardware-agnostic, you can wrap these in a MyPwmDriver struct. 
+1. The Motor Driver Struct
+This struct holds the PWM channels. Since each motor is usually on a different channel of a timer, you store the handles to those channels.
+rust
+use embassy_stm32::timer::simple_pwm::SimplePwm;
+// or for RP2040: use embassy_rp::pwm::Pwm;
+
+pub struct MyPwmDriver<'d, T: Instance> {
+    pwm: SimplePwm<'d, T>,
+}
+
+impl<'d, T: Instance> MyPwmDriver<'d, T> {
+    pub fn new(pwm: SimplePwm<'d, T>) -> Self {
+        // Enable the timer and channels
+        let mut driver = Self { pwm };
+        driver.pwm.enable(Channel::Ch1);
+        driver.pwm.enable(Channel::Ch2);
+        driver.pwm.enable(Channel::Ch3);
+        driver.pwm.enable(Channel::Ch4);
+        driver
+    }
+
+    pub fn set_throttles(&mut self, throttles: [f32; 4]) {
+        let max = self.pwm.get_max_duty();
+        
+        // Convert 0.0..1.0 float to hardware duty cycle units
+        self.pwm.set_duty(Channel::Ch1, (throttles[0] * max as f32) as u16);
+        self.pwm.set_duty(Channel::Ch2, (throttles[1] * max as f32) as u16);
+        self.pwm.set_duty(Channel::Ch3, (throttles[2] * max as f32) as u16);
+        self.pwm.set_duty(Channel::Ch4, (throttles[3] * max as f32) as u16);
+    }
+}
+Use code with caution.
+
+2. The Motor Task (Using the Signal)
+This task lives on whichever core you prefer (likely Core 0 alongside the controller). It waits for the MOTOR_SIG we defined earlier.
+rust
+#[embassy_executor::task]
+pub async fn motor_task(mut driver: MyPwmDriver<'static, TIM1>) {
+    loop {
+        // 1. Wait for the PID controller to signal new values
+        let cmd = MOTOR_SIG.wait().await;
+        
+        // 2. Update the hardware immediately
+        driver.set_throttles(cmd.throttle);
+        
+        // 3. Optional: Add a safety timeout 
+        // If no signal is received for 500ms, you could kill the motors here.
+    }
+}
+Use code with caution.
+
+3. Initialisation in Main
+You set up the pins and the timer, then pass the driver to the task.
+rust
+#[embassy_executor::main]
+async fn main(spawner: Spawner) {
+    let p = embassy_stm32::init(Default::default());
+
+    // Configure pins for PWM (specific to your MCU)
+    let ch1 = PwmPin::new_ch1(p.PA8, OutputType::PushPull);
+    let ch2 = PwmPin::new_ch2(p.PA9, OutputType::PushPull);
+    // ... repeat for 4 channels ...
+
+    // Create the Embassy PWM instance (e.g., at 20kHz for motors)
+    let pwm = SimplePwm::new(p.TIM1, Some(ch1), Some(ch2), None, None, khz(20), Default::default());
+    
+    let driver = MyPwmDriver::new(pwm);
+
+    // Spawn the task
+    spawner.spawn(motor_task(driver)).unwrap();
+}
+Use code with caution.
+
+Why this is effective for Dual-Core:
+Decoupled Frequency: The imu_task on Core 1 can run at 1kHz, the controller_task on Core 0 can run at 400Hz, and the motor_task updates exactly when a new PID result is ready. Embassy's Signal handles the cross-core wake-up efficiently.
+Safety: If the controller_task crashes or hangs, the motor_task will simply stay at MOTOR_SIG.wait().await, preventing the motors from receiving "stale" commands or spinning out of control. 
+Reddit
+Reddit
+Do you want to see how to add a Watchdog Timer to this setup so the whole system reboots if any of these tasks stop responding?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+undefined
+
+2 sites
+Intro to Embassy : embedded development with async Rust : r ...
+10 Jan 2025 — sometimes the most difficult part of an embedded. project is just figuring out where to start there can be many decisions that nee...
+
+Reddit
+·
+The Rusty Bits
+
+18:47
+embassy/examples/stm32f4/src/bin/pwm.rs at main - GitHub
+use embassy_stm32::timer::simple_pwm::{PwmPin, SimplePwm}; use embassy_time::Timer; use {defmt_rtt as _, panic_probe as _}; #[emba...
+
+GitHub
+Can you add a "build flag" so that so that I can build this for either STM32 or RP2040
+To handle both STM32 and RP2040 in the same codebase, you use Rust's Cargo Features and Conditional Compilation (#[cfg(...)]).
+This allows you to swap out the hardware-specific types (like I2c and Pwm) while keeping your high-level logic (the Imu trait and the controller_task) exactly the same.
+1. Update Cargo.toml
+Define your hardware "targets" as features.
+toml
+[features]
+stm32 = ["embassy-stm32", "stm32-metapac"]
+rp2040 = ["embassy-rp", "rp2040-pac"]
+Use code with caution.
+
+2. Create a "Hardware Abstraction" Module
+Instead of putting chip-specific code in main.rs, create a hw.rs file that aliases the types based on which flag is active.
+rust
+// hw.rs
+#[cfg(feature = "stm32")]
+pub use embassy_stm32::timer::simple_pwm::SimplePwm as PwmDriver;
+#[cfg(feature = "stm32")]
+pub use embassy_stm32::peripherals::TIM1 as PwmInstance;
+
+#[cfg(feature = "rp2040")]
+pub use embassy_rp::pwm::Pwm as PwmDriver;
+#[cfg(feature = "rp2040")]
+pub use embassy_rp::peripherals::PWM_CH0 as PwmInstance;
+
+// Common type alias used by your tasks
+pub type MotorPwm = PwmDriver<'static, PwmInstance>;
+Use code with caution.
+
+3. Conditional Initialization in main.rs
+Your entry point needs to change slightly to call the correct HAL initialization.
+rust
+#[embassy_executor::main]
+async fn main(spawner: Spawner) {
+    // 1. Initialize the correct HAL
+    #[cfg(feature = "stm32")]
+    let p = embassy_stm32::init(Default::default());
+    
+    #[cfg(feature = "rp2040")]
+    let p = embassy_rp::init(Default::default());
+
+    // 2. Initialize PWM (Hardware specific setup)
+    let pwm = setup_pwm(p); 
+    
+    // 3. The rest of your code is hardware-agnostic!
+    let driver = MyPwmDriver::new(pwm);
+    spawner.spawn(motor_task(driver)).unwrap();
+}
+Use code with caution.
+
+4. Hardware-Specific setup functions
+You can hide the messy pin-mapping logic in small functions gated by the same flags:
+rust
+#[cfg(feature = "stm32")]
+fn setup_pwm(p: Peripherals) -> MotorPwm {
+    let ch1 = PwmPin::new_ch1(p.PA8, OutputType::PushPull);
+    SimplePwm::new(p.TIM1, Some(ch1), None, None, None, khz(20), Default::default())
+}
+
+#[cfg(feature = "rp2040")]
+fn setup_pwm(p: Peripherals) -> MotorPwm {
+    let mut config = embassy_rp::pwm::Config::default();
+    config.top = 0x8000;
+    Pwm::new_output_a(p.PWM_CH0, p.PIN_0, config)
+}
+Use code with caution.
+
+5. Building the Project
+Now, you simply pass the flag to your cargo command:
+For STM32: cargo build --features stm32
+For RP2040: cargo build --features rp2040
+Why this is the "Best Practice":
+Cleaner Logic: Your controller_task and imu_task don't have a single cfg flag in them—they just use the MotorPwm type alias.
+Faster Iteration: You can even add a feature = "simulator" to run your PID logic on a PC for debugging.
+Do you want to see how to set up a .cargo/config.toml file so it automatically selects the correct linker script and runner (like probe-rs) based on the chip?
+AI responses may include mistakes. Learn more
+
+
+
+
+can you also a feature for ESP32
+Supporting the ESP32 in an Embassy project is slightly different because the HAL is maintained by Espressif (esp-rs/esp-hal) rather than the core Embassy project. 
+GitHub
+GitHub
+ +1
+Here is how to integrate the ESP32 into your feature-flagged build system:
+1. Update Cargo.toml
+Add the esp32 feature and the necessary crates. Note that ESP32 support often requires specific "chip" features within the HAL. 
+Espressif Systems
+Espressif Systems
+ +1
+toml
+[features]
+stm32 = ["embassy-stm32"]
+rp2040 = ["embassy-rp"]
+esp32 = ["esp-hal", "esp-hal-embassy", "esp-backtrace", "esp-println"]
+
+[dependencies]
+# ... other dependencies ...
+esp-hal = { version = "0.23", optional = true, features = ["esp32", "async"] }
+esp-hal-embassy = { version = "0.6", optional = true, features = ["esp32", "executors"] }
+Use code with caution.
+
+2. Update the Hardware Abstraction (hw.rs)
+Add the ESP32 aliases to your hardware module. 
+The Embedded Rustacean
+The Embedded Rustacean
+rust
+// hw.rs
+#[cfg(feature = "esp32")]
+pub use esp_hal::ledc::HighSpeed as PwmDriver; // ESP32 uses LEDC for PWM
+#[cfg(feature = "esp32")]
+pub use esp_hal::peripherals::LEDC as PwmInstance;
+
+// Update the common alias
+pub type MotorPwm = PwmDriver<'static, PwmInstance>;
+Use code with caution.
+
+3. Handle Dual-Core for ESP32 
+Unlike the RP2040, which uses a specific "spawn_core1" function, the ESP32 typically uses a "start_second_core" approach within the esp-hal ecosystem to launch an executor on the second CPU. 
+Espressif Systems
+Espressif Systems
+ +1
+rust
+#[cfg(feature = "esp32")]
+fn start_multicore(p: Peripherals) {
+    // ESP32 specific second-core initialization
+    esp_hal::cpu_control::CpuControl::new(p.CPU_CTRL).start_core1(move || {
+        let executor = EXECUTOR_K1.init(Executor::new());
+        executor.run(|spawner| {
+            spawner.spawn(imu_task(p.I2C0)).unwrap();
+        });
+    }).unwrap();
+}
+Use code with caution.
+
+4. Initialization in main.rs
+The initialization for ESP32 requires setting up the clocks and the Embassy timer specifically. 
+Espressif Systems
+Espressif Systems
+ +1
+rust
+#[embassy_executor::main]
+async fn main(spawner: Spawner) {
+    #[cfg(feature = "esp32")]
+    let p = {
+        let peripherals = esp_hal::init(Default::default());
+        let timg0 = esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0);
+        // Initialize Embassy on ESP32
+        esp_hal_embassy::init(timg0.timer0);
+        peripherals
+    };
+
+    // ... rest of hardware initialization ...
+}
+Use code with caution.
+
+Build Commands
+You can now target all three platforms using their respective flags:
+STM32: cargo build --features stm32
+RP2040: cargo build --features rp2040
+ESP32: cargo build --features esp32 
+Note: For ESP32 (Xtensa-based), you may need the espup toolchain and use cargo +esp build depending on your specific chip model. 
+Would you like to see how to configure the LEDC peripheral on the ESP32 to match the PWM frequency used on the other chips?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+undefined
+undefined
+undefined
+11 sites
+esp_hal_embassy - Rust
+Note that this crate currently requires you to enable the unstable feature on esp-hal . * Executors. Two types of executors are pr...
+
+Espressif Systems
+ESP32 embedded Rust setup explained
+22 Sept 2025 — and its predecessor espressive claimed to have sold over a billion of these things and that was two years ago but it's not just po...
+
+
+YouTube
+·
+The Rusty Bits
+
+9m
+embassy-rs/embassy: Modern embedded framework ... - GitHub
+HALs implement safe, idiomatic Rust APIs to use the hardware capabilities, so raw register manipulation is not needed. The Embassy...
+
+GitHub
+
+Show all
+yes please
+To keep your ESP32 PWM frequency consistent with the 20kHz we set for the STM32 and RP2040, we use the LEDC (LED Control) peripheral. In the ESP32 ecosystem, LEDC is the standard way to generate high-speed PWM for motors or LEDs.
+1. The ESP32 PWM Implementation
+The ESP32 requires you to define a Timer (which sets the frequency) and then attach Channels to that timer.
+rust
+#[cfg(feature = "esp32")]
+pub fn setup_pwm(p: Peripherals) -> MyPwmDriver {
+    use esp_hal::ledc::{Ledc, LSGlobalControl, LowSpeed, Timer, TimerSpeed};
+
+    // 1. Initialize the LEDC peripheral
+    let mut ledc = Ledc::new(p.LEDC);
+
+    // 2. Configure the Timer to 20kHz
+    // The resolution (e.g., 10-bit) determines the max duty cycle value (0..1023)
+    ledc.set_global_config(LSGlobalControl::FreeRunning);
+    let mut timer = ledc.get_timer::<LowSpeed>(esp_hal::ledc::timer::Number::Timer0);
+    timer.configure(esp_hal::ledc::timer::config::Config {
+        duty_resolution: esp_hal::ledc::timer::config::DutyResolution::Bit10,
+        clock_source: esp_hal::ledc::timer::config::ClockSource::APB,
+        frequency: 20_000.hz(), // 20kHz
+    }).unwrap();
+
+    // 3. Create the channels for the 4 motors
+    let mut ch1 = ledc.get_channel::<LowSpeed>(esp_hal::ledc::channel::Number::Channel0, p.GPIO0);
+    let mut ch2 = ledc.get_channel::<LowSpeed>(esp_hal::ledc::channel::Number::Channel1, p.GPIO1);
+    // ... repeat for 4 channels ...
+
+    ch1.configure(esp_hal::ledc::channel::config::Config {
+        timer: &timer,
+        duty_pct: 0,
+        pin_config: esp_hal::ledc::channel::config::PinConfig::PushPull,
+    }).unwrap();
+
+    // Return your wrapped driver
+    MyPwmDriver { ch1, ch2, max_duty: 1023 }
+}
+Use code with caution.
+
+2. Standardising the MyPwmDriver
+To make the motor_task work across all three platforms without if/else logic, we use the Type Alias pattern in hw.rs:
+rust
+// hw.rs
+#[cfg(feature = "esp32")]
+pub struct ChipPwm {
+    pub ch1: esp_hal::ledc::channel::Channel<'static, LowSpeed>,
+    pub ch2: esp_hal::ledc::channel::Channel<'static, LowSpeed>,
+    pub max_duty: u32,
+}
+
+#[cfg(feature = "stm32")]
+pub type ChipPwm = embassy_stm32::timer::simple_pwm::SimplePwm<'static, TIM1>;
+
+#[cfg(feature = "rp2040")]
+pub type ChipPwm = embassy_rp::pwm::Pwm<'static, PWM_CH0>;
+Use code with caution.
+
+3. The Cross-Platform set_throttles
+Now, in your main logic, the implementation handles the hardware differences internally:
+rust
+impl MyPwmDriver {
+    pub fn set_throttles(&mut self, throttles: [f32; 4]) {
+        #[cfg(feature = "esp32")]
+        {
+            let duty = (throttles[0] * self.max_duty as f32) as u32;
+            self.ch1.set_duty_with_hpoint(duty, 0).unwrap();
+            self.ch2.set_duty_with_hpoint(duty, 0).unwrap();
+        }
+
+        #[cfg(feature = "stm32")]
+        {
+            let max = self.pwm.get_max_duty();
+            self.pwm.set_duty(Channel::Ch1, (throttles[0] * max as f32) as u16);
+            // ...
+        }
+    }
+}
+Use code with caution.
+
+Key Differences to Note:
+Resolution: On ESP32, you manually set the bit-depth (e.g., Bit10 = 1024 steps). On STM32/RP2040, the resolution is often tied to the clock speed and frequency automatically.
+Timer Choice: ESP32 has HighSpeed and LowSpeed timers. For motor PWM at 20kHz, LowSpeed is usually sufficient and more flexible.
+Async/Sync: Note that updating PWM duty cycles is typically a synchronous (immediate register write) operation on all these platforms, so it doesn't need to be async.
+Would you like to see how to set up the .cargo/config.toml so that cargo build automatically selects the correct target architecture (Thumbv7 vs Xtensa) based on the feature flag?
+AI responses may include mistakes. Learn more
+
+
+
+
+yes please
+To make this work seamlessly, you use a combination of Cargo Features and Environment Variables. Since a single Cargo.toml can only have one default target, the best way to handle STM32 (ARM), RP2040 (ARM), and ESP32 (Xtensa) is to use a small build.rs script or specific alias commands.
+However, for the simplest "one-command" experience, here is how you configure .cargo/config.toml:
+1. Define the Targets in .cargo/config.toml
+You can't dynamically change the [build] target based on a feature automatically in config.toml, but you can define the settings for each architecture so they are ready when you specify the target on the command line.
+toml
+# --- STM32 (Cortex-M4/M7 example) ---
+[target.thumbv7em-none-eabihf]
+runner = "probe-rs run --chip STM32F401CCTx" # Change to your specific chip
+rustflags = [
+  "-C", "link-arg=-Tlink.x",
+  "-C", "link-arg=-Tdefmt.x",
+]
+
+# --- RP2040 (Cortex-M0+) ---
+[target.thumbv6m-none-eabi]
+runner = "probe-rs run --chip RP2040"
+rustflags = [
+  "-C", "link-arg=-Tlink.x",
+  "-C", "link-arg=-Tdefmt.x",
+]
+
+# --- ESP32 (Xtensa) ---
+[target.xtensa-esp32-none-elf]
+runner = "espflash flash --monitor"
+rustflags = [
+  "-C", "link-arg=-Tlink.x",
+  "-C", "link-arg=-Trom_functions.x",
+]
+Use code with caution.
+
+2. The "Easy Build" Alias
+To avoid typing long commands, add an [alias] section to your .cargo/config.toml. This allows you to just type cargo stm32 or cargo esp.
+toml
+[alias]
+# Build & Run for STM32
+stm32 = "run --target thumbv7em-none-eabihf --features stm32"
+
+# Build & Run for RP2040
+rp2040 = "run --target thumbv6m-none-eabi --features rp2040"
+
+# Build & Run for ESP32
+esp = "run --target xtensa-esp32-none-elf --features esp32"
+Use code with caution.
+
+3. The build.rs (The "Safety Catch")
+Since it's easy to accidentally build for the wrong chip, add a build.rs file in your project root to throw a clear error if no feature is selected:
+rust
+fn main() {
+    let stm32 = std::env::var("CARGO_FEATURE_STM32").is_ok();
+    let rp2040 = std::env::var("CARGO_FEATURE_RP2040").is_ok();
+    let esp32 = std::env::var("CARGO_FEATURE_ESP32").is_ok();
+
+    if [stm32, rp2040, esp32].iter().filter(|&&x| x).count() != 1 {
+        panic!("\n\nError: You must select exactly one hardware feature (stm32, rp2040, or esp32).\nExample: cargo stm32\n\n");
+    }
+}
+Use code with caution.
+
+Why this is the "Pro" Setup:
+Correct Linkers: Each chip needs its specific link.x script. This setup ensures the ARM linker is used for ARM chips and the Xtensa linker for ESP32.
+Correct Runner: probe-rs works for ARM, but espflash is the standard for ESP32. The aliases handle this switch for you.
+Defmt Support: It automatically includes the defmt.x link argument for logging on the ARM targets.
+Final Build Commands:
+cargo stm32 — Builds and flashes your STM32.
+cargo rp2040 — Builds and flashes your Pico.
+cargo esp — Builds and flashes your ESP32.
+Would you like to see how to set up defmt or esp-println so that your logs look the same regardless of which board you are using?
+AI responses may include mistakes. Learn more
+
+
+
+
+yes please
+To make your logging hardware-agnostic, you can use the log crate as a frontend. This allows your IMU and PID code to just call log::info!(), while the hardware-specific "backends" (defmt for ARM or esp-println for ESP32) handle the actual transmission.
+1. Update Cargo.toml
+Add the log crate and the specific backends for each platform.
+toml
+[dependencies]
+log = "0.4"
+
+# STM32/RP2040 logging
+defmt = { version = "0.3", optional = true }
+defmt-rtt = { version = "0.4", optional = true }
+
+# ESP32 logging
+esp-println = { version = "0.12", optional = true, features = ["log"] }
+Use code with caution.
+
+2. Create a Logging Initialization Module
+In hw.rs (or a new logging.rs), set up the bridge between the log crate and the hardware.
+rust
+// hw.rs
+
+pub fn init_logging() {
+    #[cfg(feature = "stm32")]
+    {
+        // defmt handles its own global logger registration
+        // We just need to make sure the crate is linked
+        use defmt_rtt as _; 
+    }
+
+    #[cfg(feature = "rp2040")]
+    {
+        use defmt_rtt as _;
+    }
+
+    #[cfg(feature = "esp32")]
+    {
+        // esp-println provides a logger that works with the 'log' crate
+        esp_println::logger::init_logger(log::LevelFilter::Info);
+    }
+}
+Use code with caution.
+
+3. Unified Logging Macro
+Since defmt uses a different format string syntax than the standard log crate (it uses {:?} vs {:#?} and has internal compression), it's best to create a small internal macro or just stick to the standard log crate if you want 100% code reuse.
+If you use the log crate exclusively in your logic code:
+rust
+// Inside your PID or IMU task
+loop {
+    let reading = imu.read_accel().await;
+    // This works on ALL platforms now
+    log::info!("Accel: x={:.2} y={:.2}", reading[0], reading[1]);
+}
+Use code with caution.
+
+4. Special Case: defmt for ARM
+If you want the high-performance benefits of defmt (which is much faster than standard text logging for high-speed loops), you can use the defmt-rs bridge:
+rust
+// In your app
+#[cfg(not(feature = "esp32"))]
+use defmt as logger;
+
+#[cfg(feature = "esp32")]
+use log as logger;
+
+// Usage:
+logger::info!("System started!");
+Use code with caution.
+
+Why this is the "Best Practice":
+Zero Overhead (ARM): On STM32/RP2040, defmt doesn't send strings; it sends tiny index tokens, saving massive amounts of CPU time in your 400Hz PID loop.
+Standard Serial (ESP32): esp-println sends human-readable text over the USB-Serial bridge, which is what the ESP32 tools expect.
+Clean Code: Your imu_task and controller_task don't care which protocol is being used to tell you that the drone is tilting 5 degrees left.
+Final Directory Structure Recommendation:
+src/main.rs: Entry point and task spawning.
+src/hw.rs: Hardware-specific aliases and init_logging().
+src/imu.rs: Your Imu trait and ImuBus implementation.
+src/pid.rs: Your hardware-agnostic PID logic.
+Do you want to see how to define a global emergency stop that shuts down the motors if the logging system detects a "Panic"?
+AI responses may include mistakes. Learn more
+
+
+
+
+yes please
+To implement a global emergency stop (E-Stop), you need a way to override the MotorCommand signal regardless of what the PID controller is doing.
+In Rust, the safest way to do this is to hook into the panic_handler. Since your motors are controlled via a Signal, you can create a global "Kill Switch" that the motor_task checks before applying power.
+1. The Atomic Kill Switch
+Use an AtomicBool. Atomics are safe to access from any core and any task without needing a complex Mutex.
+rust
+use core::sync::atomic::{AtomicBool, Ordering};
+
+// Global safety flag: true means "Kill everything"
+static PANIC_KILLED: AtomicBool = AtomicBool::new(false);
+
+pub fn trigger_emergency_stop() {
+    PANIC_KILLED.store(true, Ordering::SeqCst);
+}
+Use code with caution.
+
+2. The Custom Panic Handler
+You need to define a panic handler for each architecture that triggers the kill switch before the CPU hangs.
+rust
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    // 1. Immediately signal the motors to stop
+    trigger_emergency_stop();
+
+    // 2. Log the error based on the platform
+    #[cfg(feature = "esp32")]
+    esp_println::println!("PANIC: {}", info);
+    
+    #[cfg(not(feature = "esp32"))]
+    defmt::error!("PANIC: {}", defmt::Display2Format(info));
+
+    // 3. Optional: Physically pull an E-Stop pin low if your hardware supports it
+    
+    loop {
+        // Halt the core
+        core::sync::atomic::compiler_fence(Ordering::SeqCst);
+    }
+}
+Use code with caution.
+
+3. Update the Motor Task
+The motor task must check the PANIC_KILLED flag every time it wakes up. If it's true, it forces the PWM to zero and enters an infinite loop to prevent any further updates.
+rust
+#[embassy_executor::task]
+pub async fn motor_task(mut driver: MyPwmDriver) {
+    loop {
+        // Wait for a command from the PID controller
+        let cmd = MOTOR_SIG.wait().await;
+
+        // CHECK SAFETY FLAG
+        if PANIC_KILLED.load(Ordering::SeqCst) {
+            driver.set_throttles([0.0, 0.0, 0.0, 0.0]);
+            log::error!("MOTORS HALTED: System in Panic State");
+            loop { embassy_time::Timer::after_secs(1).await; } // Stay dead
+        }
+
+        // Normal operation
+        driver.set_throttles(cmd.throttle);
+    }
+}
+Use code with caution.
+
+4. Integration with Watchdog
+For true flight safety, you should also initialize a Watchdog Timer (WDT). If your code hangs (e.g., a core locks up), the WDT will hardware-reset the chip.
+STM32: Use Iwdg (Independent Watchdog).
+RP2040: Use the Watchdog peripheral.
+ESP32: Use the Wdt from esp-hal.
+Why this is the "Golden Rule" of Robotics:
+Fail-Fast: If your IMU task crashes on Core 1, Core 0 will see the panic, trigger the atomic, and Core 0's motor task will kill the props.
+No Race Conditions: By checking the atomic after the wait().await, you ensure that the very next instruction the motor task executes after a panic is the safety check.
+Hardware-Agnostic: This logic works the same way whether you are on an ESP32 or an STM32.
+Would you like to see how to add a Battery Voltage check that triggers this same trigger_emergency_stop() if the voltage drops too low?
+AI responses may include mistakes. Learn more
+
+
+
+
+bl
+bl
+To monitor battery levels across your platforms, you can create a dedicated Battery Task that reads an Analog-to-Digital Converter (ADC) pin. If the voltage drops below a safe threshold, it calls the trigger_emergency_stop() function we created earlier. 
+1. Hardware Setup
+Since most microcontrollers can only handle up to 3.3V on their ADC pins, you must use a voltage divider (two resistors) to scale your battery voltage (e.g., 12V) down to a safe range. 
+cceckman.com
+cceckman.com
+ +1
+2. The Battery Monitoring Task
+This task runs at a lower frequency (e.g., 1Hz) to save power. It calculates the real battery voltage by reversing the voltage divider math.
+rust
+#[embassy_executor::task]
+pub async fn battery_monitor_task(mut adc: MyAdcDriver) {
+    let low_voltage_threshold = 10.5; // Example for a 3S LiPo battery
+
+    loop {
+        let voltage = adc.read_battery_voltage().await;
+        
+        if voltage < low_voltage_threshold {
+            log::error!("CRITICAL: Low Battery ({:.2}V). Shutting down motors!", voltage);
+            trigger_emergency_stop(); // Calls our global kill switch
+            break; // Stop monitoring once triggered
+        }
+
+        embassy_time::Timer::after_secs(1).await;
+    }
+}
+Use code with caution.
+
+3. Hardware-Agnostic ADC Abstraction
+In your hw.rs, you can define a wrapper for each chip's ADC: 
+Embassy docs
+Embassy docs
+ +1
+STM32: Uses embassy_stm32::adc::Adc with an internal channel like Vbat or a GPIO pin.
+RP2040: Uses embassy_rp::adc::Adc and Channel.
+ESP32: Uses esp_hal::analog::adc::Adc. 
+GitHub
+GitHub
+ +2
+rust
+// Example logic inside your MyAdcDriver for STM32
+pub async fn read_battery_voltage(&mut self) -> f32 {
+    let sample = self.adc.read(&mut self.pin).await;
+    let mv = sample as f32 * (3300.0 / 4095.0); // 12-bit ADC conversion
+    
+    // Reverse the voltage divider math (e.g., 10k and 47k resistors)
+    let divider_ratio = (47.0 + 10.0) / 10.0; 
+    (mv / 1000.0) * divider_ratio
+}
+Use code with caution.
+
+Why this is effective:
+Safety Integration: Because it uses the same trigger_emergency_stop() as the panic_handler, it follows the exact same priority path to the motors.
+Averaging: You can easily add a small loop to take 10 samples and average them to prevent "sag" (momentary voltage drops during high throttle) from triggering a false emergency stop.
+Low Overhead: At 1Hz, this task consumes negligible CPU time, even on a single core. 
+YouTube
+YouTube
+Would you like to see how to add an Average-over-Time filter to this task to prevent false triggers during high-power motor bursts?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+undefined
+undefined
+undefined
+7 sites
+embassy_stm32::adc - Rust - embassy-executor
+Module adc. Source. Analog to Digital Converter (ADC) Modules. vals. Structs. Adc. Analog to Digital driver. AdcConfig Adc configu...
+
+Embassy docs
+The ESP32 ADC | cceckman.com
+18 Dec 2025 — In the case of R 1 = R 2 , that's the same as dividing by 2. We could create a different ratio by having different resistances on ...
+
+cceckman.com
+
+embassy/examples/rp/src/bin/adc.rs at main - GitHub
+33. 34. 35. 36. 37. 38. 39. 40. 41. 42. 43. 44. 45. 46. 47. 48. 49. 50. 51. //! This example test the ADC (Analog to Digital Conve...
+
+GitHub
+Show all
+going back to the Imu trait, if I add a function set_acc_offset, is it possible to implement this just once, rather than for every type of Imu
+Yes, you can do this using Default Trait Methods. Since all your IMU structs share the ImuState data through the state_mut() method we defined earlier, you can write the logic once in the trait definition.
+Every struct that implements Imu will automatically inherit this function.
+The Implementation
+You define the function body directly inside the trait block:
+rust
+pub trait Imu {
+    type Bus: ImuBus;
+
+    // These must be implemented by each chip (Mpu6050, Bno055, etc.)
+    fn state(&self) -> &ImuState;
+    fn state_mut(&mut self) -> &mut ImuState;
+
+    // --- SHARED LOGIC (Implemented only once) ---
+    fn set_acc_offset(&mut self, offset: [f32; 3]) {
+        let s = self.state_mut();
+        s.accel_offset = offset;
+        log::info!("New accelerometer offset applied.");
+    }
+
+    fn apply_calibration(&self, raw: [f32; 3]) -> [f32; 3] {
+        let s = self.state();
+        [
+            raw[0] - s.accel_offset[0],
+            raw[1] - s.accel_offset[1],
+            raw[2] - s.accel_offset[2],
+        ]
+    }
+}
+Use code with caution.
+
+Why this is the "Rust Way":
+Code Reuse: You don't have to copy-paste the offset math into every single driver.
+Access Control: By requiring the chip to provide state_mut(), you guarantee the trait has a place to store the data without needing C++-style inheritance.
+Overrideable: If a specific high-end chip (like the BNO055) has internal hardware registers for offsets, you can "override" this default method in that specific impl block to write directly to the chip's memory instead of your local ImuState.
+Pro-Tip: The "Zero-Init" Pattern
+To make this even cleaner, ensure your ImuState implements Default. Then, your chip structs can just call ImuState::default() in their new() functions.
+Would you like to see how to add a calibrate_level() function to this trait that samples the sensor for 2 seconds and sets the offsets automatically?
+AI responses may include mistakes. Learn more
+
+
+
+
+is it possible to have some data in the state mutable while some is not
+In Rust, mutability is determined by how you hold the reference to the struct, not by the individual fields. However, you can achieve "partial mutability" using two common patterns:
+1. The "Split State" Pattern (Recommended)
+The cleanest way is to split your data into two structs: one for Configuration (read-only after setup) and one for Status (mutable).
+rust
+pub struct ImuConfig {
+    pub hardware_id: u8,      // Fixed
+    pub i2c_address: u8,      // Fixed
+}
+
+pub struct ImuStatus {
+    pub accel_offset: [f32; 3], // Can change
+    pub is_calibrated: bool,    // Can change
+}
+
+pub struct Mpu6050 {
+    pub config: ImuConfig,      // Stored as-is
+    pub status: ImuStatus,
+}
+Use code with caution.
+
+In your trait, you provide a read-only getter for config and a mutable getter for status. This prevents your calibration logic from accidentally overwriting the hardware address.
+2. Internal Mutability (Cell / RefCell)
+If you want the state struct to appear "immutable" to the outside world but still allow specific fields to change internally, use Cell.
+Cell<T> is perfect for small copyable types like f32 or bool.
+It allows you to change the value even if you only have a shared (&self) reference.
+rust
+use core::cell::Cell;
+
+pub struct ImuState {
+    pub hardware_id: u8,               // Normal field (Immutable via &self)
+    pub accel_offset_x: Cell<f32>,     // Interior Mutability
+}
+
+impl ImuState {
+    pub fn update_offset(&self, new_x: f32) {
+        self.accel_offset_x.set(new_x); // Works even with &self!
+    }
+}
+Use code with caution.
+
+Which one to choose?
+Use Pattern 1 (Split State) if you want the compiler to strictly enforce that "Config" shouldn't be touched during normal operation. This is the most "Rustacean" way. [1]
+Use Pattern 2 (Cell) if you are in a constrained environment where you can't easily pass &mut self around (e.g., inside an interrupt or a shared callback). [2]
+Pro-Tip: In embedded systems, keep as much as possible in a "Config" struct. You can even put it in Flash memory (via the #[link_section] attribute) to save precious RAM. [3]
+Would you like to see how to define the Trait so it enforces this split between Config and Status?
+Sources:
+[1] Rust Design Patterns - Modeling data
+[2] The Rust Programming Language - Interior Mutability
+[3] The Embedded Rust Book - Memory Layout
+AI responses may include mistakes. Learn more
+
+
+
+
+yes please
+To enforce this split in your trait, you define two separate associated types (or methods) that return references to your Config (immutable) and Status (mutable) structs.
+This ensures that high-level shared logic (like calibration) can only touch the "Status" fields, while "Config" stays protected.
+1. The Data Structures
+rust
+pub struct ImuConfig {
+    pub device_id: u8,
+    pub sample_rate: u32,
+}
+
+pub struct ImuStatus {
+    pub accel_offset: [f32; 3],
+    pub last_reading: [f32; 3],
+}
+Use code with caution.
+
+2. The Split-Access Trait
+By defining these two methods, any chip that implements Imu must provide a way to get both.
+rust
+pub trait Imu {
+    // 1. Mandatory implementations for each chip
+    fn config(&self) -> &ImuConfig;     // Read-only access
+    fn status(&mut self) -> &mut ImuStatus; // Read-write access
+
+    // 2. Shared "Read-Only" Logic
+    fn get_device_info(&self) {
+        let cfg = self.config();
+        log::info!("Device ID: {}, Rate: {}Hz", cfg.device_id, cfg.sample_rate);
+    }
+
+    // 3. Shared "Mutable" Logic
+    fn update_calibration(&mut self, new_offset: [f32; 3]) {
+        let stat = self.status();
+        stat.accel_offset = new_offset;
+        // Notice: You physically CANNOT change cfg.sample_rate here
+    }
+}
+Use code with caution.
+
+3. The Concrete Implementation
+Each chip struct holds both pieces of data.
+rust
+pub struct Mpu6050<B: ImuBus> {
+    bus: B,
+    config: ImuConfig,
+    status: ImuStatus,
+}
+
+impl<B: ImuBus> Imu for Mpu6050<B> {
+    fn config(&self) -> &ImuConfig { &self.config }
+    fn status(&mut self) -> &mut ImuStatus { &mut self.status }
+}
+Use code with caution.
+
+Why this is the "Golden Standard":
+Safety: You can pass &self.config() to a logging task without giving it permission to change the offsets.
+Clear Intent: When reading the code, you immediately know if a function is meant to change the state or just read the hardware settings.
+Documentation: The types themselves act as documentation for which data is "live" (Status) and which is "fixed" (Config).
+Pro-Tip: Constant Config
+For even better memory efficiency, you can make ImuConfig a const or store it in Flash (ROM) rather than RAM. Since config(&self) only returns a reference, it doesn't care if the data is in RAM or Flash!
+Would you like to see how to use const generics to handle different buffer sizes for different chips within this same trait?
+AI responses may include mistakes. Learn more
+
+
+
+
+going back to Mpu6050 if I want to have constants for the registers for this IMU and also a constant Id for this IMU, what is the preferred way to do this
+In Rust, the preferred way to handle hardware-specific constants (like registers and IDs) is to use an associated module or an internal enum inside the chip-specific implementation.
+Since these constants are unique to the Mpu6050 and not shared by a Bno055, they shouldn't live in the Imu trait.
+1. The "Namespaced Constants" Pattern
+The cleanest way is to use a private or public struct or enum to group the registers. In Rust, we use u8 constants for registers to make them easy to pass to your ImuBus.
+rust
+// mpu6050.rs
+
+pub struct Mpu6050<B: ImuBus> {
+    bus: B,
+    config: ImuConfig,
+    status: ImuStatus,
+}
+
+// Group your constants here
+impl<B: ImuBus> Mpu6050<B> {
+    pub const DEVICE_ID: u8 = 0x68; // Expected WHO_AM_I value
+    
+    // Register Map
+    const REG_WHO_AM_I: u8 = 0x75;
+    const REG_ACCEL_XOUT_H: u8 = 0x3B;
+    const REG_PWR_MGMT_1: u8 = 0x6B;
+    
+    pub fn new(bus: B) -> Self {
+        // You can use the constants internally
+        Self { 
+            bus, 
+            config: ImuConfig { device_id: Self::DEVICE_ID, ..Default::default() },
+            status: ImuStatus::default() 
+        }
+    }
+}
+Use code with caution.
+
+2. The "Enum" Pattern (For Bits and Settings)
+For register values (like Power Modes or Scale Ranges), use a C-style enum. This prevents you from passing invalid magic numbers to the hardware.
+rust
+#[repr(u8)]
+pub enum AccelScale {
+    Fs2g = 0x00,
+    Fs4g = 0x01,
+    Fs8g = 0x02,
+    Fs16g = 0x03,
+}
+
+impl<B: ImuBus> Mpu6050<B> {
+    pub async fn set_accel_scale(&mut self, scale: AccelScale) {
+        // Use 'scale as u8' to get the raw value for the bus
+        self.bus.write_register(0x1C, scale as u8).await.ok();
+    }
+}
+Use code with caution.
+
+3. Why not put these in the Imu Trait?
+Registers vary: The WHO_AM_I register is 0x75 on an MPU6050 but 0x00 on a BNO055.
+Internal Detail: Your high-level PID controller doesn't care which register the data came from, only that it is a f32.
+Compile-time Safety: Keeping them inside the Mpu6050 implementation ensures you can't accidentally use an MPU6050 register address on a Bosch sensor.
+Pro-Tip: The WhoAmI Check
+Always use your DEVICE_ID constant in your new() or init() function to verify the hardware is actually connected before starting the rest of your Embassy tasks.
+rust
+pub async fn init(&mut self) -> Result<(), Error> {
+    let id = self.bus.read_register(Self::REG_WHO_AM_I).await?;
+    if id != Self::DEVICE_ID {
+        return Err(Error::WrongDevice);
+    }
+    Ok(())
+}
+Use code with caution.
+
+Do you want to see how to use bitflags to handle the individual bits inside these registers (like enabling/disabling specific axes)?
+Proceed with bitflags example?
+AI responses may include mistakes. Learn more
+
+
+
+
+yes please
+In Rust, the standard way to handle register bits is using the bitflags crate. It provides a type-safe way to manage bitmasks without the risks of manual bitwise math (like accidentally using | when you meant &). 
+1. Define the Bitflags
+Inside your mpu6050.rs file, use the bitflags! macro to define the bits for a specific register, such as PWR_MGMT_1.
+rust
+use bitflags::bitflags;
+
+bitflags! {
+    /// Power Management 1 register bits
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct PwrMgmt1: u8 {
+        const DEVICE_RESET = 0b1000_0000;
+        const SLEEP        = 0b0100_0000;
+        const CYCLE        = 0b0010_0000;
+        const TEMP_DIS     = 0b0000_1000;
+        const CLKSEL_0     = 0b0000_0001;
+        const CLKSEL_1     = 0b0000_0010;
+        const CLKSEL_2     = 0b0000_0100;
+    }
+}
+Use code with caution.
+
+2. Using Bitflags in your Driver
+Instead of passing a raw u8 to your bus, you can now use the PwrMgmt1 type. This makes the code much more readable and prevents you from accidentally setting bits that don't exist in that register. 
+Stack Overflow
+Stack Overflow
+ +1
+rust
+impl<B: ImuBus> Mpu6050<B> {
+    pub async fn set_power_mode(&mut self, flags: PwrMgmt1) -> Result<(), B::Error> {
+        // .bits() converts the typesafe struct back to a raw u8 for the I2C/SPI bus
+        self.bus.write_register(Self::REG_PWR_MGMT_1, flags.bits()).await
+    }
+
+    pub async fn wake_up(&mut self) -> Result<(), B::Error> {
+        // Easily combine flags using the | operator
+        let config = PwrMgmt1::CLKSEL_0 | PwrMgmt1::TEMP_DIS;
+        
+        // This ensures the SLEEP bit is NOT set
+        let wake_config = config & !PwrMgmt1::SLEEP; 
+        
+        self.set_power_mode(wake_config).await
+    }
+}
+Use code with caution.
+
+3. Benefits of bitflags
+Type Safety: You cannot accidentally pass AccelScale flags to a PwrMgmt1 function.
+Readability: PwrMgmt1::SLEEP is far more descriptive than 0x40.
+Convenience Methods: The generated struct includes helpful methods like .contains(), .intersects(), and .insert().
+Zero Cost: At compile time, these abstractions are resolved into the same raw bitwise operations you would have written manually. 
+Crates.io
+Crates.io
+ +2
+Why not use a standard enum?
+A standard Rust enum is designed to represent one state out of many (Exclusive). Bitflags are designed to represent multiple states at once (Inclusive). 
+Stack Overflow
+Stack Overflow
+Would you like to see how to implement a Read-Modify-Write pattern using these bitflags so you can change one bit without overwriting the rest of the register?
+Propose: Show Read-Modify-Write pattern?
+AI responses may include mistakes. Learn more
+
+
+
+
+
+undefined
+undefined
+undefined
+5 sites
+bitflags - crates.io: Rust Package Registry
+13 Feb 2026 — Example. Generate a flags structure: use bitflags::bitflags; // The `bitflags!` macro generates `struct`s that manage a set of fla...
+
+Crates.io
+
+bitflags - Rust - Docs.rs
+The following methods are defined for the generated struct : * empty : an empty set of flags. * all : the set of all flags. * bits...
+
+Docs.rs
+bitflags - Rust Embedded
+Crate bitflags [−] [src] [−] A typesafe bitmask flag generator useful for sets of C-style bitmask flags. It can be used for creati...
+
+Rust Embedded
+Show all
+ca
+To modify specific bits without overwriting the entire register, you use the Read-Modify-Write (RMW) pattern. This involves reading the current value, using bitwise operations to update only the target bits, and writing the result back. 
+GitHub
+GitHub
+ +2
+Using the bitflags crate makes this safer and more readable by providing methods like .insert() and .remove(). 
+Docs.rs
+Docs.rs
+1. The RMW Pattern with Bitflags
+You can implement a helper method in your Mpu6050 to perform this operation atomically from the perspective of the bus.
+rust
+impl<B: ImuBus> Mpu6050<B> {
+    pub async fn modify_pwr_mgmt(&mut self, f: impl FnOnce(&mut PwrMgmt1)) -> Result<(), B::Error> {
+        // 1. READ the current register value
+        let raw = self.bus.read_register(Self::REG_PWR_MGMT_1).await?;
+        
+        // 2. MODIFY using bitflags
+        let mut flags = PwrMgmt1::from_bits_truncate(raw);
+        f(&mut flags); // Apply the changes via the closure
+        
+        // 3. WRITE the result back
+        self.bus.write_register(Self::REG_PWR_MGMT_1, flags.bits()).await
+    }
+}
+Use code with caution.
+
+2. Usage Examples
+Now you can change single bits easily without knowing or affecting the state of the others: 
+Set a bit: imu.modify_pwr_mgmt(|f| f.insert(PwrMgmt1::SLEEP)).await;
+Clear a bit: imu.modify_pwr_mgmt(|f| f.remove(PwrMgmt1::SLEEP)).await;
+Toggle a bit: imu.modify_pwr_mgmt(|f| f.toggle(PwrMgmt1::TEMP_DIS)).await;
+3. Safety Warning: Race Conditions
+In a multi-core or interrupt-driven environment, a standard RMW cycle is not atomic. If an interrupt or the other core modifies the register between your read and your write, their changes will be lost. 
+Hacker News
+Hacker News
+ +2
+Solution: If multiple tasks/cores share the same IMU, wrap the Mpu6050 in an Embassy Mutex. This ensures only one task can perform the RMW sequence at a time.
+rust
+use embassy_sync::mutex::Mutex;
+static IMU: Mutex<CriticalSectionRawMutex, Mpu6050<I2cBus>> = Mutex::new(...);
+Use code with caution.
+
+Would you like to see how to implement error recovery if the read_register fails during this RMW cycle?
+Proposed Next Step: Explore Error handling and retry logic for bus transactions.
+AI responses may include mistakes. Learn more
+
+
+
+
+
+undefined
+undefined
+undefined
+8 sites
+When to use modify() vs write()? · rust-embedded discovery - GitHub
+19 Apr 2021 — The read/modify/write methods are documented on svd2rust, but the gist is: * write() starts from the register's reset value (which...
+
+GitHub
+
+Memory-mapped Registers - The Embedded Rust Book
+If we wish to change only one particular sub-field in this register and leave the other sub-fields unchanged, we can use the modif...
+
+Rust Embedded
+
+I've done some small embedded Rust applications on various ...
+17 Aug 2022 — Being owned and unsafe feels like the most natural fit. If multiple threads (or the interrupt handler) manipulate a register while...
+
+Hacker News
+Show all
+can you give an example implementation of the write_register function
+To implement write_register, you add it to your ImuBus trait. For I2C, this usually involves sending a 2-byte payload: the register address followed by the data byte.
+1. Update the ImuBus Trait
+First, add the method to your trait definition so all interfaces (I2C/SPI) provide it.
+rust
+pub trait ImuBus {
+    type Error;
+    async fn read_register(&mut self, reg: u8) -> Result<u8, Self::Error>;
+    async fn read_registers(&mut self, reg: u8, data: &mut [u8]) -> Result<(), Self::Error>;
+    
+    // The new write method
+    async fn write_register(&mut self, reg: u8, value: u8) -> Result<(), Self::Error>;
+}
+Use code with caution.
+
+2. Implementation for I2C (Embassy)
+For I2C, you send the register and value together in one write operation.
+rust
+impl<I2C> ImuBus for I2cInterface<I2C>
+where
+    I2C: embedded_hal_async::i2c::I2c,
+{
+    type Error = I2C::Error;
+
+    async fn write_register(&mut self, reg: u8, value: u8) -> Result<(), Self::Error> {
+        // We send [Address, Data] as a single transaction
+        self.i2c.write(self.address, &[reg, value]).await
+    }
+    
+    // ... read_register etc ...
+}
+Use code with caution.
+
+3. Implementation for SPI (Embassy)
+SPI is slightly different. You usually pull the Chip Select (CS) pin low, send the register address (often with the MSB set to 0 for "write"), send the data, and then pull CS high.
+rust
+impl<SPI, CS> ImuBus for SpiInterface<SPI, CS>
+where
+    SPI: embedded_hal_async::spi::SpiDevice,
+    CS: embedded_hal::digital::v2::OutputPin,
+{
+    type Error = SPI::Error;
+
+    async fn write_register(&mut self, reg: u8, value: u8) -> Result<(), Self::Error> {
+        // Many IMUs require bit 7 to be 0 for a WRITE operation
+        let reg_address = reg & 0x7F; 
+        
+        // SPI write: [Register, Value]
+        self.spi.write(&[reg_address, value]).await
+    }
+}
+Use code with caution.
+
+Why this is the "Embassy Way":
+Buffer Safety: We pass a slice &[reg, value]. Embassy handles the DMA transfer (if configured) so the CPU doesn't sit in a busy-loop waiting for the I2C clock.
+Error Bubbling: If the slave device doesn't NACK or the bus is noisy, the Result::Err travels all the way back to your modify_pwr_mgmt function so you can handle it.
+Pro-Tip: Sequential Writes
+If you need to write multiple registers at once (like loading a large configuration table), it's more efficient to add a write_registers(reg, data: &[u8]) method to the trait to avoid the overhead of multiple start/stop conditions on the bus.
+Would you like to see how to implement retries with exponential backoff if a write_register fails?
+AI responses may include mistakes. Learn more
+
+
+
+
+Ask anything
+
+
+AI Mode response is ready
+Ask abouts

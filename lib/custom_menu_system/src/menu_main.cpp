@@ -2,7 +2,7 @@
 #include "cmsx.h"
 
 
-static const std::array<CMSX::OSD_Entry, 3> menu_blackboxEntries
+static const std::array<CMSX::osd_entry_t, 3> menu_blackboxEntries
 {{
     {"-- BLACKBOX --", OME_LABEL, nullptr, nullptr},
 
@@ -17,7 +17,7 @@ CMSX::menu_t CMSX::menu_blackbox {
     .entries = &menu_blackboxEntries[0],
 };
 
-static const std::array<CMSX::OSD_Entry, 3> menu_powerEntries
+static const std::array<CMSX::osd_entry_t, 3> menu_powerEntries
 {{
     {"-- POWER --", OME_LABEL, nullptr, nullptr},
 
@@ -32,7 +32,7 @@ CMSX::menu_t CMSX::menu_power {
     .entries = &menu_powerEntries[0],
 };
 
-static const std::array<CMSX::OSD_Entry, 6> menu_featuresEntries
+static const std::array<CMSX::osd_entry_t, 6> menu_featuresEntries
 {{
     {"-- FEATURES --", OME_LABEL, nullptr, nullptr},
 
@@ -57,7 +57,7 @@ static const void* saveExitMenu(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]]
     return nullptr;
 }
 
-static const void* menu_setup_popupOnDisplayUpdate(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* selected)
+static const void* menu_setup_popupOnDisplayUpdate(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* selected)
 {
     (void)cmsx;
     (void)ctx;
@@ -65,7 +65,7 @@ static const void* menu_setup_popupOnDisplayUpdate(CMSX& cmsx, cms_context_t& ct
     return nullptr;
 }
 
-std::array<CMSX::OSD_Entry, CMSX::SETUP_POPUP_MAX_ENTRIES> CMSX::menu_setup_popupEntries;
+std::array<CMSX::osd_entry_t, CMSX::SETUP_POPUP_MAX_ENTRIES> CMSX::menu_setup_popupEntries;
 
 CMSX::menu_t CMSX::menu_setup_popup = {
     .on_enter = nullptr,
@@ -88,7 +88,7 @@ enum { MENU_MAIN_ENTRY_COUNT = 8 };
 #else
 enum { MENU_MAIN_ENTRY_COUNT = 7 };
 #endif
-static const std::array<CMSX::OSD_Entry, MENU_MAIN_ENTRY_COUNT> menu_mainEntries
+static const std::array<CMSX::osd_entry_t, MENU_MAIN_ENTRY_COUNT> menu_mainEntries
 {{
     {"-- MAIN --",  OME_LABEL, nullptr, nullptr},
 

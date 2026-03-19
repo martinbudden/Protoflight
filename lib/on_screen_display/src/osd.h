@@ -65,6 +65,29 @@ struct osd_stats_config_t {
     uint8_t save_move_limit; // gyro rate limit for saving stats upon disarm
 };
 
+struct osd_stats_t {
+    time_us32_t armed_time;
+    float max_g_force;
+    int32_t max_altitude;
+    int32_t max_esc_rpm;
+    int16_t max_esc_temperature_index;
+    int16_t max_esc_temperature;
+    int16_t max_distance;
+    int16_t max_speed;
+    int16_t min_voltage; // /100
+    uint16_t end_voltage;
+    int16_t max_current; // /10
+    uint16_t min_link_quality;
+    int16_t min_rssi_dbm;
+    int16_t min_rsnr;
+    uint8_t min_rssi;
+};
+
+struct osd_stats_rendering_state_t {
+    uint8_t row;
+    uint8_t index;
+    uint8_t row_count;
+};
 /*!
 On _screen Display.
 */
@@ -195,29 +218,6 @@ public:
     };
 
 public:
-    struct stats_t {
-        time_us32_t armed_time;
-        float max_g_force;
-        int32_t max_altitude;
-        int32_t max_esc_rpm;
-        int16_t max_esc_temperature_index;
-        int16_t max_esc_temperature;
-        int16_t max_distance;
-        int16_t max_speed;
-        int16_t min_voltage; // /100
-        uint16_t end_voltage;
-        int16_t max_current; // /10
-        uint16_t min_link_quality;
-        int16_t min_rssi_dbm;
-        int16_t min_rsnr;
-        uint8_t min_rssi;
-    };
-    struct stats_rendering_state_t {
-        uint8_t row;
-        uint8_t index;
-        uint8_t row_count;
-    };
-public:
     void init(const DisplayPortBase* display_port);
     void draw_logo_and_complete_initialization(const osd_context_t& ctx);
     const osd_config_t& get_config() const { return _config; }
@@ -244,13 +244,13 @@ public:
 
     void set_warning_state(uint8_t warning_index, bool enabled);
     bool get_warning_state(uint8_t warning_index) const;
-    bool getVisual_beeper_state() const { return _visual_beeper_state; }
-    void setVisual_beeper_state(bool visual_beeper_state) { _visual_beeper_state = visual_beeper_state; }
-    const stats_t& get_stats() const { return _stats; }
+    bool get_visual_beeper_state() const { return _visual_beeper_state; }
+    void set_visual_beeper_state(bool visual_beeper_state) { _visual_beeper_state = visual_beeper_state; }
+    const osd_stats_t& get_stats() const { return _stats; }
     void display_statistic_label(DisplayPortBase& display_port, uint8_t x, uint8_t y, const char * text, const char * value);
     bool display_statistic(DisplayPortBase& display_port, int statistic, uint8_t display_row);
     bool render_stats_continue(DisplayPortBase& display_port);
-    bool refreshStats(DisplayPortBase& display_port);
+    bool refresh_stats(DisplayPortBase& display_port);
     bool process_stats1(const osd_context_t& ctx, time_us32_t current_time_us);
     void process_stats2(const osd_context_t& ctx, time_us32_t current_time_us);
     void process_stats3(const osd_context_t& ctx);
@@ -265,13 +265,13 @@ private:
 
     osd_config_t _config {};
     osd_stats_config_t _stats_config {};
-    stats_t _stats {};
-    stats_rendering_state_t _stats_rendering_state {};
+    osd_stats_t _stats {};
+    osd_stats_rendering_state_t _stats_rendering_state {};
     refresh_stats_state_e _refresh_stats_state {REFRESH_STATS_STATE_INITIAL_CLEAR_SCREEN};
     bool _visual_beeper_state {};
     bool _suppress_stats_flag {};
     bool _more_elements_to_draw {};
-    bool _background_layer_supported {};
+    bool _background_is_layer_supported {};
     bool _is_ready {false};
     bool _stats_visible {false};
     bool _stats_enabled {false};

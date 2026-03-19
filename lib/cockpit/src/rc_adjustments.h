@@ -114,14 +114,14 @@ public:
     void set_adjustment_configs(const adjustment_configs_t& adjustment_configs);
     const adjustment_configs_t& get_adjustment_configs() const;
 
-    void process_adjustments(const ReceiverBase& receiver, FlightController& flight_controller, Blackbox* blackbox, Cockpit& cockpit, OSD* osd, bool isReceiverSignal);
+    void process_adjustments(const ReceiverBase& receiver, FlightController& flight_controller, Blackbox* blackbox, Cockpit& cockpit, OSD* osd, bool is_receiver_signal);
 // public for test code
     int32_t apply_step_adjustment(FlightController& flight_controller, Blackbox* blackbox, rates_t& rates, adjustment_e adjustment, int32_t delta);
     int32_t apply_absolute_adjustment(FlightController& flight_controller, Blackbox* blackbox, rates_t& rates, adjustment_e adjustment, int32_t value);
     uint8_t apply_select_adjustment(FlightController& flight_controller, Cockpit& cockpit, Blackbox* blackbox, OSD* osd, adjustment_e adjustment, uint8_t position);
 private:
     enum { ADJUSTMENT_FUNCTION_CONFIG_INDEX_OFFSET = 1};
-    void blackbox_log_inflight_adjustment_event(Blackbox* blackbox, adjustment_e adjustment, int32_t newValue);
+    void blackbox_log_inflight_adjustment_event(Blackbox* blackbox, adjustment_e adjustment, int32_t new_value);
     void process_stepwise_adjustments(const ReceiverBase& receiver, FlightController& flight_controller, Blackbox* blackbox, rates_t& rates, bool canUseRxData);
     void process_continuous_adjustments(const ReceiverBase& receiver, FlightController& flight_controller, Cockpit& cockpit, Blackbox* blackbox, OSD* osd);
     void calculate_active_adjustment_ranges();

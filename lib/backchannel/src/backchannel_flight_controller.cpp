@@ -22,8 +22,8 @@
 #include <task_base.h>
 
 
-BackchannelFlightController::BackchannelFlightController(BackchannelTransceiverBase& backchannelTransceiver, const uint8_t* backchannel_mac_address, const uint8_t* my_mac_address) :
-    BackchannelBase(backchannelTransceiver, backchannel_mac_address, my_mac_address)
+BackchannelFlightController::BackchannelFlightController(BackchannelTransceiverBase& backchannel_transceiver, const uint8_t* backchannel_mac_address, const uint8_t* my_mac_address) :
+    BackchannelBase(backchannel_transceiver, backchannel_mac_address, my_mac_address)
 {
 #if !defined(ESP_NOW_MAX_DATA_LEN)
 #define ESP_NOW_MAX_DATA_LEN (250)

@@ -6,7 +6,6 @@ enum { VIDEO_COLUMNS_SD = 30 };
 enum { VIDEO_LINES_NTSC = 13, VIDEO_LINES_PAL = 16 };
 
 struct display_canvas_t;
-struct osdCharacter_t;
 
 enum display_transaction_option_e {
     DISPLAY_TRANSACTION_OPTION_NONE = 0x00,
@@ -83,12 +82,12 @@ public:
     virtual bool draw_screen() = 0; // Returns true if screen still being transferred
 
     virtual uint32_t write_string(uint8_t x, uint8_t y, const char *text, uint8_t attr) = 0;
-    uint32_t write_string(uint8_t x, uint8_t y, const char *text) { return write_string(x, y, text, SEVERITY_NORMAL); }
-    uint32_t write_string(uint8_t x, uint8_t y, const uint8_t* text, uint8_t attr) { return write_string(x, y, reinterpret_cast<const char*>(text), attr); }
-    uint32_t write_string(uint8_t x, uint8_t y, const uint8_t* text) { return write_string(x, y, reinterpret_cast<const char*>(text), SEVERITY_NORMAL); }
+    uint32_t write_string_normal(uint8_t x, uint8_t y, const char *text) { return write_string(x, y, text, SEVERITY_NORMAL); }
+    //uint32_t write_string(uint8_t x, uint8_t y, const uint8_t* text, uint8_t attr) { return write_string(x, y, reinterpret_cast<const char*>(text), attr); }
+    //uint32_t write_string(uint8_t x, uint8_t y, const uint8_t* text) { return write_string(x, y, reinterpret_cast<const char*>(text), SEVERITY_NORMAL); }
 
     virtual uint32_t write_char(uint8_t x, uint8_t y, uint8_t c, uint8_t attr) = 0;
-    uint32_t write_char(uint8_t x, uint8_t y, uint8_t c) { return write_char(x, y, c, SEVERITY_NORMAL); }
+    uint32_t write_char_normal(uint8_t x, uint8_t y, uint8_t c) { return write_char(x, y, c, SEVERITY_NORMAL); }
 
     virtual uint32_t screen_size() const { return _row_count * _column_count; }
     virtual uint32_t write_sys(uint8_t x, uint8_t y, system_element_e systemElement) { (void)x; (void)y; (void)systemElement; return 0; }
@@ -98,11 +97,11 @@ public:
     virtual bool is_synced() const {return true;}
     virtual uint32_t tx_bytes_free() const {return 0;}
 
-    virtual bool layer_supported(layer_e layer) {
+    virtual bool is_layer_supported(layer_e layer) {
         if (layer == LAYER_FOREGROUND) { return true; } // Every device must support the foreground (default) layer
         return false;
     }
-    virtual bool layer_select(layer_e layer) { if (layer_supported(layer)) { _active_layer = layer; return true; } return false; }
+    virtual bool layer_select(layer_e layer) { if (is_layer_supported(layer)) { _active_layer = layer; return true; } return false; }
     virtual bool layer_copy(layer_e destLayer, layer_e sourceLayer) { return (sourceLayer == destLayer) ? false : true; }
 
     virtual bool write_font_character(uint16_t addr, const struct osd_character_t* chr) { (void)addr; (void)chr; return false; }
@@ -115,7 +114,7 @@ public:
     virtual int grab() { clear_screen(DISPLAY_CLEAR_WAIT); ++_grab_count; return 0; }
     bool is_grabbed() const { return _grab_count > 0; }
     virtual uint32_t release() { --_grab_count; return 0; }
-    void releaseAll() { _grab_count = 0; }
+    void release_all() { _grab_count = 0; }
 
     bool is_cleared() const { return _cleared; }
     void set_cleared(bool cleared) { _cleared = cleared; }
@@ -123,10 +122,10 @@ public:
     uint8_t get_row_count() const { return _row_count; }
     uint8_t get_column_count() const { return _column_count; }
 
-    uint8_t get_pos_x() const { return _posx; }
-    void set_pos_x(uint8_t pos_x) { _posx = pos_x; }
-    uint8_t get_pos_y() const { return _posy; }
-    void set_pos_y(uint8_t pos_y) { _posy = pos_y; }
+    uint8_t get_pos_x() const { return _pos_x; }
+    void set_pos_x(uint8_t pos_x) { _pos_x = pos_x; }
+    uint8_t get_pos_y() const { return _pos_y; }
+    void set_pos_y(uint8_t pos_y) { _pos_y = pos_y; }
 
     uint8_t get_small_arrow_up() const { return _small_arrow_up; }
     uint8_t get_small_arrow_down() const { return _small_arrow_down; }
@@ -145,8 +144,8 @@ protected:
 
     uint8_t _row_count {};
     uint8_t _column_count {};
-    uint8_t _posx {};
-    uint8_t _posy {};
+    uint8_t _pos_x {};
+    uint8_t _pos_y {};
     uint8_t _small_arrow_up {'^'};
     uint8_t _small_arrow_down {'v'};
 

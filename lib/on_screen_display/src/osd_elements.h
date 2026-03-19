@@ -346,7 +346,7 @@ private:
     bool _displayPendingBackground {};
     //bool _blinkState {true};
     bool _backgroundRendered {false};
-    bool _background_layer_supported {false};
+    bool _background_is_layer_supported {false};
 
     // data 'local' to specific draw functions
     bool _HORIZON_SIDEBARS_RenderLevel {false};

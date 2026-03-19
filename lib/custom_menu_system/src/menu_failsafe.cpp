@@ -14,7 +14,7 @@ static const void* menu_failsafeOnEnter(CMSX& cmsx, cms_context_t& ctx)
     return nullptr;
 }
 
-static const void* menu_failsafeOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menu_failsafeOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     ctx.cockpit.set_failsafe_config(failsafe_config);
@@ -33,7 +33,7 @@ static auto entryFailsafeThrottle    = osd_uint16_t { &failsafe_config.throttle_
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
 // NOLINTBEGIN(hicpp-signed-bitwise)
-static const std::array<CMSX::OSD_Entry, 7> menu_failsafeEntries
+static const std::array<CMSX::osd_entry_t, 7> menu_failsafeEntries
 {{
     { "-- FAILSAFE --", OME_LABEL, nullptr, nullptr},
 

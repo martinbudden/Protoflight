@@ -309,7 +309,7 @@ DisplayPortMax7456::init_status_e DisplayPortMax7456::init(const config_t* max74
     // This register is not modified in this driver, therefore ensured to remain at its default value (0x1B).
 
     _bus.set_clock_divisor(_bus.calculate_clock_divider(INITIAL_SPI_CLOCK_FREQUENCY_HZ));
-    concludeCurrentSPI_Transaction();
+    conclude_current_spi_transaction();
 
     //uint8_t osdm = spiReadRegMsk(dev, MAX7456ADD_OSDM);
     const uint8_t osdm = _bus.read_register(MAX7456ADD_OSDM);
@@ -454,19 +454,19 @@ uint32_t DisplayPortMax7456::write_string(uint8_t x, uint8_t y, const char *text
 
 bool DisplayPortMax7456::layer_copy(layer_e destLayer, layer_e sourceLayer)
 {
-    if ((sourceLayer != destLayer) && layer_supported(destLayer)) {
+    if ((sourceLayer != destLayer) && is_layer_supported(destLayer)) {
         memcpy(getLayerBuffer(destLayer), getLayerBuffer(sourceLayer), VIDEO_BUFFER_PAL_CHARACTER_COUNT);
         return true;
     }
     return false;
 }
 
-bool DisplayPortMax7456::dmaInProgress()
+bool DisplayPortMax7456::dma_in_progress()
 {
     return ActiveDMA;
 }
 
-bool DisplayPortMax7456::buffersSynced() const
+bool DisplayPortMax7456::buffers_synced() const
 {
 #if (__cplusplus >= 202002L)
     const auto foregroundSpan = std::span(_displayLayers[LAYER_FOREGROUND].buffer).first(_max_screen_size);
@@ -482,27 +482,27 @@ bool DisplayPortMax7456::buffersSynced() const
 #endif
 }
 
-void DisplayPortMax7456::concludeCurrentSPI_Transaction()
+void DisplayPortMax7456::conclude_current_spi_transaction()
 {
     // Write 0xff to conclude any current SPI transaction the MAX7456 is expecting
     std::array<uint8_t, 1> data = { 0xFF };
     _bus.write_bytes(&data[0], 1);
 }
 
-bool DisplayPortMax7456::reInitIfRequired(bool forceStallCheck, Debug& debug)
+bool DisplayPortMax7456::re_init_if_required(bool forceStallCheck, Debug& debug)
 {
     const time_ms32_t timeNowMs = time_ms();
 
     bool stalled = false;
     if (forceStallCheck || (_lastStallCheckMs + STALL_CHECK_INTERVAL_MS < timeNowMs)) { // cppcheck-suppress knownConditionTrueFalse
         _lastStallCheckMs = timeNowMs;
-        concludeCurrentSPI_Transaction();
+        conclude_current_spi_transaction();
         stalled = (_bus.read_register(MAX7456ADD_VM0) != _videoSignalReg);
     }
     if (stalled) {
         reInit();
     } else if ((_videoSignalCfg == VIDEO_SYSTEM_AUTO) && ((timeNowMs - _lastSigCheckMs) > SIGNAL_CHECK_INTERVAL_MS)) { // cppcheck-suppress knownConditionTrueFalse
-        concludeCurrentSPI_Transaction();
+        conclude_current_spi_transaction();
         // Adjust output format based on the current input format.
         const uint8_t videoSense = _bus.read_register(MAX7456ADD_STAT);
         debug.set(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_MODEREG, static_cast<int16_t>(_videoSignalReg & VIDEO_MODE_MASK));
@@ -629,13 +629,13 @@ bool DisplayPortMax7456::draw_screen() // NOLINT(readability-function-cognitive-
 }
 
 // should not be used when armed
-void DisplayPortMax7456::refreshAll(Debug& debug)
+void DisplayPortMax7456::refresh_all(Debug& debug)
 {
-    reInitIfRequired(true, debug);
+    re_init_if_required(true, debug);
     while (draw_screen()) {}
 }
 
-bool DisplayPortMax7456::writeNvm(uint8_t char_address, const uint8_t *font_data)
+bool DisplayPortMax7456::write_nvm(uint8_t char_address, const uint8_t *font_data)
 {
     if (!_deviceDetected) {
         return false;
@@ -695,7 +695,7 @@ void DisplayPortMax7456::hardwareReset()
 #endif
 }
 
-bool DisplayPortMax7456::isDeviceDetected() // NOLINT(readability-make-member-function-const)
+bool DisplayPortMax7456::is_device_detected() // NOLINT(readability-make-member-function-const)
 {
     return _deviceDetected;
 }

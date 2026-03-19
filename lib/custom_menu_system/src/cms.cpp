@@ -25,7 +25,7 @@ void CMS::init()
 
 }
 
-void CMS::set_config(const config_t& config)
+void CMS::set_config(const cms_config_t& config)
 {
     _config = config;
 }
@@ -73,14 +73,14 @@ void CMS::update_cms(cms_context_t& ctx, uint32_t current_time_us, uint32_t time
     _last_called_ms = time_ms();
 }
 
-void CMS::set_extern_key(CMSX::key_e extern_key)
+void CMS::set_extern_key(cmsx_key_e extern_key)
 {
-    if (_extern_key == CMSX::KEY_NONE) {
+    if (_extern_key == CMSX_KEY_NONE) {
         _extern_key = extern_key;
     }
 }
 
-uint16_t CMS::handle_key_with_repeat(cms_context_t& ctx, CMSX::key_e key, size_t repeat_count)
+uint16_t CMS::handle_key_with_repeat(cms_context_t& ctx, cmsx_key_e key, size_t repeat_count)
 {
     uint16_t ret = 0;
 #if (__cplusplus >= 202002L)
@@ -95,30 +95,30 @@ uint16_t CMS::handle_key_with_repeat(cms_context_t& ctx, CMSX::key_e key, size_t
 
 bool CMS::scan_keys(cms_context_t& ctx, int32_t time_delta, const receiver_controls_pwm_t& controls, bool is_armed) // NOLINT(readability-function-cognitive-complexity)
 {
-    if (_extern_key != CMSX::KEY_NONE) {
+    if (_extern_key != CMSX_KEY_NONE) {
         _key_delay_ms = _cmsx.handle_key(ctx, _extern_key);
-        _extern_key = CMSX::KEY_NONE;
+        _extern_key = CMSX_KEY_NONE;
         ctx.display_port.begin_transaction(DISPLAY_TRANSACTION_OPTION_RESET_DRAWING);
         return true;
     }
 
-    CMSX::key_e key = CMSX::KEY_NONE;
+    cmsx_key_e key = CMSX_KEY_NONE;
     if (is_armed == false && RcModes::pwm_is_mid(controls.throttle) && RcModes::pwm_is_low(controls.yaw) && RcModes::pwm_is_high(controls.pitch)) {
-        key = CMSX::KEY_MENU;
+        key = CMSX_KEY_MENU;
     } else if (RcModes::pwm_is_high(controls.pitch)) {
-        key = CMSX::KEY_UP;
+        key = CMSX_KEY_UP;
     } else if (RcModes::pwm_is_low(controls.pitch)) {
-        key = CMSX::KEY_DOWN;
+        key = CMSX_KEY_DOWN;
     } else if (RcModes::pwm_is_high(controls.roll)) {
-        key = CMSX::KEY_RIGHT;
+        key = CMSX_KEY_RIGHT;
     } else if (RcModes::pwm_is_low(controls.roll)) {
-        key = CMSX::KEY_LEFT;
+        key = CMSX_KEY_LEFT;
     } else if (RcModes::pwm_is_high(controls.yaw)) {
-        key = CMSX::KEY_ESC;
+        key = CMSX_KEY_ESC;
     } else if (RcModes::pwm_is_low(controls.yaw)) {
-        key = CMSX::KEY_SAVE_MENU;
+        key = CMSX_KEY_SAVE_MENU;
     }
-    if (key == CMSX::KEY_NONE) {
+    if (key == CMSX_KEY_NONE) {
         // No 'key' pressed, reset repeat control
         _hold_count = 1;
         _repeat_count = 1;
@@ -143,7 +143,7 @@ bool CMS::scan_keys(cms_context_t& ctx, int32_t time_delta, const receiver_contr
         // XXX Caveat: Most constants are adjusted pragmatically.
         // XXX Rewrite this someday, so it uses actual hold time instead
         // of hold_count, which depends on the scheduling interval.
-        if (((key == CMSX::KEY_LEFT) || (key == CMSX::KEY_RIGHT)) && (_hold_count > 20)) {
+        if (((key == CMSX_KEY_LEFT) || (key == CMSX_KEY_RIGHT)) && (_hold_count > 20)) {
             // Decrease key_delay_ms reciprocally
             _key_delay_ms /= static_cast<int32_t>(_hold_count - 20);
             // When we reach the scheduling limit,

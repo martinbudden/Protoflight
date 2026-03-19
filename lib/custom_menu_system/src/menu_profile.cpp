@@ -43,7 +43,7 @@ static const void* menu_ratesOnEnter(CMSX& cmsx, cms_context_t& ctx)
     return nullptr;
 }
 
-static const void* menu_ratesOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menu_ratesOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     ctx.cockpit.set_rates(data.rates);
@@ -71,7 +71,7 @@ static auto entryThrottleLimitType = osd_table_t { &data.rates.throttle_limit_ty
 static auto entryThrottleLimitPercent = osd_uint8_t { &data.rates.throttle_limit_percent, 25, 100, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 10> menu_ratesEntries
+static const std::array<CMSX::osd_entry_t, 10> menu_ratesEntries
 {{
     { "-- RATE --",  OME_LABEL, nullptr, &rate_profile_indexString[0] },
 
@@ -124,7 +124,7 @@ static const void* menu_imu_filters_on_enter(CMSX& cmsx, cms_context_t& ctx)
     return nullptr;
 }
 
-static const void* menu_imu_filters_on_exit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menu_imu_filters_on_exit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     ctx.imu_filters.set_config(data.imu_filtersConfig); // NOLINT(cppcoreguidelines-pro-type-union-access)
@@ -140,7 +140,7 @@ static auto entryGyroNF2  = osd_uint16_t { &data.imu_filtersConfig.gyro_notch2_h
 static auto entryGyroNF2C = osd_uint16_t { &data.imu_filtersConfig.gyro_notch2_cutoff, 0, 500, 1 };
 // NOLINTEND(cppcoreguidelines-pro-type-union-access,fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 9> menu_imu_filters_entries
+static const std::array<CMSX::osd_entry_t, 9> menu_imu_filters_entries
 {{
     { "-- FILTERS --", OME_LABEL, nullptr, nullptr },
 
@@ -175,7 +175,7 @@ static const void* menu_pid_filters_on_enter(CMSX& cmsx, cms_context_t& ctx)
     return nullptr;
 }
 
-static const void* menu_pid_filters_on_exit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menu_pid_filters_on_exit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     FlightController& flight_controller = ctx.flight_controller;
@@ -183,7 +183,7 @@ static const void* menu_pid_filters_on_exit(CMSX& cmsx, cms_context_t& ctx, [[ma
     return nullptr;
 }
 
-static const std::array<CMSX::OSD_Entry, 3> menu_pid_filters_entries
+static const std::array<CMSX::osd_entry_t, 3> menu_pid_filters_entries
 {{
     { "-- PID FILTERS --", OME_LABEL, nullptr, nullptr },
 
@@ -214,7 +214,7 @@ static const void* menuSimplifiedTuningOnEnter(CMSX& cmsx, cms_context_t& ctx)
     return nullptr;
 }
 
-static const void* menuSimplifiedTuningOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuSimplifiedTuningOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     FlightController& flight_controller = ctx.flight_controller;
@@ -243,9 +243,9 @@ static auto entryMasterMultiplier = osd_uint16_fixed_t { &data.pidSettings.multi
 // NOLINTEND(fuchsia-statically-constructed-objects,cppcoreguidelines-pro-type-union-access)
 
 #if defined(USE_DMAX)
-static const std::array<CMSX::OSD_Entry, 14> menuSimplifiedTuningEntries
+static const std::array<CMSX::osd_entry_t, 14> menuSimplifiedTuningEntries
 #else
-static const std::array<CMSX::OSD_Entry, 13> menuSimplifiedTuningEntries
+static const std::array<CMSX::osd_entry_t, 13> menuSimplifiedTuningEntries
 #endif
 {{
     { "-- SIMPLIFIED TUNE --", OME_LABEL, nullptr, nullptr},
@@ -295,7 +295,7 @@ static const void* menu_pid_tuningOnEnter(CMSX& cmsx, cms_context_t& ctx)
     return nullptr;
 }
 
-static const void* menu_pid_tuningOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menu_pid_tuningOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     FlightController& flight_controller = ctx.flight_controller;
@@ -325,7 +325,7 @@ static auto entryYawPID_K   = osd_uint16_t { &data.pids[2].kk, 0, PID_GAIN_MAX, 
 static auto entryYawPID_S   = osd_uint16_t { &data.pids[2].ks, 0, PID_GAIN_MAX, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 18> menu_pid_tuningEntries
+static const std::array<CMSX::osd_entry_t, 18> menu_pid_tuningEntries
 {{
     { "-- PID --", OME_LABEL, nullptr, &pid_profile_indexString[0] },
 
@@ -376,7 +376,7 @@ static auto entryRateProfile = osd_table_t { &rate_profile_index, 4-1, &rateProf
 static auto entryPID_Profile = osd_table_t { &pid_profile_index, 4-1, &pid_profileNames[0] };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 10> menu_profileEntries
+static const std::array<CMSX::osd_entry_t, 10> menu_profileEntries
 {{
     {"-- PROFILES --",  OME_LABEL, nullptr, nullptr},
 
@@ -404,7 +404,7 @@ static const void* menu_profileOnEnter(CMSX& cmsx, cms_context_t& ctx)
     return nullptr;
 }
 
-static const void* menu_profileOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menu_profileOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     cmsx.set_current_pid_profile_index(ctx, pid_profile_index);
     cmsx.set_current_rate_profile_index(ctx, rate_profile_index);

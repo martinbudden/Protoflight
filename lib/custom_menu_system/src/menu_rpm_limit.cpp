@@ -23,7 +23,7 @@ static const void* menu_rpm_limitOnEnter(CMSX& cmsx, cms_context_t& ctx)
     return nullptr;
 }
 
-static const void* menu_rpm_limitOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menu_rpm_limitOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     ctx.motor_mixer.set_dynamic_idle_controller_config(dynamicIdleControllerConfig);
@@ -36,7 +36,7 @@ static auto entry_rpm_limitValue = osd_uint16_t { &dummy1, 0, UINT16_MAX, 100};
 static auto entryKV             = osd_uint16_t { &dummy2, 0, UINT16_MAX, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 7> menu_rpm_limitEntries
+static const std::array<CMSX::osd_entry_t, 7> menu_rpm_limitEntries
 {{
     { "-- RPM LIMIT --", OME_LABEL, nullptr, nullptr },
 

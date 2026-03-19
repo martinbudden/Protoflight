@@ -12,7 +12,7 @@ static uint8_t fpvCam_angle_degrees;
 static uint8_t crashFlipRate;
 
 #if false
-static const void* menuRcConfirmBack(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuRcConfirmBack(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     if (self && ((self->flags & OME_TYPE_MASK) == OME_BACK)) {
@@ -23,7 +23,7 @@ static const void* menuRcConfirmBack(CMSX& cmsx, cms_context_t& ctx, [[maybe_unu
 #endif
 
 // cppcheck-suppress constParameterCallback
-static const void* menuRcOnDisplayUpdate(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menuRcOnDisplayUpdate(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     const ReceiverBase& receiver = ctx.receiver;
@@ -46,7 +46,7 @@ static auto entryRcAux3     = osd_uint16_t { &rcData[6], 1, 2500, 0 };
 static auto entryRcAux4     = osd_uint16_t { &rcData[7], 1, 2500, 0 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 9> menuRcEntries
+static const std::array<CMSX::osd_entry_t, 9> menuRcEntries
 {{
     { "-- RC PREV --", OME_LABEL, nullptr, nullptr},
 
@@ -83,7 +83,7 @@ static const void* menu_miscOnEnter(CMSX& cmsx, cms_context_t& ctx)
     return nullptr;
 }
 
-static const void* menu_miscOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* self)
+static const void* menu_miscOnExit(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* self)
 {
     (void)cmsx;
     MotorMixerBase& motor_mixer = ctx.motor_mixer;
@@ -101,7 +101,7 @@ static auto entryFpvCamAngle    = osd_uint8_t  { &fpvCam_angle_degrees, 1, 90, 1
 static auto entryCrashFlipRate  = osd_uint8_t  { &crashFlipRate, 1, 100, 1 };
 // NOLINTEND(fuchsia-statically-constructed-objects)
 
-static const std::array<CMSX::OSD_Entry, 8> menu_miscEntries
+static const std::array<CMSX::osd_entry_t, 8> menu_miscEntries
 {{
     { "-- MISC --", OME_LABEL, nullptr, nullptr },
 

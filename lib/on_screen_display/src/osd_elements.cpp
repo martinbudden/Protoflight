@@ -283,7 +283,7 @@ bool OSD_Elements::draw_next_active_element(const osd_context_t& ctx)
 
     const uint8_t element = _active_elements[_active_element_index];
 
-    if (!_background_layer_supported && DrawBackgroundFunctions[element] && !_backgroundRendered) {
+    if (!_background_is_layer_supported && DrawBackgroundFunctions[element] && !_backgroundRendered) {
         // If the background layer isn't supported then we
         // have to draw the element's static layer as well.
         _backgroundRendered = draw_single_element_background(ctx, element);
@@ -394,7 +394,7 @@ bool OSD_Elements::draw_single_element_background(const osd_context_t& ctx, uint
 
 void OSD_Elements::draw_active_elements_background(const osd_context_t& ctx) // NOLINT(readability-make-member-function-const)
 {
-    if (_background_layer_supported) {
+    if (_background_is_layer_supported) {
         ctx.display_port.layer_select(DisplayPortBase::LAYER_BACKGROUND);
         ctx.display_port.clear_screen(DISPLAY_CLEAR_WAIT);
         for (size_t ii = 0; ii < _active_element_count; ++ii) {

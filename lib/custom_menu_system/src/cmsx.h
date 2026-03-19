@@ -30,6 +30,17 @@ struct cms_context_t {
     VTX* vtx;
 };
 
+enum cmsx_key_e {
+    CMSX_KEY_NONE,
+    CMSX_KEY_UP,
+    CMSX_KEY_DOWN,
+    CMSX_KEY_LEFT,
+    CMSX_KEY_RIGHT,
+    CMSX_KEY_ESC,
+    CMSX_KEY_MENU,
+    CMSX_KEY_SAVE_MENU,
+};
+
 class CMSX {
 public:
     CMSX(CMS& cms);
@@ -40,53 +51,42 @@ private:
     CMSX(CMSX&&) = delete;
     CMSX& operator=(CMSX&&) = delete;
 public:
-    enum { CURSOR_ROW_NOT_SET = 255 };
+    static constexpr uint8_t CURSOR_ROW_NOT_SET = 255;
 
-    enum { MAX_ROWS = 31 };
+    static constexpr uint8_t MAX_ROWS = 31;
     static constexpr uint8_t MENU_DRAW_BUFFER_LEN = 12;
     static constexpr uint8_t MENU_TABLE_BUFFER_LEN = 30;
-    enum { NUMBER_FIELD_LEN = 5 };
-    enum { DYNAMIC_VALUES_POLLING_INTERVAL_US = 100'000 };
-    enum { BUTTON_TIME_MS = 250 };
-    enum { BUTTON_PAUSE_MS = 500 };
-    enum { LOOKUP_TABLE_TICKER_START_CYCLES = 20,  // Task loops for start/end of ticker (1 second delay)
-           LOOKUP_TABLE_TICKER_SCROLL_CYCLES = 3   // Task loops for each scrolling step of the ticker (150ms delay)
-    };
-    enum { NORMAL_SCREEN_MIN_COLS = 18,      // Less is a small screen
-           NORMAL_SCREEN_MAX_COLS = 30      // More is a large screen
-    };
+    static constexpr uint8_t NUMBER_FIELD_LEN = 5;
+    
+    static constexpr uint32_t DYNAMIC_VALUES_POLLING_INTERVAL_US = 100'000;
+    static constexpr uint32_t BUTTON_TIME_MS = 250;
+    static constexpr uint32_t BUTTON_PAUSE_MS = 500;
+    static constexpr uint32_t LOOKUP_TABLE_TICKER_START_CYCLES = 20;  // Task loops for start/end of ticker (1 second delay)
+    static constexpr uint32_t LOOKUP_TABLE_TICKER_SCROLL_CYCLES = 3;  // Task loops for each scrolling step of the ticker (150ms delay)
+    static constexpr uint32_t NORMAL_SCREEN_MIN_COLS = 18;      // Less is a small screen
+    static constexpr uint32_t NORMAL_SCREEN_MAX_COLS = 30;      // More is a large screen
 #if defined(USE_BATTERY_CONTINUE)
-    enum { SETUP_POPUP_MAX_ENTRIES = 5 };   // Increase as new entries are added
+    static constexpr uint32_t SETUP_POPUP_MAX_ENTRIES = 5;   // Increase as new entries are added
 #else
-    enum { SETUP_POPUP_MAX_ENTRIES = 4 };   // Increase as new entries are added
+    static constexpr uint32_t SETUP_POPUP_MAX_ENTRIES = 4;   // Increase as new entries are added
 #endif
-    enum key_e {
-        KEY_NONE,
-        KEY_UP,
-        KEY_DOWN,
-        KEY_LEFT,
-        KEY_RIGHT,
-        KEY_ESC,
-        KEY_MENU,
-        KEY_SAVE_MENU,
-    };
 public:
     struct menu_t;
     typedef const void* (*entryFnPtr)(CMSX& cmsx, cms_context_t& ctx, const menu_t* menu);
-    struct OSD_Entry {
+    struct osd_entry_t {
         const char* text;
         uint16_t flags;
         entryFnPtr fnPtr;
         const void* data;
     };
     typedef const void* (*menuOnEnterFnPtr)(CMSX& cmsx, cms_context_t& ctx);
-    typedef const void* (*menuOnExitFnPtr)(CMSX& cmsx, cms_context_t& ctx, const OSD_Entry* self);
-    typedef const void* (*menuOnDisplayUpdateFnPtr)(CMSX& cmsx, cms_context_t& ctx, const OSD_Entry* selected);
+    typedef const void* (*menuOnExitFnPtr)(CMSX& cmsx, cms_context_t& ctx, const osd_entry_t* self);
+    typedef const void* (*menuOnDisplayUpdateFnPtr)(CMSX& cmsx, cms_context_t& ctx, const osd_entry_t* selected);
     struct menu_t {
         menuOnEnterFnPtr on_enter;
         menuOnExitFnPtr on_exit;
         menuOnDisplayUpdateFnPtr on_display_update;
-        const OSD_Entry* entries;
+        const osd_entry_t* entries;
     };
     struct menu_context_t {
         const menu_t* menu; // menu for this context
@@ -105,8 +105,8 @@ public:
     menu_t* get_save_exit_menu() const;
     static const void* inhibit_save_menu(CMSX& cmsx, cms_context_t& ctx) { cmsx.set_save_menu_inhibited(); (void)ctx; return nullptr; }
     void set_save_menu_inhibited() { _save_menu_inhibited = true; }
-    uint16_t handle_key(cms_context_t& ctx, key_e key);
-    uint16_t handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry, uint16_t& entry_flags);
+    uint16_t handle_key(cms_context_t& ctx, cmsx_key_e key);
+    uint16_t handle_key(cms_context_t& ctx, cmsx_key_e key, const osd_entry_t* entry, uint16_t& entry_flags);
     void save_config_and_notify(cms_context_t& ctx);
 
     void set_arming_disabled(cms_context_t& ctx);
@@ -121,17 +121,17 @@ private:
     bool get_reboot_required() const;
 
     bool row_slider_override(const uint16_t flags);
-    bool row_is_skippable(const OSD_Entry* row);
+    bool row_is_skippable(const osd_entry_t* row);
 
     static void pad_left(char *buf, uint8_t size);
     static void pad_right(char *buf, uint8_t size);
     void pad_to_size(char* buf, uint8_t maxSize) const;
-    uint32_t draw_menuItemValue(DisplayPortBase& display_port, uint8_t row, uint8_t maxSize);
-    uint32_t draw_menuTableItemValue(DisplayPortBase& display_port, uint8_t row, uint8_t maxSize);
-    uint32_t draw_menuTableEntry(DisplayPortBase& display_port, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
-    uint32_t draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
+    uint32_t draw_menu_item_value(DisplayPortBase& display_port, uint8_t row, uint8_t maxSize);
+    uint32_t draw_menu_table_item_value(DisplayPortBase& display_port, uint8_t row, uint8_t maxSize);
+    uint32_t draw_menu_table_entry(DisplayPortBase& display_port, const osd_entry_t* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
+    uint32_t draw_menu_entry(cms_context_t& ctx, const osd_entry_t* entry, uint8_t row, uint16_t& flags, table_ticker_t& ticker);
 
-    enum { MAX_MENU_STACK_DEPTH = 10 };
+    static constexpr uint32_t MAX_MENU_STACK_DEPTH = 10;
     enum menu_stack_e { MENU_STACK_NOTHING_TO_POP, MENU_STACK_NO_ROOM_TO_PUSH, MENU_STACK_OK };
     void menu_stack_reset();
     menu_stack_e menu_stack_push();
@@ -157,7 +157,7 @@ public:
     static const void* menu_calibrate_acc(CMSX& cmsx, cms_context_t& ctx, const  menu_t* menu);
     static const void* menu_calibrate_baro(CMSX& cmsx, cms_context_t& ctx, const  menu_t* menu);
     //static const void* inhibit_save_menu(cms_context_t& ctx) { (void)display_port; cmsx.inhibit_save_menu(); return nullptr; }
-    enum { CALIBRATION_STATUS_MAX_LENGTH = 6 };
+    static constexpr uint32_t CALIBRATION_STATUS_MAX_LENGTH = 6;
     static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> GyroCalibrationStatus;
     static std::array<char, CALIBRATION_STATUS_MAX_LENGTH> AccCalibrationStatus;
 #if defined(USE_BAROMETER)
@@ -169,7 +169,7 @@ private:
     menu_t& _menu_main;
     menu_context_t _current_menu_context {};
     std::array<menu_context_t, MAX_MENU_STACK_DEPTH> _menu_stack {};
-    const OSD_Entry* _page_top {}; // First entry for the current page
+    const osd_entry_t* _page_top {}; // First entry for the current page
     uint32_t _last_polled_us {};
     uint16_t _osd_profile_cursor {};
     uint16_t _profile {0};
@@ -202,7 +202,7 @@ public:
     static const menu_t* MENU_POPUP_EXIT_REBOOT;
     static const menu_t* MENU_BACK;
 
-    static std::array<OSD_Entry, SETUP_POPUP_MAX_ENTRIES> menu_setup_popupEntries;
+    static std::array<osd_entry_t, SETUP_POPUP_MAX_ENTRIES> menu_setup_popupEntries;
 
     // Menus
     static menu_t menu_setup_popup;

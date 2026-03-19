@@ -212,12 +212,12 @@ void OSD_Elements::drawBackground_HORIZON_SIDEBARS(const osd_context_t& ctx)
 
     if (_HORIZON_SIDEBARS_RenderLevel) {
         // AH level indicators
-        ctx.display_port.write_char(_active_element.pos_x - width + 1, _active_element.pos_y, SYM_AH_LEFT);
-        ctx.display_port.write_char(_active_element.pos_x + width - 1, _active_element.pos_y, SYM_AH_RIGHT);
+        ctx.display_port.write_char_normal(_active_element.pos_x - width + 1, _active_element.pos_y, SYM_AH_LEFT);
+        ctx.display_port.write_char_normal(_active_element.pos_x + width - 1, _active_element.pos_y, SYM_AH_RIGHT);
         _HORIZON_SIDEBARS_RenderLevel = false;
     } else {
-        ctx.display_port.write_char(_active_element.pos_x - width, _active_element.pos_y + static_cast<uint8_t>(_HORIZON_SIDEBARS__pos_y), SYM_AH_DECORATION);
-        ctx.display_port.write_char(_active_element.pos_x + width, _active_element.pos_y + static_cast<uint8_t>(_HORIZON_SIDEBARS__pos_y), SYM_AH_DECORATION);
+        ctx.display_port.write_char_normal(_active_element.pos_x - width, _active_element.pos_y + static_cast<uint8_t>(_HORIZON_SIDEBARS__pos_y), SYM_AH_DECORATION);
+        ctx.display_port.write_char_normal(_active_element.pos_x + width, _active_element.pos_y + static_cast<uint8_t>(_HORIZON_SIDEBARS__pos_y), SYM_AH_DECORATION);
         if (_HORIZON_SIDEBARS__pos_y == height) {
             // Rendering is complete, so prepare to start again
             _HORIZON_SIDEBARS__pos_y = -height;

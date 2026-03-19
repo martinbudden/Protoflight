@@ -2,7 +2,7 @@
 #include "cmsx.h"
 
 
-static const std::array<CMSX::OSD_Entry, 6> menu_save_exitEntries =
+static const std::array<CMSX::osd_entry_t, 6> menu_save_exitEntries =
 {{
     { "-- SAVE/EXIT --", OME_LABEL, nullptr, nullptr},
 
@@ -14,7 +14,7 @@ static const std::array<CMSX::OSD_Entry, 6> menu_save_exitEntries =
     { nullptr, OME_END, nullptr, nullptr}
 }};
 
-static const std::array<CMSX::OSD_Entry, 5> menu_save_exit_rebootEntries =
+static const std::array<CMSX::osd_entry_t, 5> menu_save_exit_rebootEntries =
 {{
     { "-- SAVE/EXIT (REBOOT REQD)", OME_LABEL, nullptr, nullptr },
 

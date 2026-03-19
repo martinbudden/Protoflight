@@ -59,12 +59,13 @@ private:
     static constexpr uint8_t MAX7456_RESET              = 0x02;
     static constexpr uint8_t VERTICAL_SYNC_NEXT_VSYNC   = 0x04;
     static constexpr uint8_t OSD_ENABLE                 = 0x08;
-    enum { CHARACTERS_PER_LINE = 30 };
-    enum { VIDEO_BUFFER_NTSC_CHARACTER_COUNT = 390 };
-    enum { VIDEO_BUFFER_PAL_CHARACTER_COUNT = 480 };
-    enum { MAX7456_SUPPORTED_LAYER_COUNT = LAYER_COUNT };
+    static constexpr uint8_t CHARACTERS_PER_LINE = 30;
+    static constexpr uint32_t VIDEO_BUFFER_NTSC_CHARACTER_COUNT = 390;
+    static constexpr uint32_t VIDEO_BUFFER_PAL_CHARACTER_COUNT = 480;
+    static constexpr uint32_t MAX7456_SUPPORTED_LAYER_COUNT = LAYER_COUNT;
     // 10 MHz max SPI frequency
-    enum { MAX_SPI_CLOCK_FREQUENCY_HZ = 1'0000'000, INITIAL_SPI_CLOCK_FREQUENCY_HZ = 5'000'000 };
+    static constexpr uint32_t MAX_SPI_CLOCK_FREQUENCY_HZ = 10'000'000;
+    static constexpr uint32_t INITIAL_SPI_CLOCK_FREQUENCY_HZ = 5'000'000;
 
     struct layer_t {
         std::array<uint8_t, VIDEO_BUFFER_PAL_CHARACTER_COUNT> buffer;
@@ -83,13 +84,13 @@ public:
     void preinit(const config_t& config);
     void invert(bool invert);
     void brightness(uint8_t black, uint8_t white);
-    bool reInitIfRequired(bool forceStallCheck, Debug& debug);
-    bool writeNvm(uint8_t char_address, const uint8_t *font_data);
-    void refreshAll(Debug& debug);
-    static bool dmaInProgress();
-    bool buffersSynced() const;
-    bool isDeviceDetected();
-    void concludeCurrentSPI_Transaction();
+    bool re_init_if_required(bool forceStallCheck, Debug& debug);
+    bool write_nvm(uint8_t char_address, const uint8_t *font_data);
+    void refresh_all(Debug& debug);
+    static bool dma_in_progress();
+    bool buffers_synced() const;
+    bool is_device_detected();
+    void conclude_current_spi_transaction();
 #if !defined(FRAMEWORK_TEST)
     static uint8_t callbackReady(uint32_t arg);
 #endif

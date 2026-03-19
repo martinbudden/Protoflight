@@ -79,7 +79,7 @@ bool CMSX::row_slider_override(const uint16_t flags)
     return false;
 }
 
-bool CMSX::row_is_skippable(const OSD_Entry* row)
+bool CMSX::row_is_skippable(const osd_entry_t* row)
 {
     const uint16_t entryType = row->flags & OME_TYPE_MASK;
 
@@ -141,21 +141,21 @@ void CMSX::pad_to_size(char* buf, uint8_t size) const
     }
 }
 
-uint32_t CMSX::draw_menuItemValue(DisplayPortBase& display_port, uint8_t row, uint8_t maxSize) // NOLINT(readability-make-member-function-const)
+uint32_t CMSX::draw_menu_item_value(DisplayPortBase& display_port, uint8_t row, uint8_t maxSize) // NOLINT(readability-make-member-function-const)
 {
     pad_to_size(&_menu_draw_buf[0], maxSize < MENU_DRAW_BUFFER_LEN ? maxSize : MENU_DRAW_BUFFER_LEN);
     const uint8_t column = _right_aligned ? _right_menu_column - maxSize : _right_menu_column;
-    return display_port.write_string(column, row, &_menu_draw_buf[0]);
+    return display_port.write_string_normal(column, row, &_menu_draw_buf[0]);
 }
 
-uint32_t CMSX::draw_menuTableItemValue(DisplayPortBase& display_port, uint8_t row, uint8_t maxSize) // NOLINT(readability-make-member-function-const)
+uint32_t CMSX::draw_menu_table_item_value(DisplayPortBase& display_port, uint8_t row, uint8_t maxSize) // NOLINT(readability-make-member-function-const)
 {
     pad_to_size(&_menu_table_buf[0], maxSize < MENU_TABLE_BUFFER_LEN ? maxSize : MENU_TABLE_BUFFER_LEN);
     const uint8_t column = _right_aligned ? _right_menu_column - maxSize : _right_menu_column;
-    return display_port.write_string(column, row, &_menu_table_buf[0]);
+    return display_port.write_string_normal(column, row, &_menu_table_buf[0]);
 }
 
-uint32_t CMSX::draw_menuTableEntry(DisplayPortBase& display_port, const OSD_Entry* entry, uint8_t row, uint16_t& entry_flags, table_ticker_t& ticker)
+uint32_t CMSX::draw_menu_table_entry(DisplayPortBase& display_port, const osd_entry_t* entry, uint8_t row, uint16_t& entry_flags, table_ticker_t& ticker)
 {
     uint32_t count = 0;
 
@@ -191,7 +191,7 @@ uint32_t CMSX::draw_menuTableEntry(DisplayPortBase& display_port, const OSD_Entr
         }
         if (drawText) {
             strncpy(&_menu_table_buf[0], static_cast<const char *>(str + ticker.state), MENU_TABLE_BUFFER_LEN);
-            count += draw_menuTableItemValue(display_port, row, availableSpace);
+            count += draw_menu_table_item_value(display_port, row, availableSpace);
         }
         clear_flag(entry_flags, OME_PRINT_VALUE);
     }
@@ -199,18 +199,18 @@ uint32_t CMSX::draw_menuTableEntry(DisplayPortBase& display_port, const OSD_Entr
     return count;
 }
 
-uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_t row, uint16_t& entry_flags, table_ticker_t& ticker) // NOLINT(readability-function-cognitive-complexity)
+uint32_t CMSX::draw_menu_entry(cms_context_t& ctx, const osd_entry_t* entry, uint8_t row, uint16_t& entry_flags, table_ticker_t& ticker) // NOLINT(readability-function-cognitive-complexity)
 {
     const uint16_t entryType = entry->flags & OME_TYPE_MASK;
     uint32_t count = 0;
     if (entry_flags & OME_PRINT_LABEL) {
         const uint8_t column = _left_menu_column + ((entryType == OME_LABEL) ? 0 : 1);
-        count += ctx.display_port.write_string(column, row, entry->text);
+        count += ctx.display_port.write_string_normal(column, row, entry->text);
         clear_flag(entry_flags, OME_PRINT_LABEL);
     }
 
     if (entryType == OME_TABLE) {
-        count += draw_menuTableEntry(ctx.display_port, entry, row, entry_flags, ticker);
+        count += draw_menu_table_entry(ctx.display_port, entry, row, entry_flags, ticker);
         return count;
     };
 
@@ -220,7 +220,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
         if ((entry_flags & OME_PRINT_VALUE) && entry->data) {
             // A label with optional string, immediately following text
             strncpy(&_menu_draw_buf[0], reinterpret_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
-            count += draw_menuItemValue(ctx.display_port, row, static_cast<uint8_t>(std::min(strlen(&_menu_draw_buf[0]), size_t{MENU_DRAW_BUFFER_LEN})));
+            count += draw_menu_item_value(ctx.display_port, row, static_cast<uint8_t>(std::min(strlen(&_menu_draw_buf[0]), size_t{MENU_DRAW_BUFFER_LEN})));
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -238,14 +238,14 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
             }
             strncat(&_menu_draw_buf[0], ">", MENU_DRAW_BUFFER_LEN);
             row = _small_screen ? row - 1 : row;
-            count += draw_menuItemValue(ctx.display_port, row, static_cast<uint8_t>(std::min(strlen(&_menu_draw_buf[0]), size_t{MENU_DRAW_BUFFER_LEN})));
+            count += draw_menu_item_value(ctx.display_port, row, static_cast<uint8_t>(std::min(strlen(&_menu_draw_buf[0]), size_t{MENU_DRAW_BUFFER_LEN})));
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
     case OME_STRING:
         if ((entry_flags & OME_PRINT_VALUE) && entry->data) {
             strncpy(reinterpret_cast<char*>(&_menu_draw_buf[0]), static_cast<const char*>(entry->data), MENU_DRAW_BUFFER_LEN);
-            count += draw_menuItemValue(ctx.display_port, row, MENU_DRAW_BUFFER_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, MENU_DRAW_BUFFER_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -254,7 +254,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
             const auto* ptr = reinterpret_cast<const osd_bool_t*>(entry->data);
             _menu_draw_buf[0] = *ptr->val ? '1' : '0';
             _menu_draw_buf[1] = 0;
-            count += draw_menuItemValue(ctx.display_port, row, NUMBER_FIELD_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, NUMBER_FIELD_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -262,7 +262,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
         if ((entry_flags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const osd_uint8_t*>(entry->data);
             ui2a(*ptr->val, &_menu_draw_buf[0]);
-            count += draw_menuItemValue(ctx.display_port, row, NUMBER_FIELD_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, NUMBER_FIELD_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -271,7 +271,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
             const auto* ptr = reinterpret_cast<const osd_uint8_fixed_t*>(entry->data);
             formatFixed6point3(*ptr->val*ptr->multiplier, &_menu_draw_buf[0]);
             ui2a(*ptr->val, &_menu_draw_buf[0]);
-            count += draw_menuItemValue(ctx.display_port, row, NUMBER_FIELD_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, NUMBER_FIELD_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -279,7 +279,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
         if ((entry_flags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const osd_int8_t*>(entry->data);
             i2a(*ptr->val, &_menu_draw_buf[0]);
-            count += draw_menuItemValue(ctx.display_port, row, NUMBER_FIELD_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, NUMBER_FIELD_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -287,7 +287,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
         if ((entry_flags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const osd_uint16_t*>(entry->data);
             ui2a(*ptr->val, &_menu_draw_buf[0]);
-            count += draw_menuItemValue(ctx.display_port, row, NUMBER_FIELD_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, NUMBER_FIELD_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -296,7 +296,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
             const auto* ptr = reinterpret_cast<const osd_uint16_fixed_t*>(entry->data);
             formatFixed6point3(*ptr->val*ptr->multiplier, &_menu_draw_buf[0]);
             ui2a(*ptr->val, &_menu_draw_buf[0]);
-            count += draw_menuItemValue(ctx.display_port, row, NUMBER_FIELD_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, NUMBER_FIELD_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -304,7 +304,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
         if ((entry_flags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const osd_int16_t*>(entry->data);
             i2a(*ptr->val, &_menu_draw_buf[0]);
-            count += draw_menuItemValue(ctx.display_port, row, NUMBER_FIELD_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, NUMBER_FIELD_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -312,7 +312,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
         if ((entry_flags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const osd_uint32_t*>(entry->data);
             ui2a(*ptr->val, &_menu_draw_buf[0]);
-            count += draw_menuItemValue(ctx.display_port, row, NUMBER_FIELD_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, NUMBER_FIELD_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -320,7 +320,7 @@ uint32_t CMSX::draw_menuEntry(cms_context_t& ctx, const OSD_Entry* entry, uint8_
         if ((entry_flags & OME_PRINT_VALUE) && entry->data) {
             const auto* ptr = reinterpret_cast<const osd_int32_t*>(entry->data);
             i2a(*ptr->val, &_menu_draw_buf[0]);
-            count += draw_menuItemValue(ctx.display_port, row, NUMBER_FIELD_LEN);
+            count += draw_menu_item_value(ctx.display_port, row, NUMBER_FIELD_LEN);
             clear_flag(entry_flags, OME_PRINT_VALUE);
         }
         break;
@@ -355,7 +355,7 @@ void CMSX::draw_menu(cms_context_t& ctx, uint32_t current_time_us) // NOLINT(rea
         }
 #else
         uint8_t ii = 0;
-        for (const OSD_Entry* entry = _page_top; entry <= _page_top + _page_max_row; ++entry, ++ii) {
+        for (const osd_entry_t* entry = _page_top; entry <= _page_top + _page_max_row; ++entry, ++ii) {
             _entry_flags[ii] |= OME_PRINT_LABEL | OME_PRINT_VALUE;
         }
 #endif
@@ -408,7 +408,7 @@ void CMSX::draw_menu(cms_context_t& ctx, uint32_t current_time_us) // NOLINT(rea
 #endif
 #else
         uint8_t ii = 0;
-        for (const OSD_Entry* entry = _page_top; entry <= _page_top + _page_max_row; ++entry, ++ii) {
+        for (const osd_entry_t* entry = _page_top; entry <= _page_top + _page_max_row; ++entry, ++ii) {
             if (entry->flags & OME_DYNAMIC) {
                 _entry_flags[ii] |= OME_PRINT_VALUE;
             }
@@ -430,13 +430,13 @@ void CMSX::draw_menu(cms_context_t& ctx, uint32_t current_time_us) // NOLINT(rea
         // clear the old cursor
         if (_cursor_row != CURSOR_ROW_NOT_SET) {
             const uint8_t row = topRow + static_cast<uint8_t>(_cursor_row * _lines_per_menu_item);
-            spaceLeft -= static_cast<int32_t>(ctx.display_port.write_string(_left_menu_column, row, " "));
+            spaceLeft -= static_cast<int32_t>(ctx.display_port.write_string_normal(_left_menu_column, row, " "));
         }
         // and draw the new one
         _cursor_row = _current_menu_context.cursor_row;
     }
     const uint8_t row = topRow + static_cast<uint8_t>(_cursor_row * _lines_per_menu_item);
-    spaceLeft -= static_cast<int32_t>(ctx.display_port.write_string(_left_menu_column, row, ">"));
+    spaceLeft -= static_cast<int32_t>(ctx.display_port.write_string_normal(_left_menu_column, row, ">"));
     if (_current_menu_context.menu->on_display_update) {
         if (_current_menu_context.menu->on_display_update(*this, ctx, _page_top + _current_menu_context.cursor_row) == MENU_BACK) {
             menu_back(ctx, nullptr);
@@ -446,20 +446,20 @@ void CMSX::draw_menu(cms_context_t& ctx, uint32_t current_time_us) // NOLINT(rea
 
     // Display the menu entries
     uint8_t ii = 0;
-    for (const OSD_Entry* entry = _page_top; entry <= _page_top + _page_max_row; ++ii, ++entry) {
+    for (const osd_entry_t* entry = _page_top; entry <= _page_top + _page_max_row; ++ii, ++entry) {
         const uint8_t entryRow = topRow + static_cast<uint8_t>(ii * _lines_per_menu_item);
         // display the current item indicator
         //uint16_t& entry_flags = _entry_flags[ii];
         // Highlight values overridden by sliders
         if (row_slider_override(entry->flags)) { // cppcheck-suppress knownConditionTrueFalse
-            ctx.display_port.write_char(_left_menu_column - 1, entryRow, 'S');
+            ctx.display_port.write_char_normal(_left_menu_column - 1, entryRow, 'S');
         }
         // Print values
         // XXX Polled values at latter positions in the list may not be
         // XXX printed if not enough room in the middle of the list.
         if ((_entry_flags[ii] & OME_PRINT_VALUE) || (_entry_flags[ii] & OME_SCROLLING_TICKER)) {
             //const bool selectedRow = (ii == _current_menu_context.cursor_row);
-            spaceLeft -= static_cast<int32_t>(draw_menuEntry(ctx, entry, entryRow, _entry_flags[ii], _runtimeTableTicker[ii]));
+            spaceLeft -= static_cast<int32_t>(draw_menu_entry(ctx, entry, entryRow, _entry_flags[ii], _runtimeTableTicker[ii]));
             enum { CHARACTERS_PER_LINE };
             if (spaceLeft < CHARACTERS_PER_LINE) {
                 return;
@@ -471,25 +471,25 @@ void CMSX::draw_menu(cms_context_t& ctx, uint32_t current_time_us) // NOLINT(rea
     // Only draw the symbols when necessary after the screen has been cleared. Otherwise they're static.
     if (displayWasCleared && _left_menu_column > 0) { // make sure there's room to draw the symbol
         if (_current_menu_context.page > 0) {
-            ctx.display_port.write_char(_left_menu_column - 1, topRow, ctx.display_port.get_small_arrow_up());
+            ctx.display_port.write_char_normal(_left_menu_column - 1, topRow, ctx.display_port.get_small_arrow_up());
         }
         if (_current_menu_context.page < _page_count - 1) {
-            ctx.display_port.write_char(_left_menu_column - 1, topRow + _page_max_row, ctx.display_port.get_small_arrow_down());
+            ctx.display_port.write_char_normal(_left_menu_column - 1, topRow + _page_max_row, ctx.display_port.get_small_arrow_down());
         }
     }
 // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
-uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key) // NOLINT(readability-function-cognitive-complexity)
+uint16_t CMSX::handle_key(cms_context_t& ctx, cmsx_key_e key) // NOLINT(readability-function-cognitive-complexity)
 {
     if (!_current_menu_context.menu) {
         return BUTTON_TIME_MS;
     }
-    if (key == KEY_MENU) {
+    if (key == CMSX_KEY_MENU) {
         menu_open(ctx);
         return BUTTON_PAUSE_MS;
     }
-    if (key == KEY_ESC) {
+    if (key == CMSX_KEY_ESC) {
         if (_elementEditing) {
             _elementEditing = false;
         } else {
@@ -497,13 +497,13 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key) // NOLINT(readability-f
         }
         return BUTTON_PAUSE_MS;
     }
-    if (key == KEY_SAVE_MENU && !_save_menu_inhibited) {
+    if (key == CMSX_KEY_SAVE_MENU && !_save_menu_inhibited) {
         _elementEditing = false;
         menu_change(*this, ctx, get_save_exit_menu());
         return BUTTON_PAUSE_MS;
     }
     if (!_elementEditing) {
-        if (key == KEY_DOWN) {
+        if (key == CMSX_KEY_DOWN) {
             if (_current_menu_context.cursor_row < _page_max_row) {
                 ++_current_menu_context.cursor_row;
             } else {
@@ -513,7 +513,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key) // NOLINT(readability-f
             }
             return BUTTON_TIME_MS;
         }
-        if (key == KEY_UP) {
+        if (key == CMSX_KEY_UP) {
             auto cursor_row = static_cast<int8_t>(_current_menu_context.cursor_row);
             --cursor_row;
             // Skip non-title labels, strings and dynamic read-only entries
@@ -531,11 +531,11 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key) // NOLINT(readability-f
             return BUTTON_TIME_MS;
         }
     }
-    const OSD_Entry* entry = _page_top + _current_menu_context.cursor_row; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    const osd_entry_t* entry = _page_top + _current_menu_context.cursor_row; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     return handle_key(ctx, key, entry, _entry_flags[_current_menu_context.cursor_row]);
 }
 
-uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry, uint16_t& entry_flags) // NOLINT(readability-function-cognitive-complexity)
+uint16_t CMSX::handle_key(cms_context_t& ctx, cmsx_key_e key, const osd_entry_t* entry, uint16_t& entry_flags) // NOLINT(readability-function-cognitive-complexity)
 {
 //NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
     uint16_t ret = BUTTON_TIME_MS;
@@ -544,13 +544,13 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
     case OME_LABEL:
         break;
     case OME_SUBMENU:
-        if (key == KEY_RIGHT) {
+        if (key == CMSX_KEY_RIGHT) {
             menu_change(*this, ctx, reinterpret_cast<const menu_t*>(entry->data));
             ret = BUTTON_PAUSE_MS;
         }
         break;
     case OME_FUNCTION_CALL:
-        if (entry->fnPtr && key == KEY_RIGHT) {
+        if (entry->fnPtr && key == CMSX_KEY_RIGHT) {
             if (entry->fnPtr(*this, ctx, reinterpret_cast<const menu_t*>(entry->data)) == MENU_BACK) {
                 menu_back(ctx, nullptr);
             }
@@ -561,7 +561,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         }
         break;
     case OME_EXIT:
-        if (entry->fnPtr && key == KEY_RIGHT) {
+        if (entry->fnPtr && key == CMSX_KEY_RIGHT) {
             entry->fnPtr(*this, ctx, reinterpret_cast<const menu_t*>(entry->data));
             ret = BUTTON_PAUSE_MS;
         }
@@ -578,24 +578,24 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const osd_uint16_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
-            if ((key == KEY_RIGHT) && (!_elementEditing)) {
+            if ((key == CMSX_KEY_RIGHT) && (!_elementEditing)) {
                 _elementEditing = true;
                 _osd_profile_cursor = 0;
             } else if (_elementEditing) {
-                if (key == KEY_RIGHT) {
+                if (key == CMSX_KEY_RIGHT) {
                     if (_osd_profile_cursor < OSD_Elements::PROFILE_COUNT) {
                         ++_osd_profile_cursor;
                     }
                 }
-                if (key == KEY_LEFT) {
+                if (key == CMSX_KEY_LEFT) {
                     if (_osd_profile_cursor > 0) {
                         --_osd_profile_cursor;
                     }
                 }
-                if (key == KEY_UP) {
+                if (key == CMSX_KEY_UP) {
                     set_flag(*ptr->val, OSD_Elements::profile_flag(_osd_profile_cursor));
                 }
-                if (key == KEY_DOWN) {
+                if (key == CMSX_KEY_DOWN) {
                     clear_flag(*ptr->val, OSD_Elements::profile_flag(_osd_profile_cursor));
                 }
             }
@@ -613,7 +613,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const osd_table_t*>(entry->data);
             const uint8_t previousValue = *ptr->val;
-            if (key == KEY_RIGHT) {
+            if (key == CMSX_KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
                     *ptr->val += 1;
                 }
@@ -635,7 +635,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const osd_bool_t*>(entry->data);
             const bool previousValue = *ptr->val;
-            *ptr->val = (key == KEY_RIGHT) ? true : false;
+            *ptr->val = (key == CMSX_KEY_RIGHT) ? true : false;
             set_flag(entry_flags, OME_PRINT_VALUE);
             if ((entry->flags & OME_REBOOT_REQUIRED) && (*ptr->val != previousValue)) {
                 set_reboot_required();
@@ -649,7 +649,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const osd_int8_t*>(entry->data);
             const int8_t previousValue = *ptr->val;
-            if (key == KEY_RIGHT) {
+            if (key == CMSX_KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
                     *ptr->val = static_cast<int8_t>(*ptr->val + ptr->step);
                 }
@@ -673,7 +673,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const osd_uint8_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
-            if (key == KEY_RIGHT) {
+            if (key == CMSX_KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
                     *ptr->val += ptr->step;
                 }
@@ -697,7 +697,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const osd_uint16_t*>(entry->data);
             const uint16_t previousValue = *ptr->val;
-            if (key == KEY_RIGHT) {
+            if (key == CMSX_KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
                     *ptr->val += ptr->step;
                 }
@@ -719,7 +719,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const osd_int16_t*>(entry->data);
             const int16_t previousValue = *ptr->val;
-            if (key == KEY_RIGHT) {
+            if (key == CMSX_KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
                     *ptr->val = static_cast<int16_t>(*ptr->val + ptr->step);
                 }
@@ -742,7 +742,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const osd_uint32_t*>(entry->data);
             const uint32_t previousValue = *ptr->val;
-            if (key == KEY_RIGHT) {
+            if (key == CMSX_KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
                     *ptr->val += ptr->step;
                 }
@@ -764,7 +764,7 @@ uint16_t CMSX::handle_key(cms_context_t& ctx, key_e key, const OSD_Entry* entry,
         if (entry->data) {
             const auto* ptr = reinterpret_cast<const osd_int32_t*>(entry->data);
             const int32_t previousValue = *ptr->val;
-            if (key == KEY_RIGHT) {
+            if (key == CMSX_KEY_RIGHT) {
                 if (*ptr->val < ptr->max) {
                     *ptr->val += ptr->step;
                 }
@@ -930,7 +930,7 @@ const void* CMSX::menu_exit(cms_context_t& ctx, const menu_t* menu)
     if ((menu == MENU_EXIT_SAVE_REBOOT) || (menu == MENU_POPUP_SAVE_REBOOT) || (menu == MENU_POPUP_EXIT_REBOOT)) {
         _cursor_row = CURSOR_ROW_NOT_SET;
         ctx.display_port.clear_screen(DISPLAY_CLEAR_WAIT);
-        ctx.display_port.write_string(5, 3, "REBOOTING...");
+        ctx.display_port.write_string_normal(5, 3, "REBOOTING...");
         ctx.display_port.redraw();
 #if false
         stopMotors();
@@ -959,7 +959,7 @@ void CMSX::clear_arming_disabled(cms_context_t& ctx)
 
 void CMSX::page_select(uint8_t newpage)
 {
-    const OSD_Entry* menuEntry = _current_menu_context.menu->entries;
+    const osd_entry_t* menuEntry = _current_menu_context.menu->entries;
     while ((menuEntry->flags & OME_TYPE_MASK) != OME_END) {
         ++menuEntry; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     }
@@ -969,7 +969,7 @@ void CMSX::page_select(uint8_t newpage)
     _page_top = &_current_menu_context.menu->entries[_current_menu_context.page * _max_menu_items]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic,bugprone-implicit-widening-of-multiplication-result)
 
     uint8_t ii = 0;
-    for (const OSD_Entry* entry = _page_top; (entry->flags & OME_TYPE_MASK) != OME_END; ++entry) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    for (const osd_entry_t* entry = _page_top; (entry->flags & OME_TYPE_MASK) != OME_END; ++entry) { // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         _entry_flags[ii] = entry->flags;
         ++ii;
     }
@@ -997,7 +997,7 @@ void CMSX::page_previous()
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast,hicpp-signed-bitwise,misc-no-recursion)
 void CMSX::traverse_global_exit(const CMSX::menu_t* menu)
 {
-    for (const CMSX::OSD_Entry* entry = menu->entries; (entry->flags & OME_TYPE_MASK) != OME_END; ++entry) {
+    for (const CMSX::osd_entry_t* entry = menu->entries; (entry->flags & OME_TYPE_MASK) != OME_END; ++entry) {
         if ((entry->flags & OME_TYPE_MASK) == OME_SUBMENU) {
             traverse_global_exit(reinterpret_cast<const CMSX::menu_t*>(entry->data));
         }

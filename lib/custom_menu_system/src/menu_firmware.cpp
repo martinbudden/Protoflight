@@ -29,7 +29,7 @@ static const void* calibrate_acc(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]
     return CMSX::MENU_BACK;
 }
 
-static const std::array<CMSX::OSD_Entry, 7> menu_calibrate_accEntries
+static const std::array<CMSX::osd_entry_t, 7> menu_calibrate_accEntries
 {{
     { "-- CALIBRATE ACC --",      OME_LABEL, nullptr, nullptr },
     { "PLACE ON A LEVEL SURFACE",   OME_LABEL, nullptr, nullptr},
@@ -52,7 +52,7 @@ const void* CMSX::menu_calibrate_baro(CMSX& cmsx, cms_context_t& ctx, [[maybe_un
     return nullptr;
 }
 
-static const std::array<CMSX::OSD_Entry, 7> menu_calibrateEntries
+static const std::array<CMSX::osd_entry_t, 7> menu_calibrateEntries
 {{
     { "-- CALIBRATE --", OME_LABEL, nullptr, nullptr },
     { "GYRO",   OME_FUNCTION_CALL | OME_DYNAMIC, CMSX::menu_calibrate_gyro, &CMSX::GyroCalibrationStatus[0] },
@@ -64,7 +64,7 @@ static const std::array<CMSX::OSD_Entry, 7> menu_calibrateEntries
     { nullptr, OME_END, nullptr, nullptr}
 }};
 
-static const void* menu_calibrateOnDisplayUpdate(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::OSD_Entry* selected)
+static const void* menu_calibrateOnDisplayUpdate(CMSX& cmsx, cms_context_t& ctx, [[maybe_unused]] const CMSX::osd_entry_t* selected)
 {
     (void)cmsx;
     (void)ctx;
@@ -84,7 +84,7 @@ CMSX::menu_t CMSX::menu_calibrate {
 #define FC_VERSION_STRING           "4.5.0"
 // NOLINTEND(cppcoreguidelines-macro-usage)
 
-static const std::array<CMSX::OSD_Entry, 7> menu_firmwareEntries
+static const std::array<CMSX::osd_entry_t, 7> menu_firmwareEntries
 {{
     { "-- INFO --", OME_LABEL, nullptr, nullptr },
 

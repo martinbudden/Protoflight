@@ -17,7 +17,7 @@ public:
     void init(DisplayPortBase::device_type_e device_type);
     void grab();
     void release();
-    void releaseAll();
+    void release_all();
     bool is_grabbed() const;
     void clear_screen(display_clear_option_e options);
     bool draw_screen();
@@ -36,7 +36,7 @@ public:
     void begin_transaction(display_transaction_option_e opts);
     void commit_transaction();
     bool get_canvas(struct display_canvas_t* canvas) const;
-    bool layer_supported(DisplayPortBase::layer_e layer);
+    bool is_layer_supported(DisplayPortBase::layer_e layer);
     bool layer_select(DisplayPortBase::layer_e layer);
     bool layer_copy(DisplayPortBase::layer_e destLayer, DisplayPortBase::layer_e sourceLayer);
     void set_background_type(DisplayPortBase::background_e background_type);

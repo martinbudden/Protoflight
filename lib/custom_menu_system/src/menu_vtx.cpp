@@ -23,7 +23,7 @@ static const void* menuConfirm(CMSX& cmsx, cms_context_t& ctx, const CMSX::menu_
     return CMSX::MENU_BACK;
 }
 
-static const std::array<CMSX::OSD_Entry, 4> menu_vtx_confirmEntries
+static const std::array<CMSX::osd_entry_t, 4> menu_vtx_confirmEntries
 {{
     { "CONFIRM", OME_LABEL, nullptr,        nullptr },
     { "YES",     OME_EXIT,  menuConfirm,    CMSX::MENU_EXIT },
@@ -134,7 +134,7 @@ CMSX::menu_t menuConfig = {
 };
 
 // RTC6705 does not support bands and channels, only frequencies.
-static const std::array<CMSX::OSD_Entry, 12> menu_vtx_Entries
+static const std::array<CMSX::osd_entry_t, 12> menu_vtx_Entries
 {{
     { "- VTX -", OME_LABEL, nullptr, nullptr }, // dynamically changed according to VTX type
 

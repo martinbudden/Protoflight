@@ -11,7 +11,7 @@ void Display::init(DisplayPortBase::device_type_e device_type)
     _display_port.set_device_type(device_type);
 
     _display_port.set_use_full_screen(false);
-    _display_port.releaseAll();
+    _display_port.release_all();
 
     begin_transaction(DISPLAY_TRANSACTION_OPTION_NONE);
     clear_screen(DISPLAY_CLEAR_WAIT);
@@ -49,9 +49,9 @@ void Display::release()
     //--_display_port._grab_count;
 }
 
-void Display::releaseAll()
+void Display::release_all()
 {
-    _display_port.releaseAll();
+    _display_port.release_all();
 }
 
 bool Display::is_grabbed() const
@@ -116,14 +116,14 @@ uint32_t Display::tx_bytes_free() const
     return _display_port.tx_bytes_free();
 }
 
-bool Display::layer_supported(DisplayPortBase::layer_e layer)
+bool Display::is_layer_supported(DisplayPortBase::layer_e layer)
 {
     if (layer == DisplayPortBase::LAYER_FOREGROUND) {
         // Every device must support the foreground (default) layer
         return true;
     }
     if (layer < DisplayPortBase::LAYER_COUNT) {
-        return _display_port.layer_supported(layer);
+        return _display_port.is_layer_supported(layer);
     }
     return false;
 }
