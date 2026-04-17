@@ -9,6 +9,7 @@
 #include "version.h"
 #include "vtx.h"
 
+#include <ahrs.h>
 #include <ahrs_message_queue.h>
 #include <blackbox.h>
 #include <debug.h>
