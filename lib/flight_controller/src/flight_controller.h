@@ -4,6 +4,7 @@
 #include "targets.h"
 
 #include <filters.h>
+#include <motor_commands.h>
 #include <vehicle_controller_base.h>
 
 #include <quaternion.h>
@@ -337,9 +338,9 @@ public:
     [[noreturn]] static void Task(void* arg);
 public:
     void detect_crash_or_spin();
-    void apply_crash_flip_to_motors(const xyz_t& gyro_rps, float delta_t, MotorMixerMessageQueue& motor_mixer_message_queue);
+    motor_commands_t apply_crash_flip_to_motors(const xyz_t& gyro_rps, float delta_t);
     void set_yaw_spin_threshold_dps(float yawSspin_threshold_dps);
-    void recover_from_yaw_spin(const xyz_t& gyro_rps, float delta_t, MotorMixerMessageQueue& motor_mixer_message_queue);
+    motor_commands_t recover_from_yaw_spin(const xyz_t& gyro_rps, float delta_t);
 
     void calculate_dmax_multipliers(Debug& debug);
     void initialize_setpoint_filters(float setpoint_delta_t);
@@ -350,6 +351,7 @@ public:
 
     float calculate_iterm_error(size_t axis, float measurement, Debug& debug);
     virtual void update_outputs_using_pids(const ahrs_data_t& ahrs_data, AhrsMessageQueue& ahrs_message_queue, MotorMixerMessageQueue& motor_mixer_message_queue, Debug& debug) override;
+    motor_commands_t calculate_motor_commands(const ahrs_data_t& ahrs_data, Debug& debug);
 
 private:
     static constexpr float DEGREES_TO_RADIANS = 3.14159265358979323846F / 180.0F;

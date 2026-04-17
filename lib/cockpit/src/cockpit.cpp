@@ -368,14 +368,14 @@ bool Cockpit::get_box_id_state(uint8_t box_id, const RcModes& rc_modes) const
 Pack used flight_mode_flags into supplied bitset.
 returns number of bits used
 */
-size_t Cockpit::pack_flight_mode_flags(MspBox::bitset_t& flight_mode_flags, const RcModes& rc_modes) const
+size_t Cockpit::pack_flight_mode_flags(std::bitset<MSP_BOX_COUNT>& flight_mode_flags, const RcModes& rc_modes) const
 {
     // Serialize the flags in the order we delivered them, ignoring BOX NAMES and BOX INDEXES
     flight_mode_flags.reset();
     // map box_id_e enabled bits to MSP status indexes
     // only active box_ids are sent in status over MSP, other bits are not counted
     size_t box_index = 0;    // index of active box_id (matches sent permanentId and boxNames)
-    for (uint8_t box_id = 0; box_id < MspBox::BOX_COUNT; ++box_id) {
+    for (uint8_t box_id = 0; box_id < MSP_BOX_COUNT; ++box_id) {
         if (_msp_box.get_active_box_id(box_id)) {
             if (get_box_id_state(box_id, rc_modes)) {
                 flight_mode_flags.set(box_index); // box is enabled

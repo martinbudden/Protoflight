@@ -19,6 +19,9 @@
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
 enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 #endif
+#if !defined(OUTPUT_TO_MOTORS_DENOMINATOR)
+enum { OUTPUT_TO_MOTORS_DENOMINATOR = 2 }; // runs at half rate of AHRS_TASK
+#endif
 
 void setUp() {
 }
@@ -32,7 +35,6 @@ void test_flight_controller()
     static MadgwickFilter sensorFusionFilter;
     static ImuNull imu(ImuBase::XPOS_YPOS_ZPOS);
 
-    static constexpr uint8_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
     static constexpr size_t MOTOR_COUNT = 4;
     static constexpr size_t SERVO_COUNT = 0;
     static MotorMixerBase motor_mixer(MotorMixerBase::QUAD_X, OUTPUT_TO_MOTORS_DENOMINATOR, MOTOR_COUNT, SERVO_COUNT);

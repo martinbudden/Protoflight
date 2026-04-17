@@ -22,6 +22,9 @@
 #if !defined(AHRS_TASK_INTERVAL_MICROSECONDS)
 enum { AHRS_TASK_INTERVAL_MICROSECONDS = 5000 };
 #endif
+#if !defined(OUTPUT_TO_MOTORS_DENOMINATOR)
+enum { OUTPUT_TO_MOTORS_DENOMINATOR = 2 }; // runs at half rate of AHRS_TASK
+#endif
 
 
 void setUp() {
@@ -35,7 +38,6 @@ static NonVolatileStorage nvs;
 static MadgwickFilter sensorFusionFilter;
 static ImuNull imu;
 static Debug debug;
-static constexpr uint8_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
 static constexpr size_t MOTOR_COUNT = 4;
 static constexpr size_t SERVO_COUNT = 0;
 static ImuFilters imu_filters(0.0F);
@@ -50,7 +52,7 @@ static Cockpit cockpit(autopilot, nullptr);
 static const float looptime_seconds = 0.001F;
 static RpmFilters rpm_filters(MOTOR_COUNT, looptime_seconds);
 static MotorMixerMessageQueue motor_mixer_message_queue {};
-static motor_mixer_message_queue_item_t motor_mixer_message_queue_item {};
+static motor_commands_t motor_commands {};
 
 
 void test_main_control_loop()
@@ -77,8 +79,8 @@ void test_main_control_loop()
     const ahrs_data_t& ahrs_data = ahrs.read_imu_and_update_orientation(time_microseconds, time_microseconds_delta, imu_filters, flight_controller, debug);
     flight_controller.update_outputs_using_pids(ahrs_data, ahrs_message_queue, motor_mixer_message_queue, debug);
 
-    motor_mixer_message_queue.WAIT(motor_mixer_message_queue_item);
-    motor_mixer.output_to_motors(motor_mixer_message_queue_item, &rpm_filters, delta_t, tick_count, debug);
+    motor_mixer_message_queue.WAIT(motor_commands);
+    motor_mixer.output_to_motors(motor_commands, &rpm_filters, delta_t, tick_count, debug);
 
     TEST_ASSERT_TRUE(true);
 }

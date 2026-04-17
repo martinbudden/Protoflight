@@ -6,6 +6,7 @@
 
 class StreamBufWriter;
 
+
 class MspBox {
 public:
     MspBox() = default;
@@ -76,7 +77,6 @@ public:
     static constexpr uint8_t BOX_LAP_TIMER_RESET = 47;
     static constexpr uint8_t BOX_COUNT = 48; // number of boxes
 
-    typedef std::bitset<BOX_COUNT> bitset_t;
     typedef int serializeBoxFn(StreamBufWriter& dst, const box_t* box);
 public:
     static const box_t* find_box_by_box_id(uint8_t box_id);
@@ -149,3 +149,5 @@ protected:
         { .id = BOX_LAP_TIMER_RESET, .permanent_id = 54, .name = "LAP TIMER RESET" },
     }};
 };
+
+static constexpr uint8_t MSP_BOX_COUNT = MspBox::BOX_COUNT;

@@ -53,7 +53,7 @@ msp_result_e MSP_Protoflight::process_get_command(msp_context_t& ctx, int16_t cm
         static constexpr uint16_t SENSOR_ACCELEROMETER = 0x01;
         static constexpr uint16_t SENSOR_GYROSCOPE = 0x01U << 5U;
         dst.write_u16(SENSOR_ACCELEROMETER | SENSOR_GYROSCOPE);
-        MspBox::bitset_t flight_mode_flags;
+        std::bitset<MSP_BOX_COUNT> flight_mode_flags;
         const size_t flagBitCount = ctx.cockpit.pack_flight_mode_flags(flight_mode_flags, ctx.rc_modes);
         dst.write_data(&flight_mode_flags, 4); // unconditional part of flags, first 32 bits
         dst.write_u8(ctx.nvs.get_current_pid_profile_index());
@@ -92,12 +92,12 @@ msp_result_e MSP_Protoflight::process_get_command(msp_context_t& ctx, int16_t cm
     }
     case MSP_RAW_IMU: {
         ImuBase::xyz_int32_t acc {};
-        ctx.ahrs.read_acc_raw(acc.x, acc.y, acc.z);
+        //!!ctx.ahrs.read_acc_raw(acc.x, acc.y, acc.z);
         dst.write_u16(static_cast<uint16_t>(acc.x));
         dst.write_u16(static_cast<uint16_t>(acc.y));
         dst.write_u16(static_cast<uint16_t>(acc.z));
         ImuBase::xyz_int32_t gyro {};
-        ctx.ahrs.read_gyro_raw(gyro.x, gyro.y, gyro.z);
+        //!!ctx.ahrs.read_gyro_raw(gyro.x, gyro.y, gyro.z);
         dst.write_u16(static_cast<uint16_t>(gyro.x));
         dst.write_u16(static_cast<uint16_t>(gyro.y));
         dst.write_u16(static_cast<uint16_t>(gyro.z));

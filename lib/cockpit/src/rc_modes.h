@@ -69,13 +69,13 @@ private:
     bool is_mode_activation_condition_configured(const rc_modes_activation_condition_t& mac, const rc_modes_activation_condition_t& empty_mac) const;
     static bool is_range_usable(uint8_t range_start, uint8_t range_end);
     static bool is_range_active(uint16_t channel_value, uint8_t range_start, uint8_t range_end);
-    void update_masks_for_mac(const rc_modes_activation_condition_t& mac, MspBox::bitset_t& and_bitset, MspBox::bitset_t& new_bitsets, bool range_active);
-    void update_masks_for_sticky_modes(const rc_modes_activation_condition_t& mac, MspBox::bitset_t& and_bitset, MspBox::bitset_t& new_bitset, bool range_active);
+    void update_masks_for_mac(const rc_modes_activation_condition_t& mac, std::bitset<MSP_BOX_COUNT>& and_bitset, std::bitset<MSP_BOX_COUNT>& new_bitsets, bool range_active);
+    void update_masks_for_sticky_modes(const rc_modes_activation_condition_t& mac, std::bitset<MSP_BOX_COUNT>& and_bitset, std::bitset<MSP_BOX_COUNT>& new_bitset, bool range_active);
 private:
     size_t _active_mac_count = 0;
     size_t _active_linked_mac_count = 0;
-    MspBox::bitset_t _rc_mode_activation_bitset {};
-    MspBox::bitset_t _sticky_modes_ever_disabled_bitset {};
+    std::bitset<MSP_BOX_COUNT> _rc_mode_activation_bitset {};
+    std::bitset<MSP_BOX_COUNT> _sticky_modes_ever_disabled_bitset {};
     std::array<uint8_t, RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT> _active_mac_array {};
     std::array<uint8_t, RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT> _active_linked_mac_array {};
     std::array<rc_modes_activation_condition_t, RC_MODES_MAX_MODE_ACTIVATION_CONDITION_COUNT> _mode_activation_conditions {};

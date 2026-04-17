@@ -24,6 +24,10 @@
 
 #include <unity.h>
 
+#if !defined(OUTPUT_TO_MOTORS_DENOMINATOR)
+enum { OUTPUT_TO_MOTORS_DENOMINATOR = 2 }; // runs at half rate of AHRS_TASK
+#endif
+
 void setUp() {
 }
 
@@ -52,7 +56,6 @@ static NonVolatileStorage nvs;
 static MadgwickFilter sensorFusionFilter;
 static ImuNull imu;
 static Debug debug;
-static constexpr uint8_t OUTPUT_TO_MOTORS_DENOMINATOR = 1;
 static constexpr size_t MOTOR_COUNT = 4;
 static constexpr size_t SERVO_COUNT = 0;
 static ImuFilters imu_filters(0.0F);

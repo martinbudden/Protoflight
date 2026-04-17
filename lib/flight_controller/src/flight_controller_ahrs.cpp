@@ -65,26 +65,26 @@ void FlightController::calculate_dmax_multipliers(Debug& debug)
 /*!
 NOTE: CALLED FROM WITHIN THE AHRS TASK
 */
-void FlightController::apply_crash_flip_to_motors(const xyz_t& gyro_rps, float delta_t, MotorMixerMessageQueue& motor_mixer_message_queue)
+motor_commands_t FlightController::apply_crash_flip_to_motors(const xyz_t& gyro_rps, float delta_t)
 {
     (void)gyro_rps;
     (void)delta_t;
-    (void)motor_mixer_message_queue;
+    return motor_commands_t {};
 }
 
 
 /*!
 NOTE: CALLED FROM WITHIN THE AHRS TASK
 */
-void FlightController::recover_from_yaw_spin(const xyz_t& gyro_rps, float delta_t, MotorMixerMessageQueue& motor_mixer_message_queue)
+motor_commands_t FlightController::recover_from_yaw_spin(const xyz_t& gyro_rps, float delta_t)
 {
 #if defined(USE_YAW_SPIN_RECOVERY)
     if (std::fabs(gyro_rps.z) > _yaw_spin.recovered_rps) {
-        _sh.output_throttle = 0.5F; // half throttle gives maximum yaw authority, since outputs will have maximum range before being clipped
+        _sh.output_throttle = 0.5F; // half throttle gives maximum yaw authority, since motor_commands will have maximum range before being clipped
         // use the YAW_RATE_DPS PID to bring the spin down to zero
         _sh.PIDS[YAW_RATE_DPS].set_setpoint(0.0F);
         const float yaw_rate_dps = yaw_rate_ned_dps(gyro_rps);
-        motor_mixer_message_queue_item_t outputs {
+        motor_commands_t  motor_commands {
             .throttle = _sh.output_throttle,
             .roll_dps = 0.0F,
             .pitch_dps = 0.0F,
@@ -94,24 +94,24 @@ void FlightController::recover_from_yaw_spin(const xyz_t& gyro_rps, float delta_
             // we have partially recovered from the spin, so try and also correct any roll and pitch spin
             _sh.PIDS[ROLL_RATE_DPS].set_setpoint(0.0F);
             const float roll_rate_dps = roll_rate_ned_dps(gyro_rps);
-            outputs.roll_dps = _sh.PIDS[ROLL_RATE_DPS].update(roll_rate_dps, delta_t);
+            motor_commands.roll_dps = _sh.PIDS[ROLL_RATE_DPS].update(roll_rate_dps, delta_t);
 
             _sh.PIDS[PITCH_RATE_DPS].set_setpoint(0.0F);
             const float pitch_rate_dps = pitch_rate_ned_dps(gyro_rps);
-            outputs.pitch_dps = _sh.PIDS[PITCH_RATE_DPS].update(pitch_rate_dps, delta_t);
+            motor_commands.pitch_dps = _sh.PIDS[PITCH_RATE_DPS].update(pitch_rate_dps, delta_t);
         }
-        motor_mixer_message_queue.SIGNAL(outputs);
-    } else {
-        // come out of yaw spin recovery
-        _sh.yaw_spin_recovery = false;
-        // switch PID integration back on
-        switch_pid_integration_on();
+        // motor_mixer_message_queue.SIGNAL(outputs);
+        return motor_commands;
     }
+    // come out of yaw spin recovery
+    _sh.yaw_spin_recovery = false;
+    // switch PID integration back on
+    switch_pid_integration_on();
 #else
     (void)gyro_rps;
     (void)delta_t;
-    (void)motor_mixer_message_queue;
 #endif
+    return motor_commands_t {};
 }
 
 /*!
@@ -240,6 +240,8 @@ It is typically called at frequency of between 1000Hz and 8000Hz, so it has to b
 
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyro_rps, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
+
+!!TODO: Move the SIGNALing etc directly into the task function
 */
 void FlightController::update_outputs_using_pids(const ahrs_data_t& ahrs_data, AhrsMessageQueue& ahrs_message_queue, MotorMixerMessageQueue& motor_mixer_message_queue, Debug& debug)
 {
@@ -258,15 +260,27 @@ void FlightController::update_outputs_using_pids(const ahrs_data_t& ahrs_data, A
 #else
     (void)ahrs_message_queue;
 #endif
+    motor_commands_t motor_commands = calculate_motor_commands(ahrs_data, debug);
+
+    // The MotorMixerTask is waiting on the message queue, so signal it that there is output data available.
+    // This will result in MotorMixer::output_to_motors() being called by the scheduler.
+    motor_mixer_message_queue.SIGNAL(motor_commands);
+}
+
+motor_commands_t FlightController::calculate_motor_commands(const ahrs_data_t& ahrs_data, Debug& debug){
+
     if (_sh.crash_flip_mode_active) {
-        apply_crash_flip_to_motors(ahrs_data.acc_gyro_rps.gyro_rps, ahrs_data.delta_t, motor_mixer_message_queue);
-        return;
+        const motor_commands_t motor_commands = apply_crash_flip_to_motors(ahrs_data.acc_gyro_rps.gyro_rps, ahrs_data.delta_t);
+        return motor_commands;
     }
 
 #if defined(USE_YAW_SPIN_RECOVERY)
     if (_sh.yaw_spin_recovery) {
-        recover_from_yaw_spin(ahrs_data.acc_gyro_rps.gyro_rps, ahrs_data.delta_t, motor_mixer_message_queue);
-        return;
+        const motor_commands_t motor_commands =  recover_from_yaw_spin(ahrs_data.acc_gyro_rps.gyro_rps, ahrs_data.delta_t);
+        if (_sh.yaw_spin_recovery) {
+            // if still in recovery, act on it
+            return motor_commands;
+        }
     }
 #endif
 #if defined(USE_DMAX)
@@ -288,10 +302,10 @@ void FlightController::update_outputs_using_pids(const ahrs_data_t& ahrs_data, A
     _sh.time_checks_microseconds[0] = time1 - time0;
 #endif
 
-    motor_mixer_message_queue_item_t outputs {}; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
-    outputs.throttle = _sh.output_throttle;
+    motor_commands_t motor_commands {}; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    motor_commands.throttle = _sh.output_throttle;
 
-    // Use the PIDs to calculate the outputs for each axis.
+    // Use the PIDs to calculate the motor_commands for each axis.
     // Note that the delta-values (ie the DTerms) are filtered:
     // this is because they are especially noisy, being the derivative of a noisy value.
 
@@ -307,12 +321,12 @@ void FlightController::update_outputs_using_pids(const ahrs_data_t& ahrs_data, A
     // filter the DTerm twice
     float roll_rate_delta_filtered_dps = _sh.dterm_filters1[ROLL_RATE_DPS].filter(roll_rate_dps - _sh.PIDS[ROLL_RATE_DPS].get_previous_measurement());
     roll_rate_delta_filtered_dps = _sh.dterm_filters2[ROLL_RATE_DPS].filter(roll_rate_delta_filtered_dps);
-    outputs.roll_dps = _sh.PIDS[ROLL_RATE_DPS].update_delta_iterm(
+    motor_commands.roll_dps = _sh.PIDS[ROLL_RATE_DPS].update_delta_iterm(
                                                     roll_rate_dps,
                                                     roll_rate_delta_filtered_dps * _rxC.TPA * _ahM.dmax_multiplier[ROLL_RATE_DPS],
                                                     calculate_iterm_error(ROLL_RATE_DPS, roll_rate_dps, debug),
                                                     ahrs_data.delta_t);
-    outputs.roll_dps = _sh.output_filters[FD_ROLL].filter(outputs.roll_dps);
+    motor_commands.roll_dps = _sh.output_filters[FD_ROLL].filter(motor_commands.roll_dps);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const time_us32_t time2 = time_us();
     _sh.time_checks_microseconds[1] = time2 - time1;
@@ -325,12 +339,12 @@ void FlightController::update_outputs_using_pids(const ahrs_data_t& ahrs_data, A
     // filter the DTerm twice
     float pitch_rate_delta_filtered_dps = _sh.dterm_filters1[PITCH_RATE_DPS].filter(pitch_rate_dps - _sh.PIDS[PITCH_RATE_DPS].get_previous_measurement());
     pitch_rate_delta_filtered_dps = _sh.dterm_filters2[PITCH_RATE_DPS].filter(pitch_rate_delta_filtered_dps);
-    outputs.pitch_dps = _sh.PIDS[PITCH_RATE_DPS].update_delta_iterm(
+    motor_commands.pitch_dps = _sh.PIDS[PITCH_RATE_DPS].update_delta_iterm(
                                                     pitch_rate_dps,
                                                     pitch_rate_delta_filtered_dps * _rxC.TPA * _ahM.dmax_multiplier[PITCH_RATE_DPS],
                                                     calculate_iterm_error(PITCH_RATE_DPS, pitch_rate_dps, debug),
                                                     ahrs_data.delta_t);
-    outputs.pitch_dps = _sh.output_filters[FD_PITCH].filter(outputs.pitch_dps);
+    motor_commands.pitch_dps = _sh.output_filters[FD_PITCH].filter(motor_commands.pitch_dps);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const time_us32_t time3 = time_us();
     _sh.time_checks_microseconds[2] = time3 - time2;
@@ -342,14 +356,12 @@ void FlightController::update_outputs_using_pids(const ahrs_data_t& ahrs_data, A
     //
     // DTerm is zero for yaw_rate, so call updateSPI() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no KTerm
     const float yaw_rate_dps = yaw_rate_ned_dps(ahrs_data.acc_gyro_rps.gyro_rps);
-    outputs.yaw_dps = _sh.PIDS[YAW_RATE_DPS].update_spi(yaw_rate_dps, ahrs_data.delta_t);
-    outputs.yaw_dps = _sh.output_filters[FD_YAW].filter(outputs.yaw_dps);
+    motor_commands.yaw_dps = _sh.PIDS[YAW_RATE_DPS].update_spi(yaw_rate_dps, ahrs_data.delta_t);
+    motor_commands.yaw_dps = _sh.output_filters[FD_YAW].filter(motor_commands.yaw_dps);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const time_us32_t time4 = time_us();
     _sh.time_checks_microseconds[3] = time4 - time3;
 #endif
 
-    // The MotorMixerTask is waiting on the message queue, so signal it that there is output data available.
-    // This will result in MotorMixer::output_to_motors() being called by the scheduler.
-    motor_mixer_message_queue.SIGNAL(outputs);
+    return motor_commands;
 }

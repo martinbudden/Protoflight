@@ -184,7 +184,7 @@ public:
     void stop_blackbox_recording(Blackbox* blackbox, FlightController& flight_controller);
 
     bool get_box_id_state(uint8_t box_id, const RcModes& rc_modes) const;
-    size_t pack_flight_mode_flags(MspBox::bitset_t& flight_mode_flags, const RcModes& rc_modes) const;
+    size_t pack_flight_mode_flags(std::bitset<MSP_BOX_COUNT>& flight_mode_flags, const RcModes& rc_modes) const;
     void serialize_box_reply_box_name(StreamBufWriter& dst, size_t page) const { _msp_box.serialize_box_reply_box_name(dst, page); }
     void serialize_box_reply_permanent_id(StreamBufWriter& dst, size_t page) const { _msp_box.serialize_box_reply_permanent_id(dst, page); }
 private:
