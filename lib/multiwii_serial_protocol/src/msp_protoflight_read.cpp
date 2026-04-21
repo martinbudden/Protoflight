@@ -514,8 +514,8 @@ msp_result_e MSP_Protoflight::process_read_command(msp_context_t& ctx, int16_t c
     case MSP_SET_BLACKBOX_CONFIG:
         // Don't allow config to be updated while Blackbox is logging
         if (ctx.blackbox != nullptr && ctx.blackbox->may_edit_config()) {
-            Blackbox::config_t blackboxConfig = ctx.blackbox->get_config();
-            blackboxConfig.device = static_cast<Blackbox::device_e>(src.read_u8());
+            blackbox_config_t blackbox_config = ctx.blackbox->get_config();
+            blackbox_config.device = static_cast<blackbox_device_e>(src.read_u8());
             const int rateNumerator = src.read_u8();
             const int rateDenominator = src.read_u8();
             uint16_t pRatio = 0;
@@ -529,17 +529,17 @@ msp_result_e MSP_Protoflight::process_read_command(msp_context_t& ctx, int16_t c
 
             if (src.bytes_remaining() >= 1) {
                 // sample_rate specified, so use it directly
-                blackboxConfig.sample_rate = static_cast<Blackbox::sample_rate_e>(src.read_u8());
+                blackbox_config.sample_rate = static_cast<blackbox_sample_rate_e>(src.read_u8());
             } else {
                 // sample_rate not specified in MSP, so calculate it from old p_ratio
-                blackboxConfig.sample_rate = static_cast<Blackbox::sample_rate_e>(ctx.blackbox->calculate_sample_rate(pRatio));
+                blackbox_config.sample_rate = static_cast<blackbox_sample_rate_e>(ctx.blackbox->calculate_sample_rate(pRatio));
             }
 
             // Added in MSP API 1.45
             if (src.bytes_remaining() >= 4) {
-                blackboxConfig.fields_disabled_mask = src.read_u32();
+                blackbox_config.fields_disabled_mask = src.read_u32();
             }
-            ctx.blackbox->init(blackboxConfig);
+            ctx.blackbox->init(blackbox_config);
         }
         break;
 #endif

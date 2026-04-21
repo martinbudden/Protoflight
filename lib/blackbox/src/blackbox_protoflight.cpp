@@ -84,7 +84,7 @@ Blackbox::write_e BlackboxProtoflight::write_system_information(const blackbox_c
 // per second and leaves the conversion to radians per microsecond to the IMU. Let's just convert Cleanflight's scale to
 // match Baseflight so we can use Baseflight's IMU for both:
 // sysConfig.GYRO_SCALE * (Math.PI / 180.0) * 0.000001
-        BLACKBOX_PRINT_HEADER_LINE("gyro_scale","0x%x",                     BlackboxEncoder::castFloatBytesToInt(0.000001F / GYRO_SCALE));
+        BLACKBOX_PRINT_HEADER_LINE("gyro_scale", "0x%x",                    BlackboxEncoder::cast_float_bytes_to_int(0.000001F / GYRO_SCALE));
         BLACKBOX_PRINT_HEADER_LINE("motorOutput", "%d,%d",                  158,2047);
         BLACKBOX_PRINT_HEADER_LINE("motor_kv", "%d",                        ctx.motor_mixer.get_motor_config().kv);
         BLACKBOX_PRINT_HEADER_LINE("acc_1G", "%u",                          4096);

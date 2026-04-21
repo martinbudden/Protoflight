@@ -142,7 +142,7 @@ float Cockpit::map_throttle(float throttle) const
 void Cockpit::start_blackbox_recording(Blackbox* blackbox, FlightController& flight_controller, const MotorMixerBase& motor_mixer, const Debug& debug)
 {
     if (blackbox) {
-        blackbox->start(Blackbox::start_t{
+        blackbox->start(blackbox_start_t{
             .debug_mode = debug.get_mode(),
             .motor_count = static_cast<uint8_t>(motor_mixer.get_motor_count()),
             .servo_count = static_cast<uint8_t>(motor_mixer.get_servo_count())

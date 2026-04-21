@@ -25,10 +25,10 @@ Blackbox* Main::create_blackbox(uint32_t task_interval_microseconds) // cppcheck
     static BlackboxProtoflight          blackbox(task_interval_microseconds, blackboxCallbacks, blackboxSerialDevice);
 
     blackbox.init({
-        .sample_rate = Blackbox::RATE_ONE,
-        .device = Blackbox::DEVICE_SDCARD,
+        .sample_rate = BLACKBOX_RATE_ONE,
+        .device = BLACKBOX_DEVICE_SDCARD,
         //.device = Blackbox::DEVICE_NONE,
-        .mode = Blackbox::MODE_NORMAL, // logging starts on arming, file is saved when disarmed
+        .mode = BLACKBOX_MODE_NORMAL, // logging starts on arming, file is saved when disarmed
         //.mode = Blackbox::MODE_ALWAYS_ON,
         .gps_use_3d_speed = false,
         .fields_disabled_mask = 0,
@@ -46,7 +46,7 @@ void Main::test_blackbox(Blackbox& blackbox, Ahrs& ahrs, ReceiverBase& receiver,
     static uint32_t time_microseconds_previous = 0;
 
     print("***StartLog\r\n");
-    blackbox.start(Blackbox::start_t{.debug_mode = debug.get_mode(), .motor_count = 4, .servo_count = 0});
+    blackbox.start(blackbox_start_t{.debug_mode = debug.get_mode(), .motor_count = 4, .servo_count = 0});
 
     for (size_t ii = 0; ii < 1500; ++ii) {
         const uint32_t time_microseconds = time_us();

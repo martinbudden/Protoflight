@@ -183,11 +183,11 @@ void BlackboxCallbacks::load_gps_state(blackbox_gps_state_t& gps_state, const bl
 
     gps_state.time_of_week_ms = gps_message_data.time_of_week_ms;
     //gps_state.interval_ms;
-    //gps_state.homeLongitude_degrees1E7;
-    //gps_state.homeLatitude_degrees1E7;
+    //gps_state.homeLongitude_degrees_1e7;
+    //gps_state.homeLatitude_degrees_1e7;
     //gps_state.homeAltitude_cm;
-    gps_state.longitude_degrees1E7 = gps_message_data.longitude_degrees1E7;
-    gps_state.latitude_degrees1E7 = gps_message_data.latitude_degrees1E7;
+    gps_state.longitude_degrees_1e7 = gps_message_data.longitude_degrees_1e7;
+    gps_state.latitude_degrees_1e7 = gps_message_data.latitude_degrees_1e7;
     gps_state.altitude_cm = gps_message_data.altitude_cm;
     gps_state.velocity_north_cmps = gps_message_data.velocity_north_cmps;
     gps_state.velocity_east_cmps = gps_message_data.velocity_east_cmps;

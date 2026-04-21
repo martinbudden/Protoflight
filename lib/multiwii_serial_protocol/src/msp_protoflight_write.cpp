@@ -437,15 +437,15 @@ msp_result_e MSP_Protoflight::process_get_command(msp_context_t& ctx, int16_t cm
         if (ctx.blackbox == nullptr) {
             return MSP_RESULT_CMD_UNKNOWN;
         }
-        const Blackbox::config_t& blackboxConfig = ctx.blackbox->get_config();
+        const blackbox_config_t& blackbox_config = ctx.blackbox->get_config();
         dst.write_u8(1); //Blackbox supported
-        dst.write_u8(blackboxConfig.device);
+        dst.write_u8(blackbox_config.device);
         dst.write_u8(1); // Rate numerator, not used anymore
         dst.write_u8(static_cast<uint8_t>(ctx.blackbox->get_pinterval()));
         dst.write_u16(static_cast<uint16_t>(ctx.blackbox->get_iinterval() / ctx.blackbox->get_pinterval()));
-        dst.write_u8(blackboxConfig.sample_rate);
+        dst.write_u8(blackbox_config.sample_rate);
         // Added in MSP API 1.45
-        dst.write_u32(blackboxConfig.fields_disabled_mask);
+        dst.write_u32(blackbox_config.fields_disabled_mask);
 #else
         dst.write_u8(0); // Blackbox not supported
         dst.write_u8(0);
