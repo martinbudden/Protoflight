@@ -1,6 +1,6 @@
-#include <ahrs.h>
 #include "ahrs_task.h"
 
+#include <ahrs.h>
 #include <array>
 #include <cassert>
 #include <cstring>

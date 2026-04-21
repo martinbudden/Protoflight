@@ -34,4 +34,6 @@ private:
     [[noreturn]] void task();
 private:
     ahrs_context_t _context;
+    const uint32_t _send_blackbox_message_denominator {8};
+    uint32_t _send_blackbox_message_count {};
 };

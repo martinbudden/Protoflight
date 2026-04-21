@@ -9,14 +9,10 @@
 
 #include <quaternion.h>
 #include <string>
-#include <xyz_type.h>
 
-class AhrsMessageQueue;
 class Debug;
 class DynamicNotchFilter;
 class MotorMixerBase;
-class MotorMixerMessageQueue;
-class Quaternion;
 
 struct flight_controller_filters_config_t {
     enum { PT1 = 0, BIQUAD, PT2, PT3 };
@@ -236,10 +232,6 @@ public:
 
     void motors_switch_off(MotorMixerBase& motor_mixer);
     void motors_switch_on(MotorMixerBase& motor_mixer);
-    //! Sets blackbox_active flag so that ahrs_data messages are sent to the blackbox task
-    void set_blackbox_active(bool is_active);
-    bool is_blackbox_active() const { return _sh.blackbox_active; }
-
     virtual uint32_t get_output_power_time_microseconds() const override; //!!TODO: is this still needed?
 
     fc_control_mode_e get_control_mode() const { return _rxC.control_mode; }
@@ -350,13 +342,11 @@ public:
     void update_rate_setpoints_for_angle_mode(const Quaternion& orientationENU, float delta_t);
 
     float calculate_iterm_error(size_t axis, float measurement, Debug& debug);
-    virtual void update_outputs_using_pids(const ahrs_data_t& ahrs_data, AhrsMessageQueue& ahrs_message_queue, MotorMixerMessageQueue& motor_mixer_message_queue, Debug& debug) override;
-    motor_commands_t calculate_motor_commands(const ahrs_data_t& ahrs_data, Debug& debug);
+    virtual motor_commands_t calculate_motor_commands(const xyz_t& gyro_rps, const Quaternion& orientation, float delta_t, Debug& debug) override;
 
 private:
     static constexpr float DEGREES_TO_RADIANS = 3.14159265358979323846F / 180.0F;
     DynamicNotchFilter* _dynamic_notch_filter {nullptr};
-    const uint32_t _send_blackbox_message_denominator {8};
 
     //!!TODO: some constants below need to be made configurable
     const bool _use_quaternion_space_for_angle_mode {false};
@@ -434,14 +424,12 @@ private:
     };
     struct ah_t {
         angle_mode_calculation_state_t amcs;
-        uint32_t send_blackbox_message_count {0};
         std::array<float, RP_AXIS_COUNT> dmax_multiplier {1.0F, 1.0F}; // used even if USE_DMAX not defined
     }; // ah_t
     struct shared_t {
         uint32_t takeOffCountStart {0};
         bool ground_mode {true}; //! When in ground mode (ie pre-takeoff mode), the PID I-terms are set to zero to avoid integral windup on the ground
         bool crash_detected {false};
-        bool blackbox_active {false};
         bool crash_flip_mode_active {false};
         bool yaw_spin_recovery {false};
 #if defined(USE_YAW_SPIN_RECOVERY)

@@ -6,9 +6,10 @@
 #if defined(USE_GPS)
 #include <geographic_coordinate.h>
 #endif
-
+#include <xyz_type.h>
 
 class AltitudeMessageQueue;
+class AhrsMessageQueue;
 
 #if !defined(MAX_WAYPOINT_COUNT)
 enum { MAX_WAYPOINT_COUNT = 16 };

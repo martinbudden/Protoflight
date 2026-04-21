@@ -58,12 +58,12 @@ static motor_commands_t motor_commands {};
 void test_main_control_loop()
 {
     const float delta_t = looptime_seconds;
-    const uint32_t time_microseconds = 1000;
-    const uint32_t time_microseconds_delta = 1000;
     const uint32_t tick_count = 1;
     const uint32_t tick_count_delta = 1;
+    const uint32_t time_microseconds = 1;
 
-    // Receiver task loop, update rc_modes and flight_controller setpoints with data from receiver
+    // RECEIVER task.
+    // update rc_modes and flight_controller setpoints with data from receiver.
     receiver.update(tick_count_delta);
     static receiver_context_t receiver_context = {
         .rc_modes = rc_modes,
@@ -76,9 +76,28 @@ void test_main_control_loop()
     cockpit.update_controls(tick_count, receiver, receiver_context); // this errors
     cockpit.check_failsafe(tick_count, receiver_context);
 
-    const ahrs_data_t& ahrs_data = ahrs.read_imu_and_update_orientation(time_microseconds, time_microseconds_delta, imu_filters, flight_controller, debug);
-    flight_controller.update_outputs_using_pids(ahrs_data, ahrs_message_queue, motor_mixer_message_queue, debug);
+    // AHRS task
+    acc_gyro_rps_t acc_gyro_rps = ahrs.read_imu();
+    const xyz_t gyro_rps_unfiltered = acc_gyro_rps.gyro_rps;
+    imu_filters.filter(acc_gyro_rps.acc, acc_gyro_rps.gyro_rps, delta_t, debug);
+    const Quaternion orientation = ahrs.update_orientation(acc_gyro_rps.acc, acc_gyro_rps.gyro_rps, delta_t, flight_controller);
+    //const ahrs_data_t& ahrs_data = ahrs.read_imu_and_update_orientation(time_microseconds, time_microseconds_delta, imu_filters, flight_controller, debug);
+    //flight_controller.update_outputs_using_pids(ahrs_data, ahrs_message_queue, motor_mixer_message_queue, debug);
+    const ahrs_data_t ahrs_data = ahrs_data_t { 
+        .acc_gyro_rps =  acc_gyro_rps,
+        .gyro_rps_unfiltered = gyro_rps_unfiltered,
+        .orientation = orientation,
+        .delta_t = delta_t,
+        .time_microseconds = time_microseconds,
+        .filler = {}
+    };
+    ahrs_message_queue.SIGNAL(ahrs_data); // signal blackbox task
+    ahrs_message_queue.SEND_AHRS_DATA(ahrs_data); // send data to dashboard and backchannel
 
+    motor_commands = flight_controller.calculate_motor_commands(acc_gyro_rps.gyro_rps, orientation, delta_t, debug);
+    motor_mixer_message_queue.SIGNAL(motor_commands);
+
+    // MOTORS task
     motor_mixer_message_queue.WAIT(motor_commands);
     motor_mixer.output_to_motors(motor_commands, &rpm_filters, delta_t, tick_count, debug);
 

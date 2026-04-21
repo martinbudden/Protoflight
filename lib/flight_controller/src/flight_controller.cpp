@@ -10,7 +10,6 @@
 #endif
 
 #include <motor_mixer_base.h>
-#include <time_microseconds.h>
 
 #if defined(FRAMEWORK_ARDUINO_ESP32)
 #include <esp32-hal.h>
@@ -244,11 +243,6 @@ void FlightController::motors_switch_on(MotorMixerBase& motor_mixer)
         // reset the PID integral values when we switch the motors on
         switch_pid_integration_on();
     }
-}
-
-void FlightController::set_blackbox_active(bool is_active)
-{
-    _sh.blackbox_active = is_active;
 }
 
 void FlightController::set_pid_tuning_mode(pid_tuning_mode_e pid_tuning_mode)

@@ -1,9 +1,8 @@
 #include "flight_controller.h"
 
 #include <ahrs.h>
-#include <ahrs_message_queue.h>
 #include <debug.h>
-#include <motor_mixer_message_queue.h>
+#include <motor_commands.h>
 #include <time_microseconds.h>
 
 #if (__cplusplus >= 202002L)
@@ -240,43 +239,17 @@ It is typically called at frequency of between 1000Hz and 8000Hz, so it has to b
 
 The FlightController uses the NED (North-East-Down) coordinate convention.
 gyro_rps, acc, and orientation come from the AHRS and use the ENU (East-North-Up) coordinate convention.
-
-!!TODO: Move the SIGNALing etc directly into the task function
 */
-void FlightController::update_outputs_using_pids(const ahrs_data_t& ahrs_data, AhrsMessageQueue& ahrs_message_queue, MotorMixerMessageQueue& motor_mixer_message_queue, Debug& debug)
-{
-#if defined(USE_BLACKBOX) || defined(USE_BACKCHANNEL) || defined(USE_DASHBOARD)
-    // signalling/sending to the message queue is not free, so, in this time-critical function, we only do it if necessary
-    ++_ahM.send_blackbox_message_count;
-    if (_ahM.send_blackbox_message_count >= _send_blackbox_message_denominator) {
-        _ahM.send_blackbox_message_count = 0;
-        if (_sh.blackbox_active) {
-            ahrs_message_queue.SIGNAL(ahrs_data);
-        }
-#if defined(USE_BACKCHANNEL) || defined(USE_DASHBOARD)
-        ahrs_message_queue.SEND_AHRS_DATA(ahrs_data);
-#endif
-    }
-#else
-    (void)ahrs_message_queue;
-#endif
-    motor_commands_t motor_commands = calculate_motor_commands(ahrs_data, debug);
-
-    // The MotorMixerTask is waiting on the message queue, so signal it that there is output data available.
-    // This will result in MotorMixer::output_to_motors() being called by the scheduler.
-    motor_mixer_message_queue.SIGNAL(motor_commands);
-}
-
-motor_commands_t FlightController::calculate_motor_commands(const ahrs_data_t& ahrs_data, Debug& debug){
+motor_commands_t FlightController::calculate_motor_commands(const xyz_t& gyro_rps, const Quaternion& orientation, float delta_t, Debug& debug) {
 
     if (_sh.crash_flip_mode_active) {
-        const motor_commands_t motor_commands = apply_crash_flip_to_motors(ahrs_data.acc_gyro_rps.gyro_rps, ahrs_data.delta_t);
+        const motor_commands_t motor_commands = apply_crash_flip_to_motors(gyro_rps, delta_t);
         return motor_commands;
     }
 
 #if defined(USE_YAW_SPIN_RECOVERY)
     if (_sh.yaw_spin_recovery) {
-        const motor_commands_t motor_commands =  recover_from_yaw_spin(ahrs_data.acc_gyro_rps.gyro_rps, ahrs_data.delta_t);
+        const motor_commands_t motor_commands =  recover_from_yaw_spin(gyro_rps, delta_t);
         if (_sh.yaw_spin_recovery) {
             // if still in recovery, act on it
             return motor_commands;
@@ -291,10 +264,10 @@ motor_commands_t FlightController::calculate_motor_commands(const ahrs_data_t& a
     const time_us32_t time0 = time_us();
 #endif
 #if defined(USE_ANGLE_MODE_LOCKED_ON)
-    update_rate_setpoints_for_angle_mode(ahrs_data.orientation, ahrs_data.delta_t);
+    update_rate_setpoints_for_angle_mode(orientation, delta_t);
 #else
     if (_rxC.use_angle_mode) {
-        update_rate_setpoints_for_angle_mode(ahrs_data.orientation, ahrs_data.delta_t);
+        update_rate_setpoints_for_angle_mode(orientation, delta_t);
     }
 #endif
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
@@ -317,7 +290,7 @@ motor_commands_t FlightController::calculate_motor_commands(const ahrs_data_t& a
     // Roll axis
     //
 //Serial.printf("RR\r\n");
-    const float roll_rate_dps = roll_rate_ned_dps(ahrs_data.acc_gyro_rps.gyro_rps);
+    const float roll_rate_dps = roll_rate_ned_dps(gyro_rps);
     // filter the DTerm twice
     float roll_rate_delta_filtered_dps = _sh.dterm_filters1[ROLL_RATE_DPS].filter(roll_rate_dps - _sh.PIDS[ROLL_RATE_DPS].get_previous_measurement());
     roll_rate_delta_filtered_dps = _sh.dterm_filters2[ROLL_RATE_DPS].filter(roll_rate_delta_filtered_dps);
@@ -325,7 +298,7 @@ motor_commands_t FlightController::calculate_motor_commands(const ahrs_data_t& a
                                                     roll_rate_dps,
                                                     roll_rate_delta_filtered_dps * _rxC.TPA * _ahM.dmax_multiplier[ROLL_RATE_DPS],
                                                     calculate_iterm_error(ROLL_RATE_DPS, roll_rate_dps, debug),
-                                                    ahrs_data.delta_t);
+                                                    delta_t);
     motor_commands.roll_dps = _sh.output_filters[FD_ROLL].filter(motor_commands.roll_dps);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const time_us32_t time2 = time_us();
@@ -335,7 +308,7 @@ motor_commands_t FlightController::calculate_motor_commands(const ahrs_data_t& a
     //
     // Pitch axis
     //
-    const float pitch_rate_dps = pitch_rate_ned_dps(ahrs_data.acc_gyro_rps.gyro_rps);
+    const float pitch_rate_dps = pitch_rate_ned_dps(gyro_rps);
     // filter the DTerm twice
     float pitch_rate_delta_filtered_dps = _sh.dterm_filters1[PITCH_RATE_DPS].filter(pitch_rate_dps - _sh.PIDS[PITCH_RATE_DPS].get_previous_measurement());
     pitch_rate_delta_filtered_dps = _sh.dterm_filters2[PITCH_RATE_DPS].filter(pitch_rate_delta_filtered_dps);
@@ -343,7 +316,7 @@ motor_commands_t FlightController::calculate_motor_commands(const ahrs_data_t& a
                                                     pitch_rate_dps,
                                                     pitch_rate_delta_filtered_dps * _rxC.TPA * _ahM.dmax_multiplier[PITCH_RATE_DPS],
                                                     calculate_iterm_error(PITCH_RATE_DPS, pitch_rate_dps, debug),
-                                                    ahrs_data.delta_t);
+                                                    delta_t);
     motor_commands.pitch_dps = _sh.output_filters[FD_PITCH].filter(motor_commands.pitch_dps);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const time_us32_t time3 = time_us();
@@ -355,8 +328,8 @@ motor_commands_t FlightController::calculate_motor_commands(const ahrs_data_t& a
     // Yaw axis
     //
     // DTerm is zero for yaw_rate, so call updateSPI() with no DTerm filtering, no TPA, no DMax, no ITerm relax, and no KTerm
-    const float yaw_rate_dps = yaw_rate_ned_dps(ahrs_data.acc_gyro_rps.gyro_rps);
-    motor_commands.yaw_dps = _sh.PIDS[YAW_RATE_DPS].update_spi(yaw_rate_dps, ahrs_data.delta_t);
+    const float yaw_rate_dps = yaw_rate_ned_dps(gyro_rps);
+    motor_commands.yaw_dps = _sh.PIDS[YAW_RATE_DPS].update_spi(yaw_rate_dps, delta_t);
     motor_commands.yaw_dps = _sh.output_filters[FD_YAW].filter(motor_commands.yaw_dps);
 #if defined(USE_FLIGHT_CONTROLLER_TIME_CHECKS)
     const time_us32_t time4 = time_us();

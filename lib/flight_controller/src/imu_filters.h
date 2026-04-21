@@ -35,7 +35,7 @@ public:
     ImuFilters(float looptime_seconds);
     ImuFilters(uint32_t looptime) = delete; // delete this overload so it is not accidentally called
 
-    virtual void filter(xyz_t& gyro_rps, xyz_t& acc, float delta_t, Debug& debug) override;
+    virtual void filter(xyz_t& acc, xyz_t& gyro_rps, float delta_t, Debug& debug) override;
 
     void set_rpm_filters(RpmFilters* rpm_filters) { _rpm_filters = rpm_filters; }
     const RpmFilters* get_rpm_filters() const { return _rpm_filters; }

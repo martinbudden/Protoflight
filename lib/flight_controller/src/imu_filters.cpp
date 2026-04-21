@@ -92,7 +92,7 @@ void ImuFilters::set_dynamic_notch_filter_config(const dynamic_notch_filter_conf
 /*!
 This is called from within AHRS::readIMUandUpdateOrientation() (ie the main IMU/PID loop) and so needs to be FAST.
 */
-void ImuFilters::filter(xyz_t& gyro_rps, xyz_t& acc, float delta_t, Debug& debug)
+void ImuFilters::filter(xyz_t& acc, xyz_t& gyro_rps, float delta_t, Debug& debug)
 {
     (void)delta_t;
 
